@@ -6485,7 +6485,8 @@ function templateIsMinor(g) { return g.sections.some(s => s.chords.some(c => /^i
 function loadGenre(name, keepLyrics) {
   const g = SONG_DATA.genres.find(x => x.name === name);
   if (!g) return;
-  const song = S.song, old = song.bars;
+  const song = S.song, old = song.bars, sameGenre = song.genre === name;
+  if (!sameGenre) song.bpmCustom = false;
   song.genre = name;
   song.sections = g.sections.map(s => ({ id: uid(), name: s.section, bars: s.bars[1] - s.bars[0] + 1, omit: false }));
   song.bars = [];
@@ -6493,8 +6494,8 @@ function loadGenre(name, keepLyrics) {
   if (keepLyrics) song.bars.forEach((b, i) => { if (old[i]) { b.lyric = old[i].lyric; b.chips = old[i].chips; b.ev = old[i].ev; b.custom = old[i].custom; } });
   const m = genreMap(name);
   if (m) {
-    song.bpm = m.defaultBpm || song.bpm;
-    if (TS_BEATS[m.meter]) song.sig = m.meter;
+    if (!song.bpmCustom && m.defaultBpm) song.bpm = m.defaultBpm;     // the user's own tempo survives a reload
+    if (TS_BEATS[m.meter] && !sameGenre) song.sig = m.meter;
     const acc = song.parts.accomp.inst === "Piano" ? stripNote(m.pianoPrimary) : stripNote(m.guitarPrimary);
     if (acc) song.parts.accomp.pattern = acc;
     const bass = stripNote(m.bassPattern); if (bass) song.parts.bass.pattern = bass;
@@ -7435,6 +7436,10 @@ function reloadGenreChords() {
 function panelBand(p) {
   const song = S.song, { start, end } = curRange();
   p.append(el("div", { class: "pHead" }, el("h3", {}, "Band"), el("button", { class: "btn sm", onclick: openSampler }, "♪ Samples"), el("button", { class: "btn sm", onclick: toggleFS }, "⛶ Full screen")));
+  const tempoRow = el("div", { class: "pRow tight" }, el("span", { class: "tiny" }, "Tempo ♩"),
+    el("input", { type: "number", class: "txt", min: 40, max: 220, value: song.bpm, style: "width:74px", onchange: e => { song.bpm = clamp(parseInt(e.target.value, 10) || song.bpm, 40, 220); song.bpmCustom = true; renderAll(); } }),
+    el("input", { type: "range", min: 40, max: 220, value: song.bpm, style: "flex:1;min-width:120px", oninput: e => { song.bpm = parseInt(e.target.value, 10); song.bpmCustom = true; e.target.previousSibling.value = song.bpm; renderHeader(); saveSoon(); }, onchange: () => renderPanel() }));
+  p.append(tempoRow);
   const bpmFit = pat => pat && pat.bpmRange ? (song.bpm >= pat.bpmRange[0] && song.bpm <= pat.bpmRange[1] ? "fits ♩" + song.bpm : `best ${pat.bpmRange[0]}–${pat.bpmRange[1]}`) : "";
   for (const part of PARTS) {
     const P = song.parts[part], meta = PART_META[part];
@@ -7722,14 +7727,15 @@ function openSongSetup() {
   keySel.append(og1, og2);
   const sigSeg = el("div", { class: "seg" });
   Object.keys(TS_BEATS).forEach(s => sigSeg.append(el("button", { class: s === song.sig ? "on" : "", onclick: () => { song.sig = s; song.bars.forEach(distributeChips); renderAll(); openSongSetup(); } }, s)));
-  const bpm = el("input", { type: "number", class: "txt", min: 40, max: 220, value: song.bpm, style: "width:80px", onchange: e => { song.bpm = clamp(parseInt(e.target.value, 10) || 100, 40, 220); renderAll(); } });
-  const bpmR = el("input", { type: "range", min: 40, max: 220, value: song.bpm, style: "flex:1", oninput: e => { song.bpm = parseInt(e.target.value, 10); bpm.value = song.bpm; renderHeader(); saveSoon(); } });
+  const setBpm = v => { song.bpm = clamp(parseInt(v, 10) || song.bpm, 40, 220); song.bpmCustom = true; renderHeader(); saveSoon(); };
+  const bpm = el("input", { type: "number", class: "txt", min: 40, max: 220, value: song.bpm, style: "width:80px", oninput: e => { if (parseInt(e.target.value, 10) >= 40) { setBpm(e.target.value); bpmR.value = song.bpm; } }, onchange: e => { setBpm(e.target.value); e.target.value = song.bpm; bpmR.value = song.bpm; } });
+  const bpmR = el("input", { type: "range", min: 40, max: 220, value: song.bpm, style: "flex:1", oninput: e => { setBpm(e.target.value); bpm.value = song.bpm; } });
   body.push(el("div", { class: "pLbl" }, "Key & time"));
   body.push(el("div", { class: "mrow" }, keySel, sigSeg));
   body.push(el("div", { class: "pLbl" }, "Tempo"));
-  body.push(el("div", { class: "mrow" }, bpm, bpmR));
+  body.push(el("div", { class: "mrow" }, bpm, bpmR, el("button", { class: "btn sm ghost", title: "Tap along to set the tempo", onclick: () => { const t = performance.now(); const taps = (openSongSetup.taps = (openSongSetup.taps || []).filter(x => t - x < 3000)); taps.push(t); if (taps.length >= 3) { const iv = (taps[taps.length - 1] - taps[0]) / (taps.length - 1); setBpm(Math.round(60000 / iv)); bpm.value = song.bpm; bpmR.value = song.bpm; } } }, "Tap tempo")));
   body.push(el("div", { class: "pLbl" }, "Genre template"));
-  body.push(el("div", { class: "tiny", style: "margin-bottom:6px" }, "Loads the song structure, chords, tempo and band patterns for a style. Your own words and notes can be kept."));
+  body.push(el("div", { class: "tiny", style: "margin-bottom:6px" }, "Loads the song structure, chords, tempo and band patterns for a style. Your own words and notes can be kept, and a tempo you've set yourself is kept when you reload the same genre."));
   const grid = el("div", { class: "genreGrid" });
   let picked = song.genre;
   const keep = el("label", { class: "toggle on", style: "margin-top:8px" }, el("span", { class: "sw" }), "Keep my words and notes");
@@ -7739,9 +7745,9 @@ function openSongSetup() {
     grid.append(el("button", { class: g.name === picked ? "on" : "", onclick: e => { picked = g.name; grid.querySelectorAll("button").forEach(b => b.classList.remove("on")); e.currentTarget.classList.add("on"); } }, g.name, el("small", {}, `${g.sections.length} sections · ${nb} bars · ♩${m ? m.defaultBpm : "–"}`)));
   });
   body.push(grid, keep);
-  openModal("Song setup", body, [
-    el("button", { class: "btn", onclick: () => { closeModal(); renderAll(); } }, "Done"),
-    el("button", { class: "btn acc", onclick: () => { if (!picked) { toast("Pick a genre first"); return; } const go = () => { closeModal(); loadGenre(picked, keep.classList.contains("on")); renderAll(); toast(`${picked} template loaded`); }; if (songHasContent() && !keep.classList.contains("on")) confirmModal("Replace the whole song with this template?", go, "Replace"); else go(); } }, "Load template")]);
+  const loadBtn = el("button", { class: "btn", onclick: () => { if (!picked) { toast("Pick a genre first"); return; } const go = () => { closeModal(); loadGenre(picked, keep.classList.contains("on")); renderAll(); toast(`${picked} template loaded · ♩${S.song.bpm}`); }; if (songHasContent() && !keep.classList.contains("on")) confirmModal("Replace the whole song with this template?", go, "Replace"); else go(); } }, song.genre ? "Reload template" : "Load template");
+  grid.addEventListener("click", () => { loadBtn.textContent = picked === song.genre ? "Reload template" : "Load template"; });
+  openModal("Song setup", body, [loadBtn, el("button", { class: "btn acc", onclick: () => { closeModal(); renderAll(); } }, "Done")]);
 }
 
 /* chord builder: Simple tier first, Advanced behind a toggle (Chord_Vocabulary) */
