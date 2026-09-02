@@ -372,7 +372,7 @@ textarea.lyricArea { width: 100%; min-height: 96px; border: 1px solid var(--line
         <svg id="stave"></svg>
       </div>
       <div id="notePop" role="toolbar"></div>
-      <div id="wordEdit"><span class="lbl2"></span><input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="word(s)"><button class="ok" title="Place (Enter)">✓</button><button title="Close (Esc)">✕</button></div>
+      <div id="wordEdit"><span class="lbl2"></span><input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="word(s)"><button class="rest" title="Rest — no word on this beat">𝄽</button><button class="ok" title="Place (Enter)">✓</button><button title="Close (Esc)">✕</button></div>
     </div>
   </main>
   <button id="fsClose" title="Close full screen">✕</button>
@@ -6621,9 +6621,12 @@ function syllabify(word) {
   out.push(word.slice(from));
   return out.filter(Boolean);
 }
+const REST_MARK = "_";
+const isRestWord = w => /^(_+|𝄽)$/.test(w);
 function tokenizeLyric(text) {
   const out = [];
   for (const word of String(text || "").split(/\s+/).filter(Boolean)) {
+    if (isRestWord(word)) { out.push({ id: uid(), text: "𝄽", pos: "rest", rest: true, t: 0, d: 1 }); continue; }
     const syls = syllabify(word);
     syls.forEach((s, i) => out.push({ id: uid(), text: s, pos: syls.length === 1 ? "single" : i === 0 ? "begin" : i === syls.length - 1 ? "end" : "middle", t: 0, d: 1 }));
   }
@@ -6642,13 +6645,16 @@ function distributeChips(bar) {
   syncNotesToChips(bar);
 }
 function syncNotesToChips(bar) {
+  bar.ev.melody = bar.ev.melody.filter(e => !(e.rest && e.chip && !bar.chips.some(c => c.id === e.chip)));   // a rest word that went away takes its rest with it
   bar.ev.melody.forEach(e => {
     if (!e.chip) return;
     const i = bar.chips.findIndex(x => x.id === e.chip);
     if (i < 0) { delete e.chip; return; }
     const c = bar.chips[i], cap = i < bar.chips.length - 1 ? bar.chips[i + 1].t - c.t : Infinity;
-    e.t = c.t; e.d = e.dLocked ? Math.min(e.d, cap) : c.d;
+    e.t = c.t; e.d = c.rest ? c.d : e.dLocked ? Math.min(e.d, cap) : c.d;
   });
+  /* every rest word carries a rest in the melody */
+  bar.chips.forEach(c => { if (c.rest && !bar.ev.melody.some(e => e.chip === c.id)) { bar.ev.melody = bar.ev.melody.filter(e => !(e.rest && !e.chip && e.t < c.t + c.d && e.t + e.d > c.t)); bar.ev.melody.push({ id: uid(), t: c.t, d: c.d, rest: true, chip: c.id }); } });
 }
 /* a note may tie over the bar line: at most one extra bar */
 const maxDur = (t) => barBeats() - t + barBeats();
@@ -6715,12 +6721,13 @@ const chipNote = (bar, chip) => bar.ev.melody.find(e => e.chip === chip.id);
 /* rebuild the bar's text from its chips (single/begin/middle/end) */
 function lyricFromChips(bar) {
   const words = []; let cur = "";
-  for (const c of bar.chips) { cur += c.text; if (c.pos === "single" || c.pos === "end") { words.push(cur); cur = ""; } }
+  for (const c of bar.chips) { if (c.rest) { if (cur) { words.push(cur); cur = ""; } words.push(REST_MARK); continue; } cur += c.text; if (c.pos === "single" || c.pos === "end") { words.push(cur); cur = ""; } }
   if (cur) words.push(cur);
   return words.join(" ");
 }
 /* word index of every chip, so a whole word can be replaced */
-function chipWordIds(bar) { let w = -1; return bar.chips.map(c => { if (c.pos === "single" || c.pos === "begin") w++; return w; }); }
+function chipWordIds(bar) { let w = -1; return bar.chips.map(c => { if (c.pos === "single" || c.pos === "begin" || c.rest) w++; return w; }); }
+const displayLyric = t => String(t || "").replace(/(^|\s)_+(?=\s|$)/g, "$1𝄽");
 /* recompute chip durations after a change of positions */
 function refitChips(bar) {
   const B = barBeats();
@@ -6744,7 +6751,9 @@ function insertWordsAt(bi, t, text) {
     const step = Math.max(0.25, Math.min(S.song.snap ? 0.5 : 0.25, Math.floor(span / fresh.length * 4) / 4));
     fresh.forEach((c, i) => { c.t = r3(Math.min(ts + i * step, B - 0.25)); });
     bar.chips.push(...fresh);
-    orphanNotes.forEach((n, i) => { if (fresh[i]) { n.chip = fresh[i].id; n.t = fresh[i].t; } else delete n.chip; });
+    const targets = fresh.filter(c => !c.rest);
+    orphanNotes.filter(n => !n.rest).forEach((n, i) => { if (targets[i]) { n.chip = targets[i].id; n.t = targets[i].t; } else delete n.chip; });
+    bar.ev.melody = bar.ev.melody.filter(n => !(n.rest && orphanNotes.includes(n)));
   } else orphanNotes.forEach(n => delete n.chip);
   refitChips(bar);
   S.song.sections[sectionOfBar(bi)].lyricRaw = null;
@@ -7384,6 +7393,11 @@ function renderStave() {
       chips.forEach((c, i) => {
         const x = xOfT(bi, c.t), note = chipNote(bar, c), isCur = c.id === cursorId;
         const tw = c.text.length * 7.8 + 10, ty = L.yL0 + 26;
+        if (c.rest) {
+          svg.append(svgEl("rect", { class: "chip", x: x + 1, y: L.yL0 + 10, width: Math.max(c.d * L.beatPx - 2, 18), height: 22, rx: 8, fill: C.ink, opacity: 0.06, stroke: C.bar, "stroke-dasharray": "3 3", "data-chip": c.id, "data-bi": bi }));
+          svg.append(svgEl("text", { x: x + Math.max(c.d * L.beatPx - 2, 18) / 2 + 1, y: ty, "text-anchor": "middle", "font-size": 14, fill: C.ink2, "font-family": "Georgia, serif" }, "𝄽"));
+          return;
+        }
         svg.append(svgEl("rect", { class: "chip", x: x + 1, y: L.yL0 + 10, width: Math.max(tw, 18), height: 22, rx: 8, fill: isCur ? C.accent : note ? C.card2 : "transparent", stroke: isCur ? C.accent : note ? "none" : C.bar, "stroke-dasharray": note || isCur ? null : "3 2", "data-chip": c.id, "data-bi": bi }));
         svg.append(svgEl("text", { x: x + 6, y: ty, "font-size": 13.5, "font-weight": 700, fill: isCur ? "#fff" : C.ink, "font-family": "Iowan Old Style, Palatino Linotype, Georgia, serif" }, c.text));
         /* hyphen to the next syllable of the same word */
@@ -7462,7 +7476,7 @@ function openWordEdit(bi, t, chip) {
   let existing = "";
   const at = bar.chips.findIndex(c => Math.abs(c.t - WE.t) < 1e-6);
   if (at >= 0) { const wid = chipWordIds(bar); existing = bar.chips.filter((c, i) => wid[i] === wid[at]).map(c => c.text).join(""); }
-  inp.value = existing;
+  inp.value = existing === "𝄽" ? REST_MARK : existing;
   lbl.textContent = `${barIndexLabel(bi).replace(/.*· /, "")} · beat ${Math.floor(WE.t) + 1}${WE.t % 1 ? "½" : ""}`;
   box.classList.add("on");
   if (S.si !== sectionOfBar(bi)) { S.si = sectionOfBar(bi); renderAll(); }
@@ -7485,7 +7499,8 @@ function commitWordEdit(advance) {
   if (advance) openWordEdit(bi, nextT); else closeWordEdit();
 }
 function initWordEdit() {
-  const box = $("wordEdit"), inp = box.querySelector("input"), [ok, close] = box.querySelectorAll("button");
+  const box = $("wordEdit"), inp = box.querySelector("input"), [rest, ok, close] = box.querySelectorAll("button");
+  rest.addEventListener("click", () => { inp.value = REST_MARK; commitWordEdit(true); });
   inp.addEventListener("keydown", e => {
     if (e.key === "Enter") { e.preventDefault(); commitWordEdit(true); }
     else if (e.key === "Escape") { e.preventDefault(); closeWordEdit(); }
@@ -7570,7 +7585,7 @@ function panelLyrics(p) {
   const { start, end } = curRange(), song = S.song;
   p.append(el("div", { class: "pHead" }, el("h3", {}, "Words"),
     toggle("Snap to beat", song.snap, v => { song.snap = v; renderAll(); }, "Words and notes land on half-beats when on; free placement when off")));
-  const ta = el("textarea", { class: "lyricArea", placeholder: "Type or paste the words for this section — one line per phrase. They'll spread across the bars.", spellcheck: "false" });
+  const ta = el("textarea", { class: "lyricArea", placeholder: "Type or paste the words for this section — one line per phrase. They'll spread across the bars. Use _ for a rest.", spellcheck: "false" });
   const sec = curSection();
   ta.value = sec.lyricRaw != null ? sec.lyricRaw : sectionLyricText(S.si);
   const apply = () => {
@@ -7583,7 +7598,7 @@ function panelLyrics(p) {
   p.append(ta);
   p.append(el("div", { class: "pRow" }, el("button", { class: "btn acc", onclick: apply }, "Place words"),
     el("button", { class: "btn", onclick: () => { const r = curRange(); openWordEdit(r.start, 0); } }, "Type at a beat…"),
-    el("span", { class: "tiny" }, "Or tap any bar on the stave's word lane to type words at that beat — Enter moves to the next beat. Tap a word to change it; drag it to move it. A hyphen (ev-ery) forces a split.")));
+    el("span", { class: "tiny" }, "Or tap any bar on the stave's word lane to type words at that beat — Enter moves to the next beat. Tap a word to change it; drag it to move it. A hyphen (ev-ery) forces a split; an underscore _ is a rest (no word on that beat).")));
   p.append(el("div", { class: "pLbl" }, "By bar — edits show on the stave above"));
   const grid = el("div", { class: "barLyrics" });
   for (let bi = start; bi < end; bi++) {
@@ -7821,6 +7836,7 @@ function placeMelody(bi, t, m) {
   let chip = bar.chips.find(c => t >= c.t && t < c.t + c.d) || null;
   if (!chip && S.followWords && S.cursor && S.cursor.bi === bi) chip = bar.chips.find(c => c.id === S.cursor.chipId) || null;
   trimTies(bi, "melody", chip ? chip.t : clamp(snapT(t), 0, B - 0.25));
+  if (chip && chip.rest) { toast("That beat is a rest — tap the 𝄽 in the word lane to change it"); return; }
   if (chip) {
     bar.ev.melody = bar.ev.melody.filter(e => e.chip !== chip.id && !(e.t < chip.t + chip.d && e.t + e.d > chip.t && e.rest));
     const ev = { id: uid(), t: chip.t, d: chip.d, m, chip: chip.id };
@@ -8197,7 +8213,7 @@ function openSampler() {
 function openHelp() {
   const h = (t, d) => el("div", { style: "margin:8px 0" }, el("b", {}, t), el("div", { class: "tiny", style: "font-size:13px;color:var(--ink2)" }, d));
   openModal("How it works", [
-    h("1 · Words", "Type a section's words in Words and press Place words. The app splits them into syllables and spreads them across the bars. Drag any syllable on the stave to place it exactly."),
+    h("1 · Words", "Type a section's words in Words and press Place words, or tap a bar's word lane to type at a beat. The app splits words into syllables and spreads them across the bars. Drag any syllable to place it exactly; an underscore _ (or the 𝄽 button) marks a rest where nothing is sung."),
     h("2 · Melody", "In Melody, tap a pitch on the top stave: the highlighted word takes that note and the next word lights up. Tap a note to nudge, stretch, or delete it."),
     h("3 · Chords", "Tap a chord name above a bar to open the chord builder. Names follow the key; Roman numerals are one toggle away."),
     h("4 · Band", "Bass, accompaniment and ensemble play patterns from the genre bank automatically. Switch a part to Custom to write its notes by hand — the ⛶ button gives you a full-screen stave for that."),
@@ -8299,7 +8315,7 @@ function openPartView(part) {
     for (let bi = start; bi < end; bi++) {
       const bar = song.bars[bi];
       const card = el("div", { class: "pvBar", "data-bi": bi }, el("div", { class: "bn" }, `bar ${bi - start + 1}`), el("div", { class: "ch" }, bar.chord ? chordDisplay(bar.chord, song) : "–"));
-      if (["melody", "sub", "backup"].includes(part) && bar.lyric) card.append(el("div", { class: "ly" }, bar.lyric));
+      if (["melody", "sub", "backup"].includes(part) && bar.lyric) card.append(el("div", { class: "ly" }, displayLyric(bar.lyric)));
       const nt = partNotesText(part, bi); if (nt) card.append(el("div", { class: "nt" }, nt));
       grid.append(card);
     }
@@ -8323,7 +8339,7 @@ function openPerf() {
       const from = bi;
       const line = el("div", { class: "perfLine", "data-bi": bi, "data-end": endBi, onclick: () => { const l = []; for (let i = from; i < song.bars.length; i++) if (!song.sections[sectionOfBar(i)].omit) l.push(i); startPlayback(l); } });
       if (first) { line.append(el("span", { class: "sec" }, sec.name)); first = false; }
-      line.append(song.bars[bi].lyric || `♪ ${endBi - bi} bar${endBi - bi === 1 ? "" : "s"}`);
+      line.append(song.bars[bi].lyric ? displayLyric(song.bars[bi].lyric) : `♪ ${endBi - bi} bar${endBi - bi === 1 ? "" : "s"}`);
       wrap.append(line);
       bi = endBi - 1;
     }
