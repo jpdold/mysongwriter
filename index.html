@@ -152,6 +152,16 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 500; margin: 0; }
 #stave .hit { cursor: pointer; }
 #stave .chip { cursor: grab; touch-action: none; }
 #stave .noteEl { cursor: pointer; touch-action: none; }
+#gutter { touch-action: none; cursor: ns-resize; }
+#gutter .gbtn { cursor: pointer; pointer-events: all; }
+#notePop { position: absolute; z-index: 8; display: none; gap: 3px; align-items: center; background: var(--card); border: 1px solid var(--line2);
+  border-radius: 12px; padding: 4px; box-shadow: var(--shadow); }
+#notePop.on { display: flex; }
+#notePop button { width: 30px; height: 30px; border: none; background: var(--card2); border-radius: 8px; font-size: 14px; padding: 0; color: var(--ink); display: grid; place-items: center; }
+#notePop button.on { background: var(--ink); color: var(--paper); }
+#notePop button.del { color: #b3261e; }
+#notePop .sep { width: 1px; align-self: stretch; background: var(--line); margin: 2px 2px; }
+#notePop .who { font-size: 11px; color: var(--ink2); padding: 0 4px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 /* full-screen accompaniment entry */
 body.fsAccomp #work { position: fixed; inset: 0; z-index: 60; background: var(--paper); padding: 0; overflow: auto; }
@@ -346,6 +356,7 @@ textarea.lyricArea { width: 100%; min-height: 96px; border: 1px solid var(--line
         <svg id="gutter"></svg>
         <svg id="stave"></svg>
       </div>
+      <div id="notePop" role="toolbar"></div>
     </div>
   </main>
   <button id="fsClose" title="Close full screen">✕</button>
@@ -6360,6 +6371,7 @@ function newBar(chord = null) {
 function newSong() {
   const s = {
     id: uid(), title: "", key: "C", sig: "4/4", bpm: 100, genre: null, showRoman: false, snap: true, created: Date.now(),
+    view: { melLo: 60, accLo: 36 },
     sections: [{ id: uid(), name: "Verse 1", bars: 8, omit: false }],
     bars: [],
     parts: {
@@ -6533,6 +6545,11 @@ function upgradeSong(s) {
   for (const p in base.parts) s.parts[p] = Object.assign({}, base.parts[p], s.parts[p]);
   s.bars.forEach(b => { b.chips = b.chips || []; b.ev = Object.assign({ melody: [], bass: [], accomp: [], ensemble: [] }, b.ev || {}); b.custom = Object.assign({ bass: false, accomp: false, ensemble: false }, b.custom || {}); });
   if (s.snap == null) s.snap = true;
+  if (!s.view) {                                   // older songs: open the window on what they contain
+    let mlo = 60, alo = 36;
+    s.bars.forEach(b => { b.ev.melody.forEach(e => { if (!e.rest && e.m < mlo + 2) mlo = e.m - 2; }); ["bass", "accomp", "ensemble"].forEach(p => (b.ev[p] || []).forEach(e => { if (!e.rest && e.m < alo + 2) alo = e.m - 2; })); });
+    s.view = { melLo: clamp(mlo, 21, 108 - MEL_ROWS + 1), accLo: clamp(alo, 21, 96 - ACC_ROWS + 1) };
+  }
   return s;
 }
 function loadPrefs() { const p = readJSON(STORE.prefs, {}); S.theme = p.theme || "auto"; S.zoom = clamp(p.zoom || 1, 0.5, 2.5); S.followWords = p.followWords !== false; applyTheme(); }
@@ -6612,7 +6629,7 @@ function syncNotesToChips(bar) {
   bar.ev.melody.forEach(e => {
     if (!e.chip) return;
     const c = bar.chips.find(x => x.id === e.chip);
-    if (!c) delete e.chip; else { e.t = c.t; e.d = c.d; }
+    if (!c) delete e.chip; else { e.t = c.t; e.d = e.dLocked ? Math.min(e.d, c.d) : c.d; }
   });
 }
 function setBarLyric(bi, text) {
@@ -7112,17 +7129,14 @@ function playBar(bi) { startPlayback([bi]); }
    Geometry: x = time (beats), y = pitch rows (semitone grid, engine style).
    ═══════════════════════════════════════════════════════════════════════ */
 const G = { padL: 6, chordH: 30, lyricH: 40, stepM: 9, stepA: 6, gutterW: 46 };
+const MEL_ROWS = 25, ACC_ROWS = 37;              // two octaves of melody, three of band
+const viewLimits = lane => lane === "mel" ? [21, 108 - MEL_ROWS + 1] : [21, 96 - ACC_ROWS + 1];
 let L = null;                        // current layout
 let lastLayoutKey = "";
 function layout() {
   const song = S.song, B = barBeats(), beatPx = 56 * S.zoom, { start, end } = curRange();
-  let mlo = 60, mhi = 84;
-  for (let bi = start; bi < end; bi++) {
-    for (const e of song.bars[bi].ev.melody) if (!e.rest) { mlo = Math.min(mlo, e.m - 2); mhi = Math.max(mhi, e.m + 2); }
-    if (song.parts.sub.on) for (const e of subVocalEvents(bi)) { mlo = Math.min(mlo, e.m - 1); mhi = Math.max(mhi, e.m + 1); }
-  }
-  let alo = 36, ahi = 72;
-  for (let bi = start; bi < end; bi++) for (const p of ["bass", "accomp", "ensemble"]) for (const e of (song.bars[bi].ev[p] || [])) if (!e.rest) { alo = Math.min(alo, e.m - 2); ahi = Math.max(ahi, e.m + 2); }
+  const view = song.view || (song.view = { melLo: 60, accLo: 36 });
+  const mlo = view.melLo, mhi = mlo + MEL_ROWS - 1, alo = view.accLo, ahi = alo + ACC_ROWS - 1;
   const fs = S.fs, stepM = G.stepM, stepA = fs ? 12 : G.stepA;
   const yM0 = G.chordH, yM1 = fs ? yM0 : yM0 + (mhi - mlo + 1) * stepM;
   const yL0 = yM1, yL1 = fs ? yL0 : yL0 + G.lyricH;
@@ -7210,6 +7224,10 @@ function renderStave() {
   const laneTitle = (y, txt, color) => gut.append(svgEl("text", { x: 4, y, "font-size": 8.5, "font-weight": 700, "letter-spacing": ".08em", fill: color, "font-family": "system-ui, sans-serif" }, txt));
   if (!S.fs) { laneTitle(L.yM0 - 6, "MELODY", C.melody); laneTitle(L.yL0 + 12, "WORDS", C.ink2); }
   laneTitle(L.yA0 - 2, S.fs ? "ACCOMPANIMENT" : "BAND", C.accomp);
+  /* register scroll: ▲ ▼ at each lane's edges (tap = an octave, drag the gutter = semitones) */
+  const gbtn = (y, lane, dir) => gut.append(svgEl("text", { class: "gbtn", x: 8, y, "font-size": 11, fill: C.ink2, "data-lane": lane, "data-dir": dir }, dir > 0 ? "▲" : "▼"));
+  if (!S.fs) { gbtn(L.yM0 + 12, "mel", 1); gbtn(L.yM1 - 4, "mel", -1); }
+  gbtn(L.yA0 + 12, "acc", 1); gbtn(L.yA1 - 4, "acc", -1);
   gut.append(svgEl("line", { x1: G.gutterW - 0.5, x2: G.gutterW - 0.5, y1: 0, y2: L.H, stroke: C.bar, "stroke-width": 1 }));
   /* lane separators */
   svg.append(svgEl("line", { x1: 0, x2: L.W, y1: L.yM0, y2: L.yM0, stroke: C.bar, "stroke-width": 1 }));
@@ -7248,6 +7266,7 @@ function renderStave() {
           const x = xOfT(bi, e.t), w = e.d * L.beatPx, y = e.rest ? (L.yA0 + L.yA1) / 2 : yAcc(e.m);
           if (e.rest) { svg.append(svgEl("rect", { class: "noteEl", x: x + 2, y: L.yA0 + 4, width: Math.max(4, w - 4), height: L.yA1 - L.yA0 - 8, rx: 4, fill: color, opacity: 0.08, stroke: color, "stroke-dasharray": "3 3", "data-ev": e.id, "data-bi": bi, "data-part": p })); continue; }
           const sel = S.sel && S.sel.id === e.id;
+          if (e.m < L.alo || e.m > L.ahi) { edgeMarker(svg, x, w, e.m > L.ahi ? L.yA0 + 7 : L.yA1 - 7, e, p, bi, color, key, sel); continue; }
           svg.append(pill(x, y, w, L.stepA + (S.fs ? 2 : 1), color, { class: "noteEl", "data-ev": e.id, "data-bi": bi, "data-part": p, stroke: sel ? C.ink : null, "stroke-width": sel ? 2 : null }));
           if (w > 26 && L.stepA >= 8) svg.append(svgEl("text", { x: x + 6, y: y + 3.5, "font-size": 9, fill: "#fff", "font-weight": 600, "font-family": "system-ui, sans-serif" }, noteName(e.m, key)));
         }
@@ -7265,7 +7284,7 @@ function renderStave() {
     /* backup + sub vocals (auto) in the melody lane */
     for (let bi = L.start; bi < L.end; bi++) {
       if (song.parts.backup.on) for (const e of partEvents("backup", bi)) for (const m of e.ms) if (m >= L.mlo && m <= L.mhi) svg.append(pill(xOfT(bi, e.t), yMel(m), e.d * L.beatPx, 3, C.backup, { opacity: 0.55, "pointer-events": "none" }));
-      if (song.parts.sub.on) for (const e of partEvents("sub", bi)) svg.append(pill(xOfT(bi, e.t), yMel(e.m), e.d * L.beatPx, L.stepM - 3, "none", { stroke: C.sub, "stroke-width": 1.5, "stroke-dasharray": "3 2", "pointer-events": "none" }));
+      if (song.parts.sub.on) for (const e of partEvents("sub", bi)) if (e.m >= L.mlo && e.m <= L.mhi) svg.append(pill(xOfT(bi, e.t), yMel(e.m), e.d * L.beatPx, L.stepM - 3, "none", { stroke: C.sub, "stroke-width": 1.5, "stroke-dasharray": "3 2", "pointer-events": "none" }));
     }
     /* melody notes + rests */
     for (let bi = L.start; bi < L.end; bi++) {
@@ -7277,6 +7296,7 @@ function renderStave() {
           svg.append(svgEl("text", { x: x + w / 2, y: (L.yM0 + L.yM1) / 2 + 5, "text-anchor": "middle", "font-size": 13, fill: C.ink3, "font-family": "Georgia, serif" }, "𝄽"));
           continue;
         }
+        if (e.m < L.mlo || e.m > L.mhi) { edgeMarker(svg, x, w, e.m > L.mhi ? L.yM0 + 7 : L.yM1 - 7, e, "melody", bi, C.melody, key, sel); continue; }
         const y = yMel(e.m);
         svg.append(pill(x, y, w, L.stepM - 1, C.melody, { class: "noteEl", "data-ev": e.id, "data-bi": bi, "data-part": "melody", stroke: sel ? C.ink : null, "stroke-width": sel ? 2 : null }));
         if (w > 24) svg.append(svgEl("text", { x: x + 6, y: y + 3.2, "font-size": 8.5, fill: "#fff", "font-weight": 600, "font-family": "system-ui, sans-serif" }, pcName(e.m, key)));
@@ -7309,6 +7329,50 @@ function renderStave() {
   /* playhead */
   svg.append(svgEl("line", { id: "playhead", x1: -10, x2: -10, y1: 0, y2: L.H, stroke: C.accent, "stroke-width": 2, "pointer-events": "none", visibility: "hidden" }));
   updatePlayhead();
+  renderNotePop();
+}
+/* a note above or below the visible register: a labelled tab at the lane edge (still tappable) */
+function edgeMarker(svg, x, w, y, e, part, bi, color, key, sel) {
+  const up = part === "melody" ? e.m > L.mhi : e.m > L.ahi;
+  const label = (up ? "▲" : "▼") + noteName(e.m, key);
+  const tw = Math.max(w - 2, label.length * 6 + 8);
+  svg.append(svgEl("rect", { class: "noteEl", x: x + 1, y: y - 6, width: tw, height: 12, rx: 6, fill: color, opacity: 0.85, stroke: sel ? "var(--ink)" : null, "stroke-width": sel ? 2 : null, "data-ev": e.id, "data-bi": bi, "data-part": part }));
+  svg.append(svgEl("text", { x: x + 5, y: y + 3.5, "font-size": 8.5, fill: "#fff", "font-weight": 700, "font-family": "system-ui, sans-serif" }, label));
+}
+function shiftView(lane, delta) {
+  const [lo, hi] = viewLimits(lane), key = lane === "mel" ? "melLo" : "accLo";
+  const next = clamp(S.song.view[key] + delta, lo, hi);
+  if (next === S.song.view[key]) return;
+  S.song.view[key] = next; L = layout(); renderStave(); saveSoon();
+}
+function ensurePitchVisible(part, m) {
+  const lane = part === "melody" ? "mel" : "acc", lo = lane === "mel" ? L.mlo : L.alo, hi = lane === "mel" ? L.mhi : L.ahi;
+  if (m < lo + 1) shiftView(lane, m - lo - 2); else if (m > hi - 1) shiftView(lane, m - hi + 2);
+}
+/* the tapped note's toolbar, floating over the stave */
+function renderNotePop() {
+  const pop = $("notePop"), ev = selEv();
+  if (!ev || !L || S.sel.bi < L.start || S.sel.bi >= L.end || (S.fs && S.sel.part === "melody")) { pop.classList.remove("on"); return; }
+  const part = S.sel.part, key = keyObj(S.song.key), frame = $("staffFrame"), sc = $("staffScroll");
+  pop.replaceChildren();
+  const b = (t, fn, title, cls) => pop.append(el("button", { class: cls || "", title, onclick: fn }, t));
+  pop.append(el("span", { class: "who" }, ev.rest ? "rest" : noteName(ev.m, key)));
+  if (!ev.rest) { b("▲", () => transposeSel(1), "Up a semitone"); b("▼", () => transposeSel(-1), "Down a semitone"); }
+  b("◀", () => moveSel(-gridStep()), "Earlier"); b("▶", () => moveSel(gridStep()), "Later");
+  pop.append(el("span", { class: "sep" }));
+  [[2, "𝅗𝅥"], [1, "♩"], [0.5, "♪"], [0.25, "𝅘𝅥𝅯"]].forEach(([d, g]) => b(g, () => setSelDur(d), `${d} beat${d === 1 ? "" : "s"}`, Math.abs(ev.d - d) < 1e-6 ? "on" : ""));
+  const dotted = [0.375, 0.75, 1.5, 3].some(d => Math.abs(ev.d - d) < 1e-6);
+  b("·", () => setSelDur(dotted ? ev.d / 1.5 : ev.d * 1.5), "Dotted", dotted ? "on" : "");
+  pop.append(el("span", { class: "sep" }));
+  b("🗑", deleteSel, "Delete", "del"); b("✕", () => { S.sel = null; renderPanel(); renderStave(); }, "Done");
+  pop.classList.add("on");
+  const x = xOfT(S.sel.bi, ev.t) + Math.min(ev.d * L.beatPx, 60) / 2 - sc.scrollLeft + G.gutterW;
+  const lane = part === "melody" ? "mel" : "acc";
+  const yN = ev.rest ? (lane === "mel" ? L.yM0 : L.yA0) + 20 : lane === "mel" ? yMel(clamp(ev.m, L.mlo, L.mhi)) : yAcc(clamp(ev.m, L.alo, L.ahi));
+  const pw = pop.offsetWidth || 340, ph = pop.offsetHeight || 40, fw = frame.clientWidth;
+  let top = yN - ph - 10; if (top < 2) top = yN + 14;
+  pop.style.left = clamp(x - pw / 2, 4, Math.max(4, fw - pw - 4)) + "px";
+  pop.style.top = clamp(top, 2, Math.max(2, L.H - ph - 2)) + "px";
 }
 function updatePlayhead() {
   const ph = $("playhead"); if (!ph || !L) return;
@@ -7407,7 +7471,7 @@ function panelMelody(p) {
   p.append(el("div", { class: "pRow" },
     el("button", { class: "btn sm", onclick: () => playSection() }, "▶ Play section"),
     el("button", { class: "btn sm", onclick: () => { S.sel = null; S.cursor = null; renderAll(); } }, "Clear selection"),
-    el("button", { class: "btn sm danger", onclick: () => confirmModal("Clear the melody in this section?", () => { const { start, end } = curRange(); for (let i = start; i < end; i++) song.bars[i].ev.melody = []; S.sel = null; S.cursor = nextUnpitchedChip(start, null); renderAll(); }) }, "Clear melody")));
+    el("button", { class: "btn sm danger", onclick: () => confirmModal(`Are you sure? This deletes every melody note in ${curSection().name}.`, () => { const { start, end } = curRange(); for (let i = start; i < end; i++) song.bars[i].ev.melody = []; S.sel = null; S.cursor = nextUnpitchedChip(start, null); renderAll(); }, "Delete melody") }, "Clear melody")));
 }
 function panelChords(p) {
   const song = S.song, { start, end } = curRange();
@@ -7556,7 +7620,7 @@ function onStaveMove(e) {
     const ev = dragCtx.ev, isMel = dragCtx.part === "melody", step = isMel ? L.stepM : L.stepA;
     const dm = -Math.round(dy / step);
     if (!ev.rest) {
-      const m = clamp(dragCtx.m0 + dm, 24, 100);
+      const m = isMel ? clamp(dragCtx.m0 + dm, L.mlo, L.mhi) : clamp(dragCtx.m0 + dm, L.alo, L.ahi);
       if (m !== ev.m) { ev.m = m; previewNote(m, dragCtx.part); }
     }
     const raw = dragCtx.t0 + dx / L.beatPx;
@@ -7638,7 +7702,22 @@ function placeBand(bi, part, t, m) {
   S.sel = null;
   renderAll();
 }
-function transposeSel(d) { const ev = selEv(); if (!ev || ev.rest) return; ev.m = clamp(ev.m + d, 24, 100); previewNote(ev.m, S.sel.part); renderAll(); }
+function transposeSel(d) { const ev = selEv(); if (!ev || ev.rest) return; ev.m = clamp(ev.m + d, 21, 108); previewNote(ev.m, S.sel.part); ensurePitchVisible(S.sel.part, ev.m); renderAll(); }
+/* set the selected note's length; a syllable-bound note keeps its start and may push the next word later */
+function setSelDur(nd) {
+  const ev = selEv(); if (!ev) return; const bar = S.song.bars[S.sel.bi], B = barBeats();
+  nd = clamp(r3(nd), 0.25, B - ev.t);
+  if (ev.chip) {
+    const chip = bar.chips.find(c => c.id === ev.chip);
+    if (chip) {
+      const k = bar.chips.indexOf(chip);
+      if (nd > chip.d + 1e-6 && k < bar.chips.length - 1) setChipTime(bar, bar.chips[k + 1], chip.t + nd);
+      else if (nd > chip.d + 1e-6) chip.d = Math.min(nd, B - chip.t);
+      ev.d = Math.min(nd, chip.d); ev.dLocked = true;
+    } else ev.d = nd;
+  } else ev.d = nd;
+  renderAll();
+}
 function moveSel(dt) {
   const ev = selEv(); if (!ev) return; const bar = S.song.bars[S.sel.bi];
   if (ev.chip) { const chip = bar.chips.find(c => c.id === ev.chip); if (chip) setChipTime(bar, chip, chip.t + dt); }
@@ -7646,13 +7725,10 @@ function moveSel(dt) {
   renderAll();
 }
 function lengthenSel(dir) {
-  const ev = selEv(); if (!ev) return; const bar = S.song.bars[S.sel.bi], B = barBeats();
+  const ev = selEv(); if (!ev) return;
   const steps = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
   let i = steps.findIndex(s => s >= ev.d - 1e-6); if (i < 0) i = steps.length - 1;
-  const nd = steps[clamp(i + dir, 0, steps.length - 1)];
-  if (ev.chip) { const chip = bar.chips.find(c => c.id === ev.chip); if (chip) { const k = bar.chips.indexOf(chip); if (k < bar.chips.length - 1) setChipTime(bar, bar.chips[k + 1], chip.t + nd); else chip.d = Math.min(nd, B - chip.t); syncNotesToChips(bar); } }
-  else ev.d = Math.min(nd, B - ev.t);
-  renderAll();
+  setSelDur(steps[clamp(i + dir, 0, steps.length - 1)]);
 }
 function deleteSel() { const ev = selEv(); if (!ev) return; const bar = S.song.bars[S.sel.bi]; bar.ev[S.sel.part] = bar.ev[S.sel.part].filter(e => e.id !== ev.id); if (ev.chip && S.followWords) S.cursor = { bi: S.sel.bi, chipId: ev.chip }; S.sel = null; renderAll(); }
 
@@ -7693,6 +7769,30 @@ function ensureBarVisible(bi) {
   const sc = $("staffScroll"), x0 = xOfT(bi, 0) - G.gutterW, x1 = x0 + L.barPx;
   if (x0 < sc.scrollLeft + 8) sc.scrollLeft = Math.max(0, x0 - 8);
   else if (x1 > sc.scrollLeft + sc.clientWidth - G.gutterW) sc.scrollLeft = Math.min(x0 - 8, x1 - sc.clientWidth + G.gutterW + 8);
+}
+/* gutter: drag up/down to scroll the register, wheel on desktop, ▲▼ taps jump an octave */
+function initGutter() {
+  const gut = $("gutter"); let g = null;
+  gut.addEventListener("pointerdown", e => {
+    const lane = !S.fs && e.offsetY < L.yM1 ? "mel" : "acc";
+    g = { id: e.pointerId, y0: e.clientY, lo0: S.song.view[lane === "mel" ? "melLo" : "accLo"], lane, step: lane === "mel" ? L.stepM : L.stepA, moved: false, target: e.target };
+    try { gut.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  gut.addEventListener("pointermove", e => {
+    if (!g || e.pointerId !== g.id) return;
+    const rows = Math.round((e.clientY - g.y0) / g.step);
+    if (Math.abs(e.clientY - g.y0) > 5) g.moved = true;
+    const key = g.lane === "mel" ? "melLo" : "accLo", [lo, hi] = viewLimits(g.lane), next = clamp(g.lo0 + rows, lo, hi);
+    if (next !== S.song.view[key]) { S.song.view[key] = next; L = layout(); renderStave(); }
+  });
+  const up = e => {
+    if (!g || e.pointerId !== g.id) return;
+    const t = g.target, wasG = g; g = null;
+    if (!wasG.moved && t.classList && t.classList.contains("gbtn")) shiftView(t.getAttribute("data-lane"), 12 * parseInt(t.getAttribute("data-dir"), 10));
+    saveSoon();
+  };
+  gut.addEventListener("pointerup", up); gut.addEventListener("pointercancel", () => { g = null; });
+  gut.addEventListener("wheel", e => { e.preventDefault(); const lane = !S.fs && e.offsetY < L.yM1 ? "mel" : "acc"; shiftView(lane, e.deltaY > 0 ? -1 : 1); }, { passive: false });
 }
 function setZoom(z) { S.zoom = clamp(z, 0.45, 2.6); savePrefs(); L = layout(); renderStave(); }
 function toggleFS() { S.fs = !S.fs; document.body.classList.toggle("fsAccomp", S.fs); if (S.fs && !["bass", "accomp", "ensemble"].includes(S.entryPart)) S.entryPart = "accomp"; renderAll(); }
@@ -7950,6 +8050,8 @@ function openHelp() {
     h("Share", "Menu → Share & export makes a link that carries the whole song, JSON files for backup, and parts laid out for a tablet on a music stand."),
     h("Real sounds", "Menu → Sounds & samples imports instrument recordings (tonejs-instruments, Salamander piano) from your device; each part can then play them instead of the built-in synth."),
     h("Pinch", "Pinch the stave to zoom time. Hold ▶ to play the whole song; tap it for the current section."),
+    h("Register", "Drag the pitch-name gutter up or down to reach higher or lower notes; the ▲▼ at a lane's edges jump an octave. Notes outside the window show as small labelled tabs at the edge."),
+    h("Editing a note", "Tap a note: a toolbar appears over it to move it up or down, earlier or later, change its length, or delete it. Drag the note to move it freely."),
   ]);
 }
 
@@ -8115,7 +8217,8 @@ async function boot() {
   window.addEventListener("pointercancel", () => { dragCtx = null; });
   window.addEventListener("blur", () => { dragCtx = null; pinch = null; pinchPts.clear(); });
   stave.addEventListener("contextmenu", e => e.preventDefault());
-  initPinch();
+  initPinch(); initGutter();
+  $("staffScroll").addEventListener("scroll", () => { if (S.sel) renderNotePop(); }, { passive: true });
   window.addEventListener("resize", () => { if (L) { L = layout(); renderStave(); } });
   window.addEventListener("keydown", e => {
     const tag = (document.activeElement && document.activeElement.tagName) || "";
