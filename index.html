@@ -6382,8 +6382,34 @@ const INSTRUMENTS = {
 const bankFor = part => part === "accomp" ? (S.song.parts.accomp.inst === "Piano" ? "piano" : "guitar") : PART_META[part].bank;
 
 function newBar(chord = null) {
-  return { id: uid(), chord, lyric: "", chips: [], ev: { melody: [], bass: [], accomp: [], ensemble: [] }, custom: { bass: false, accomp: false, ensemble: false } };
+  return { id: uid(), chord, chords: chord ? [{ t: 0, sym: chord }] : [], lyric: "", chips: [], ev: { melody: [], bass: [], accomp: [], ensemble: [] }, custom: { bass: false, accomp: false, ensemble: false } };
 }
+/* chords live at beats: bar.chords = [{ t, sym }] sorted by t; bar.chord mirrors the one on beat 1 */
+const barChords = bar => bar.chords || (bar.chords = bar.chord ? [{ t: 0, sym: bar.chord }] : []);
+function syncBarChord(bar) { const c = barChords(bar); c.sort((a, b) => a.t - b.t); bar.chord = c.length && c[0].t === 0 ? c[0].sym : null; }
+function setChordAt(bi, t, sym) { const bar = S.song.bars[bi], c = barChords(bar).filter(x => Math.abs(x.t - t) > 1e-6); if (sym) c.push({ t: r3(t), sym }); bar.chords = c; syncBarChord(bar); }
+function removeChordAt(bi, t) { setChordAt(bi, t, null); }
+function copyChords(from, to) { to.chords = barChords(from).map(c => ({ t: c.t, sym: c.sym })); syncBarChord(to); }
+function setBarChord(bi, sym) { const bar = S.song.bars[bi]; bar.chords = sym ? [{ t: 0, sym }] : []; syncBarChord(bar); }
+/* the chord sounding at a beat: the last change at or before it, carried over from earlier bars if the bar has none yet */
+function chordSymAt(bi, t) {
+  for (let b = bi; b >= Math.max(0, bi - 16); b--) {
+    const c = barChords(S.song.bars[b]); let best = null;
+    for (const x of c) if (b < bi || x.t <= t + 1e-6) best = x;
+    if (best) return best.sym;
+  }
+  return null;
+}
+const chordAt = (bi, t) => { const sym = chordSymAt(bi, t); return sym ? chordFromRoman(sym, keyObj(S.song.key)) : null; };
+/* the bar split into chord spans: [{ t, d, sym, ch, carried }] */
+function chordSegments(bi) {
+  const B = barBeats(), c = barChords(S.song.bars[bi]), out = [];
+  if (!c.length || c[0].t > 0) { const sym = chordSymAt(bi, 0); if (sym) out.push({ t: 0, sym, carried: true }); }
+  c.forEach(x => out.push({ t: x.t, sym: x.sym }));
+  out.forEach((seg, i) => { seg.d = r3((i < out.length - 1 ? out[i + 1].t : B) - seg.t); seg.ch = chordFromRoman(seg.sym, keyObj(S.song.key)); });
+  return out;
+}
+const chordsText = (bi, song = S.song) => chordSegments(bi).filter(x => !x.carried).map(x => (x.t ? `${chordDisplay(x.sym, song)}@${Math.floor(x.t) + 1}${x.t % 1 ? "½" : ""}` : chordDisplay(x.sym, song))).join(" · ");
 function newSong() {
   const s = {
     id: uid(), title: "", key: "C", sig: "4/4", bpm: 100, genre: null, showRoman: false, snap: true, created: Date.now(),
@@ -6449,7 +6475,7 @@ function setSectionBars(si, n) {
     const add = [];
     for (let i = 0; i < n - sec.bars; i++) {
       const src = S.song.bars[start + ((sec.bars ? (sec.bars + i) % sec.bars : 0))];
-      add.push(newBar(src ? src.chord : null));
+      const nb = newBar(null); if (src) copyChords(src, nb); add.push(nb);
     }
     S.song.bars.splice(end, 0, ...add);
   } else if (n < sec.bars) S.song.bars.splice(start + n, sec.bars - n);
@@ -6559,7 +6585,7 @@ function upgradeSong(s) {
   const base = newSong();
   s.parts = Object.assign({}, base.parts, s.parts || {});
   for (const p in base.parts) s.parts[p] = Object.assign({}, base.parts[p], s.parts[p]);
-  s.bars.forEach(b => { b.chips = b.chips || []; b.ev = Object.assign({ melody: [], bass: [], accomp: [], ensemble: [] }, b.ev || {}); b.custom = Object.assign({ bass: false, accomp: false, ensemble: false }, b.custom || {}); });
+  s.bars.forEach(b => { b.chips = b.chips || []; b.ev = Object.assign({ melody: [], bass: [], accomp: [], ensemble: [] }, b.ev || {}); b.custom = Object.assign({ bass: false, accomp: false, ensemble: false }, b.custom || {}); if (!b.chords) b.chords = b.chord ? [{ t: 0, sym: b.chord }] : []; });
   if (s.snap == null) s.snap = true;
   if (!s.view) {                                   // older songs: open the window on what they contain
     let mlo = 60, alo = 36;
@@ -6810,7 +6836,7 @@ function patternSlots(p, B, feel) {
   }
   return out;
 }
-function chordOf(bi) { const b = S.song.bars[bi]; return b && b.chord ? chordFromRoman(b.chord, keyObj(S.song.key)) : null; }
+function chordOf(bi) { return S.song.bars[bi] ? chordAt(bi, 0) : null; }
 const chordTonesPcs = ch => ch.iv.map(i => (ch.rootPc + i) % 12);
 function melodyRange(bi) {
   const ms = S.song.bars[bi].ev.melody.filter(e => !e.rest).map(e => e.m);
@@ -6831,18 +6857,18 @@ function voiceChord(ch, lo, hi, below) {
   while (tones.length > 2 && tones[tones.length - 1] > limit) tones.pop();
   return tones;
 }
-function accompVoicing(bi) {
-  const ch = chordOf(bi); if (!ch) return [];
+function accompVoicing(bi, ch = chordOf(bi)) {
+  if (!ch) return [];
   const mr = melodyRange(bi), center = mr ? mr.center - 12 : 60;
   return voiceChord(ch, clamp(Math.round(center) - 7, 48, 60), 72, mr ? mr.lo : null);
 }
-function ensembleVoicing(bi) {
-  const ch = chordOf(bi); if (!ch) return [];
+function ensembleVoicing(bi, ch = chordOf(bi)) {
+  if (!ch) return [];
   const mr = melodyRange(bi);
   return voiceChord(ch, 55, 79, mr ? mr.lo : null).slice(0, 3);
 }
-function backupVoicing(bi) {
-  const ch = chordOf(bi); if (!ch) return [];
+function backupVoicing(bi, ch = chordOf(bi)) {
+  if (!ch) return [];
   const mr = melodyRange(bi), top = mr ? mr.lo - 3 : 67;
   return voiceChord(ch, clamp(top - 14, 55, 64), 79, mr ? mr.lo : 70).slice(-3);
 }
@@ -6862,14 +6888,14 @@ function bassPitch(ch, pat, idx) {
   return m > 55 ? m - 12 : m;
 }
 /* snap a pitch to the nearest chord tone (or scale tone when the bar has no chord) */
-function chordSnapper(bi) {
-  const ch = chordOf(bi), pcs = ch ? chordTonesPcs(ch) : scaleOf(keyObj(S.song.key));
+function chordSnapper(bi, t = 0) {
+  const ch = chordAt(bi, t), pcs = ch ? chordTonesPcs(ch) : scaleOf(keyObj(S.song.key));
   return m => { for (let d = 0; d <= 6; d++) { if (pcs.includes(((m - d) % 12 + 12) % 12)) return m - d; if (pcs.includes(((m + d) % 12 + 12) % 12)) return m + d; } return m; };
 }
 /* call-and-response: echo the lead's last phrase into its rests (≥ 1 beat) */
 function callResponse(bi, interval, lo, hi) {
-  const bar = S.song.bars[bi], snapTo = chordSnapper(bi);
-  const fit = m => { while (m < lo) m += 12; while (m > hi) m -= 12; return snapTo(m); };
+  const bar = S.song.bars[bi];
+  const fit = (m, t) => { while (m < lo) m += 12; while (m > hi) m -= 12; return chordSnapper(bi, t)(m); };
   const mel = bar.ev.melody.filter(e => !e.rest).sort((a, b) => a.t - b.t);
   const B = barBeats(), gaps = []; let cur = 0;
   for (const e of mel) { if (e.t - cur >= 1) gaps.push([cur, e.t]); cur = Math.max(cur, e.t + e.d); }
@@ -6882,16 +6908,15 @@ function callResponse(bi, interval, lo, hi) {
     for (let i = src.length - 1; i >= 0 && tot + src[i].d <= len + 1e-6; i--) { take.unshift(src[i]); tot += src[i].d; }
     if (!take.length) { take = [{ ...src[src.length - 1], d: Math.min(len, 1) }]; tot = take[0].d; }
     let t = g0 + (len - tot >= 0.5 ? 0.5 : 0);
-    for (const e of take) { out.push({ t: r3(t), d: e.d, m: fit(e.m + interval) }); t += e.d; }
+    for (const e of take) { out.push({ t: r3(t), d: e.d, m: fit(e.m + interval, t) }); t += e.d; }
   }
   return out;
 }
 /* sub vocal: harmony locked to the lead's syllables, or call-and-response in its rests */
 function subVocalEvents(bi) {
   const sp = S.song.parts.sub, bar = S.song.bars[bi];
-  const snapTo = chordSnapper(bi);
   const mel = bar.ev.melody.filter(e => !e.rest).sort((a, b) => a.t - b.t);
-  if (sp.mode === "harmony") return mel.map(e => ({ t: e.t, d: e.d, m: snapTo(e.m + sp.interval) }));
+  if (sp.mode === "harmony") return mel.map(e => ({ t: e.t, d: e.d, m: chordSnapper(bi, e.t)(e.m + sp.interval) }));
   return callResponse(bi, sp.interval, 48, 96);
 }
 const isCountermelodyInst = inst => /trumpet|clarinet/i.test(inst || "");
@@ -6901,16 +6926,18 @@ function partEvents(part, bi) {
   if (!P.on) return [];
   if (part === "melody") return bar.ev.melody.filter(e => !e.rest).map(e => ({ t: e.t, d: e.d, ms: [e.m], vel: 0.9, sus: e.d * 0.95, src: e }));
   if (part === "sub") return subVocalEvents(bi).map(e => ({ ...e, ms: [e.m], vel: 0.7, sus: e.d * 0.95, auto: true }));
-  if (part === "backup") { const v = backupVoicing(bi); return v.length ? [{ t: 0, d: B, ms: v, vel: 0.35, sus: B * 0.97, auto: true }] : []; }
+  if (part === "backup") return chordSegments(bi).map(seg => ({ t: seg.t, d: seg.d, ms: backupVoicing(bi, seg.ch), vel: 0.35, sus: seg.d * 0.97, auto: true })).filter(e => e.ms.length);
   if (bar.custom[part]) return (bar.ev[part] || []).filter(e => !e.rest).map(e => ({ t: e.t, d: e.d, ms: [e.m], vel: 0.8, sus: e.d * autoRatio(e.d), src: e }));
   if (part === "ensemble" && isCountermelodyInst(P.inst)) return callResponse(bi, 0, 55, 79).map(e => ({ ...e, ms: [e.m], vel: 0.55, sus: e.d * 0.9, auto: true }));
-  const ch = chordOf(bi); if (!ch) return [];
+  const segs = chordSegments(bi); if (!segs.length) return [];
+  const chAt = t => { let c = segs[0].ch; for (const sg of segs) if (sg.t <= t + 1e-6) c = sg.ch; return c; };
   const pat = patternByName(bankFor(part), P.pattern), slots = patternSlots(pat, B, P.feel);
-  if (part === "bass") return slots.filter(s => s.ratio > 0.001).map((s, i) => ({ t: s.t, d: s.d, ms: [bassPitch(ch, pat, i)], vel: 0.8, sus: Math.max(0.05, s.d * s.ratio), auto: true }));
-  const voicing = part === "accomp" ? accompVoicing(bi) : ensembleVoicing(bi);
-  if (!voicing.length) return [];
+  if (part === "bass") return slots.filter(s => s.ratio > 0.001).map((s, i) => ({ t: s.t, d: s.d, ms: [bassPitch(chAt(s.t), pat, i)], vel: 0.8, sus: Math.max(0.05, s.d * s.ratio), auto: true }));
+  const vcache = new Map();
+  const voicingAt = t => { const ch = chAt(t); if (!vcache.has(ch.sym)) vcache.set(ch.sym, part === "accomp" ? accompVoicing(bi, ch) : ensembleVoicing(bi, ch)); return vcache.get(ch.sym); };
   const arp = pat && /arpeggio|alberti|travis|fingerstyle|montuno|broken|tremolo|ostinato|clawhammer|boogie/i.test(pat.name);
   return slots.map((s, i) => {
+    const voicing = voicingAt(s.t); if (!voicing.length) return { vel: 0 };
     let ms = voicing;
     if (arp) { const seq = /alberti/i.test(pat.name) ? [0, 2, 1, 2] : null; const k = seq ? seq[i % seq.length] : i % voicing.length; ms = [voicing[Math.min(k, voicing.length - 1)]]; }
     return { t: s.t, d: s.d, ms, vel: s.ratio < 0.01 ? 0 : (part === "ensemble" ? 0.45 : 0.6), sus: Math.max(0.05, s.d * s.ratio), auto: true };
@@ -6924,9 +6951,9 @@ function barCoverage(bi) {
   for (const p of PARTS) {
     const P = song.parts[p]; if (!P.on) continue;
     if (p === "melody" || p === "sub") vals.push(sum(bar.ev.melody, "melody"));
-    else if (p === "backup") vals.push(bar.chord ? 1 : 0);
+    else if (p === "backup") vals.push(chordSymAt(bi, 0) ? 1 : 0);
     else if (bar.custom[p]) vals.push(sum(bar.ev[p] || [], p));
-    else vals.push(bar.chord && P.pattern ? 1 : 0);
+    else vals.push(chordSymAt(bi, 0) && P.pattern ? 1 : 0);
   }
   if (!vals.length) return 0;
   const min = Math.min(...vals), max = Math.max(...vals);
@@ -7364,8 +7391,13 @@ function renderStave() {
     const bwid = L.bw[bi - L.start];
     svg.append(svgEl("rect", { class: "hit", x: x0, y: 0, width: bwid, height: G.chordH, fill: "transparent", "data-lane": "chord", "data-bi": bi }));
     svg.append(svgEl("text", { x: x0 + 5, y: 11, "font-size": 8.5, fill: C.ink3, "font-family": "system-ui, sans-serif" }, `${bi - L.start + 1}`));
-    const label = bar.chord ? chordDisplay(bar.chord, song) : "+";
-    svg.append(svgEl("text", { x: x0 + 20, y: 21, "text-anchor": "start", "font-size": bar.chord ? 15 : 14, fill: bar.chord ? C.ink : C.ink3, "font-family": "Iowan Old Style, Palatino Linotype, Georgia, serif", "font-weight": 500 }, label));
+    const segs = chordSegments(bi);
+    if (!segs.length) svg.append(svgEl("text", { x: x0 + 20, y: 21, "text-anchor": "start", "font-size": 14, fill: C.ink3, "font-family": "Iowan Old Style, Palatino Linotype, Georgia, serif" }, "+"));
+    segs.forEach(seg => {
+      const sx = seg.t ? xOfT(bi, seg.t) : x0 + 20;
+      if (seg.t) svg.append(svgEl("line", { x1: sx, x2: sx, y1: 4, y2: G.chordH, stroke: C.bar, "stroke-width": 1, "stroke-dasharray": "2 2", "pointer-events": "none" }));
+      svg.append(svgEl("text", { x: seg.t ? sx + 3 : sx, y: 21, "text-anchor": "start", "font-size": 15, fill: seg.carried ? C.ink3 : C.ink, "font-style": seg.carried ? "italic" : null, "font-family": "Iowan Old Style, Palatino Linotype, Georgia, serif", "font-weight": 500 }, (seg.carried ? "(" : "") + chordDisplay(seg.sym, song) + (seg.carried ? ")" : "")));
+    });
     /* lane hit rects (under the notes) */
     if (!S.fs) {
       svg.append(svgEl("rect", { class: "hit", x: x0, y: L.yM0, width: bwid, height: L.yM1 - L.yM0, fill: "transparent", "data-lane": "mel", "data-bi": bi }));
@@ -7652,7 +7684,7 @@ function panelLyrics(p) {
     const inp = el("input", { type: "text", value: bar.lyric, placeholder: "…", "data-bi": bi, spellcheck: "false", autocomplete: "off" });
     inp.addEventListener("input", () => { setBarLyric(bi, inp.value); sec.lyricRaw = null; L = layout(); renderStave(); renderLights(); saveSoon(); });
     inp.addEventListener("keydown", e => { if (e.key === "Enter") { const nx = grid.querySelector(`input[data-bi="${bi + 1}"]`); if (nx) nx.focus(); else inp.blur(); } });
-    grid.append(el("div", { class: "barField" + (S.sel && S.sel.bi === bi ? " cur" : "") }, el("label", {}, el("b", {}, `Bar ${bi - start + 1}`), el("span", {}, bar.chord ? chordDisplay(bar.chord, song) : "")), inp));
+    grid.append(el("div", { class: "barField" + (S.sel && S.sel.bi === bi ? " cur" : "") }, el("label", {}, el("b", {}, `Bar ${bi - start + 1}`), el("span", {}, chordsText(bi))), inp));
   }
   p.append(grid);
 }
@@ -7686,22 +7718,25 @@ function panelChords(p) {
   const row = el("div", { class: "chipRow" });
   for (let bi = start; bi < end; bi++) {
     const bar = song.bars[bi];
-    row.append(el("button", { class: "chipBtn" + (bar.chord ? "" : " adv"), style: "font-family:var(--serif);font-size:15px", onclick: () => openChordBuilder(bi) }, el("span", { class: "tiny", style: "margin-right:6px" }, bi - start + 1), bar.chord ? chordDisplay(bar.chord, song) : "+"));
+    const segs = chordSegments(bi).filter(x => !x.carried);
+    if (!segs.length) row.append(el("button", { class: "chipBtn adv", style: "font-family:var(--serif);font-size:15px", onclick: () => openChordBuilder(bi, 0) }, el("span", { class: "tiny", style: "margin-right:6px" }, bi - start + 1), "+"));
+    segs.forEach((seg, k) => row.append(el("button", { class: "chipBtn", style: "font-family:var(--serif);font-size:15px", onclick: () => openChordBuilder(bi, seg.t) }, el("span", { class: "tiny", style: "margin-right:6px" }, k === 0 ? String(bi - start + 1) : `·${Math.floor(seg.t) + 1}${seg.t % 1 ? "½" : ""}`), chordDisplay(seg.sym, song))));
+    row.append(el("button", { class: "chipBtn adv", title: "Add a chord change in this bar", style: "padding:5px 8px", onclick: () => { const used = barChords(bar).map(c => c.t); let b = 0; while (used.some(u => Math.abs(u - b) < 1e-6) && b < barBeats() - 1) b += 1; openChordBuilder(bi, b); } }, "+"));
   }
   p.append(row);
   const ops = el("div", { class: "pRow" });
   ops.append(el("button", { class: "btn sm", onclick: () => openChordBuilder(start) }, "Chord builder"));
-  if (S.si > 0) ops.append(el("button", { class: "btn sm", onclick: () => { const prev = sectionRange(S.si - 1); for (let i = start; i < end; i++) song.bars[i].chord = song.bars[prev.start + ((i - start) % (prev.end - prev.start))].chord; renderAll(); } }, "Copy from previous section"));
+  if (S.si > 0) ops.append(el("button", { class: "btn sm", onclick: () => { const prev = sectionRange(S.si - 1); for (let i = start; i < end; i++) copyChords(song.bars[prev.start + ((i - start) % (prev.end - prev.start))], song.bars[i]); renderAll(); } }, "Copy from previous section"));
   if (song.genre) ops.append(el("button", { class: "btn sm", onclick: () => reloadGenreChords() }, "Reset to genre progression"));
   ops.append(el("button", { class: "btn sm", onclick: () => playSection() }, "▶ Hear it"));
   p.append(ops);
-  p.append(el("div", { class: "tiny", style: "margin-top:6px" }, "Tap a chord name on the stave to change it. Names follow the key; switch to Roman numerals to see the function."));
+  p.append(el("div", { class: "tiny", style: "margin-top:6px" }, "Tap the chord row above a bar at any beat to add or change a chord there — a chord holds until the next change, even across bars. Names follow the key; switch to Roman numerals to see the function."));
 }
 function reloadGenreChords() {
   const g = SONG_DATA.genres.find(x => x.name === S.song.genre); if (!g) return;
   const sec = curSection(), tpl = g.sections.find(s => s.section === sec.name) || g.sections[Math.min(S.si, g.sections.length - 1)];
   const { start, end } = curRange();
-  for (let i = start; i < end; i++) S.song.bars[i].chord = tpl.chords[(i - start) % tpl.chords.length];
+  for (let i = start; i < end; i++) setBarChord(i, tpl.chords[(i - start) % tpl.chords.length]);
   renderAll();
 }
 function panelBand(p) {
@@ -7862,7 +7897,13 @@ function handleTap(ctx, e) {
     renderPanel(); renderStave(); return;
   }
   const t = tOfX(ctx.bi, pt.x);
-  if (ctx.lane === "chord") { openChordBuilder(ctx.bi); return; }
+  if (ctx.lane === "chord") {
+    const B = barBeats(), beat = clamp(S.song.snap ? Math.round(t) : Math.round(t * 2) / 2, 0, B - (S.song.snap ? 1 : 0.5));
+    const own = barChords(S.song.bars[ctx.bi]);
+    const near = own.filter(c => Math.abs(c.t - t) <= 0.6).sort((a, b) => Math.abs(a.t - t) - Math.abs(b.t - t))[0];
+    openChordBuilder(ctx.bi, near ? near.t : (own.length && !own.some(c => c.t === 0) && beat === 0 ? 0 : beat));
+    return;
+  }
   if (ctx.lane === "lyr") { if (S.mode !== "lyrics") setMode("lyrics"); openWordEdit(ctx.bi, t); return; }
   if (ctx.lane === "mel") { if (S.mode !== "melody") setMode("melody"); placeMelody(ctx.bi, t, yToMidi(pt.y)); return; }
   if (ctx.lane === "acc") {
@@ -8108,10 +8149,13 @@ function openSongSetup() {
 }
 
 /* chord builder: Simple tier first, Advanced behind a toggle (Chord_Vocabulary) */
-function openChordBuilder(bi) {
-  const song = S.song, key = keyObj(song.key), bar = song.bars[bi];
-  const cur = bar.chord ? chordFromRoman(bar.chord, key) : null;
-  const st = { deg: cur ? cur.deg : 1, acc: cur ? (cur.acc === "♭" ? "b" : cur.acc === "♯" ? "#" : cur.acc) : "", q: cur ? cur.quality : "maj", inv: cur ? cur.bassIdx : 0, sec: cur && /\//.test(cur.sym) ? cur.sym.split("/")[1] : null };
+function openChordBuilder(bi, t0 = 0) {
+  const song = S.song, key = keyObj(song.key), bar = song.bars[bi], B = barBeats();
+  t0 = r3(t0);
+  const own = barChords(bar).find(c => Math.abs(c.t - t0) < 1e-6);
+  const curSym = own ? own.sym : chordSymAt(bi, t0);
+  const cur = curSym ? chordFromRoman(curSym, key) : null;
+  const st = { t: t0, deg: cur ? cur.deg : 1, acc: cur ? (cur.acc === "♭" ? "b" : cur.acc === "♯" ? "#" : cur.acc) : "", q: cur ? cur.quality : "maj", inv: cur ? cur.bassIdx : 0, sec: cur && /\//.test(cur.sym) ? cur.sym.split("/")[1] : null };
   const symOf = () => {
     if (st.sec) return "V/" + st.sec;
     let s = romanFor(st.deg, st.acc, st.q, key);
@@ -8125,7 +8169,12 @@ function openChordBuilder(bi) {
     body.push(el("div", { style: "display:flex;align-items:baseline;gap:10px;margin:2px 0 8px" },
       el("span", { style: "font-family:var(--serif);font-size:34px" }, ch ? chordName(ch, key) : "–"),
       el("span", { class: "muted", style: "font-family:var(--serif);font-size:18px" }, ch ? ch.sym : ""),
-      el("span", { class: "tiny", style: "margin-left:auto" }, barIndexLabel(bi))));
+      el("span", { class: "tiny", style: "margin-left:auto" }, `${barIndexLabel(bi)}${own || st.t ? "" : " · new"}`)));
+    body.push(el("div", { class: "pLbl" }, "Starts on beat"));
+    const beatRow = el("div", { class: "chipRow" });
+    const beats = []; for (let b = 0; b < B; b += song.snap ? 1 : 0.5) beats.push(b);
+    beats.forEach(b => beatRow.append(el("button", { class: "chipBtn" + (Math.abs(st.t - b) < 1e-6 ? " on" : ""), onclick: () => { st.t = b; paint(); } }, `${Math.floor(b) + 1}${b % 1 ? "½" : ""}`)));
+    body.push(beatRow);
     body.push(el("div", { class: "pLbl" }, "Root"));
     const degRow = el("div", { class: "chordGrid" });
     const names = key.minor ? ["i", "ii°", "III", "iv", "v", "VI", "VII"] : ["I", "ii", "iii", "IV", "V", "vi", "vii°"];
@@ -8159,16 +8208,16 @@ function openChordBuilder(bi) {
       toggle("Roman numerals on stave", song.showRoman, v => { song.showRoman = v; renderAll(); paint(); })));
     const apply = (all) => {
       const s = symOf(), old = bar.chord;
-      if (all) { const { start, end } = curRange(); for (let i = start; i < end; i++) if (song.bars[i].chord === old) song.bars[i].chord = s; }
-      else bar.chord = s;
+      if (all) { const { start, end } = curRange(); for (let i = start; i < end; i++) if (song.bars[i].chord === old) setChordAt(i, 0, s); }
+      else { if (Math.abs(st.t - t0) > 1e-6) removeChordAt(bi, t0); setChordAt(bi, st.t, s); }
       renderAll();
     };
     const foot = [
-      el("button", { class: "btn sm ghost", onclick: () => { bar.chord = null; renderAll(); closeModal(); } }, "Clear"),
+      el("button", { class: "btn sm ghost", onclick: () => { removeChordAt(bi, t0); renderAll(); closeModal(); } }, own ? "Remove" : "Clear"),
       el("button", { class: "btn sm", disabled: bi <= curRange().start, onclick: () => { apply(false); openChordBuilder(bi - 1); } }, "◀"),
       el("button", { class: "btn sm", disabled: bi >= curRange().end - 1, onclick: () => { apply(false); openChordBuilder(bi + 1); } }, "▶"),
-      el("button", { class: "btn", onclick: () => { apply(true); closeModal(); } }, "All like this"),
-      el("button", { class: "btn acc", onclick: () => { apply(false); closeModal(); } }, "Set chord"),
+      st.t === 0 ? el("button", { class: "btn", onclick: () => { apply(true); closeModal(); } }, "All like this") : null,
+      el("button", { class: "btn acc", onclick: () => { apply(false); closeModal(); } }, own || t0 === 0 ? "Set chord" : "Add chord"),
     ];
     openModal("Chord", body, foot);
   };
@@ -8206,7 +8255,7 @@ function openAddSection() {
       const src = curRange(), from = S.si;
       const existing = S.song.sections.filter(s => s.name.replace(/\s*\d+$/, "") === name).length;
       addSection(existing ? `${name} ${existing + 1}` : name, bars, from);
-      if (chordsFrom) { const { start, end } = curRange(); const n = src.end - src.start; for (let i = start; i < end; i++) S.song.bars[i].chord = n ? S.song.bars[src.start + ((i - start) % n)].chord : null; }
+      if (chordsFrom) { const { start, end } = curRange(); const n = src.end - src.start; for (let i = start; i < end; i++) { if (n) copyChords(S.song.bars[src.start + ((i - start) % n)], S.song.bars[i]); else setBarChord(i, null); } }
       renderAll();
     } }, "Add")]);
 }
@@ -8300,7 +8349,7 @@ function openHelp() {
   openModal("How it works", [
     h("1 · Words", "Type a section's words in Words and press Place words, or tap a bar's word lane to type at a beat. The app splits words into syllables and spreads them across the bars. Drag any syllable to place it exactly; an underscore _ (or the 𝄽 button) marks a rest where nothing is sung."),
     h("2 · Melody", "In Melody, tap a pitch on the top stave: the highlighted word takes that note and the next word lights up. Tap a note to nudge, stretch, or delete it."),
-    h("3 · Chords", "Tap a chord name above a bar to open the chord builder. Names follow the key; Roman numerals are one toggle away."),
+    h("3 · Chords", "Tap the chord row above a bar — at any beat — to open the chord builder. A chord holds until the next change, so one chord per bar or several per bar both work. Names follow the key; Roman numerals are one toggle away."),
     h("4 · Band", "Bass, accompaniment and ensemble play patterns from the genre bank automatically. Switch a part to Custom to write its notes by hand — the ⛶ button gives you a full-screen stave for that."),
     h("Lights", "The row of lights under the title shows every bar: green when every voice is full, white when empty, yellow in between."),
     h("Sections", "Tap the current section's name for rename, length, omit, duplicate, copy/paste, reorder and delete. + adds a section."),
@@ -8375,7 +8424,7 @@ function partNotesText(part, bi) {
   const fmt = evs => evs.sort((a, b) => a.t - b.t).map(e => e.rest ? `𝄽${durGlyph(e.d)}` : `${noteName(e.m, key)}${durGlyph(e.d)}${tiedOver(e) ? "⌒" : ""}`).join("  ");
   if (part === "melody") return fmt([...bar.ev.melody]);
   if (part === "sub") return fmt(subVocalEvents(bi));
-  if (part === "backup") { const v = backupVoicing(bi); return v.length ? "pad: " + v.map(m => noteName(m, key)).join(" ") : ""; }
+  if (part === "backup") return chordSegments(bi).map(seg => backupVoicing(bi, seg.ch).map(m => noteName(m, key)).join(" ")).filter(Boolean).join(" | ");
   if (bar.custom[part]) return fmt([...(bar.ev[part] || [])]);
   const evs = partEvents(part, bi);
   if (!evs.length) return "";
@@ -8399,7 +8448,7 @@ function openPartView(part) {
     const grid = el("div", { class: "pvBars" });
     for (let bi = start; bi < end; bi++) {
       const bar = song.bars[bi];
-      const card = el("div", { class: "pvBar", "data-bi": bi }, el("div", { class: "bn" }, `bar ${bi - start + 1}`), el("div", { class: "ch" }, bar.chord ? chordDisplay(bar.chord, song) : "–"));
+      const card = el("div", { class: "pvBar", "data-bi": bi }, el("div", { class: "bn" }, `bar ${bi - start + 1}`), el("div", { class: "ch" }, chordsText(bi) || "–"));
       if (["melody", "sub", "backup"].includes(part) && bar.lyric) card.append(el("div", { class: "ly" }, displayLyric(bar.lyric)));
       const nt = partNotesText(part, bi); if (nt) card.append(el("div", { class: "nt" }, nt));
       grid.append(card);
