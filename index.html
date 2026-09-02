@@ -6363,7 +6363,7 @@ function newSong() {
     sections: [{ id: uid(), name: "Verse 1", bars: 8, omit: false }],
     bars: [],
     parts: {
-      melody: { on: true, inst: "Voice", vol: 1 },
+      melody: { on: true, inst: "Voice", vol: 1, bank: null },
       sub: { on: false, inst: "Voice", mode: "harmony", interval: -3, vol: 0.8 },
       backup: { on: false, inst: "Voices", vol: 0.45 },
       bass: { on: true, inst: "Bass guitar", pattern: "Root quarters", vol: 0.9, feel: null },
@@ -6877,8 +6877,9 @@ const TIMBRE = inst => {
   return "voice";
 };
 /* one note: sounds for `sus` seconds then damps; returns a handle with stop(t) */
-function playTone(ctx, midi, when, sus, level, vel, timbre) {
+function playTone(ctx, midi, when, sus, level, vel, timbre, bank) {
   if (level <= 0) return null;
+  if (bank && SAMPLES.loaded.has(bank) && SAMPLES.loaded.get(bank).anchors.length) return playSample(ctx, bank, midi, when, sus, level, vel);
   const f = midiFreq(midi), master = ctx.createGain(), nodes = [], v = vel == null ? 0.7 : vel;
   master.gain.setValueAtTime(1, when); master.connect(masterGain);
   const osc = (type, freq, gain, det) => { const o = ctx.createOscillator(); o.type = type; o.frequency.value = freq; if (det) o.detune.value = det; const g = ctx.createGain(); g.gain.value = gain; o.connect(g); nodes.push(o); return g; };
@@ -6950,7 +6951,97 @@ function playTone(ctx, midi, when, sus, level, vel, timbre) {
 }
 function previewNote(midi, part) {
   const ctx = ensureCtx(), P = S.song.parts[part] || S.song.parts.melody;
-  playTone(ctx, midi, ctx.currentTime, 0.35, 0.5 * P.vol, 0.75, TIMBRE(P.inst));
+  playTone(ctx, midi, ctx.currentTime, 0.35, 0.5 * P.vol, 0.75, TIMBRE(P.inst), partBank(P));
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SECTION 7b · SAMPLE BANKS — user-imported mp3/wav sets (tonejs-instruments,
+   Salamander grand piano) stored in this browser's IndexedDB. Zero network:
+   the user picks the files from their device. Nearest-sample pitch shifting.
+   ═══════════════════════════════════════════════════════════════════════ */
+const SAMPLE_DB = "mySongWriter", SAMPLE_STORE = "samples";
+const sampKey = (bank, midi) => `${bank}${midi}`;
+function sampParseKey(k) { const s = String(k), i = s.indexOf(""); if (i < 0) return null; const midi = parseInt(s.slice(i + 1), 10); return Number.isFinite(midi) ? { bank: s.slice(0, i), midi } : null; }
+function sdb() { return new Promise((res, rej) => { const r = indexedDB.open(SAMPLE_DB, 1); r.onupgradeneeded = () => r.result.createObjectStore(SAMPLE_STORE); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
+function sdbTx(mode, fn) { return sdb().then(db => new Promise((res, rej) => { const tx = db.transaction(SAMPLE_STORE, mode); const out = fn(tx.objectStore(SAMPLE_STORE)); tx.oncomplete = () => res(out); tx.onerror = () => rej(tx.error); })); }
+const sdbPut = (key, rec) => sdbTx("readwrite", st => st.put(rec, key));
+const sdbDel = key => sdbTx("readwrite", st => st.delete(key));
+async function sdbAll() { const r = await sdbTx("readonly", st => ({ k: st.getAllKeys(), v: st.getAll() })); return r.k.result.map((k, i) => [k, r.v.result[i]]); }
+const SAMPLES = { meta: new Map(), loaded: new Map(), warned: new Set() };
+/* C4.mp3 · Cs4.mp3 (tonejs-instruments) · F#3.wav · Ab2.ogg · A0v8.mp3 (Salamander) */
+function parseSampleName(name) {
+  const m = /^([A-Ga-g])([#bs]?)(-?\d)(?:v(\d+))?\.(mp3|ogg|wav|flac|m4a|aac|aif|aiff)$/i.exec(String(name).trim());
+  if (!m) return null;
+  const L = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[m[1].toUpperCase()];
+  const acc = (m[2] === "#" || m[2] === "s") ? 1 : m[2] === "b" ? -1 : 0;
+  const midi = (parseInt(m[3], 10) + 1) * 12 + L + acc;
+  return midi >= 12 && midi <= 120 ? { midi, vel: m[4] ? parseInt(m[4], 10) : null } : null;
+}
+function bankNameFromPath(p) { const parts = String(p).split("/").filter(Boolean); if (parts.length < 2) return null; const dir = parts[parts.length - 2]; return !dir || dir === "samples" || dir.startsWith(".") ? null : dir.slice(0, 24); }
+const BANK_HINTS = [[/salamander|piano/i, "Piano"], [/guitar-acoustic|guitar-nylon|acoustic|nylon/i, "Acoustic guitar"], [/guitar-electric|electric/i, "Electric guitar (clean)"], [/bass/i, "Bass guitar"], [/trumpet/i, "Trumpet"], [/clarinet/i, "Clarinet"], [/tuba/i, "Tuba"], [/violin|cello|contrabass|string/i, "Strings"], [/horn|trombone|sax/i, "Horns"]];
+const bankHint = bank => { for (const [re, inst] of BANK_HINTS) if (re.test(bank)) return inst; return null; };
+function decoderCtx() { const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext; return new OAC(1, 1, 44100); }
+async function loadSampleMeta() {
+  if (typeof indexedDB === "undefined") return;
+  try {
+    const rows = await sdbAll(); SAMPLES.meta.clear();
+    for (const [k] of rows) { const p = sampParseKey(k); if (!p) continue; const e = SAMPLES.meta.get(p.bank) || { count: 0, lo: 999, hi: -1 }; e.count++; e.lo = Math.min(e.lo, p.midi); e.hi = Math.max(e.hi, p.midi); SAMPLES.meta.set(p.bank, e); }
+  } catch (e) {}
+}
+async function ensureBankDecoded(bank) {
+  if (!bank || SAMPLES.loaded.has(bank) || !SAMPLES.meta.has(bank)) return;
+  SAMPLES.loaded.set(bank, { map: new Map(), anchors: [] });
+  try {
+    const rows = await sdbAll(), ctx = decoderCtx(), map = new Map();
+    for (const [k, rec] of rows) { const p = sampParseKey(k); if (!p || p.bank !== bank) continue; try { map.set(p.midi, await ctx.decodeAudioData(rec.bytes.slice(0))); } catch (e) {} }
+    SAMPLES.loaded.set(bank, { map, anchors: [...map.keys()].sort((a, b) => a - b) });
+  } catch (e) { SAMPLES.loaded.delete(bank); }
+}
+function unloadUnusedBanks() { const used = new Set(PARTS.map(p => S.song.parts[p].bank).filter(Boolean)); for (const b of [...SAMPLES.loaded.keys()]) if (!used.has(b)) SAMPLES.loaded.delete(b); }
+async function loadSongBanks() { for (const p of PARTS) { const P = S.song.parts[p]; if (P.bank && P.on) await ensureBankDecoded(P.bank); } unloadUnusedBanks(); }
+function nearestAnchor(anchors, midi) { let best = null; for (const a of anchors) if (best == null || Math.abs(midi - a) < Math.abs(midi - best)) best = a; return best; }
+/* one velocity layer per note (Salamander ships up to 16): the layer nearest v8 */
+function pickLayers(files) {
+  const byMidi = new Map();
+  for (const f of files) { const p = parseSampleName(f.name); if (!p) continue; const score = p.vel == null ? 0 : Math.abs(p.vel - 8); const cur = byMidi.get(p.midi); if (!cur || score < cur.score) byMidi.set(p.midi, { f, score, midi: p.midi }); }
+  return [...byMidi.values()];
+}
+async function importSampleFiles(files, bank, status) {
+  const ctx = decoderCtx(), picked = pickLayers(files); let ok = 0, skip = files.length - picked.length;
+  for (const { f, midi } of picked) {
+    try { const bytes = await f.arrayBuffer(); await ctx.decodeAudioData(bytes.slice(0)); await sdbPut(sampKey(bank, midi), { name: f.name, bytes }); ok++; if (status) status(`Importing ${bank}… ${ok}`); }
+    catch (e) { skip++; }
+  }
+  SAMPLES.loaded.delete(bank); await loadSampleMeta();
+  return { ok, skip };
+}
+async function deleteBank(bank) {
+  const rows = await sdbAll();
+  for (const [k] of rows) { const p = sampParseKey(k); if (p && p.bank === bank) await sdbDel(k); }
+  SAMPLES.loaded.delete(bank); await loadSampleMeta();
+  for (const p of PARTS) if (S.song.parts[p].bank === bank) S.song.parts[p].bank = null;
+}
+function playSample(ctx, bank, midi, when, sus, level, vel) {
+  const b = SAMPLES.loaded.get(bank); if (!b || !b.anchors.length) return null;
+  const anchor = nearestAnchor(b.anchors, midi), buf = b.map.get(anchor), v = vel == null ? 0.7 : vel;
+  const src = ctx.createBufferSource(); src.buffer = buf; src.playbackRate.value = Math.pow(2, (midi - anchor) / 12);
+  const g = ctx.createGain(); g.gain.setValueAtTime(0, when); g.gain.linearRampToValueAtTime(level * 1.6, when + 0.005);
+  let chain = src;
+  if (v < 0.85) { const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 1500 + 12000 * Math.pow(v, 1.5); src.connect(lp); chain = lp; }
+  chain.connect(g).connect(masterGain);
+  const end = Math.min(sus, buf.duration / src.playbackRate.value);
+  g.gain.setValueAtTime(level * 1.6, when + Math.max(end - 0.005, 0.001)); g.gain.setTargetAtTime(0, when + end, 0.08);
+  src.start(when); src.stop(when + end + 0.5);
+  const h = { stop(t) { try { g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(g.gain.value, t); g.gain.setTargetAtTime(0, t, 0.03); src.stop(t + 0.2); } catch (e) {} liveNodes.delete(h); } };
+  liveNodes.add(h); setTimeout(() => liveNodes.delete(h), Math.max(0, (when - ctx.currentTime + end + 1) * 1000));
+  return h;
+}
+/* resolve a part's sound: its sample bank when present on this device, else the synth */
+function partBank(P) {
+  if (!P.bank) return null;
+  if (SAMPLES.meta.has(P.bank)) return P.bank;
+  if (!SAMPLES.warned.has(P.bank)) { SAMPLES.warned.add(P.bank); toast(`Sample bank “${P.bank}” isn't on this device — using the built-in ${P.inst} sound`); }
+  return null;
 }
 
 /* ── transport: lookahead scheduler + playhead ── */
@@ -6994,8 +7085,8 @@ function scheduleBar(ctx, bi, t0) {
   const song = S.song, bs = beatSec();
   for (const p of PARTS) {
     const P = song.parts[p]; if (!P.on) continue;
-    const timbre = TIMBRE(P.inst), strum = p === "accomp" && timbre !== "piano" ? 0.012 : 0;
-    for (const e of partEvents(p, bi)) e.ms.forEach((m, k) => playTone(ctx, m, t0 + e.t * bs + k * strum, Math.max(0.04, e.sus * bs), P.vol * e.vel * 0.5, e.vel, timbre));
+    const timbre = TIMBRE(P.inst), strum = p === "accomp" && timbre !== "piano" ? 0.012 : 0, bank = partBank(P);
+    for (const e of partEvents(p, bi)) e.ms.forEach((m, k) => playTone(ctx, m, t0 + e.t * bs + k * strum, Math.max(0.04, e.sus * bs), P.vol * e.vel * 0.5, e.vel, timbre, bank));
   }
 }
 function stopPlayback() {
@@ -7270,8 +7361,14 @@ function panelLyrics(p) {
   p.append(el("div", { class: "pHead" }, el("h3", {}, "Words"),
     toggle("Snap to beat", song.snap, v => { song.snap = v; renderAll(); }, "Words and notes land on half-beats when on; free placement when off")));
   const ta = el("textarea", { class: "lyricArea", placeholder: "Type or paste the words for this section — one line per phrase. They'll spread across the bars.", spellcheck: "false" });
-  ta.value = sectionLyricText(S.si);
-  const apply = () => { setSectionLyrics(S.si, ta.value); S.cursor = null; renderAll(); toast("Words placed across the bars"); };
+  const sec = curSection();
+  ta.value = sec.lyricRaw != null ? sec.lyricRaw : sectionLyricText(S.si);
+  const apply = () => {
+    setSectionLyrics(S.si, ta.value); sec.lyricRaw = ta.value; ta.blur();
+    S.sel = null; S.cursor = nextUnpitchedChip(start, null);
+    renderAll(); setMode("melody"); scrollStaveIntoView();
+    toast(S.cursor ? "Words placed — now tap a pitch for each word" : "Words cleared");
+  };
   ta.addEventListener("keydown", e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); apply(); } });
   p.append(ta);
   p.append(el("div", { class: "pRow" }, el("button", { class: "btn acc", onclick: apply }, "Place words"),
@@ -7281,7 +7378,7 @@ function panelLyrics(p) {
   for (let bi = start; bi < end; bi++) {
     const bar = song.bars[bi];
     const inp = el("input", { type: "text", value: bar.lyric, placeholder: "…", "data-bi": bi, spellcheck: "false", autocomplete: "off" });
-    inp.addEventListener("input", () => { setBarLyric(bi, inp.value); L = layout(); renderStave(); renderLights(); saveSoon(); });
+    inp.addEventListener("input", () => { setBarLyric(bi, inp.value); sec.lyricRaw = null; L = layout(); renderStave(); renderLights(); saveSoon(); });
     inp.addEventListener("keydown", e => { if (e.key === "Enter") { const nx = grid.querySelector(`input[data-bi="${bi + 1}"]`); if (nx) nx.focus(); else inp.blur(); } });
     grid.append(el("div", { class: "barField" + (S.sel && S.sel.bi === bi ? " cur" : "") }, el("label", {}, el("b", {}, `Bar ${bi - start + 1}`), el("span", {}, bar.chord ? chordDisplay(bar.chord, song) : "")), inp));
   }
@@ -7337,19 +7434,27 @@ function reloadGenreChords() {
 }
 function panelBand(p) {
   const song = S.song, { start, end } = curRange();
-  p.append(el("div", { class: "pHead" }, el("h3", {}, "Band"), el("button", { class: "btn sm", onclick: toggleFS }, "⛶ Full screen entry")));
+  p.append(el("div", { class: "pHead" }, el("h3", {}, "Band"), el("button", { class: "btn sm", onclick: openSampler }, "♪ Samples"), el("button", { class: "btn sm", onclick: toggleFS }, "⛶ Full screen")));
   const bpmFit = pat => pat && pat.bpmRange ? (song.bpm >= pat.bpmRange[0] && song.bpm <= pat.bpmRange[1] ? "fits ♩" + song.bpm : `best ${pat.bpmRange[0]}–${pat.bpmRange[1]}`) : "";
   for (const part of PARTS) {
     const P = song.parts[part], meta = PART_META[part];
     const card = el("div", { class: "partCard" + (P.on ? "" : " off") });
     const head = el("div", { class: "ph" }, el("span", { class: "dot", style: `background:${meta.color}` }), el("b", {}, meta.label));
-    head.append(toggle("", P.on, v => { P.on = v; renderAll(); }));
+    head.append(toggle("", P.on, v => { P.on = v; if (v && P.bank) ensureBankDecoded(P.bank); renderAll(); }));
     card.append(head);
     if (!P.on) { p.append(card); continue; }
     const row = el("div", { class: "pRow tight" });
     const instSel = el("select", { class: "sel", onchange: e => { P.inst = e.target.value; if (part === "accomp") { const m = genreMap(song.genre); const nm = P.inst === "Piano" ? (m && stripNote(m.pianoPrimary)) : (m && stripNote(m.guitarPrimary)); if (!patternByName(bankFor("accomp"), P.pattern)) P.pattern = nm || SONG_DATA.patternBanks[bankFor("accomp")][1].name; } renderAll(); } });
     INSTRUMENTS[part].forEach(n => instSel.append(el("option", { value: n, selected: n === P.inst }, n)));
     row.append(instSel);
+    const banks = [...SAMPLES.meta.keys()];
+    if (banks.length || P.bank) {
+      const snd = el("select", { class: "sel", title: "Sound: built-in synth or an imported sample bank", onchange: e => { P.bank = e.target.value || null; if (P.bank) ensureBankDecoded(P.bank).then(unloadUnusedBanks); else unloadUnusedBanks(); saveSoon(); renderPanel(); } });
+      snd.append(el("option", { value: "" }, "Built-in sound"));
+      banks.forEach(b => snd.append(el("option", { value: b, selected: b === P.bank }, "♪ " + b)));
+      if (P.bank && !SAMPLES.meta.has(P.bank)) snd.append(el("option", { value: P.bank, selected: true }, "♪ " + P.bank + " (not on this device)"));
+      row.append(snd);
+    }
     if (meta.bank || part === "accomp") {
       const bank = bankFor(part), list = SONG_DATA.patternBanks[bank].filter(x => !x.custom);
       const patSel = el("select", { class: "sel", onchange: e => { P.pattern = e.target.value; renderAll(); } });
@@ -7570,6 +7675,10 @@ function initPinch() {
   window.addEventListener("pointerup", release); window.addEventListener("pointercancel", release);
   frame.addEventListener("gesturestart", e => e.preventDefault());
 }
+function scrollStaveIntoView() {
+  const top = $("staffFrame").getBoundingClientRect().top + window.scrollY - $("top").offsetHeight - 14;
+  window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+}
 function ensureBarVisible(bi) {
   if (!L || bi < L.start || bi >= L.end) return;
   const sc = $("staffScroll"), x0 = xOfT(bi, 0) - G.gutterW, x1 = x0 + L.barPx;
@@ -7642,7 +7751,7 @@ function openChordBuilder(bi) {
     if (st.inv) { const seventh = ["dom7", "min7", "maj7", "dim7", "hdim7"].includes(st.q); s += seventh ? ["", "65", "43", "42"][st.inv] : ["", "6", "64"][Math.min(st.inv, 2)]; }
     return s;
   };
-  const preview = () => { const ch = chordFromRoman(symOf(), key); if (!ch) return; const ctx = ensureCtx(); voiceChord(ch, 48, 72, null).forEach((m, i) => playTone(ctx, m, ctx.currentTime + i * 0.02, 0.9, 0.3, 0.7, TIMBRE(song.parts.accomp.inst))); };
+  const preview = () => { const ch = chordFromRoman(symOf(), key); if (!ch) return; const ctx = ensureCtx(); voiceChord(ch, 48, 72, null).forEach((m, i) => playTone(ctx, m, ctx.currentTime + i * 0.02, 0.9, 0.3, 0.7, TIMBRE(song.parts.accomp.inst), partBank(song.parts.accomp))); };
   const render = () => {
     const body = [];
     const sym = symOf(), ch = chordFromRoman(sym, key);
@@ -7746,6 +7855,7 @@ function openMenu() {
     item("⇪", "Share & export", openShare),
     item("🎼", "Parts for the band", openParts),
     item("🎤", "Performance mode", openPerf),
+    item("♪", "Sounds & samples", openSampler),
     item("?", "How it works", openHelp));
   openModal("My Song Writer", [list, el("div", { class: "mrow", style: "margin-top:12px;justify-content:space-between" }, el("span", { class: "tiny" }, "Theme"), themeSeg)]);
 }
@@ -7753,10 +7863,70 @@ function openOpen() {
   const songs = listSongs();
   const body = songs.length ? songs.map(s => el("div", { class: "listRow" },
     el("b", {}, s.title || "Untitled song", el("span", { class: "tiny", style: "margin-left:8px" }, `${s.key} · ${s.sections.length} sections${s.genre ? " · " + s.genre : ""}`)),
-    el("button", { class: "btn sm", onclick: () => { saveNow(); loadSong(s.id); closeModal(); renderAll(); setMode("lyrics"); } }, "Open"),
+    el("button", { class: "btn sm", onclick: () => { saveNow(); loadSong(s.id); loadSongBanks(); closeModal(); renderAll(); setMode("lyrics"); } }, "Open"),
     el("button", { class: "btn sm ghost danger", disabled: s.id === S.song.id, onclick: () => confirmModal(`Delete “${s.title || "Untitled song"}”?`, () => { deleteSong(s.id); openOpen(); }, "Delete") }, "✕")))
     : el("p", { class: "muted" }, "No saved songs yet.");
   openModal("Your songs", body);
+}
+function openSampler() {
+  const song = S.song, key = keyObj(song.key);
+  const status = el("div", { class: "tiny", style: "min-height:16px" });
+  const list = el("div");
+  const paintList = () => {
+    list.replaceChildren();
+    if (!SAMPLES.meta.size) { list.append(el("p", { class: "muted", style: "margin:4px 0" }, "No sample banks on this device yet.")); return; }
+    for (const [bank, m] of SAMPLES.meta) {
+      const users = PARTS.filter(p => song.parts[p].bank === bank).map(p => PART_META[p].short);
+      list.append(el("div", { class: "listRow" },
+        el("b", {}, bank, el("span", { class: "tiny", style: "margin-left:8px" }, `${m.count} samples · ${noteName(m.lo, key)}–${noteName(m.hi, key)}${users.length ? " · " + users.join(", ") : ""}`)),
+        el("button", { class: "btn sm", title: "Play a test note", onclick: async () => { const ctx = ensureCtx(); await ensureBankDecoded(bank); playTone(ctx, clamp(69, m.lo - 6, m.hi + 6), ctx.currentTime, 1.2, 0.5, 0.75, "sine", bank); } }, "▶"),
+        el("button", { class: "btn sm ghost danger", onclick: () => confirmModal(`Delete the “${bank}” samples from this device?`, async () => { await deleteBank(bank); openSampler(); renderPanel(); }, "Delete") }, "✕")));
+    }
+  };
+  paintList();
+  const afterImport = async (groups, totOk, totSkip) => {
+    const assigned = [];
+    for (const bank of groups) {
+      const hint = bankHint(bank);
+      const part = hint && PARTS.find(p => song.parts[p].inst === hint && !song.parts[p].bank);
+      if (part) { song.parts[part].bank = bank; assigned.push(`${PART_META[part].short} → ${bank}`); }
+    }
+    await loadSongBanks(); saveSoon(); paintList(); renderPanel();
+    status.textContent = `Imported ${totOk} samples${totSkip ? ` (${totSkip} files skipped)` : ""}.${assigned.length ? " Now playing: " + assigned.join(", ") + "." : ""}`;
+    toast(`Imported ${totOk} samples`);
+  };
+  const folderIn = el("input", { type: "file", multiple: true, style: "display:none" }); folderIn.setAttribute("webkitdirectory", "");
+  folderIn.addEventListener("change", async () => {
+    const files = [...(folderIn.files || [])]; if (!files.length) return;
+    const groups = new Map();
+    files.forEach(f => { if (!parseSampleName(f.name)) return; const rel = f.webkitRelativePath || f.name; let bank = bankNameFromPath(rel); if (!bank) bank = rel.split("/")[0] || "samples"; if (!groups.has(bank)) groups.set(bank, []); groups.get(bank).push(f); });
+    if (!groups.size) { status.textContent = "No sample files found — names must look like C4.mp3, Cs4.mp3 or A0v8.mp3."; return; }
+    let totOk = 0, totSkip = 0;
+    for (const [bank, fls] of groups) { const r = await importSampleFiles(fls, bank, t => status.textContent = t); totOk += r.ok; totSkip += r.skip; }
+    await afterImport([...groups.keys()], totOk, totSkip); folderIn.value = "";
+  });
+  const nameIn = el("input", { class: "txt", type: "text", placeholder: "bank name (e.g. piano)", maxlength: 24, style: "flex:1" });
+  const filesIn = el("input", { type: "file", multiple: true, accept: "audio/*,.mp3,.wav,.ogg", style: "display:none" });
+  filesIn.addEventListener("change", async () => {
+    const files = [...(filesIn.files || [])]; if (!files.length) return;
+    let bank = nameIn.value.trim() || bankNameFromPath(files[0].webkitRelativePath || "") || "samples";
+    bank = bank.replace(//g, "").slice(0, 24);
+    const r = await importSampleFiles(files, bank, t => status.textContent = t);
+    await afterImport([bank], r.ok, r.skip); filesIn.value = "";
+  });
+  openModal("Sounds & samples", [
+    el("div", { class: "tiny", style: "margin-bottom:8px" }, "Real instrument recordings, stored in this browser only. Each part can use a bank (Band → sound picker). Nothing is downloaded by the app — you pick the files."),
+    el("div", { class: "pLbl" }, "On this device"), list, status,
+    el("div", { class: "pLbl" }, "Import"),
+    el("div", { class: "mrow" }, el("button", { class: "btn acc", onclick: () => folderIn.click() }, "Import an instrument folder…"), el("span", { class: "tiny" }, "Pick the unzipped tonejs-instruments “samples” folder (every instrument becomes a bank) or one instrument's folder.")),
+    el("div", { class: "mrow" }, nameIn, el("button", { class: "btn", onclick: () => filesIn.click() }, "Import files…")),
+    folderIn, filesIn,
+    el("div", { class: "pLbl" }, "Where to get sounds"),
+    el("div", { class: "tiny", style: "line-height:1.5" },
+      el("b", {}, "tonejs-instruments"), " — github.com/nbrosowsky/tonejs-instruments, the samples folder: guitar-acoustic, guitar-electric, guitar-nylon, bass-electric, piano, trumpet, clarinet, tuba, violin, cello, french-horn, trombone, saxophone, flute, harp… (mostly CC0 / CC-BY, from VSCO 2 CE). Files are named like Cs4.mp3.", el("br"),
+      el("b", {}, "Salamander Grand Piano"), " — the full set (A0v1…C8v16, CC BY 3.0, Alexander Holm) or the trimmed set at tonejs.github.io/audio/salamander. One velocity layer per note is kept (nearest v8).", el("br"),
+      "Prefer mp3: iPhones don't decode ogg. Banks named piano, guitar-acoustic, bass-electric, trumpet, clarinet, tuba, violin/cello, french-horn are assigned to matching parts automatically."),
+  ]);
 }
 function openHelp() {
   const h = (t, d) => el("div", { style: "margin:8px 0" }, el("b", {}, t), el("div", { class: "tiny", style: "font-size:13px;color:var(--ink2)" }, d));
@@ -7768,6 +7938,7 @@ function openHelp() {
     h("Lights", "The row of lights under the title shows every bar: green when every voice is full, white when empty, yellow in between."),
     h("Sections", "Tap the current section's name for rename, length, omit, duplicate, copy/paste, reorder and delete. + adds a section."),
     h("Share", "Menu → Share & export makes a link that carries the whole song, JSON files for backup, and parts laid out for a tablet on a music stand."),
+    h("Real sounds", "Menu → Sounds & samples imports instrument recordings (tonejs-instruments, Salamander piano) from your device; each part can then play them instead of the built-in synth."),
     h("Pinch", "Pinch the stave to zoom time. Hold ▶ to play the whole song; tap it for the current section."),
   ]);
 }
@@ -7792,7 +7963,7 @@ async function importFromHash() {
     else json = new TextDecoder().decode(bytes);
     const song = upgradeSong(JSON.parse(json)); song.id = uid(); song.updated = Date.now();
     const part = song.sharePart; delete song.sharePart;
-    S.song = song; S.si = 0; S.sel = null; S.cursor = null; saveNow();
+    S.song = song; S.si = 0; S.sel = null; S.cursor = null; saveNow(); loadSongBanks();
     history.replaceState(null, "", location.pathname);
     toast("Song opened from the link");
     if (part) setTimeout(() => openPartView(part), 300);
@@ -7808,7 +7979,7 @@ function openShare() {
   const song = S.song, name = (song.title || "song").replace(/[^\w\- ]+/g, "").trim() || "song";
   const linkBox = el("input", { class: "txt", type: "text", readonly: true, value: "Making link…", style: "width:100%;font-size:12px" });
   shareURL().then(u => { linkBox.value = u; });
-  const file = el("input", { type: "file", accept: ".json,application/json", style: "display:none", onchange: e => { const f = e.target.files[0]; if (!f) return; f.text().then(txt => { try { const s = upgradeSong(JSON.parse(txt)); s.id = uid(); S.song = s; S.si = 0; S.sel = null; saveNow(); closeModal(); renderAll(); toast("Imported"); } catch (err) { toast("That file isn't a song"); } }); } });
+  const file = el("input", { type: "file", accept: ".json,application/json", style: "display:none", onchange: e => { const f = e.target.files[0]; if (!f) return; f.text().then(txt => { try { const s = upgradeSong(JSON.parse(txt)); s.id = uid(); S.song = s; S.si = 0; S.sel = null; saveNow(); loadSongBanks(); closeModal(); renderAll(); toast("Imported"); } catch (err) { toast("That file isn't a song"); } }); } });
   const partRow = el("div", { class: "chipRow" });
   PARTS.forEach(p => partRow.append(el("button", { class: "chipBtn", onclick: () => { closeModal(); openPartView(p); } }, PART_META[p].label)));
   openModal("Share & export", [
@@ -7906,6 +8077,7 @@ async function boot() {
   loadPrefs();
   const fromLink = await importFromHash();
   if (!fromLink) { const cur = readJSON(STORE.cur, null); if (!cur || !loadSong(cur)) { S.song = newSong(); saveNow(); } }
+  loadSampleMeta().then(loadSongBanks);
   $("songTitle").addEventListener("input", e => { S.song.title = e.target.value; saveSoon(); });
   $("songTitle").addEventListener("keydown", e => { if (e.key === "Enter") e.target.blur(); });
   $("keyPill").addEventListener("click", openSongSetup);

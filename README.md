@@ -15,6 +15,15 @@ Single-file, zero dependencies, works offline: open `index.html` in any modern b
 
 The row of lights under the title shows every bar: green when every voice is full, white when empty, yellow in between.
 
+## Real instrument sounds
+
+Menu → *Sounds & samples* imports instrument recordings from your device into the browser's IndexedDB; nothing is downloaded by the app. Each part then picks its sound in Band (built-in synth or a sample bank).
+
+- **tonejs-instruments** — the `samples` folder from <https://github.com/nbrosowsky/tonejs-instruments> (guitar-acoustic, guitar-electric, bass-electric, piano, trumpet, clarinet, tuba, violin, cello, french-horn …). Pick the whole folder and every instrument becomes a bank; matching parts are assigned automatically.
+- **Salamander Grand Piano** (CC BY 3.0, Alexander Holm) — the full multi-layer set or the trimmed one at <https://tonejs.github.io/audio/salamander/>. One velocity layer per note is kept (nearest v8).
+
+File names must carry the pitch: `C4.mp3`, `Cs4.mp3`, `F#3.wav`, `A0v8.mp3`. Prefer mp3; iPhones don't decode ogg.
+
 ## Files
 
 | File | Role |
