@@ -7393,6 +7393,14 @@ function renderStave() {
     svg.append(svgEl("text", { x: x0 + 5, y: 11, "font-size": 8.5, fill: C.ink3, "font-family": "system-ui, sans-serif" }, `${bi - L.start + 1}`));
     const segs = chordSegments(bi);
     if (!segs.length) svg.append(svgEl("text", { x: x0 + 20, y: 21, "text-anchor": "start", "font-size": 14, fill: C.ink3, "font-family": "Iowan Old Style, Palatino Linotype, Georgia, serif" }, "+"));
+    if (S.mode === "chords") {
+      const own = barChords(bar);
+      for (let b = 0; b < L.B; b += 1) if (!own.some(c => Math.abs(c.t - b) < 1e-6)) {
+        const bx = xOfT(bi, b);
+        if (b > 0) svg.append(svgEl("line", { x1: bx, x2: bx, y1: 8, y2: G.chordH - 4, stroke: C.beat, "stroke-width": 1, "pointer-events": "none" }));
+        svg.append(svgEl("text", { x: bx + (b === 0 ? 4 : 3), y: G.chordH - 8, "font-size": 10, fill: C.ink3, "font-family": "system-ui, sans-serif", "pointer-events": "none" }, b === 0 && !segs.length ? "" : "+"));
+      }
+    }
     segs.forEach(seg => {
       const sx = seg.t ? xOfT(bi, seg.t) : x0 + 20;
       if (seg.t) svg.append(svgEl("line", { x1: sx, x2: sx, y1: 4, y2: G.chordH, stroke: C.bar, "stroke-width": 1, "stroke-dasharray": "2 2", "pointer-events": "none" }));
@@ -7724,13 +7732,26 @@ function panelChords(p) {
     row.append(el("button", { class: "chipBtn adv", title: "Add a chord change in this bar", style: "padding:5px 8px", onclick: () => { const used = barChords(bar).map(c => c.t); let b = 0; while (used.some(u => Math.abs(u - b) < 1e-6) && b < barBeats() - 1) b += 1; openChordBuilder(bi, b); } }, "+"));
   }
   p.append(row);
-  const ops = el("div", { class: "pRow" });
+  p.append(el("div", { class: "pLbl" }, "By beat — tap a beat to put a chord there"));
+  const B = barBeats(), grid = el("div", { style: "display:grid;grid-template-columns:auto repeat(" + B + ",1fr);gap:3px;align-items:center;max-width:520px" });
+  for (let bi = start; bi < end; bi++) {
+    const bar = song.bars[bi], own = barChords(bar), segs = chordSegments(bi);
+    grid.append(el("span", { class: "tiny", style: "padding-right:4px" }, `Bar ${bi - start + 1}`));
+    for (let b = 0; b < B; b++) {
+      const here = own.find(c => Math.abs(c.t - b) < 1e-6);
+      let sounding = null; for (const sg of segs) if (sg.t <= b + 1e-6) sounding = sg;
+      grid.append(el("button", { class: "chipBtn" + (here ? " on" : ""), style: "font-family:var(--serif);font-size:14px;padding:5px 4px;text-align:center;border-radius:8px;" + (here ? "" : "color:var(--ink3)"), title: `Bar ${bi - start + 1} · beat ${b + 1}`, onclick: () => openChordBuilder(bi, b) },
+        here ? chordDisplay(here.sym, song) : sounding ? "·" : "+"));
+    }
+  }
+  p.append(grid);
+  const ops = el("div", { class: "pRow", style: "margin-top:8px" });
   ops.append(el("button", { class: "btn sm", onclick: () => openChordBuilder(start) }, "Chord builder"));
   if (S.si > 0) ops.append(el("button", { class: "btn sm", onclick: () => { const prev = sectionRange(S.si - 1); for (let i = start; i < end; i++) copyChords(song.bars[prev.start + ((i - start) % (prev.end - prev.start))], song.bars[i]); renderAll(); } }, "Copy from previous section"));
   if (song.genre) ops.append(el("button", { class: "btn sm", onclick: () => reloadGenreChords() }, "Reset to genre progression"));
   ops.append(el("button", { class: "btn sm", onclick: () => playSection() }, "▶ Hear it"));
   p.append(ops);
-  p.append(el("div", { class: "tiny", style: "margin-top:6px" }, "Tap the chord row above a bar at any beat to add or change a chord there — a chord holds until the next change, even across bars. Names follow the key; switch to Roman numerals to see the function."));
+  p.append(el("div", { class: "tiny", style: "margin-top:6px" }, "A chord holds until the next change, even across bars — a dot means the previous chord is still sounding. You can also tap the + marks in the chord row above the stave. Names follow the key; switch to Roman numerals to see the function."));
 }
 function reloadGenreChords() {
   const g = SONG_DATA.genres.find(x => x.name === S.song.genre); if (!g) return;
