@@ -6644,9 +6644,20 @@ function distributeChips(bar) {
 function syncNotesToChips(bar) {
   bar.ev.melody.forEach(e => {
     if (!e.chip) return;
-    const c = bar.chips.find(x => x.id === e.chip);
-    if (!c) delete e.chip; else { e.t = c.t; e.d = e.dLocked ? Math.min(e.d, c.d) : c.d; }
+    const i = bar.chips.findIndex(x => x.id === e.chip);
+    if (i < 0) { delete e.chip; return; }
+    const c = bar.chips[i], cap = i < bar.chips.length - 1 ? bar.chips[i + 1].t - c.t : Infinity;
+    e.t = c.t; e.d = e.dLocked ? Math.min(e.d, cap) : c.d;
   });
+}
+/* a note may tie over the bar line: at most one extra bar */
+const maxDur = (t) => barBeats() - t + barBeats();
+const tiedOver = e => e.t + e.d > barBeats() + 1e-6;
+/* a new note at `t` in bar `bi` ends any tie from the previous bar that would still be sounding there */
+function trimTies(bi, part, t) {
+  if (bi <= 0) return;
+  const prev = S.song.bars[bi - 1], B = barBeats();
+  (prev.ev[part] || []).forEach(e => { if (!e.rest && e.t + e.d > B + t + 1e-6) e.d = r3(Math.max(0.25, B + t - e.t)); });
 }
 function setBarLyric(bi, text) {
   const bar = S.song.bars[bi], old = bar.chips, chips = tokenizeLyric(text);
@@ -6893,12 +6904,13 @@ function partEvents(part, bi) {
 /* progression light: 1 = every voice full, 0 = every voice empty, 0.5 = between */
 function barCoverage(bi) {
   const song = S.song, bar = song.bars[bi], B = barBeats(), vals = [];
-  const sum = list => clamp(list.reduce((a, e) => a + e.d, 0) / B, 0, 1);
+  const carry = part => bi > 0 ? (song.bars[bi - 1].ev[part] || []).reduce((a, e) => a + (e.rest ? 0 : Math.max(0, Math.min(e.t + e.d - B, B))), 0) : 0;
+  const sum = (list, part) => clamp((list.reduce((a, e) => a + Math.min(e.d, B - e.t), 0) + carry(part)) / B, 0, 1);
   for (const p of PARTS) {
     const P = song.parts[p]; if (!P.on) continue;
-    if (p === "melody" || p === "sub") vals.push(sum(bar.ev.melody));
+    if (p === "melody" || p === "sub") vals.push(sum(bar.ev.melody, "melody"));
     else if (p === "backup") vals.push(bar.chord ? 1 : 0);
-    else if (bar.custom[p]) vals.push(sum(bar.ev[p] || []));
+    else if (bar.custom[p]) vals.push(sum(bar.ev[p] || [], p));
     else vals.push(bar.chord && P.pattern ? 1 : 0);
   }
   if (!vals.length) return 0;
@@ -7329,6 +7341,7 @@ function renderStave() {
           const sel = S.sel && S.sel.id === e.id;
           if (e.m < L.alo || e.m > L.ahi) { edgeMarker(svg, x, w, e.m > L.ahi ? L.yA0 + 7 : L.yA1 - 7, e, p, bi, color, key, sel); continue; }
           svg.append(pill(x, y, w, L.stepA + (S.fs ? 2 : 1), color, { class: "noteEl", "data-ev": e.id, "data-bi": bi, "data-part": p, stroke: sel ? C.ink : null, "stroke-width": sel ? 2 : null }));
+          if (tiedOver(e)) tieArc(svg, xOfT(bi, L.B), y + L.stepA / 2 + 1, color);
           if (w > 26 && L.stepA >= 8) svg.append(svgEl("text", { x: x + 6, y: y + 3.5, "font-size": 9, fill: "#fff", "font-weight": 600, "font-family": "system-ui, sans-serif" }, noteName(e.m, key)));
         }
       } else {
@@ -7360,6 +7373,7 @@ function renderStave() {
         if (e.m < L.mlo || e.m > L.mhi) { edgeMarker(svg, x, w, e.m > L.mhi ? L.yM0 + 7 : L.yM1 - 7, e, "melody", bi, C.melody, key, sel); continue; }
         const y = yMel(e.m);
         svg.append(pill(x, y, w, L.stepM - 1, C.melody, { class: "noteEl", "data-ev": e.id, "data-bi": bi, "data-part": "melody", stroke: sel ? C.ink : null, "stroke-width": sel ? 2 : null }));
+        if (tiedOver(e)) tieArc(svg, xOfT(bi, L.B), y + L.stepM / 2 + 1, C.melody);
         if (w > 24) svg.append(svgEl("text", { x: x + 6, y: y + 3.2, "font-size": 8.5, fill: "#fff", "font-weight": 600, "font-family": "system-ui, sans-serif" }, pcName(e.m, key)));
       }
     }
@@ -7392,6 +7406,10 @@ function renderStave() {
   updatePlayhead();
   renderNotePop();
 }
+/* tie mark straddling the bar line */
+function tieArc(svg, x, y, color) {
+  svg.append(svgEl("path", { d: `M ${x - 11} ${y} Q ${x} ${y + 8} ${x + 11} ${y}`, fill: "none", stroke: color, "stroke-width": 1.6, "pointer-events": "none" }));
+}
 /* a note above or below the visible register: a labelled tab at the lane edge (still tappable) */
 function edgeMarker(svg, x, w, y, e, part, bi, color, key, sel) {
   const up = part === "melody" ? e.m > L.mhi : e.m > L.ahi;
@@ -7422,9 +7440,10 @@ function renderNotePop() {
   if (!ev.rest) { b("▲", () => transposeSel(1), "Up a semitone"); b("▼", () => transposeSel(-1), "Down a semitone"); }
   b("◀", () => moveSel(-gridStep()), "Earlier"); b("▶", () => moveSel(gridStep()), "Later");
   pop.append(el("span", { class: "sep" }));
-  [[2, "𝅗𝅥"], [1, "♩"], [0.5, "♪"], [0.25, "𝅘𝅥𝅯"]].forEach(([d, g]) => b(g, () => setSelDur(d), `${d} beat${d === 1 ? "" : "s"}`, Math.abs(ev.d - d) < 1e-6 ? "on" : ""));
+  [[4, "𝅝"], [2, "𝅗𝅥"], [1, "♩"], [0.5, "♪"], [0.25, "𝅘𝅥𝅯"]].forEach(([d, g]) => b(g, () => setSelDur(d), `${d} beat${d === 1 ? "" : "s"}`, Math.abs(ev.d - d) < 1e-6 ? "on" : ""));
   const dotted = [0.375, 0.75, 1.5, 3].some(d => Math.abs(ev.d - d) < 1e-6);
   b("·", () => setSelDur(dotted ? ev.d / 1.5 : ev.d * 1.5), "Dotted", dotted ? "on" : "");
+  if (!ev.rest) b("⌒", toggleTieSel, tiedOver(ev) ? "Tied over the bar line — tap to cut at the line" : "Tie: hold this note into the next bar", tiedOver(ev) ? "on" : "");
   pop.append(el("span", { class: "sep" }));
   b("🗑", deleteSel, "Delete", "del"); b("✕", () => { S.sel = null; renderPanel(); renderStave(); }, "Done");
   pop.classList.add("on");
@@ -7542,6 +7561,7 @@ function selToolbar(part) {
   const b = (t, fn, title) => el("button", { class: "btn sm", onclick: fn, title }, t);
   if (!ev.rest) { row.append(b("▲", () => transposeSel(1), "Up a semitone"), b("▼", () => transposeSel(-1), "Down a semitone"), b("8va", () => transposeSel(12), "Up an octave"), b("8vb", () => transposeSel(-12), "Down an octave")); }
   row.append(b("◀", () => moveSel(-gridStep()), "Earlier"), b("▶", () => moveSel(gridStep()), "Later"), b("Longer", () => lengthenSel(1), ""), b("Shorter", () => lengthenSel(-1), ""));
+  if (!ev.rest) row.append(el("button", { class: "btn sm" + (tiedOver(ev) ? " on" : ""), onclick: toggleTieSel, title: "Hold the note into the next bar" }, "⌒ Tie"));
   row.append(el("button", { class: "btn sm danger", onclick: deleteSel }, "Delete"));
   row.append(el("button", { class: "btn sm ghost", onclick: () => { S.sel = null; renderPanel(); renderStave(); } }, "Done"));
   return row;
@@ -7751,7 +7771,7 @@ function onStaveMove(e) {
     }
     const raw = dragCtx.t0 + dx / L.beatPx;
     if (ev.chip) { const chip = bar.chips.find(c => c.id === ev.chip); if (chip) setChipTime(bar, chip, S.song.snap ? snapT(raw) : Math.round(raw * 8) / 8); }
-    else ev.t = r3(clamp(S.song.snap ? snapT(raw) : Math.round(raw * 8) / 8, 0, barBeats() - ev.d));
+    else ev.t = r3(clamp(S.song.snap ? snapT(raw) : Math.round(raw * 8) / 8, 0, Math.max(0, Math.min(barBeats() - 0.25, barBeats() - ev.d))));
     scheduleStave();
   }
 }
@@ -7800,6 +7820,7 @@ function placeMelody(bi, t, m) {
   }
   let chip = bar.chips.find(c => t >= c.t && t < c.t + c.d) || null;
   if (!chip && S.followWords && S.cursor && S.cursor.bi === bi) chip = bar.chips.find(c => c.id === S.cursor.chipId) || null;
+  trimTies(bi, "melody", chip ? chip.t : clamp(snapT(t), 0, B - 0.25));
   if (chip) {
     bar.ev.melody = bar.ev.melody.filter(e => e.chip !== chip.id && !(e.t < chip.t + chip.d && e.t + e.d > chip.t && e.rest));
     const ev = { id: uid(), t: chip.t, d: chip.d, m, chip: chip.id };
@@ -7819,6 +7840,7 @@ function placeMelody(bi, t, m) {
 function placeBand(bi, part, t, m) {
   const bar = S.song.bars[bi], B = barBeats();
   const ts = clamp(snapT(t), 0, B - 0.25), d = Math.min(noteLenBeats(), B - ts);
+  trimTies(bi, part, ts);
   if (S.restMode) { bar.ev[part] = bar.ev[part].filter(e => !(e.t < ts + d && e.t + e.d > ts)); bar.ev[part].push({ id: uid(), t: ts, d, rest: true }); }
   else {
     bar.ev[part] = bar.ev[part].filter(e => !(e.rest && e.t < ts + d && e.t + e.d > ts) && !(Math.abs(e.t - ts) < 1e-6 && e.m === m));
@@ -7832,27 +7854,34 @@ function transposeSel(d) { const ev = selEv(); if (!ev || ev.rest) return; ev.m 
 /* set the selected note's length; a syllable-bound note keeps its start and may push the next word later */
 function setSelDur(nd) {
   const ev = selEv(); if (!ev) return; const bar = S.song.bars[S.sel.bi], B = barBeats();
-  nd = clamp(r3(nd), 0.25, B - ev.t);
+  nd = clamp(r3(nd), 0.25, ev.rest ? B - ev.t : maxDur(ev.t));
   if (ev.chip) {
     const chip = bar.chips.find(c => c.id === ev.chip);
     if (chip) {
       const k = bar.chips.indexOf(chip);
-      if (nd > chip.d + 1e-6 && k < bar.chips.length - 1) setChipTime(bar, bar.chips[k + 1], chip.t + nd);
+      if (nd > chip.d + 1e-6 && k < bar.chips.length - 1) setChipTime(bar, bar.chips[k + 1], chip.t + Math.min(nd, B - chip.t - 0.25 * (bar.chips.length - 1 - k)));
       else if (nd > chip.d + 1e-6) chip.d = Math.min(nd, B - chip.t);
-      ev.d = Math.min(nd, chip.d); ev.dLocked = true;
+      ev.d = k < bar.chips.length - 1 ? Math.min(nd, bar.chips[k + 1].t - chip.t) : nd; ev.dLocked = true;
     } else ev.d = nd;
   } else ev.d = nd;
+  if (tiedOver(ev)) { const nb = S.song.bars[S.sel.bi + 1]; if (nb) (nb.ev[S.sel.part] || []).forEach(o => { if (!o.rest && o.t < ev.t + ev.d - B - 1e-6 && o.t + 1e-6 >= 0) ev.d = r3(Math.max(0.25, B + o.t - ev.t)); }); }
   renderAll();
+}
+/* hold the note through the bar line (or cut it back at the line) */
+function toggleTieSel() {
+  const ev = selEv(); if (!ev || ev.rest) return; const B = barBeats();
+  if (tiedOver(ev)) setSelDur(B - ev.t);
+  else setSelDur(B - ev.t + Math.min(B, Math.max(1, ev.d)));
 }
 function moveSel(dt) {
   const ev = selEv(); if (!ev) return; const bar = S.song.bars[S.sel.bi];
   if (ev.chip) { const chip = bar.chips.find(c => c.id === ev.chip); if (chip) setChipTime(bar, chip, chip.t + dt); }
-  else ev.t = r3(clamp(ev.t + dt, 0, barBeats() - ev.d));
+  else ev.t = r3(clamp(ev.t + dt, 0, Math.max(0, Math.min(barBeats() - 0.25, barBeats() - ev.d))));
   renderAll();
 }
 function lengthenSel(dir) {
   const ev = selEv(); if (!ev) return;
-  const steps = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
+  const steps = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4, 5, 6, 7, 8];
   let i = steps.findIndex(s => s >= ev.d - 1e-6); if (i < 0) i = steps.length - 1;
   setSelDur(steps[clamp(i + dir, 0, steps.length - 1)]);
 }
@@ -8178,7 +8207,7 @@ function openHelp() {
     h("Real sounds", "Menu → Sounds & samples imports instrument recordings (tonejs-instruments, Salamander piano) from your device; each part can then play them instead of the built-in synth."),
     h("Pinch", "Pinch the stave to zoom time. Hold ▶ to play the whole song; tap it for the current section."),
     h("Register", "Drag the pitch-name gutter up or down to reach higher or lower notes; the ▲▼ at a lane's edges jump an octave. Notes outside the window show as small labelled tabs at the edge."),
-    h("Editing a note", "Tap a note: a toolbar appears over it to move it up or down, earlier or later, change its length, or delete it. Drag the note to move it freely."),
+    h("Editing a note", "Tap a note: a toolbar appears to move it up or down, earlier or later, change its length, tie it into the next bar (⌒), or delete it. Drag the note to move it freely."),
   ]);
 }
 
@@ -8242,7 +8271,7 @@ function openParts() {
 }
 function partNotesText(part, bi) {
   const song = S.song, key = keyObj(song.key), bar = song.bars[bi];
-  const fmt = evs => evs.sort((a, b) => a.t - b.t).map(e => e.rest ? `𝄽${durGlyph(e.d)}` : `${noteName(e.m, key)}${durGlyph(e.d)}`).join("  ");
+  const fmt = evs => evs.sort((a, b) => a.t - b.t).map(e => e.rest ? `𝄽${durGlyph(e.d)}` : `${noteName(e.m, key)}${durGlyph(e.d)}${tiedOver(e) ? "⌒" : ""}`).join("  ");
   if (part === "melody") return fmt([...bar.ev.melody]);
   if (part === "sub") return fmt(subVocalEvents(bi));
   if (part === "backup") { const v = backupVoicing(bi); return v.length ? "pad: " + v.map(m => noteName(m, key)).join(" ") : ""; }
