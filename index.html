@@ -7434,17 +7434,22 @@ function renderStave() {
         }
         svg.append(svgEl("rect", { class: "chip", x: x + 1, y: L.yL0 + 10, width: Math.max(tw, 18), height: 22, rx: 8, fill: isCur ? C.accent : note ? C.card2 : "transparent", stroke: isCur ? C.accent : note ? "none" : C.bar, "stroke-dasharray": note || isCur ? null : "3 2", "data-chip": c.id, "data-bi": bi }));
         svg.append(svgEl("text", { x: x + 6, y: ty, "font-size": 13.5, "font-weight": 700, fill: isCur ? "#fff" : C.ink, "font-family": "Iowan Old Style, Palatino Linotype, Georgia, serif" }, c.text));
-        /* hyphen to the next syllable of the same word */
+        /* hyphens to the next syllable of the same word — repeated across a wide gap, engraving style */
         if (c.pos === "begin" || c.pos === "middle") {
-          const nx = i < chips.length - 1 ? xOfT(bi, chips[i + 1].t) : xOfT(bi, L.B);
-          const hx = (x + tw + nx) / 2;
-          svg.append(svgEl("text", { x: Math.max(hx, x + tw + 2), y: ty, "text-anchor": "middle", "font-size": 13, fill: C.ink2 }, "-"));
+          let nx;
+          if (i < chips.length - 1) nx = xOfT(bi, chips[i + 1].t);
+          else { const nb = bi + 1 < L.end ? song.bars[bi + 1] : null; nx = nb && nb.chips.length ? xOfT(bi + 1, nb.chips[0].t) : xOfT(bi, L.B); }
+          const g0 = x + tw + 3, g1 = nx - 3, gap = g1 - g0;
+          if (gap < 10) svg.append(svgEl("text", { x: x + tw + 1, y: ty, "text-anchor": "middle", "font-size": 13, fill: C.ink2 }, "-"));
+          else { const n = Math.max(1, Math.floor(gap / 44)); for (let k = 1; k <= n; k++) svg.append(svgEl("text", { x: g0 + gap * k / (n + 1), y: ty, "text-anchor": "middle", "font-size": 13, fill: C.ink2 }, "-")); }
         }
-        /* extender: melisma (following notes without a syllable of their own) */
+        /* extender line: the word's last syllable held on — a long or tied note, or extra notes without words */
         if (note && (c.pos === "single" || c.pos === "end")) {
-          const nextT = i < chips.length - 1 ? chips[i + 1].t : L.B;
+          const nextT = i < chips.length - 1 ? chips[i + 1].t : L.B + 99;
           const tail = notes.filter(n => n.t > note.t && n.t < nextT && !n.chip);
-          if (tail.length) { const endX = xOfT(bi, Math.max(...tail.map(n => n.t + n.d))); svg.append(svgEl("line", { x1: x + tw + 2, x2: endX - 2, y1: ty, y2: ty, stroke: C.ink2, "stroke-width": 1.2 })); }
+          const endT = Math.max(note.t + note.d, ...tail.map(n => n.t + n.d));
+          const endX = xOfT(bi, endT) - 3, x0 = x + tw + 3;
+          if (endX - x0 > 10) svg.append(svgEl("line", { x1: x0, x2: endX, y1: ty, y2: ty, stroke: C.ink2, "stroke-width": 1.3, "stroke-linecap": "round" }));
         }
       });
     }
