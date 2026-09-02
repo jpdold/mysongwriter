@@ -7532,11 +7532,14 @@ function onStaveDown(e) {
   } else if (t.classList && t.classList.contains("hit")) {
     dragCtx = { type: "tap", lane: t.getAttribute("data-lane"), bi, x0: e.clientX, y0: e.clientY, moved: false };
   } else dragCtx = null;
+  /* capture on the <svg> itself: a mid-drag re-render removes the child that
+     was touched, and pointerup on a detached node never reaches the window */
+  if (dragCtx) { try { $("stave").setPointerCapture(e.pointerId); } catch (err) {} }
 }
 function onStaveMove(e) {
   if (!dragCtx || pinch) return;
   const dx = e.clientX - dragCtx.x0, dy = e.clientY - dragCtx.y0;
-  if (!dragCtx.moved && Math.hypot(dx, dy) < 7) return;
+  if (!dragCtx.moved && Math.hypot(dx, dy) < (dragCtx.type === "tap" ? 12 : 7)) return;
   if (dragCtx.type === "tap") { dragCtx.moved = true; return; }
   dragCtx.moved = true;
   const bar = S.song.bars[dragCtx.bi];
@@ -7653,6 +7656,7 @@ function initPinch() {
   const frame = $("staffScroll");
   frame.addEventListener("pointerdown", e => {
     if (e.pointerType !== "touch") return;
+    if (e.isPrimary) { pinchPts.clear(); pinch = null; }
     pinchPts.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pinchPts.size === 2) {
       dragCtx = null;
@@ -8103,6 +8107,7 @@ async function boot() {
   window.addEventListener("pointermove", onStaveMove);
   window.addEventListener("pointerup", onStaveUp);
   window.addEventListener("pointercancel", () => { dragCtx = null; });
+  window.addEventListener("blur", () => { dragCtx = null; pinch = null; pinchPts.clear(); });
   stave.addEventListener("contextmenu", e => e.preventDefault());
   initPinch();
   window.addEventListener("resize", () => { if (L) { L = layout(); renderStave(); } });
