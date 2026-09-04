@@ -66,6 +66,21 @@ svg text { pointer-events: none; }
    ═══════════════════════════════════════════════════════════════════════ */
 #app { max-width: 560px; margin: 0 auto; padding: 8px 10px calc(14px + env(safe-area-inset-bottom)); display: grid; gap: 7px;
   grid-template-columns: 1fr; grid-template-areas: "head" "nav" "beats" "mel" "rhy" "lyr" "pal" "acc" "bass" "foot"; }
+#rollBar { grid-area: rollbar; display: none; gap: 6px; }
+/* rolled-up view: three labelled bars across the top; open staves drop down beneath; strips and tools follow */
+#app.rolled { max-width: 560px !important; grid-template-columns: 1fr !important; grid-template-areas: "head" "nav" "rollbar" "beats" "mel" "acc" "bass" "rhy" "lyr" "pal" "foot" !important; }
+#app.rolled #rollBar { display: flex; }
+#app.rolled .win.closed { display: none !important; }
+#app.rolled .win .sizer { display: none; }
+#app.rolled #melWin { margin-top: 0; }
+#app.rolled #accWin, #app.rolled #bassWin { margin-top: 12px; }
+.rollItem { flex: 1; display: flex; align-items: center; gap: 6px; height: 30px; background: #111; color: #fff; border: 1px solid #000; border-radius: 4px; padding: 0 4px 0 8px;
+  font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; overflow: hidden; }
+.rollItem .dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; }
+.rollItem .lbl { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+.rollItem button { width: 24px; height: 22px; border: 1px solid rgba(255,255,255,.35); border-radius: 4px; background: rgba(255,255,255,.12); color: #fff; font-size: 16px; line-height: 1; padding: 0; flex: 0 0 auto; }
+.rollItem.open { background: var(--ground2); }
+.rollItem.open button { background: var(--box); color: #111; border-color: #a86d10; }
 #head { grid-area: head; } #nav { grid-area: nav; } #beatRow { grid-area: beats; } #melWin { grid-area: mel; } #rhyStrip { grid-area: rhy; }
 #lyrStrip { grid-area: lyr; } #palette { grid-area: pal; } #accWin { grid-area: acc; } #bassWin { grid-area: bass; } #foot { grid-area: foot; }
 @media (min-width: 860px) and (min-aspect-ratio: 5/4) {
@@ -352,6 +367,7 @@ textarea.lyricArea { width: 100%; min-height: 90px; border: 1px solid #999; bord
     <button class="arrow" id="nextBar" title="Next bar">▶</button>
   </div>
 
+  <div id="rollBar"></div>
   <div id="beatRow"></div>
 
   <section class="win" id="melWin">
@@ -6937,7 +6953,7 @@ function partEvents(part, bi) {
   if (part === "melody") return melodyPlayEvents(bi);
   if (part === "sub") return subVocalEvents(bi).map(e => ({ ...e, ms: [e.m], vel: 0.7, sus: e.d * 0.95, auto: true }));
   if (part === "backup") return chordSegments(bi).map(seg => ({ t: seg.t, d: seg.d, ms: backupVoicing(bi, seg.ch), vel: 0.35, sus: seg.d * 0.97, auto: true })).filter(e => e.ms.length);
-  if (bar.custom[part]) return (bar.ev[part] || []).filter(e => !e.rest).map(e => ({ t: e.t, d: e.d, ms: [e.m], vel: 0.8, sus: e.d * articFactor(e, autoRatio(e.d)), src: e }));
+  if (bar.custom[part]) return bandPlayEvents(part, bi);
   if (part === "ensemble" && isCountermelodyInst(P.inst)) return callResponse(bi, 0, 55, 79).map(e => ({ ...e, ms: [e.m], vel: 0.55, sus: e.d * 0.9, auto: true }));
   const segs = chordSegments(bi); if (!segs.length) return [];
   const chAt = t => { let c = segs[0].ch; for (const sg of segs) if (sg.t <= t + 1e-6) c = sg.ch; return c; };
@@ -7643,7 +7659,7 @@ const WIN_WEIGHT = { mel: 1.5, acc: 1, bass: 1 };
 const STEPS = { mel: 14, acc: 8, bass: 8 };      // computed by allocate()
 const WIN_PART = { mel: "melody", acc: "accomp", bass: "bass" };
 const WIN_LO = { mel: "melLo", acc: "accLo", bass: "bassLo" };
-Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", halfLines: false, winSize: "m", chordsDisp: "names", metro: "off", winState: { mel: "open", acc: "open", bass: "open" }, zoomWin: { mel: 1, acc: 1, bass: 1 }, lyricFont: "sans", viewSpan: 1, selChip: null, ghost: null, restNext: false, artic: null, slurFrom: null, active: null, softKb: ("ontouchstart" in window), popPos: null, mode: "melody" });
+Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", halfLines: false, winSize: "m", chordsDisp: "names", metro: "off", winState: { mel: "open", acc: "open", bass: "open" }, zoomWin: { mel: 1, acc: 1, bass: 1 }, lyricFont: "sans", viewSpan: 1, layout: "stack", selChip: null, ghost: null, restNext: false, artic: null, slurFrom: null, active: null, softKb: ("ontouchstart" in window), popPos: null, mode: "melody" });
 const UNDO = { stack: [], last: null, max: 60 };
 const setMode = () => {};                          // engine shims (the old mode sheets are gone)
 const renderPanel = () => renderAll();
@@ -7651,10 +7667,10 @@ function loadPrefs() {
   const p = readJSON(STORE.prefs, {});
   S.theme = p.theme || "auto"; S.followWords = p.followWords !== false; S.noteStyle = p.noteStyle || "trad"; S.halfLines = !!p.halfLines;
   S.winSize = WIN[p.winSize] ? p.winSize : "m"; S.chordsDisp = p.chordsDisp || "names"; S.metro = p.metro || "off"; S.custom = p.custom || null; S.len = p.len || 1;
-  S.lyricFont = p.lyricFont || "sans"; S.winState = Object.assign({ mel: "open", acc: "open", bass: "open" }, p.winState || {}); S.zoomWin = Object.assign({ mel: 1, acc: 1, bass: 1 }, p.zoomWin || {}); S.midi = p.midi || {}; S.viewSpan = [1, 2, 3, 4].includes(p.viewSpan) ? p.viewSpan : 1; if (p.softKb != null) S.softKb = p.softKb;
+  S.lyricFont = p.lyricFont || "sans"; S.winState = Object.assign({ mel: "open", acc: "open", bass: "open" }, p.winState || {}); S.zoomWin = Object.assign({ mel: 1, acc: 1, bass: 1 }, p.zoomWin || {}); S.midi = p.midi || {}; S.viewSpan = [1, 2, 3, 4].includes(p.viewSpan) ? p.viewSpan : 1; if (p.softKb != null) S.softKb = p.softKb; S.layout = p.layout === "rolled" ? "rolled" : "stack";
   applyTheme();
 }
-function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, followWords: S.followWords, noteStyle: S.noteStyle, halfLines: S.halfLines, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb: S.softKb }); }
+function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, followWords: S.followWords, noteStyle: S.noteStyle, halfLines: S.halfLines, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb: S.softKb, layout: S.layout }); }
 function applyTheme() {
   const r = document.documentElement;
   if (S.theme === "dark") r.setAttribute("data-theme", "dark"); else r.removeAttribute("data-theme");
@@ -7737,10 +7753,10 @@ function geo(win) {
    A melody event with m == null is a rhythm-only slot (orange box, no pitch).
    e.tie means "held into the next event" (also across the bar line).
    ═══════════════════════════════════════════════════════════════════════ */
-const sortedEv = bar => [...bar.ev.melody].sort((a, b) => a.t - b.t);
-/* chains of tied events within one bar: [{ head, members, t, d, tieOut, tieIn }] */
-function chains(bar) {
-  const evs = sortedEv(bar), out = [], B = barBeats(S.song.bars.indexOf(bar)); let cur = null;
+const sortedEv = (bar, part = "melody") => [...(bar.ev[part] || [])].sort((a, b) => a.t - b.t);
+/* chains of tied events within one bar (any part): [{ head, members, t, d, tieOut }] */
+function chains(bar, part = "melody") {
+  const evs = sortedEv(bar, part), out = [], B = barBeats(S.song.bars.indexOf(bar)); let cur = null;
   for (const e of evs) {
     if (cur && cur.last.tie && !cur.last.rest && !e.rest && Math.abs(cur.last.t + cur.last.d - e.t) < 1e-6) { cur.members.push(e); cur.d = r3(cur.d + e.d); cur.last = e; continue; }
     cur = { head: e, members: [e], t: e.t, d: e.d, last: e }; out.push(cur);
@@ -7751,7 +7767,7 @@ function chains(bar) {
 const chainOf = (bar, e) => chains(bar).find(c => c.members.includes(e));
 const isContinuation = (bar, e) => { const c = chainOf(bar, e); return !!c && c.head !== e; };
 /* a chain that starts at beat 1 and continues the previous bar's tie is not a new attack */
-function tiedFromPrev(bi, chain) { if (chain.t > 1e-6 || bi <= 0) return false; const pc = chains(S.song.bars[bi - 1]); return pc.length > 0 && pc[pc.length - 1].tieOut && !chain.rest; }
+function tiedFromPrev(bi, chain, part = "melody") { if (chain.t > 1e-6 || bi <= 0) return false; const pc = chains(S.song.bars[bi - 1], part); return pc.length > 0 && pc[pc.length - 1].tieOut && !chain.rest; }
 function setChainPitch(bar, chain, m) { chain.members.forEach(e => { e.m = m; }); if (chain.tieOut) { const nb = S.song.bars[S.song.bars.indexOf(bar) + 1]; if (nb) { const nc = chains(nb)[0]; if (nc && nc.t === 0 && !nc.rest) nc.members.forEach(e => { e.m = m; }); } } }
 const rhythmEnd = bar => { const c = chains(bar); return c.length ? r3(c[c.length - 1].t + c[c.length - 1].d) : 0; };
 function freeSpan(bar, t) { const B = barBeats(S.song.bars.indexOf(bar)); let end = B; for (const e of bar.ev.melody) if (e.t > t + 1e-6) end = Math.min(end, e.t); return r3(end - t); }
@@ -7816,6 +7832,17 @@ function melodyPlayEvents(bi) {
   return out;
 }
 const barSlotsSummary = bi => chains(S.song.bars[bi]).filter(c => !c.rest).length;
+/* hand-placed band notes: one sound per tie chain, held into the next bar when tied over */
+function bandPlayEvents(part, bi) {
+  const bar = S.song.bars[bi], out = [];
+  for (const c of chains(bar, part)) {
+    if (c.rest || c.head.m == null || tiedFromPrev(bi, c, part)) continue;
+    let d = c.d, k = bi, cc = c;
+    while (cc.tieOut && S.song.bars[k + 1]) { const nc = chains(S.song.bars[k + 1], part)[0]; if (!nc || nc.t > 1e-6 || nc.rest) break; d = r3(d + nc.d); cc = nc; k++; }
+    out.push({ t: c.t, d, ms: [c.head.m], vel: 0.8, sus: d * articFactor(c.head, autoRatio(d)), src: c.head });
+  }
+  return out;
+}
 /* the one active beat: only it takes taps; everything else just becomes active when tapped */
 const beatOf = (bi, t) => Math.min(Math.floor(t + 1e-6), Math.max(0, Math.ceil(barBeats(bi)) - 1));
 const inActive = (bi, t) => !!S.active && S.active.bi === bi && beatOf(bi, t) === S.active.beat;
@@ -7839,6 +7866,17 @@ const ARTIC = { staccato: { glyph: "•", label: "staccato" }, tenuto: { glyph: 
 /* ═══════════════════════════════════════════════════════════════════════
    SECTION 10 · RENDERING
    ═══════════════════════════════════════════════════════════════════════ */
+function renderRollBar() {
+  const bar = $("rollBar"); bar.replaceChildren();
+  $("app").classList.toggle("rolled", S.layout === "rolled");
+  if (S.layout !== "rolled") return;
+  for (const w of ["mel", "acc", "bass"]) {
+    const part = WIN_PART[w], open = S.winState[w] !== "closed";
+    bar.append(el("div", { class: "rollItem" + (open ? " open" : "") },
+      el("span", { class: "dot", style: `background:var(--${part})` }), el("span", { class: "lbl" }, part === "melody" ? "Melody" : part === "accomp" ? "Accompaniment" : "Bass"),
+      el("button", { title: open ? "Roll up" : "Open", onclick: () => { S.winState[w] = open ? "closed" : "open"; savePrefs(); renderAll(); } }, open ? "−" : "+")));
+  }
+}
 function renderAll() {
   if (!S.song) return;
   const snap = JSON.stringify(S.song);
@@ -7848,7 +7886,7 @@ function renderAll() {
   S.bi = clamp(S.bi, 0, S.song.bars.length - 1);
   if (S.si !== S.siLast && S.si !== sectionOfBar(S.bi) && S.song.sections[S.si]) S.bi = sectionRange(S.si).start;   // a section op moved us
   S.si = sectionOfBar(S.bi); S.siLast = S.si;
-  renderHeader(); renderNav(); renderPalette(); allocate(); renderWindows(); renderStrips(); renderBeatRow();
+  renderHeader(); renderNav(); renderRollBar(); renderPalette(); allocate(); renderWindows(); renderStrips(); renderBeatRow();
   saveSoon();
 }
 function renderLights() { renderNav(); }
@@ -8045,6 +8083,12 @@ function renderWindows() {
     if (bar.custom[part]) {
       const groups = S.noteStyle === "trad" ? beamGroups(bar.ev[part].filter(e => e.m >= g.lo && e.m <= g.hi)) : [], beamed = new Set(groups.flatMap(gp => gp.evs.map(e => e.id)));
       groups.forEach(gp => drawBeamed(svg, g, gp, color, e => g.x(bi, e.t) + 2));
+      for (const c of chains(bar, part)) {
+        if (c.rest || c.head.m == null) continue;
+        const m = clamp(c.head.m, g.lo, g.hi);
+        c.members.forEach((e, k) => { if (e.tie) { const nx = k < c.members.length - 1 ? g.x(bi, c.members[k + 1].t) + 2 + g.step * 0.55 : g.x(bi, barBeats(bi)) + (g.bars.includes(bi + 1) ? 2 + g.step * 0.55 : 0); tieArcAt(svg, g.x(bi, e.t) + 2 + g.step * 0.55, nx, g.y(m) + g.step * 0.5, color); } });
+        if (tiedFromPrev(bi, c, part) && bi === g.first) tieArcAt(svg, 0, g.x(bi, c.t) + 1 + g.step * 0.55, g.y(m) + g.step * 0.5, color);
+      }
       for (const e of bar.ev[part]) {
         if (e.rest || e.m < g.lo || e.m > g.hi) continue;
         const up = stemUp(g, e.m, groups, e);
@@ -8126,6 +8170,7 @@ function renderStrips() {
 }
 function renderBeatRow() {
   const rowEl = $("beatRow"), g = GEO.mel, song = S.song, bar = curBar(), bi = S.bi; rowEl.replaceChildren();
+  if (S.layout === "rolled" && ["mel", "acc", "bass"].every(w => S.winState[w] === "closed")) return;
   const frame = $("melWin").querySelector(".frame"), left = S.winState.mel === "closed" ? $("rhyStrip").querySelector(".body").offsetLeft : frame.offsetLeft;
   const row = el("div", { class: "inner" }); rowEl.append(row); row.style.transform = `translateX(${-frame.scrollLeft}px)`;
   const r = curRange();
@@ -8287,21 +8332,22 @@ function applyArtic(bi, part, ev) {
   ev.artic = ev.artic === S.artic ? undefined : S.artic; if (!ev.artic) delete ev.artic; previewNote(ev.m, part); renderAll();
 }
 function tapTie() {
-  let ev = selEv(), bar;
-  if (!ev || S.sel.part !== "melody") { bar = curBar(); const c = chains(bar); if (!c.length) return; ev = c[c.length - 1].last; S.sel = { bi: S.bi, part: "melody", id: ev.id }; } else bar = S.song.bars[S.sel.bi];
+  let ev = selEv(), bar, part = S.sel ? S.sel.part : "melody";
+  if (!ev) { bar = curBar(); const c = chains(bar); if (!c.length) return; ev = c[c.length - 1].last; part = "melody"; S.sel = { bi: S.bi, part, id: ev.id }; } else bar = S.song.bars[S.sel.bi];
   if (ev.rest) return;
-  const B = barBeats(S.sel.bi);
+  const bi = S.sel.bi, B = barBeats(bi), list = bar.ev[part];
   if (ev.tie) { delete ev.tie; renderAll(); return; }
-  const next = bar.ev.melody.filter(e => e.t > ev.t + 1e-6).sort((a, b) => a.t - b.t)[0];
+  const next = list.filter(e => e.t > ev.t + 1e-6).sort((a, b) => a.t - b.t)[0];
   if (next && Math.abs(next.t - (ev.t + ev.d)) < 1e-6) { if (next.rest) { toast("Can't tie into a rest"); return; } ev.tie = true; if (ev.m != null) next.m = ev.m; else if (next.m != null) ev.m = next.m; }
   else if (!next && Math.abs(ev.t + ev.d - B) < 1e-6) {
-    const bi = S.sel.bi, nb = S.song.bars[bi + 1]; if (!nb) { toast("No next bar to tie into"); return; }
-    let first = sortedEv(nb)[0];
-    if (!first || first.t > 1e-6) { first = { id: uid(), t: 0, d: Math.min(baseLen(ev.d), first ? first.t : barBeats(bi + 1)), m: ev.m == null ? null : ev.m }; nb.ev.melody.push(first); }
+    const nb = S.song.bars[bi + 1]; if (!nb) { toast("No next bar to tie into"); return; }
+    if (part !== "melody" && !nb.custom[part]) nb.custom[part] = true;                       // the tie carries into a custom bar
+    let first = sortedEv(nb, part)[0];
+    if (!first || first.t > 1e-6) { first = { id: uid(), t: 0, d: Math.min(baseLen(ev.d), first ? first.t : barBeats(bi + 1)), m: ev.m == null ? null : ev.m }; nb.ev[part].push(first); }
     else if (first.rest) { toast("The next bar starts with a rest"); return; } else if (ev.m != null) first.m = ev.m;
-    ev.tie = true; syncNotesToChips(nb);
+    ev.tie = true; if (part === "melody") syncNotesToChips(nb);
   } else { toast("A tie needs the next note right after this one"); return; }
-  syncNotesToChips(bar); renderAll();
+  if (part === "melody") syncNotesToChips(bar); renderAll();
 }
 function transposeSel(d) { const ev = selEv(); if (!ev || ev.rest || ev.m == null) return; const bar = S.song.bars[S.sel.bi]; const m = clamp(ev.m + d, 21, 108); if (S.sel.part === "melody") setChainPitch(bar, chainOf(bar, ev), m); else ev.m = m; previewNote(m, S.sel.part); ensureVisible(S.sel.part, m); renderAll(); }
 function moveSel(dt) {
@@ -8312,7 +8358,7 @@ function moveSel(dt) {
   if (S.sel.part === "melody") { const chip = bar.chips.find(c => c.id === ev.chip); if (chip) setChipTime(bar, chip, nt); else syncNotesToChips(bar); }
   renderAll();
 }
-function deleteSel() { const ev = selEv(); if (!ev) return; const bar = S.song.bars[S.sel.bi]; bar.ev[S.sel.part] = bar.ev[S.sel.part].filter(e => e.id !== ev.id); bar.ev[S.sel.part].forEach(e => { if (e.slur === ev.id) delete e.slur; }); if (S.sel.part === "melody") { const prev = bar.ev.melody.filter(e => e.t < ev.t).sort((a, b) => b.t - a.t)[0]; if (prev && prev.tie) delete prev.tie; syncNotesToChips(bar); if (S.followWords) S.cursor = nextUnpitchedChip(S.sel.bi, null); } S.sel = null; renderAll(); }
+function deleteSel() { const ev = selEv(); if (!ev) return; const bar = S.song.bars[S.sel.bi]; bar.ev[S.sel.part] = bar.ev[S.sel.part].filter(e => e.id !== ev.id); bar.ev[S.sel.part].forEach(e => { if (e.slur === ev.id) delete e.slur; }); { const prev = bar.ev[S.sel.part].filter(e => e.t < ev.t).sort((a, b) => b.t - a.t)[0]; if (prev && prev.tie && Math.abs(prev.t + prev.d - ev.t) < 1e-6) delete prev.tie; } if (S.sel.part === "melody") { const prev = bar.ev.melody.filter(e => e.t < ev.t).sort((a, b) => b.t - a.t)[0]; if (prev && prev.tie) delete prev.tie; syncNotesToChips(bar); if (S.followWords) S.cursor = nextUnpitchedChip(S.sel.bi, null); } S.sel = null; renderAll(); }
 function ensureVisible(part, m) {
   const win = part === "melody" ? "mel" : part === "accomp" ? "acc" : "bass", { rows } = rowsOf(win), key = WIN_LO[win], lo = viewOf(win);
   if (m < lo + 1) S.song.view[key] = clamp(m - 2, 21, 108 - rows); else if (m > lo + rows - 2) S.song.view[key] = clamp(m - rows + 3, 21, 108 - rows);
@@ -8591,6 +8637,7 @@ function openSettings() {
   if (S.theme === "custom") [["ground", "Body"], ["ground2", "Strips"], ["accent", "Buttons"], ["lyric", "Lyrics"], ["box", "Rhythm boxes"]].forEach(([k, l]) => colorRow.append(el("label", { class: "tiny", style: "display:inline-flex;align-items:center;gap:4px" }, el("input", { type: "color", value: custom[k], oninput: e => { custom[k] = e.target.value; S.custom = custom; applyTheme(); savePrefs(); } }), l)));
   openModal("Settings", [
     el("div", { class: "pLbl" }, "Theme"), seg([["auto", "Default"], ["dark", "Dark"], ["custom", "Custom"]], S.theme, v => { S.theme = v; if (v === "custom" && !S.custom) S.custom = custom; applyTheme(); savePrefs(); }), colorRow,
+    el("div", { class: "pLbl" }, "View"), seg([["stack", "Stacked staves"], ["rolled", "Rolled up (bars with + / −)"]], S.layout, v => { S.layout = v; if (v === "rolled") { S.focus = null; $("app").classList.remove("focused", "focus-mel", "focus-acc", "focus-bass"); } savePrefs(); renderAll(); }),
     el("div", { class: "pLbl" }, "Window shows"), seg([[1, "1 bar"], [2, "2 bars"], [3, "3 bars"], [4, "4 bars"]], S.viewSpan, v => { S.viewSpan = v; savePrefs(); renderAll(); }),
     el("div", { class: "tiny" }, "More bars make the staves proportionately wider — swipe sideways to move along them; every window and strip scrolls together."),
     el("div", { class: "pLbl" }, "Window sizing"), seg([["s", "Small"], ["m", "Medium"], ["l", "Large"]], S.winSize, v => { S.winSize = v; savePrefs(); renderAll(); }),
@@ -8738,7 +8785,7 @@ function openHelp() {
     h("Articulation", "• staccato, ‒ tenuto, ◠ slur. With a note selected, tap a mark to apply it. Otherwise tap a mark to arm it: notes you enter carry it, and tapping existing notes marks them; tap the mark again to finish. For a slur, tap the first note then the last."),
     h("Chords", "Chord names sit in the beat row; tap a beat there or use Chords… to set the chord at any beat. A chord holds until the next change."),
     h("Accompaniment & Bass", "Play genre patterns automatically; ⚙ on each window sets instrument, sound, pattern, volume, or Custom to place notes yourself."),
-    h("Settings ⚙", "Theme, window sizing, chords display, note appearance (traditional, pills, circles), half steps on lines, metronome."),
+    h("Settings ⚙", "View (stacked staves, or rolled up into three bars with + / −), theme, window sizing, chords display, note appearance (traditional, pills, circles), half steps on lines, metronome."),
     h("Menu ☰", "Share a link or per-musician parts, export/import files, save."),
   ]);
 }
