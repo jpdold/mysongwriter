@@ -18,7 +18,7 @@ Articulation: • staccato, ‒ tenuto and ◠ slur sit in the palette. With a n
 
 Notes follow standard engraving: eighths and shorter are beamed per beat (per dotted quarter in 6/8), sixteenths get a second beam, and stems point down above the middle of the window.
 
-7. **⚙ Settings** — theme (default, dark, custom colours), window shows 1 bar (beats) or 4 bars, window sizing, chords displayed (names / Roman / hidden), note appearance (traditional / pills / circles), half steps on lines, lyrics font, metronome and count-in.
+7. **⚙ Settings** — theme (default, dark, custom colours), window shows 1, 2, 3 or 4 bars (more bars widen the staves; everything scrolls together), window sizing, chords displayed (names / Roman / hidden), note appearance (traditional / pills / circles), half steps on lines, lyrics font, metronome and count-in.
 8. **☰ Menu / Save…** — share a link, per-musician parts and performance mode; export/import files; save, open, copy and start songs.
 
 The dots under the bar bracket show each bar of the section: green when every voice is full, white when empty, yellow in between.

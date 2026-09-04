@@ -104,7 +104,8 @@ svg text { pointer-events: none; }
 #barDots i.play { box-shadow: 0 0 0 1px var(--box); }
 
 /* ── beat header ── */
-#beatRow { position: relative; height: 22px; margin-bottom: -2px; }
+#beatRow { position: relative; height: 22px; margin-bottom: -2px; overflow: hidden; }
+#beatRow .inner { position: absolute; inset: 0; will-change: transform; }
 #beatRow .beat { position: absolute; top: 3px; height: 16px; display: flex; align-items: center; gap: 4px; }
 #beatRow .beat b { background: #111; color: #fff; font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 2px; white-space: nowrap; }
 #beatRow .beat i { display: inline-block; width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 8px solid #fff; }
@@ -118,7 +119,9 @@ svg text { pointer-events: none; }
 .win .gutter svg { display: block; width: 42px; }
 .win .frame { background: var(--paper); border: 2px solid #111; border-radius: 3px; box-shadow: inset 0 0 0 2px #fff, inset 0 2px 8px rgba(0,0,0,.28), 0 1px 0 rgba(255,255,255,.15);
   overflow: hidden; position: relative; }
-.win .frame svg { display: block; width: 100%; touch-action: none; }
+.win .frame { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.win .frame::-webkit-scrollbar { display: none; }
+.win .frame svg { display: block; touch-action: none; }
 .win .side { display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 2px 0; }
 .win .gear, .win .sizer { width: 22px; height: 22px; border: none; background: none; color: var(--on-ground); font-size: 17px; padding: 0; line-height: 1; opacity: .85; }
 .win .sizer { font-size: 13px; letter-spacing: -2px; }
@@ -135,8 +138,9 @@ svg text { pointer-events: none; }
 .strip .tag { justify-self: stretch; height: 22px; display: grid; place-items: center; background: var(--tag); color: var(--tag-ink); border: 1px solid #2c5; border-radius: 3px;
   font-size: 10px; font-weight: 700; letter-spacing: 0; text-transform: none; padding: 0 2px; white-space: nowrap; overflow: hidden; }
 .strip .tag:active { filter: brightness(1.1); }
-.strip .body { border: 2px solid #111; border-radius: 3px; overflow: hidden; position: relative; }
-.strip .body svg { display: block; width: 100%; touch-action: none; }
+.strip .body { border: 2px solid #111; border-radius: 3px; overflow-x: auto; overflow-y: hidden; position: relative; scrollbar-width: none; }
+.strip .body::-webkit-scrollbar { display: none; }
+.strip .body svg { display: block; touch-action: none; }
 #rhyStrip .body { background: var(--ground2); }
 #lyrStrip .body { background: var(--lyric); box-shadow: 0 0 0 2px var(--tag) inset; }
 #lyrStrip .body svg text { font-family: var(--sans); font-weight: 700; fill: var(--lyric-ink); }
@@ -243,13 +247,13 @@ textarea.lyricArea { width: 100%; min-height: 90px; border: 1px solid #999; bord
 #wordEdit .weRow { display: flex; align-items: center; gap: 4px; }
 #wordEdit .weRow .flex { flex: 1; }
 #wordEdit .weRow button { width: 32px; height: 30px; }
-#lyrInline { position: absolute; top: 2px; height: 24px; display: none; border: none; outline: none; background: rgba(255,255,255,.18); border-radius: 4px; padding: 0 3px;
-  font-family: var(--sans); font-weight: 700; font-size: 15px; color: #fff; caret-color: #fff; min-width: 40px; }
+#lyrInline { position: absolute; top: 3px; height: 30px; display: none; border: none; outline: none; background: rgba(255,255,255,.18); border-radius: 4px; padding: 0 3px;
+  font-family: var(--sans); font-weight: 700; font-size: 16px; color: #fff; caret-color: #fff; min-width: 40px; }
 #lyrInline.on { display: block; }
 #lyrInline::placeholder { color: rgba(255,255,255,.6); font-weight: 400; }
 #lyrStrip.serif #lyrInline { font-family: var(--serif); font-weight: 600; }
 #lyrStrip.smallcaps #lyrInline { font-family: var(--serif); font-variant: small-caps; }
-#lyrStrip .body { overflow: visible; }
+#lyrStrip .body { overflow-y: visible; }
 #wordEdit .weKeys { display: flex; flex-direction: column; gap: 3px; }
 #wordEdit .weKeys .krow { display: flex; gap: 3px; justify-content: center; }
 #wordEdit .weKeys button { flex: 1 1 0; min-width: 0; height: 38px; padding: 0; font-size: 17px; font-family: var(--sans); background: #f4f4f4; border: 1px solid #bbb; border-radius: 6px; color: #111; box-shadow: 0 1px 0 #999; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
@@ -7608,7 +7612,7 @@ function loadPrefs() {
   const p = readJSON(STORE.prefs, {});
   S.theme = p.theme || "auto"; S.followWords = p.followWords !== false; S.noteStyle = p.noteStyle || "trad"; S.halfLines = !!p.halfLines;
   S.winSize = WIN[p.winSize] ? p.winSize : "m"; S.chordsDisp = p.chordsDisp || "names"; S.metro = p.metro || "off"; S.custom = p.custom || null; S.len = p.len || 1;
-  S.lyricFont = p.lyricFont || "sans"; S.collapsed = p.collapsed || { acc: true, bass: true }; S.midi = p.midi || {}; S.viewSpan = p.viewSpan === 4 ? 4 : 1; if (p.softKb != null) S.softKb = p.softKb;
+  S.lyricFont = p.lyricFont || "sans"; S.collapsed = p.collapsed || { acc: true, bass: true }; S.midi = p.midi || {}; S.viewSpan = [1, 2, 3, 4].includes(p.viewSpan) ? p.viewSpan : 1; if (p.softKb != null) S.softKb = p.softKb;
   applyTheme();
 }
 function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, followWords: S.followWords, noteStyle: S.noteStyle, halfLines: S.halfLines, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, collapsed: S.collapsed, midi: S.midi, viewSpan: S.viewSpan, softKb: S.softKb }); }
@@ -7627,13 +7631,14 @@ const curBar = () => S.song.bars[S.bi];
 function viewOf(win) { const v = S.song.view; if (v.bassLo == null) v.bassLo = 36; return v[WIN_LO[win]]; }
 function rowsOf(win) { const [rows, step, cstep] = WIN[S.winSize][win]; return { rows, step: S.collapsed[win] ? cstep : step }; }
 /* the window shows 1 or 4 bars (S.viewSpan) starting at S.bi: x is time, y is pitch */
-const viewFirst = () => S.viewSpan === 4 ? S.bi - ((S.bi - curRange().start) % 4) : S.bi;
+const viewFirst = () => S.viewSpan > 1 ? S.bi - ((S.bi - curRange().start) % S.viewSpan) : S.bi;
 const viewBars = () => { const f = viewFirst(), out = []; for (let i = 0; i < S.viewSpan; i++) if (f + i < S.song.bars.length) out.push(f + i); return out; };
 let GEO = {};
 function geo(win) {
   const svg = $(win + "Svg"), B = barBeats(), { rows, step } = rowsOf(win), lo = viewOf(win), hi = lo + rows - 1;
-  const W = Math.max(120, svg.clientWidth || svg.parentNode.clientWidth || 300), padL = 3, padR = 3, padT = 5, padB = 5, n = S.viewSpan, first = viewFirst();
-  const g = { win, B, n, first, W, H: padT + rows * step + padB, padL, padT, step, lo, hi, beatPx: (W - padL - padR) / (B * n) };
+  const n = S.viewSpan, first = viewFirst(), W1 = Math.max(120, svg.parentNode.clientWidth || 300), W = W1 * n, padL = 3, padR = 3, padT = 5, padB = 5;
+  const g = { win, B, n, first, W, W1, H: padT + rows * step + padB, padL, padT, step, lo, hi, beatPx: (W - padL - padR) / (B * n) };
+  svg.setAttribute("width", W); svg.style.width = W + "px"; svg.style.touchAction = n > 1 ? "pan-x" : "none";
   g.x = (bi, t) => padL + ((bi - first) * B + t) * g.beatPx;                 // x(bi, t)
   g.at = x => { const beats = (x - padL) / g.beatPx, k = clamp(Math.floor(beats / B), 0, n - 1); return { bi: first + k, t: beats - k * B }; };
   g.y = m => padT + (hi - m) * step + step / 2; g.m = y => clamp(hi - Math.round((y - padT - step / 2) / step), lo, hi);
@@ -7751,7 +7756,7 @@ function renderHeader() { const t = $("songTitle"); if (document.activeElement !
 function renderNav() {
   const song = S.song, sec = curSection(), r = curRange();
   const vb = viewBars(), inSec = vb.filter(b => b >= r.start && b < r.end);
-  $("barLabel").textContent = S.viewSpan === 4 && inSec.length > 1 ? `${sec.name} · bars ${inSec[0] - r.start + 1}–${inSec[inSec.length - 1] - r.start + 1} of ${sec.bars}` : `${sec.name} · bar ${S.bi - r.start + 1} of ${sec.bars}`;
+  $("barLabel").textContent = S.viewSpan > 1 && inSec.length > 1 ? `${sec.name} · bars ${inSec[0] - r.start + 1}–${inSec[inSec.length - 1] - r.start + 1} of ${sec.bars}` : `${sec.name} · bar ${S.bi - r.start + 1} of ${sec.bars}`;
   $("prevBar").disabled = S.bi <= 0; $("nextBar").disabled = vb[vb.length - 1] >= song.bars.length - 1;
   const dots = $("barDots"); dots.replaceChildren();
   for (let bi = r.start; bi < r.end; bi++) {
@@ -7954,14 +7959,14 @@ function renderWindows() {
   }
 }
 function renderStrips() {
-  const song = S.song, key = keyObj(song.key), g = GEO.mel, B = g.B, H = 28, bars = viewBars();
+  const song = S.song, key = keyObj(song.key), g = GEO.mel, B = g.B, H = 36, bars = viewBars();
   const dividers = (svg, color, op) => { for (const bi of bars) { for (let b = 1; b < B; b++) svg.append(svgEl("line", { x1: g.x(bi, b), x2: g.x(bi, b), y1: 0, y2: H, stroke: color, "stroke-width": 1, "stroke-dasharray": "2 3", opacity: op * (g.n > 1 ? 0.6 : 1) })); if (bi > g.first) svg.append(svgEl("line", { x1: g.x(bi, 0), x2: g.x(bi, 0), y1: 0, y2: H, stroke: color, "stroke-width": 2, opacity: op })); } };
   /* rhythm strip: the slots as small glyphs, the ▶ marks where the next tap lands */
   {
-    const svg = $("rhySvg"); svg.replaceChildren(); svg.setAttribute("height", H); svg.setAttribute("viewBox", `0 0 ${g.W} ${H}`);
+    const svg = $("rhySvg"); svg.replaceChildren(); svg.setAttribute("height", H); svg.setAttribute("viewBox", `0 0 ${g.W} ${H}`); svg.setAttribute("width", g.W); svg.style.width = g.W + "px"; svg.style.touchAction = g.n > 1 ? "pan-x" : "none";
     svg.append(svgEl("rect", { class: "hit", x: 0, y: 0, width: g.W, height: H, fill: "transparent", "data-lane": "rhy" }));
     dividers(svg, "#ddd", 0.6);
-    const mini = { step: 6, y: () => 19, x: g.x, beatPx: g.beatPx, lo: 0, hi: 1, W: g.W, H };
+    const mini = { step: 6, y: () => 23, x: g.x, beatPx: g.beatPx, lo: 0, hi: 1, W: g.W, H };
     for (const bi of bars) {
       const bar = song.bars[bi], sel = S.sel && S.sel.bi === bi && S.sel.part === "melody" ? S.sel.id : null;
       const rhyEvs = bar.ev.melody.filter(e => !e.rest).map(e => ({ id: e.id, t: e.t, d: e.d, m: 0.5 })), groups = beamGroups(rhyEvs), beamed = new Set(groups.flatMap(gp => gp.evs.map(e => e.id)));
@@ -7969,12 +7974,12 @@ function renderStrips() {
       for (const c of chains(bar)) {
         const x0 = g.x(bi, c.t), x1 = g.x(bi, c.t + c.d);
         svg.append(svgEl("rect", { class: "noteEl", x: x0 + 1, y: 1, width: Math.max(4, x1 - x0 - 2), height: H - 2, rx: 3, fill: c.members.some(e => e.id === sel) ? "rgba(245,166,35,.35)" : "transparent", "data-ev": c.head.id, "data-part": "melody", "data-bi": bi }));
-        if (c.rest) { svg.append(svgEl("text", { x: x0 + 5, y: 21, "font-size": 13, fill: "#fff", "font-family": "Georgia, serif" }, "𝄽")); continue; }
+        if (c.rest) { svg.append(svgEl("text", { x: x0 + 5, y: 25, "font-size": 13, fill: "#fff", "font-family": "Georgia, serif" }, "𝄽")); continue; }
         c.members.forEach((e, k) => {
           const saved = S.noteStyle; S.noteStyle = "trad";
           drawNote(svg, mini, g.x(bi, e.t) + 2, 0.5, e.d, "#fff", { "data-ev": e.id, "data-part": "melody", "pointer-events": "none" }, { stem: 2.2, noStem: beamed.has(e.id) });
           S.noteStyle = saved;
-          if (e.tie) { const nx = k < c.members.length - 1 ? g.x(bi, c.members[k + 1].t) + 2 + 3.3 : g.x(bi, B) + (bi + 1 < g.first + g.n ? 5.3 : 0); tieArcAt(svg, g.x(bi, e.t) + 5.3, nx, 22, "#fff"); }
+          if (e.tie) { const nx = k < c.members.length - 1 ? g.x(bi, c.members[k + 1].t) + 2 + 3.3 : g.x(bi, B) + (bi + 1 < g.first + g.n ? 5.3 : 0); tieArcAt(svg, g.x(bi, e.t) + 5.3, nx, 26, "#fff"); }
         });
       }
       const end = rhythmEnd(bar);
@@ -7984,7 +7989,7 @@ function renderStrips() {
   }
   /* lyrics strip: syllables, or free letters / spaces / symbols the user has split apart */
   {
-    const svg = $("lyrSvg"); svg.replaceChildren(); svg.setAttribute("height", H); svg.setAttribute("viewBox", `0 0 ${g.W} ${H}`);
+    const svg = $("lyrSvg"); svg.replaceChildren(); svg.setAttribute("height", H); svg.setAttribute("viewBox", `0 0 ${g.W} ${H}`); svg.setAttribute("width", g.W); svg.style.width = g.W + "px"; svg.style.touchAction = g.n > 1 ? "pan-x" : "none";
     $("lyrStrip").classList.toggle("serif", S.lyricFont === "serif"); $("lyrStrip").classList.toggle("smallcaps", S.lyricFont === "smallcaps");
     $("wordEdit").classList.toggle("serif", S.lyricFont === "serif"); $("wordEdit").classList.toggle("smallcaps", S.lyricFont === "smallcaps");
     svg.append(svgEl("rect", { class: "hit", x: 0, y: 0, width: g.W, height: H, fill: "transparent", "data-lane": "lyr" }));
@@ -7995,26 +8000,27 @@ function renderStrips() {
       bar.chips.forEach((c, i) => {
         any = true;
         const x = g.x(bi, c.t) + 3, tw = chipW(c), isCur = c.id === cursorId, isSel = c.id === selId;
-        if (isCur) svg.append(svgEl("rect", { x: x - 2, y: 3, width: tw - 4, height: H - 6, rx: 5, fill: css("--box"), opacity: 0.9, "pointer-events": "none" }));
-        if (isSel) svg.append(svgEl("rect", { x: x - 3, y: 2, width: tw - 2, height: H - 4, rx: 5, fill: "#fff", opacity: 0.35, stroke: "#fff", "stroke-width": 1.5, "pointer-events": "none" }));
+        if (isCur) svg.append(svgEl("rect", { x: x - 2, y: 4, width: tw - 4, height: H - 8, rx: 5, fill: css("--box"), opacity: 0.9, "pointer-events": "none" }));
+        if (isSel) svg.append(svgEl("rect", { x: x - 3, y: 3, width: tw - 2, height: H - 6, rx: 5, fill: "#fff", opacity: 0.35, stroke: "#fff", "stroke-width": 1.5, "pointer-events": "none" }));
         svg.append(svgEl("rect", { class: "chip", x: x - 2, y: 2, width: Math.max(tw - 4, 14), height: H - 4, rx: 5, fill: "transparent", "data-chip": c.id, "data-bi": bi }));
         const editing = WE.on && WE.bi === bi && WE.wid != null && chipWordIds(bar)[i] === WE.wid;
-        if (!editing) svg.append(svgEl("text", { x, y: 20, "font-size": 15, fill: isCur ? "#222" : "#fff", "font-weight": 700, "font-family": "system-ui, sans-serif", opacity: c.kind === "space" ? 0.55 : 1 }, c.rest ? "𝄽" : c.kind === "space" ? "␣" : c.text));
+        if (!editing) svg.append(svgEl("text", { x, y: 24, "font-size": 16, fill: isCur ? "#222" : "#fff", "font-weight": 700, "font-family": "system-ui, sans-serif", opacity: c.kind === "space" ? 0.55 : 1 }, c.rest ? "𝄽" : c.kind === "space" ? "␣" : c.text));
         if (c.kind) return;                                        // letters, spaces and symbols carry no hyphens or extenders
-        if (c.pos === "begin" || c.pos === "middle") { const nx = i < bar.chips.length - 1 ? g.x(bi, bar.chips[i + 1].t) + 3 : g.x(bi, B); const gap = nx - (x + tw - 6); const n = Math.max(1, Math.floor(gap / 40)); for (let k = 1; k <= n; k++) svg.append(svgEl("text", { x: x + tw - 6 + gap * k / (n + 1), y: 20, "text-anchor": "middle", "font-size": 15, fill: "#fff", "font-weight": 700 }, "-")); }
-        else if (c.pos === "end" || c.pos === "single") { const n = chipNote(bar, c); if (n && !n.rest) { const ch = chainOf(bar, n); const endX = g.x(bi, ch.t + ch.d) - 4; if ((ch.members.length > 1 || ch.d >= 2) && endX - (x + tw - 4) > 12) svg.append(svgEl("line", { x1: x + tw - 4, x2: endX, y1: 21, y2: 21, stroke: "#fff", "stroke-width": 1.5, "stroke-linecap": "round" })); } }
+        if (c.pos === "begin" || c.pos === "middle") { const nx = i < bar.chips.length - 1 ? g.x(bi, bar.chips[i + 1].t) + 3 : g.x(bi, B); const gap = nx - (x + tw - 6); const n = Math.max(1, Math.floor(gap / 40)); for (let k = 1; k <= n; k++) svg.append(svgEl("text", { x: x + tw - 6 + gap * k / (n + 1), y: 24, "text-anchor": "middle", "font-size": 16, fill: "#fff", "font-weight": 700 }, "-")); }
+        else if (c.pos === "end" || c.pos === "single") { const n = chipNote(bar, c); if (n && !n.rest) { const ch = chainOf(bar, n); const endX = g.x(bi, ch.t + ch.d) - 4; if ((ch.members.length > 1 || ch.d >= 2) && endX - (x + tw - 4) > 12) svg.append(svgEl("line", { x1: x + tw - 4, x2: endX, y1: 25, y2: 25, stroke: "#fff", "stroke-width": 1.5, "stroke-linecap": "round" })); } }
       });
     }
-    if (!any) svg.append(svgEl("text", { x: g.W / 2, y: 19, "text-anchor": "middle", "font-size": 11, fill: "rgba(255,255,255,.75)", "font-weight": 400 }, "tap to type words at a beat"));
+    if (!any) svg.append(svgEl("text", { x: g.W1 / 2, y: 23, "text-anchor": "middle", "font-size": 11, fill: "rgba(255,255,255,.75)", "font-weight": 400 }, "tap to type words at a beat"));
   }
   const ph = $("lyrSvg"); ph.append(svgEl("line", { id: "lyrHead", x1: -5, x2: -5, y1: 0, y2: H, stroke: "#fff", "stroke-width": 2, "pointer-events": "none" }));
-  if (WE.on) { const inp = weInput(), bodyEl = $("lyrStrip").querySelector(".body"); if (viewBars().includes(WE.bi)) { inp.classList.add("on"); const x = g.x(WE.bi, WE.t) * (bodyEl.clientWidth / g.W); inp.style.left = clamp(x + 1, 0, Math.max(0, bodyEl.clientWidth - inp.offsetWidth - 2)) + "px"; } else inp.classList.remove("on"); }
+  if (WE.on) { const inp = weInput(); if (viewBars().includes(WE.bi)) { inp.classList.add("on"); const x = g.x(WE.bi, WE.t); inp.style.left = clamp(x + 1, 0, Math.max(0, g.W - inp.offsetWidth - 2)) + "px"; } else inp.classList.remove("on"); }
 }
 function renderBeatRow() {
-  const row = $("beatRow"), g = GEO.mel, song = S.song, bar = curBar(), bi = S.bi; row.replaceChildren();
+  const rowEl = $("beatRow"), g = GEO.mel, song = S.song, bar = curBar(), bi = S.bi; rowEl.replaceChildren();
   const frame = $("melWin").querySelector(".frame"), left = frame.offsetLeft;
+  const row = el("div", { class: "inner" }); rowEl.append(row); row.style.transform = `translateX(${-frame.scrollLeft}px)`;
   const r = curRange();
-  if (S.viewSpan === 4) {
+  if (S.viewSpan > 1) {
     for (const vbi of viewBars()) {
       const segs = chordSegments(vbi), seg = segs[0];
       const d = el("div", { class: "beat", style: `left:${left + g.x(vbi, 0)}px`, title: `Bar ${vbi - r.start + 1} — tap for its chord`, onclick: () => { S.bi = vbi; openChordBuilder(vbi, 0); } });
@@ -8052,7 +8058,7 @@ function renderPalette() {
     b("✕", () => { S.selChip = null; renderAll(); }, { cls: "txt", title: "Done" });
     return;
   }
-  [[4, "𝅝"], [2, "𝅗𝅥"], [1, "♩"], [0.5, "♪"], [0.25, "𝅘𝅥𝅯"]].forEach(([v, gl]) => b(gl, () => tapLength(v), { on: ev ? Math.abs(baseLen(ev.d) - v) < 1e-6 : S.len === v, title: ev ? `Make it ${v} beat${v === 1 ? "" : "s"}` : `Next note: ${v} beat${v === 1 ? "" : "s"} — tap to add it to the rhythm` }));
+  [[4, "𝅝"], [2, "𝅗𝅥"], [1, "♩"], [0.5, "♪"], [0.25, "𝅘𝅥𝅯"]].forEach(([v, gl]) => b(gl, () => tapLength(v), { on: ev ? Math.abs(baseLen(ev.d) - v) < 1e-6 : S.len === v, title: ev ? `Make it ${v} beat${v === 1 ? "" : "s"}` : `Next note: ${v} beat${v === 1 ? "" : "s"}` }));
   b("·", tapDot, { on: ev ? isDotted(ev.d) : S.dot, title: "Dotted" });
   b("𝄽", tapRest, { on: S.restNext, title: ev ? "Turn into a rest" : S.ghost ? "Put a rest in the box" : "Rest: tap where it goes" });
   b("＋", appendFromStrip, { cls: "txt", title: "Add a box of this length at the end of the rhythm", disabled: !!ev });
@@ -8080,6 +8086,7 @@ function updatePlayhead() {
     l.setAttribute("x1", x); l.setAttribute("x2", x);
   }
   document.querySelectorAll(".win").forEach(w => w.classList.toggle("playing", !!pp));
+  if (pp && GEO.mel && GEO.mel.n > 1) { const fr = $("melWin").querySelector(".frame"), x = GEO.mel.x(pp.bi, pp.beat); if (x < fr.scrollLeft + 10 || x > fr.scrollLeft + fr.clientWidth - 30) fr.scrollLeft = Math.max(0, x - 40); }
   perfFollow();
 }
 
@@ -8110,9 +8117,9 @@ function insertSlotAt(bi, t, d, rest) {
 }
 function tapLength(v) {
   const ev = selEv();
+  S.len = v; savePrefs();                                              // the picked length stays until it's changed
   if (ev && S.sel.part === "melody") { setDur(ev, isDotted(ev.d) ? v * 1.5 : v); return; }
   if (ev) { setDur(ev, v); return; }
-  S.len = v; savePrefs();
   if (S.ghost) { const bar = S.song.bars[S.ghost.bi]; S.ghost.d = Math.min(noteLenBeats(), S.ghost.part === "melody" ? freeSpan(bar, S.ghost.t) : barBeats() - S.ghost.t); renderWindows(); }
   renderPalette();
 }
@@ -8219,17 +8226,18 @@ function tapMelody(bi, t, m) {
   if (ts == null) ts = end;
   if (ts >= B - 1e-6) { toast("This bar is full"); return; }
   if (overlaps(bar, ts, 0.25)) { toast("Tap inside a rhythm box to give it this pitch"); return; }
-  const d = Math.min(cur && !chipPitched(bar, cur) && Math.abs(cur.t - ts) < 1e-6 ? Math.max(0.25, Math.min(noteLenBeats(), cur.d)) : noteLenBeats(), freeSpan(bar, ts));
-  /* first tap: show the box where the note will go; second tap inside it: place the note at that pitch */
+  let d = Math.min(cur && !chipPitched(bar, cur) && Math.abs(cur.t - ts) < 1e-6 ? Math.max(0.25, Math.min(noteLenBeats(), cur.d)) : noteLenBeats(), freeSpan(bar, ts));
+  /* first tap: show the box at the next free time; second tap anywhere: the note takes that pitch, at the box's time */
   const gh = S.ghost;
-  if (!(gh && gh.part === "melody" && gh.bi === bi && Math.abs(gh.t - ts) < 1e-6 && t >= gh.t - 0.02 && t < gh.t + gh.d + 0.02)) {
+  if (!(gh && gh.part === "melody" && gh.bi === bi && Math.abs(gh.t - ts) < 1e-6)) {
     S.ghost = { part: "melody", bi, t: ts, d, rest: S.restNext }; S.sel = null; renderWindows(); renderPalette(); return;
   }
+  d = Math.min(gh.d, freeSpan(bar, ts)); ts = gh.t;
   S.ghost = null;
   if (S.restNext) { S.restNext = false; bar.ev.melody.push({ id: uid(), t: ts, d, rest: true }); syncNotesToChips(bar); renderAll(); return; }
   const ev = { id: uid(), t: ts, d, m }; if (S.artic && S.artic !== "slur") ev.artic = S.artic;
   bar.ev.melody.push(ev); syncNotesToChips(bar); previewNote(m, "melody");
-  S.sel = { bi, part: "melody", id: ev.id };
+  S.sel = null;                                                         // entry continues; tap the note to edit it
   if (S.followWords) S.cursor = nextUnpitchedChip(bi, ev.chip || null);
   renderAll();
 }
@@ -8246,7 +8254,7 @@ function tapBand(win, bi, t, m) {
   S.ghost = null;
   bar.ev[part] = bar.ev[part].filter(e => !(e.rest && e.t < ts + d && e.t + e.d > ts));
   const ev = { id: uid(), t: ts, d, m }; if (S.artic && S.artic !== "slur") ev.artic = S.artic;
-  bar.ev[part].push(ev); previewNote(m, part); select(bi, part, ev.id);
+  bar.ev[part].push(ev); previewNote(m, part); S.sel = null; renderAll();
 }
 /* ── lyric pieces: split a syllable into letters, join back, delete without reflow ── */
 function selChipObj() { if (!S.selChip) return null; const bar = S.song.bars[S.selChip.bi]; const chip = bar && bar.chips.find(c => c.id === S.selChip.id); return chip ? { bar, chip } : null; }
@@ -8337,7 +8345,7 @@ function initPointer() {
     const dx = e.clientX - ld.x0; if (!ld.moved && Math.abs(dx) < 6) return; ld.moved = true;
     const g = GEO.mel, r = lyr.getBoundingClientRect(), raw = ld.t0 + dx * (g.W / r.width) / g.beatPx, bar = S.song.bars[ld.bi];
     if (ld.chip.kind) setChipTime(bar, ld.chip, Math.round(raw * 16) / 16);          // letters move freely, in 1/16 beats
-    else { const attacks = chains(bar).filter(c => !c.rest).map(c => c.t), near = attacks.find(a => Math.abs(a - raw) < 0.3); setChipTime(bar, ld.chip, near != null ? near : (S.song.snap ? snapT(raw) : Math.round(raw * 4) / 4)); }
+    else { const attacks = chains(bar).filter(c => !c.rest).map(c => c.t), near = attacks.sort((a, b) => Math.abs(a - raw) - Math.abs(b - raw)).find(a => Math.abs(a - raw) < 0.45); setChipTime(bar, ld.chip, near != null ? near : Math.round(raw * 16) / 16); }
     S.selChip = { bi: ld.bi, id: ld.chip.id };
     renderStrips(); renderWindows();
   });
@@ -8375,12 +8383,13 @@ function openWordEdit(bi, t, chip) {
   inp.value = existing; S.bi = bi;
   lbl.textContent = `Bar ${bi - curRange().start + 1} · beat ${Math.floor(WE.t) + 1}${WE.t % 1 ? "+" : ""}`;
   box.classList.add("on"); renderWeKeys(); renderStrips();
-  const g = GEO.mel, bodyEl = $("lyrStrip").querySelector(".body"), x = g.x(bi, WE.t) * (bodyEl.clientWidth / g.W);
+  const g = GEO.mel, bodyEl = $("lyrStrip").querySelector(".body"), x = g.x(bi, WE.t);
   inp.classList.add("on"); sizeInline();
-  inp.style.left = clamp(x + 1, 0, Math.max(0, bodyEl.clientWidth - inp.offsetWidth - 2)) + "px";
+  inp.style.left = clamp(x + 1, 0, Math.max(0, g.W - inp.offsetWidth - 2)) + "px";
+  if (x < bodyEl.scrollLeft || x > bodyEl.scrollLeft + bodyEl.clientWidth - 60) bodyEl.scrollLeft = Math.max(0, x - 40);
   setTimeout(() => { inp.focus(); const n = inp.value.length; try { inp.setSelectionRange(n, n); } catch (e) {} }, 20);
 }
-function sizeInline() { const inp = weInput(); inp.style.width = Math.max(40, Math.min(chipW({ text: inp.value || "word" }) + 6, $("lyrStrip").querySelector(".body").clientWidth - 4)) + "px"; }
+function sizeInline() { const inp = weInput(); inp.style.width = Math.max(44, chipW({ text: inp.value || "word" }) + 8) + "px"; }   // grows with what you type — beats don't box it in
 /* the app's own keyboard: QWERTY, a symbols page for lyricists' marks, an accents page. The phone's keyboard is a toggle (⌨). */
 const WE_PAGES = {
   abc: ["q w e r t y u i o p", "a s d f g h j k l", "⇧ z x c v b n m ⌫"],
@@ -8451,7 +8460,8 @@ function openSettings() {
   if (S.theme === "custom") [["ground", "Body"], ["ground2", "Strips"], ["accent", "Buttons"], ["lyric", "Lyrics"], ["box", "Rhythm boxes"]].forEach(([k, l]) => colorRow.append(el("label", { class: "tiny", style: "display:inline-flex;align-items:center;gap:4px" }, el("input", { type: "color", value: custom[k], oninput: e => { custom[k] = e.target.value; S.custom = custom; applyTheme(); savePrefs(); } }), l)));
   openModal("Settings", [
     el("div", { class: "pLbl" }, "Theme"), seg([["auto", "Default"], ["dark", "Dark"], ["custom", "Custom"]], S.theme, v => { S.theme = v; if (v === "custom" && !S.custom) S.custom = custom; applyTheme(); savePrefs(); }), colorRow,
-    el("div", { class: "pLbl" }, "Window shows"), seg([[1, "1 bar (beats)"], [4, "4 bars"]], S.viewSpan, v => { S.viewSpan = v; savePrefs(); renderAll(); }),
+    el("div", { class: "pLbl" }, "Window shows"), seg([[1, "1 bar"], [2, "2 bars"], [3, "3 bars"], [4, "4 bars"]], S.viewSpan, v => { S.viewSpan = v; savePrefs(); renderAll(); }),
+    el("div", { class: "tiny" }, "More bars make the staves proportionately wider — swipe sideways to move along them; every window and strip scrolls together."),
     el("div", { class: "pLbl" }, "Window sizing"), seg([["s", "Small"], ["m", "Medium"], ["l", "Large"]], S.winSize, v => { S.winSize = v; savePrefs(); renderAll(); }),
     el("div", { class: "pLbl" }, "Chords displayed"), seg([["names", "Names (C, G7)"], ["roman", "Roman (I, V7)"], ["off", "Hidden"]], S.chordsDisp, v => { S.chordsDisp = v; S.song.showRoman = v === "roman"; savePrefs(); renderAll(); }),
     el("div", { class: "pLbl" }, "Notes appearance"), seg([["trad", "Traditional"], ["pill", "Pills"], ["circle", "Circles"]], S.noteStyle, v => { S.noteStyle = v; savePrefs(); renderAll(); }),
@@ -8690,8 +8700,12 @@ async function boot() {
   $("setupBtn").addEventListener("click", openSongSetup);
   $("menuBtn").addEventListener("click", openMenu);
   $("gearBtn").addEventListener("click", openSettings);
-  $("prevBar").addEventListener("click", () => { S.bi = Math.max(0, S.viewSpan === 4 ? viewFirst() - 4 : S.bi - 1); S.sel = null; S.ghost = null; renderAll(); });
-  $("nextBar").addEventListener("click", () => { S.bi = Math.min(S.song.bars.length - 1, S.viewSpan === 4 ? viewFirst() + 4 : S.bi + 1); S.sel = null; S.ghost = null; renderAll(); });
+  $("prevBar").addEventListener("click", () => { S.bi = Math.max(0, S.viewSpan > 1 ? viewFirst() - S.viewSpan : S.bi - 1); S.sel = null; S.ghost = null; renderAll(); });
+  $("nextBar").addEventListener("click", () => { S.bi = Math.min(S.song.bars.length - 1, S.viewSpan > 1 ? viewFirst() + S.viewSpan : S.bi + 1); S.sel = null; S.ghost = null; renderAll(); });
+  /* the five frames scroll as one; the beat row follows */
+  const scrollers = ["melWin", "accWin", "bassWin"].map(id => $(id).querySelector(".frame")).concat(["rhyStrip", "lyrStrip"].map(id => $(id).querySelector(".body")));
+  let syncing = false;
+  scrollers.forEach(sc => sc.addEventListener("scroll", () => { if (syncing) return; syncing = true; scrollers.forEach(o => { if (o !== sc) o.scrollLeft = sc.scrollLeft; }); const inner = $("beatRow").querySelector(".inner"); if (inner) inner.style.transform = `translateX(${-sc.scrollLeft}px)`; syncing = false; }, { passive: true }));
   $("barLabel").addEventListener("click", openSectionOps);
   $("rhyTag").addEventListener("click", openRhythmMenu);
   $("lyrTag").addEventListener("click", openWords);
