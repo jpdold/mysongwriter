@@ -239,9 +239,20 @@ textarea.lyricArea { width: 100%; min-height: 90px; border: 1px solid #999; bord
 #wordEdit { position: absolute; z-index: 9; display: none; flex-direction: column; gap: 4px; background: #fff; border: 2px solid var(--tag); border-radius: 8px; padding: 4px 6px; box-shadow: 0 4px 16px rgba(0,0,0,.4); color: #111; top: 100%; margin-top: 3px; max-width: 100%; }
 #wordEdit.on { display: flex; }
 #wordEdit .weRow { display: flex; align-items: center; gap: 4px; }
+#wordEdit .weRow .flex { flex: 1; }
+#wordEdit .weRow button { width: 32px; height: 30px; }
+#lyrInline { position: absolute; top: 2px; height: 24px; display: none; border: none; outline: none; background: rgba(255,255,255,.18); border-radius: 4px; padding: 0 3px;
+  font-family: var(--sans); font-weight: 700; font-size: 15px; color: #fff; caret-color: #fff; min-width: 40px; }
+#lyrInline.on { display: block; }
+#lyrInline::placeholder { color: rgba(255,255,255,.6); font-weight: 400; }
+#lyrStrip.serif #lyrInline { font-family: var(--serif); font-weight: 600; }
+#lyrStrip.smallcaps #lyrInline { font-family: var(--serif); font-variant: small-caps; }
+#lyrStrip .body { overflow: visible; }
 #wordEdit .weKeys { display: flex; flex-direction: column; gap: 3px; }
 #wordEdit .weKeys .krow { display: flex; gap: 3px; justify-content: center; }
-#wordEdit .weKeys button { flex: 1 1 0; min-width: 0; height: 30px; padding: 0; font-size: 15px; font-family: var(--sans); background: #f4f4f4; border: 1px solid #bbb; border-radius: 5px; color: #111; box-shadow: 0 1px 0 #999; }
+#wordEdit .weKeys button { flex: 1 1 0; min-width: 0; height: 38px; padding: 0; font-size: 17px; font-family: var(--sans); background: #f4f4f4; border: 1px solid #bbb; border-radius: 6px; color: #111; box-shadow: 0 1px 0 #999; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
+#wordEdit .weKeys button:active { background: #cfe3fb; transform: translateY(1px); }
+#wordEdit .weKeys .krow { gap: 4px; }
 #wordEdit .weKeys button.sym { font-family: var(--serif); }
 #wordEdit .weKeys button.wide { flex: 1.6 1 0; font-size: 12px; font-weight: 600; }
 #wordEdit .weKeys button.space { flex: 4 1 0; }
@@ -315,10 +326,10 @@ textarea.lyricArea { width: 100%; min-height: 90px; border: 1px solid #999; bord
 
   <div class="strip" id="lyrStrip">
     <button class="tag" id="lyrTag" title="Words">Lyrics</button>
-    <div class="body"><svg id="lyrSvg"></svg></div>
+    <div class="body"><svg id="lyrSvg"></svg><input id="lyrInline" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="word"></div>
     <span></span>
     <div id="wordEdit">
-      <div class="weRow"><span class="lbl2"></span><input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="word(s)"><button class="kb" title="Switch between the app keyboard and the phone's keyboard">⌨</button><button class="rest" title="Rest — nothing sung here">𝄽</button><button class="ok" title="Place (Enter)">✓</button><button class="close" title="Close (Esc)">✕</button></div>
+      <div class="weRow"><span class="lbl2"></span><span class="flex"></span><button class="kb" title="Switch between the app keyboard and the phone's keyboard">⌨</button><button class="rest" title="Rest — nothing sung here">𝄽</button><button class="close" title="Done (Esc)">✕</button></div>
       <div class="weKeys" id="weKeys"></div>
     </div>
   </div>
@@ -7787,7 +7798,7 @@ function drawNote(svg, g, x, m, d, color, attrs, opts = {}) {
     const dotted = Math.abs(d - base * 1.5) < 1e-6;
     const rx = st * 0.55, ry = st * 0.40, hx = x + rx + 1, hollow = base >= 2, up = m < (g.lo + g.hi) / 2 + 0.5;
     grp.append(svgEl("ellipse", { cx: hx, cy: y, rx, ry, fill: hollow ? css("--paper") : color, stroke: color, "stroke-width": hollow ? 1.6 : 0, transform: `rotate(-22 ${hx} ${y})`, opacity: opts.auto ? 0.55 : 1 }));
-    if (base < 4) {
+    if (base < 4 && !opts.noStem) {
       const stemLen = st * (opts.stem || 3.1), sx = up ? hx + rx - 0.6 : hx - rx + 0.6, sy2 = up ? y - stemLen : y + stemLen;
       grp.append(svgEl("line", { x1: sx, x2: sx, y1: y, y2: sy2, stroke: color, "stroke-width": 1.4, opacity: opts.auto ? 0.55 : 1 }));
       const flags = base <= 0.25 ? 2 : base <= 0.5 ? 1 : 0;
@@ -7806,6 +7817,36 @@ function drawGhost(svg, g, bi, ghost, color) {
   if (ghost.rest) svg.append(svgEl("text", { x: (x0 + x1) / 2, y: g.H / 2 + 6, "text-anchor": "middle", "font-size": Math.min(18, g.step * 1.4), fill: color, opacity: 0.7, "font-family": "Georgia, serif", "pointer-events": "none" }, "𝄽"));
   else svg.append(svgEl("text", { x: (x0 + x1) / 2, y: g.H / 2 + 4, "text-anchor": "middle", "font-size": 10, fill: color, opacity: 0.8, "font-family": "system-ui, sans-serif", "pointer-events": "none" }, "tap a pitch"));
 }
+/* beam groups: eighths and shorter, contiguous, inside one beat (one dotted quarter in 6/8) */
+const beamGroupLen = () => S.song.sig === "6/8" ? 1.5 : 1;
+function beamGroups(evs) {
+  const gl = beamGroupLen(), out = []; let cur = null;
+  for (const e of [...evs].sort((a, b) => a.t - b.t)) {
+    const ok = !e.rest && e.m != null && baseLen(e.d) <= 0.5, grp = Math.floor((e.t + 1e-6) / gl);
+    if (ok && cur && cur.grp === grp && Math.abs(cur.end - e.t) < 1e-6) { cur.evs.push(e); cur.end = r3(e.t + e.d); continue; }
+    cur = ok ? { grp, evs: [e], end: r3(e.t + e.d) } : null; if (cur) out.push(cur);
+  }
+  return out.filter(gp => gp.evs.length >= 2);
+}
+/* stems joined by a beam (secondary beam / stubs for sixteenths) */
+function drawBeamed(svg, g, group, color, xOf, opts = {}) {
+  const st = g.step, rx = st * 0.55, stemF = opts.stem || 3.1, op = opts.auto ? 0.55 : 1;
+  const avg = group.evs.reduce((a, e) => a + e.m, 0) / group.evs.length, up = opts.up != null ? opts.up : avg < (g.lo + g.hi) / 2 + 0.5;
+  const stems = group.evs.map(e => { const hx = xOf(e) + rx + 1; return { e, sx: up ? hx + rx - 0.6 : hx - rx + 0.6, y: g.y(e.m) }; });
+  const beamY = up ? Math.min(...stems.map(s => s.y - st * stemF)) : Math.max(...stems.map(s => s.y + st * stemF));
+  stems.forEach(s => svg.append(svgEl("line", { x1: s.sx, x2: s.sx, y1: s.y, y2: beamY, stroke: color, "stroke-width": 1.4, opacity: op, "pointer-events": "none" })));
+  const th = Math.max(2, st * 0.32), dir = up ? 1 : -1, x0 = stems[0].sx, x1 = stems[stems.length - 1].sx;
+  const beam = (xa, xb, level) => svg.append(svgEl("rect", { x: Math.min(xa, xb) - 0.7, y: up ? beamY + level * (th + st * 0.25) : beamY - th - level * (th + st * 0.25), width: Math.abs(xb - xa) + 1.4, height: th, fill: color, opacity: op, "pointer-events": "none" }));
+  beam(x0, x1, 0);
+  const is16 = e => baseLen(e.d) <= 0.25;
+  for (let i = 0; i < stems.length; i++) {
+    if (!is16(stems[i].e)) continue;
+    const prev = i > 0 && is16(stems[i - 1].e), next = i < stems.length - 1 && is16(stems[i + 1].e);
+    if (next) beam(stems[i].sx, stems[i + 1].sx, 1);
+    else if (!prev) { const stub = st * 0.9; beam(stems[i].sx, i > 0 ? stems[i].sx - stub : stems[i].sx + stub, 1); }   // lone sixteenth: stub toward its neighbour
+  }
+  void dir;
+}
 function tieArcAt(svg, x1, x2, y, color) { svg.append(svgEl("path", { d: `M ${x1} ${y} Q ${(x1 + x2) / 2} ${y + 10} ${x2} ${y}`, fill: "none", stroke: color, "stroke-width": 1.6, "pointer-events": "none" })); }
 
 function renderWindows() {
@@ -7817,6 +7858,7 @@ function renderWindows() {
     svg.append(svgEl("rect", { class: "hit", x: 0, y: 0, width: g.W, height: g.H, fill: "transparent", "data-lane": "mel" }));
     for (const bi of viewBars()) {
     const bar = song.bars[bi], sel = S.sel && S.sel.bi === bi && S.sel.part === "melody" ? S.sel.id : null;
+    const groups = S.noteStyle === "trad" ? beamGroups(bar.ev.melody.filter(e => e.m != null && e.m >= g.lo && e.m <= g.hi)) : [], beamed = new Set(groups.flatMap(gp => gp.evs.map(e => e.id)));
     const cur = S.cursor && S.cursor.bi === bi ? bar.chips.find(c => c.id === S.cursor.chipId) : null;
     if (cur && S.followWords) svg.append(svgEl("rect", { x: g.x(bi, cur.t), y: 0, width: Math.max(6, cur.d * g.beatPx), height: g.H, fill: box, opacity: 0.12, "pointer-events": "none" }));
     if (S.ghost && S.ghost.part === "melody" && S.ghost.bi === bi) drawGhost(svg, g, bi, S.ghost, box);
@@ -7829,12 +7871,13 @@ function renderWindows() {
       const m = c.head.m;
       if (m < g.lo || m > g.hi) { svg.append(svgEl("text", { x: x0 + 3, y: m > g.hi ? 12 : g.H - 4, "font-size": 9, "font-weight": 700, fill: ink, "font-family": "system-ui, sans-serif" }, (m > g.hi ? "▲" : "▼") + noteName(m, key))); continue; }
       c.members.forEach((e, k) => {
-        drawNote(svg, g, g.x(bi, e.t) + 2, m, e.d, ink, { "data-ev": e.id, "data-part": "melody", "data-bi": bi }, { label: k === 0 && S.noteStyle !== "trad" ? pcName(m, key) : null });
+        drawNote(svg, g, g.x(bi, e.t) + 2, m, e.d, ink, { "data-ev": e.id, "data-part": "melody", "data-bi": bi }, { label: k === 0 && S.noteStyle !== "trad" ? pcName(m, key) : null, noStem: beamed.has(e.id) });
         if (e.tie) { const nx = k < c.members.length - 1 ? g.x(bi, c.members[k + 1].t) + 2 + g.step * 0.55 : g.x(bi, g.B) + (bi + 1 < g.first + g.n ? 2 + g.step * 0.55 : 0); tieArcAt(svg, g.x(bi, e.t) + 2 + g.step * 0.55, nx, g.y(m) + g.step * 0.5, ink); }
       });
       if (tiedFromPrev(bi, c) && bi === g.first) tieArcAt(svg, 0, x0 + g.step * 0.55, g.y(m) + g.step * 0.5, ink);
       if (c.members.some(e => e.id === sel)) svg.append(svgEl("rect", { x: x0 - 1, y: g.y(m) - g.step, width: x1 - x0 + 2, height: g.step * 2, rx: 4, fill: "none", stroke: css("--accent"), "stroke-width": 1.5, "pointer-events": "none" }));
     }
+    groups.forEach(gp => drawBeamed(svg, g, gp, ink, e => g.x(bi, e.t) + 2));
     /* other voices, faint */
     if (song.parts.sub.on) for (const e of partEvents("sub", bi)) if (e.m >= g.lo && e.m <= g.hi) svg.append(svgEl("rect", { x: g.x(bi, e.t) + 2, y: g.y(e.m) - 2, width: Math.max(4, e.d * g.beatPx - 4), height: 4, rx: 2, fill: css("--sub"), opacity: 0.7, "pointer-events": "none" }));
     if (song.parts.backup.on) for (const e of partEvents("backup", bi)) for (const m of e.ms) if (m >= g.lo && m <= g.hi) svg.append(svgEl("rect", { x: g.x(bi, e.t) + 2, y: g.y(m) - 1.5, width: Math.max(4, e.d * g.beatPx - 4), height: 3, fill: css("--backup"), opacity: 0.5, "pointer-events": "none" }));
@@ -7855,11 +7898,13 @@ function renderWindows() {
     const bar = song.bars[bi], sel = S.sel && S.sel.bi === bi && S.sel.part === part ? S.sel.id : null;
     if (S.ghost && S.ghost.part === part && S.ghost.bi === bi) drawGhost(svg, g, bi, S.ghost, color);
     if (bar.custom[part]) {
+      const groups = S.noteStyle === "trad" ? beamGroups(bar.ev[part].filter(e => e.m >= g.lo && e.m <= g.hi)) : [], beamed = new Set(groups.flatMap(gp => gp.evs.map(e => e.id)));
+      groups.forEach(gp => drawBeamed(svg, g, gp, color, e => g.x(bi, e.t) + 2));
       for (const e of [...bar.ev[part]].sort((a, b) => a.t - b.t)) {
         const x0 = g.x(bi, e.t) + 1, x1 = g.x(bi, e.t + Math.min(e.d, g.B - e.t)) - 2;
         if (e.rest) { svg.append(svgEl("rect", { class: "noteEl", x: x0, y: 2, width: Math.max(4, x1 - x0), height: g.H - 4, rx: 2, fill: "none", stroke: css("--ink2"), "stroke-dasharray": "3 3", "data-ev": e.id, "data-part": part, "data-bi": bi })); continue; }
         if (e.m < g.lo || e.m > g.hi) { svg.append(svgEl("text", { class: "noteEl", x: x0 + 2, y: e.m > g.hi ? 9 : g.H - 3, "font-size": 8, "font-weight": 700, fill: color, "data-ev": e.id, "data-part": part, "data-bi": bi, style: "pointer-events:all" }, (e.m > g.hi ? "▲" : "▼") + noteName(e.m, key))); continue; }
-        drawNote(svg, g, x0 + 1, e.m, e.d, color, { "data-ev": e.id, "data-part": part, "data-bi": bi });
+        drawNote(svg, g, x0 + 1, e.m, e.d, color, { "data-ev": e.id, "data-part": part, "data-bi": bi }, { noStem: beamed.has(e.id) });
         if (e.id === sel) svg.append(svgEl("rect", { x: x0 - 1, y: g.y(e.m) - g.step, width: Math.max(6, x1 - x0 + 2), height: g.step * 2, rx: 3, fill: "none", stroke: css("--accent"), "stroke-width": 1.5, "pointer-events": "none" }));
       }
     } else {
@@ -7881,13 +7926,15 @@ function renderStrips() {
     const mini = { step: 6, y: () => 19, x: g.x, beatPx: g.beatPx, lo: 0, hi: 1, W: g.W, H };
     for (const bi of bars) {
       const bar = song.bars[bi], sel = S.sel && S.sel.bi === bi && S.sel.part === "melody" ? S.sel.id : null;
+      const rhyEvs = bar.ev.melody.filter(e => !e.rest).map(e => ({ id: e.id, t: e.t, d: e.d, m: 0.5 })), groups = beamGroups(rhyEvs), beamed = new Set(groups.flatMap(gp => gp.evs.map(e => e.id)));
+      groups.forEach(gp => drawBeamed(svg, mini, gp, "#fff", e => g.x(bi, e.t) + 2, { stem: 2.2, up: true }));
       for (const c of chains(bar)) {
         const x0 = g.x(bi, c.t), x1 = g.x(bi, c.t + c.d);
         svg.append(svgEl("rect", { class: "noteEl", x: x0 + 1, y: 1, width: Math.max(4, x1 - x0 - 2), height: H - 2, rx: 3, fill: c.members.some(e => e.id === sel) ? "rgba(245,166,35,.35)" : "transparent", "data-ev": c.head.id, "data-part": "melody", "data-bi": bi }));
         if (c.rest) { svg.append(svgEl("text", { x: x0 + 5, y: 21, "font-size": 13, fill: "#fff", "font-family": "Georgia, serif" }, "𝄽")); continue; }
         c.members.forEach((e, k) => {
           const saved = S.noteStyle; S.noteStyle = "trad";
-          drawNote(svg, mini, g.x(bi, e.t) + 2, 0.5, e.d, "#fff", { "data-ev": e.id, "data-part": "melody", "pointer-events": "none" }, { stem: 2.2 });
+          drawNote(svg, mini, g.x(bi, e.t) + 2, 0.5, e.d, "#fff", { "data-ev": e.id, "data-part": "melody", "pointer-events": "none" }, { stem: 2.2, noStem: beamed.has(e.id) });
           S.noteStyle = saved;
           if (e.tie) { const nx = k < c.members.length - 1 ? g.x(bi, c.members[k + 1].t) + 2 + 3.3 : g.x(bi, B) + (bi + 1 < g.first + g.n ? 5.3 : 0); tieArcAt(svg, g.x(bi, e.t) + 5.3, nx, 22, "#fff"); }
         });
@@ -7913,7 +7960,8 @@ function renderStrips() {
         if (isCur) svg.append(svgEl("rect", { x: x - 2, y: 3, width: tw - 4, height: H - 6, rx: 5, fill: css("--box"), opacity: 0.9, "pointer-events": "none" }));
         if (isSel) svg.append(svgEl("rect", { x: x - 3, y: 2, width: tw - 2, height: H - 4, rx: 5, fill: "#fff", opacity: 0.35, stroke: "#fff", "stroke-width": 1.5, "pointer-events": "none" }));
         svg.append(svgEl("rect", { class: "chip", x: x - 2, y: 2, width: Math.max(tw - 4, 14), height: H - 4, rx: 5, fill: "transparent", "data-chip": c.id, "data-bi": bi }));
-        svg.append(svgEl("text", { x, y: 20, "font-size": 15, fill: isCur ? "#222" : "#fff", "font-weight": 700, "font-family": "system-ui, sans-serif", opacity: c.kind === "space" ? 0.55 : 1 }, c.rest ? "𝄽" : c.kind === "space" ? "␣" : c.text));
+        const editing = WE.on && WE.bi === bi && WE.wid != null && chipWordIds(bar)[i] === WE.wid;
+        if (!editing) svg.append(svgEl("text", { x, y: 20, "font-size": 15, fill: isCur ? "#222" : "#fff", "font-weight": 700, "font-family": "system-ui, sans-serif", opacity: c.kind === "space" ? 0.55 : 1 }, c.rest ? "𝄽" : c.kind === "space" ? "␣" : c.text));
         if (c.kind) return;                                        // letters, spaces and symbols carry no hyphens or extenders
         if (c.pos === "begin" || c.pos === "middle") { const nx = i < bar.chips.length - 1 ? g.x(bi, bar.chips[i + 1].t) + 3 : g.x(bi, B); const gap = nx - (x + tw - 6); const n = Math.max(1, Math.floor(gap / 40)); for (let k = 1; k <= n; k++) svg.append(svgEl("text", { x: x + tw - 6 + gap * k / (n + 1), y: 20, "text-anchor": "middle", "font-size": 15, fill: "#fff", "font-weight": 700 }, "-")); }
         else if (c.pos === "end" || c.pos === "single") { const n = chipNote(bar, c); if (n && !n.rest) { const ch = chainOf(bar, n); const endX = g.x(bi, ch.t + ch.d) - 4; if ((ch.members.length > 1 || ch.d >= 2) && endX - (x + tw - 4) > 12) svg.append(svgEl("line", { x1: x + tw - 4, x2: endX, y1: 21, y2: 21, stroke: "#fff", "stroke-width": 1.5, "stroke-linecap": "round" })); } }
@@ -7922,6 +7970,7 @@ function renderStrips() {
     if (!any) svg.append(svgEl("text", { x: g.W / 2, y: 19, "text-anchor": "middle", "font-size": 11, fill: "rgba(255,255,255,.75)", "font-weight": 400 }, "tap to type words at a beat"));
   }
   const ph = $("lyrSvg"); ph.append(svgEl("line", { id: "lyrHead", x1: -5, x2: -5, y1: 0, y2: H, stroke: "#fff", "stroke-width": 2, "pointer-events": "none" }));
+  if (WE.on) { const inp = weInput(), bodyEl = $("lyrStrip").querySelector(".body"); if (viewBars().includes(WE.bi)) { inp.classList.add("on"); const x = g.x(WE.bi, WE.t) * (bodyEl.clientWidth / g.W); inp.style.left = clamp(x + 1, 0, Math.max(0, bodyEl.clientWidth - inp.offsetWidth - 2)) + "px"; } else inp.classList.remove("on"); }
 }
 function renderBeatRow() {
   const row = $("beatRow"), g = GEO.mel, song = S.song, bar = curBar(), bi = S.bi; row.replaceChildren();
@@ -8228,7 +8277,7 @@ function initPointer() {
     const p = svgPoint(lyr, e), at = GEO.mel.at(p.x);
     S.sel = null;
     if (d.chip) { if (S.selChip && S.selChip.id === d.chip.id) openWordEdit(d.bi, d.chip.t, d.chip); else { S.selChip = { bi: d.bi, id: d.chip.id }; S.bi = d.bi; closeWordEdit(); renderAll(); } }
-    else { S.selChip = null; S.bi = at.bi; renderAll(); openWordEdit(at.bi, at.t); }
+    else { S.selChip = null; S.bi = at.bi; openWordEdit(at.bi, at.t); }
   });
   lyr.addEventListener("pointercancel", () => { ld = null; });
   window.addEventListener("resize", () => { if (S.song) renderAll(); });
@@ -8242,22 +8291,26 @@ function initWindowChrome() {
   document.querySelectorAll(".winHead").forEach(b => b.addEventListener("click", () => openWinSettings(b.dataset.win)));
 }
 /* in-place word entry on the lyric strip */
-const WE = { on: false, bi: 0, t: 0 };
+const WE = { on: false, bi: 0, t: 0, wid: null, dirty: false };
+const weInput = () => $("lyrInline");
 function openWordEdit(bi, t, chip) {
-  const box = $("wordEdit"), inp = box.querySelector("input"), lbl = box.querySelector(".lbl2"), bar = S.song.bars[bi], B = barBeats();
+  const box = $("wordEdit"), inp = weInput(), lbl = box.querySelector(".lbl2"), bar = S.song.bars[bi], B = barBeats();
+  if (WE.on && WE.dirty) commitWordEdit(false, true);
   if (t >= B - 1e-6) { closeWordEdit(); return; }
   const attacks = chains(bar).filter(c => !c.rest).map(c => c.t), near = attacks.find(a => Math.abs(a - t) < 0.3);
-  WE.on = true; WE.bi = bi; WE.t = chip ? chip.t : near != null ? near : clamp(S.song.snap ? Math.round(t * 2) / 2 : Math.round(t * 4) / 4, 0, B - 0.25);
-  let existing = "";
+  WE.on = true; WE.bi = bi; WE.t = chip ? chip.t : near != null ? near : clamp(S.song.snap ? Math.round(t * 2) / 2 : Math.round(t * 4) / 4, 0, B - 0.25); WE.dirty = false;
+  let existing = ""; WE.wid = null;
   const at = bar.chips.findIndex(c => Math.abs(c.t - WE.t) < 1e-6);
-  if (at >= 0) { const wid = chipWordIds(bar); existing = bar.chips.filter((c, i) => wid[i] === wid[at]).map(c => c.rest ? REST_MARK : c.text).join(""); }
-  inp.value = existing;
-  lbl.textContent = `beat ${Math.floor(WE.t) + 1}${WE.t % 1 ? "+" : ""}`;
-  box.classList.add("on"); renderWeKeys();
-  const g = GEO.mel, strip = $("lyrStrip"), bodyEl = strip.querySelector(".body"), w = box.offsetWidth || 260, x = bodyEl.offsetLeft + g.x(bi, WE.t) * (bodyEl.clientWidth / g.W);
-  box.style.left = clamp(x - 8, 0, Math.max(0, strip.clientWidth - w)) + "px";
-  setTimeout(() => { inp.focus(); inp.select(); }, 30);
+  if (at >= 0) { const wid = chipWordIds(bar); WE.wid = wid[at]; existing = bar.chips.filter((c, i) => wid[i] === wid[at]).map(c => c.rest ? REST_MARK : c.text).join(""); }
+  inp.value = existing; S.bi = bi;
+  lbl.textContent = `Bar ${bi - curRange().start + 1} · beat ${Math.floor(WE.t) + 1}${WE.t % 1 ? "+" : ""}`;
+  box.classList.add("on"); renderWeKeys(); renderStrips();
+  const g = GEO.mel, bodyEl = $("lyrStrip").querySelector(".body"), x = g.x(bi, WE.t) * (bodyEl.clientWidth / g.W);
+  inp.classList.add("on"); sizeInline();
+  inp.style.left = clamp(x + 1, 0, Math.max(0, bodyEl.clientWidth - inp.offsetWidth - 2)) + "px";
+  setTimeout(() => { inp.focus(); const n = inp.value.length; try { inp.setSelectionRange(n, n); } catch (e) {} }, 20);
 }
+function sizeInline() { const inp = weInput(); inp.style.width = Math.max(40, Math.min(chipW({ text: inp.value || "word" }) + 6, $("lyrStrip").querySelector(".body").clientWidth - 4)) + "px"; }
 /* the app's own keyboard: QWERTY, a symbols page for lyricists' marks, an accents page. The phone's keyboard is a toggle (⌨). */
 const WE_PAGES = {
   abc: ["q w e r t y u i o p", "a s d f g h j k l", "⇧ z x c v b n m ⌫"],
@@ -8265,16 +8318,17 @@ const WE_PAGES = {
   acc: ["é è ê ë á à â ä í ï", "ó ò ô ö ú ù û ü ñ ç", "É Á Í Ó Ú Ñ ß œ æ ⌫"],
 };
 const WE_TITLES = { "‿": "elision — sing two words as one", "_": "rest", "—": "em dash", "…": "ellipsis", "𝄽": "rest", "⇧": "shift", "⌫": "delete" };
-let wePage = "abc", weShift = false, weCaps = false, weShiftAt = 0;
+let wePage = "abc", weShift = false, weCaps = false, weShiftAt = -1e9;
 function renderWeKeys() {
-  const k = $("weKeys"), box = $("wordEdit"), inp = box.querySelector("input"); k.replaceChildren();
+  const k = $("weKeys"), box = $("wordEdit"), inp = weInput(); k.replaceChildren();
   box.classList.toggle("native", !S.softKb); box.querySelector("button.kb").classList.toggle("on", !S.softKb);
   inp.setAttribute("inputmode", S.softKb ? "none" : "text");
   if (!S.softKb) return;
   const caret = () => [inp.selectionStart == null ? inp.value.length : inp.selectionStart, inp.selectionEnd == null ? inp.value.length : inp.selectionEnd];
-  const insert = ch => { const [s, e2] = caret(); inp.value = inp.value.slice(0, s) + ch + inp.value.slice(e2); inp.focus(); inp.setSelectionRange(s + ch.length, s + ch.length); if (weShift && !weCaps) { weShift = false; renderWeKeys(); } };
-  const back = () => { let [s, e2] = caret(); if (s === e2 && s > 0) s = s - 1; inp.value = inp.value.slice(0, s) + inp.value.slice(e2); inp.focus(); inp.setSelectionRange(s, s); };
-  const key = (label, fn, cls, title) => el("button", { class: cls || "", title, onpointerdown: e => e.preventDefault(), onclick: fn }, label);
+  const insert = ch => { const [s, e2] = caret(); inp.value = inp.value.slice(0, s) + ch + inp.value.slice(e2); WE.dirty = true; sizeInline(); inp.focus(); inp.setSelectionRange(s + ch.length, s + ch.length); if (weShift && !weCaps) { weShift = false; renderWeKeys(); } };
+  const back = () => { let [s, e2] = caret(); if (s === e2 && s > 0) s = s - 1; inp.value = inp.value.slice(0, s) + inp.value.slice(e2); WE.dirty = true; sizeInline(); inp.focus(); inp.setSelectionRange(s, s); };
+  /* keys fire on the finger lifting inside the key: no 300 ms delay, no ghost clicks, mis-taps can slide off */
+  const key = (label, fn, cls, title) => { let down = false; return el("button", { class: cls || "", title, onpointerdown: e => { e.preventDefault(); down = true; }, onpointerup: e => { e.preventDefault(); if (down) fn(); down = false; }, onpointerleave: () => { down = false; }, onpointercancel: () => { down = false; }, onclick: e => e.preventDefault() }, label); };
   WE_PAGES[wePage].forEach(row => {
     const r = el("div", { class: "krow" });
     row.split(" ").forEach(ch => {
@@ -8292,24 +8346,29 @@ function renderWeKeys() {
   bottom.append(key("↵", () => commitWordEdit(true), "wide go", "place and move on"));
   k.append(bottom);
 }
-function closeWordEdit() { WE.on = false; $("wordEdit").classList.remove("on"); }
-function commitWordEdit(advance) {
+function closeWordEdit() { if (WE.on && WE.dirty) { commitWordEdit(false, true); return; } WE.on = false; WE.wid = null; $("wordEdit").classList.remove("on"); weInput().classList.remove("on"); }
+function commitWordEdit(advance, quiet) {
   if (!WE.on) return;
-  const inp = $("wordEdit").querySelector("input"), text = inp.value.trim(), bi = WE.bi, bar = S.song.bars[bi];
+  const inp = weInput(), text = inp.value.trim(), bi = WE.bi, bar = S.song.bars[bi];
+  WE.dirty = false;
   const nextT = insertWordsAt(bi, WE.t, text);
   syncNotesToChips(bar);
   if (S.followWords) S.cursor = nextUnpitchedChip(bi, null);
+  if (quiet) { WE.on = false; WE.wid = null; $("wordEdit").classList.remove("on"); inp.classList.remove("on"); renderAll(); return; }
   renderAll();
-  if (advance) { const attacks = chains(bar).filter(c => !c.rest).map(c => c.t), na = attacks.find(a => a > WE.t + 1e-6 && !bar.chips.some(c => Math.abs(c.t - a) < 1e-6)); if (na != null) openWordEdit(bi, na); else if (nextT < barBeats()) openWordEdit(bi, nextT); else if (bi + 1 < S.song.bars.length && viewBars().includes(bi + 1)) openWordEdit(bi + 1, 0); else closeWordEdit(); }
-  else closeWordEdit();
+  if (advance) { const attacks = chains(bar).filter(c => !c.rest).map(c => c.t), na = attacks.find(a => a > WE.t + 1e-6 && !bar.chips.some(c => Math.abs(c.t - a) < 1e-6)); if (na != null) openWordEdit(bi, na); else if (nextT < barBeats()) openWordEdit(bi, nextT); else if (bi + 1 < S.song.bars.length && viewBars().includes(bi + 1)) openWordEdit(bi + 1, 0); else { WE.on = false; WE.wid = null; $("wordEdit").classList.remove("on"); weInput().classList.remove("on"); renderStrips(); } }
+  else { WE.on = false; WE.wid = null; $("wordEdit").classList.remove("on"); weInput().classList.remove("on"); renderStrips(); }
 }
 function initWordEdit() {
-  const box = $("wordEdit"), inp = box.querySelector("input"), rest = box.querySelector("button.rest"), ok = box.querySelector("button.ok"), close = box.querySelector("button.close");
+  const box = $("wordEdit"), inp = weInput(), rest = box.querySelector("button.rest"), close = box.querySelector("button.close");
   box.querySelector("button.kb").addEventListener("click", () => { S.softKb = !S.softKb; savePrefs(); renderWeKeys(); if (!S.softKb) { inp.blur(); setTimeout(() => inp.focus(), 30); } });
-  inp.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === "Tab") { e.preventDefault(); commitWordEdit(true); } else if (e.key === "Escape") { e.preventDefault(); closeWordEdit(); } });
-  rest.addEventListener("click", () => { inp.value = REST_MARK; commitWordEdit(true); });
-  ok.addEventListener("click", () => commitWordEdit(true)); close.addEventListener("click", closeWordEdit);
-  box.addEventListener("pointerdown", e => e.stopPropagation());
+  inp.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === "Tab") { e.preventDefault(); commitWordEdit(true); } else if (e.key === "Escape") { e.preventDefault(); WE.dirty = false; closeWordEdit(); } });
+  inp.addEventListener("input", () => { WE.dirty = true; sizeInline(); });
+  inp.addEventListener("blur", () => { setTimeout(() => { if (WE.on && document.activeElement !== inp && !box.contains(document.activeElement)) { if (WE.dirty) commitWordEdit(false, true); else closeWordEdit(); } }, 120); });
+  inp.addEventListener("pointerdown", e => e.stopPropagation());
+  rest.addEventListener("click", () => { inp.value = REST_MARK; WE.dirty = true; commitWordEdit(true); });
+  close.addEventListener("click", () => { if (WE.dirty) commitWordEdit(false, true); else closeWordEdit(); });
+  box.addEventListener("pointerdown", e => { e.stopPropagation(); e.preventDefault(); });
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -8460,7 +8519,7 @@ function openHelp() {
     h("Blank slate", "Give the song a title, then Setup… for genre, key, time signature and tempo. You work one bar at a time — ◀ ▶ or the dots move between bars; tap the bar name for sections."),
     h("Rhythm", "Tap a note length in the palette to add it to the rhythm; each note becomes an orange box in the melody window. ⌒ ties a note to the next one (or into the next bar). Tap a box to select it, then change its length, dot it, move it or delete it. Tap the Rhythm strip to insert at a beat."),
     h("Melody", "Tap once on empty space: an orange box appears where the next note will go, flush against the note before it. Tap a pitch inside that box to place the note. Tap a pitch inside an existing box to give that note its pitch. To delete: tap the note to select it, then 🗑. ▲▼ beside the window change the register; hold for an octave."),
-    h("Words", "Tap the Lyrics strip at a beat to type a word there (Enter moves on), or tap the Lyrics tag to paste a whole section. Words sit on the rhythm's notes; drag one to line it up. With Follow words on, the next unpitched word is highlighted and takes the next pitch you tap."),
+    h("Words", "Tap the Lyrics strip at a beat and type straight into it (↵ moves to the next note; tapping elsewhere keeps what you typed). Tap the Lyrics tag to paste a whole section. Words sit on the rhythm's notes; drag one to line it up; tap one to nudge, split into letters, edit or delete it."),
     h("Chords", "Chord names sit in the beat row; tap a beat there or use Chords… to set the chord at any beat. A chord holds until the next change."),
     h("Accompaniment & Bass", "Play genre patterns automatically; ⚙ on each window sets instrument, sound, pattern, volume, or Custom to place notes yourself."),
     h("Settings ⚙", "Theme, window sizing, chords display, note appearance (traditional, pills, circles), half steps on lines, metronome."),
