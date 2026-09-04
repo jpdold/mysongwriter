@@ -18,6 +18,8 @@ Articulation: • staccato, ‒ tenuto and ◠ slur sit in the palette. With a n
 
 Notes follow standard engraving: eighths and shorter are beamed per beat (per dotted quarter in 6/8), sixteenths get a second beam, and stems point down above the middle of the window.
 
+Windows share the screen: the melody gets the most room and Accompaniment and Bass split the rest. The small button under each window's ⚙ cycles it open → half → closed (one window always stays open) and the others take up the space. Pinch a window with two fingers to zoom its rows (sideways pinch changes how many bars show).
+
 7. **⚙ Settings** — theme (default, dark, custom colours), window shows 1, 2, 3 or 4 bars (more bars widen the staves; everything scrolls together), window sizing, chords displayed (names / Roman / hidden), note appearance (traditional / pills / circles), half steps on lines, lyrics font, metronome and count-in.
 8. **☰ Menu / Save…** — share a link, per-musician parts and performance mode; export/import files; save, open, copy and start songs.
 

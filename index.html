@@ -64,7 +64,7 @@ svg text { pointer-events: none; }
 /* ═══════════════════════════════════════════════════════════════════════
    3. LAYOUT — one column on a phone; melody stack left / band right when wide
    ═══════════════════════════════════════════════════════════════════════ */
-#app { max-width: 560px; margin: 0 auto; padding: 8px 10px calc(14px + env(safe-area-inset-bottom)); display: grid; gap: 6px;
+#app { max-width: 560px; margin: 0 auto; padding: 8px 10px calc(14px + env(safe-area-inset-bottom)); display: grid; gap: 7px;
   grid-template-columns: 1fr; grid-template-areas: "head" "nav" "beats" "mel" "rhy" "lyr" "pal" "acc" "bass" "foot"; }
 #head { grid-area: head; } #nav { grid-area: nav; } #beatRow { grid-area: beats; } #melWin { grid-area: mel; } #rhyStrip { grid-area: rhy; }
 #lyrStrip { grid-area: lyr; } #palette { grid-area: pal; } #accWin { grid-area: acc; } #bassWin { grid-area: bass; } #foot { grid-area: foot; }
@@ -82,7 +82,7 @@ svg text { pointer-events: none; }
 /* ── header ── */
 #head { display: grid; grid-template-columns: 44px 1fr 44px; grid-template-rows: auto auto; gap: 4px 6px; align-items: center; }
 #songTitle { grid-column: 1 / -1; justify-self: center; width: min(100%, 360px); text-align: center; font-size: 22px; line-height: 1.2;
-  background: var(--paper); color: var(--ink); border: 2px solid #111; border-radius: 3px; padding: 3px 10px; font-family: var(--sans); }
+  background: var(--paper); color: var(--ink); border: 1.5px solid #141414; border-radius: 4px; padding: 4px 10px; font-family: var(--sans); box-shadow: inset 0 1px 3px rgba(0,0,0,.15), 0 2px 5px rgba(0,0,0,.25); }
 #songTitle::placeholder { color: #999; font-style: italic; }
 .iconBtn { width: 44px; height: 40px; border: none; background: none; color: var(--on-ground); font-size: 26px; display: grid; place-items: center; border-radius: 8px; }
 .iconBtn:active { background: rgba(255,255,255,.12); }
@@ -107,7 +107,7 @@ svg text { pointer-events: none; }
 #beatRow { position: relative; height: 22px; margin-bottom: -2px; overflow: hidden; }
 #beatRow .inner { position: absolute; inset: 0; will-change: transform; }
 #beatRow .beat { position: absolute; top: 3px; height: 16px; display: flex; align-items: center; gap: 4px; }
-#beatRow .beat b { background: #111; color: #fff; font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 2px; white-space: nowrap; }
+#beatRow .beat b { background: #111; color: #fff; font-size: 10px; font-weight: 600; height: 16px; line-height: 16px; padding: 0 6px; border-radius: 2px; white-space: nowrap; border: 1px solid #000; }
 #beatRow .beat i { display: inline-block; width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 8px solid #fff; }
 #beatRow .beat .ch { color: #ffd58a; font-family: var(--serif); font-size: 12px; font-weight: 700; margin-left: 6px; white-space: nowrap; }
 #beatRow .beat .ch.carried { opacity: .55; font-style: italic; }
@@ -117,28 +117,39 @@ svg text { pointer-events: none; }
 .win { position: relative; display: grid; grid-template-columns: 42px 1fr 22px; gap: 0 3px; align-items: stretch; }
 .win .gutter { position: relative; }
 .win .gutter svg { display: block; width: 42px; }
-.win .frame { background: var(--paper); border: 2px solid #111; border-radius: 3px; box-shadow: inset 0 0 0 2px #fff, inset 0 2px 8px rgba(0,0,0,.28), 0 1px 0 rgba(255,255,255,.15);
+.win .frame { background: var(--paper); border: 1.5px solid #141414; border-radius: 4px; box-shadow: inset 0 0 0 1.5px #fff, inset 0 2px 6px rgba(0,0,0,.22), 0 1px 0 rgba(255,255,255,.12), 0 2px 5px rgba(0,0,0,.25);
   overflow: hidden; position: relative; }
 .win .frame { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 .win .frame::-webkit-scrollbar { display: none; }
-.win .frame svg { display: block; touch-action: none; }
-.win .side { display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 2px 0; }
-.win .gear, .win .sizer { width: 22px; height: 22px; border: none; background: none; color: var(--on-ground); font-size: 17px; padding: 0; line-height: 1; opacity: .85; }
-.win .sizer { font-size: 13px; letter-spacing: -2px; }
+.win .frame svg { display: block; touch-action: none; shape-rendering: geometricPrecision; }
+.win .frame svg line.stl { shape-rendering: crispEdges; }
+.win .side { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 8px; padding: 2px 0; }
+.win .gear { width: 22px; height: 22px; border: none; background: none; color: var(--on-ground); font-size: 17px; padding: 0; line-height: 1; opacity: .9; }
+.win .sizer { width: 22px; height: 22px; padding: 0; border: 1px solid rgba(255,255,255,.35); border-radius: 4px; background: rgba(0,0,0,.25); color: var(--on-ground); display: grid; place-items: center; }
+.win .sizer .sz { display: block; width: 12px; height: 9px; border: 1.5px solid currentColor; border-radius: 1px; position: relative; }
+.win.half .sizer .sz { height: 5px; }
+.win.closed .sizer .sz { height: 9px; border-top-width: 4px; }
+.win.closed .frame, .win.closed .gutter { display: none; }
+.win.closed { min-height: 22px; grid-template-columns: 42px 1fr 22px; }
+.win.closed .side { flex-direction: row; gap: 6px; grid-column: 3; }
+.win.closed .winHead { position: static; transform: none; justify-self: start; grid-column: 2; }
+#melWin.closed::before { content: ""; grid-column: 1; }
 .win .rArr { width: 42px; height: 14px; border: none; background: none; color: var(--on-ground); font-size: 12px; padding: 0; line-height: 1; position: absolute; left: 0; }
 .win .rArr.up { top: -2px; } .win .rArr.dn { bottom: -2px; }
-.winHead { position: absolute; left: 50%; transform: translateX(-50%); top: -9px; z-index: 2; background: #111; color: #fff; font-size: 10.5px; font-weight: 700;
-  letter-spacing: .06em; padding: 1px 12px; border-radius: 3px; white-space: nowrap; text-transform: uppercase; border: none; }
+.winHead { position: absolute; left: 50%; transform: translateX(-50%); top: -9px; z-index: 2; background: #111; color: #fff; font-size: 10.5px; font-weight: 700; height: 18px; line-height: 16px;
+  letter-spacing: .06em; padding: 0 12px; border-radius: 3px; white-space: nowrap; text-transform: uppercase; border: 1px solid #000; max-width: calc(100% - 100px); overflow: hidden; text-overflow: ellipsis; }
 #accWin, #bassWin { margin-top: 10px; }
+#melWin .winHead { display: none; }
+#melWin.closed .winHead { display: block; }
 .win.compact .gutter svg text { font-size: 7px; }
 .win.playing .frame { box-shadow: inset 0 0 0 2px var(--box), inset 0 2px 8px rgba(0,0,0,.28); }
 
 /* ── strips ── */
 .strip { display: grid; grid-template-columns: 42px 1fr 22px; gap: 0 3px; align-items: center; }
-.strip .tag { justify-self: stretch; height: 22px; display: grid; place-items: center; background: var(--tag); color: var(--tag-ink); border: 1px solid #2c5; border-radius: 3px;
+.strip .tag { justify-self: stretch; height: 24px; display: grid; place-items: center; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); border: 1px solid #3a8a1e; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,.3);
   font-size: 10px; font-weight: 700; letter-spacing: 0; text-transform: none; padding: 0 2px; white-space: nowrap; overflow: hidden; }
 .strip .tag:active { filter: brightness(1.1); }
-.strip .body { border: 2px solid #111; border-radius: 3px; overflow-x: auto; overflow-y: hidden; position: relative; scrollbar-width: none; }
+.strip .body { border: 1.5px solid #141414; border-radius: 4px; overflow-x: auto; overflow-y: hidden; position: relative; scrollbar-width: none; box-shadow: 0 2px 5px rgba(0,0,0,.25); }
 .strip .body::-webkit-scrollbar { display: none; }
 .strip .body svg { display: block; touch-action: none; }
 #rhyStrip .body { background: var(--ground2); }
@@ -148,11 +159,17 @@ svg text { pointer-events: none; }
 #lyrStrip.smallcaps .body svg text, #wordEdit.smallcaps input { font-family: var(--serif); font-variant: small-caps; font-weight: 700; letter-spacing: .02em; }
 
 /* ── palette: note lengths + editing tools ── */
-#palette { display: flex; gap: 4px; align-items: center; justify-content: center; flex-wrap: wrap; padding: 2px 0; }
-#palette button { min-width: 31px; height: 32px; border: 1px solid #222; background: linear-gradient(#fff, #d9d9d9); color: #111; border-radius: 4px; font-size: 18px; padding: 0 6px;
+#palette { display: flex; flex-direction: column; gap: 4px; padding: 5px 6px; background: var(--ground2); border: 1.5px solid #141414; border-radius: 4px; box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 2px 5px rgba(0,0,0,.25); }
+#palette .prow { display: flex; gap: 3px; align-items: center; justify-content: center; height: 30px; }
+#palette .prow .hint { font-size: 11px; color: var(--on-ground2); text-align: center; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#palette button { min-width: 28px; height: 28px; border: 1px solid #222; background: linear-gradient(#fff, #d9d9d9); color: #111; border-radius: 4px; font-size: 18px; padding: 0 6px;
   font-family: var(--music), var(--serif); box-shadow: 0 1px 2px rgba(0,0,0,.4); }
-#palette { gap: 3px; }
+
 #palette button.txt { font-family: var(--sans); font-size: 12px; font-weight: 600; }
+#palette .prow > * { flex: 0 0 auto; }
+#palette .prow button.txt { padding: 0 7px; }
+#palette .prow > * { flex: 0 0 auto; }
+#palette .prow button.txt { padding: 0 7px; }
 #palette button.on { background: linear-gradient(#6fb3ff, #2f7fd6); color: #fff; border-color: #1b4f8a; }
 #palette button.warn { color: var(--danger); }
 #palette button.undo { font-family: var(--sans); font-size: 17px; }
@@ -165,11 +182,11 @@ svg text { pointer-events: none; }
 
 /* ── footer ── */
 #foot { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; margin-top: 4px; }
-.bigBtn { height: 40px; border: 2px solid #111; border-radius: 4px; font-size: 19px; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); }
+.bigBtn { height: 40px; border: 1.5px solid #141414; border-radius: 4px; font-size: 19px; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); }
 #chordsBtn { background: linear-gradient(#fff, #ddd); color: #111; }
 #saveBtn { background: linear-gradient(#ff5a4e, #e5322d); color: #fff; }
 #transport { display: flex; gap: 6px; }
-#transport button { width: 42px; height: 40px; border: 2px solid #111; border-radius: 4px; background: linear-gradient(#fff, #cfcfcf); color: #111; font-size: 17px; padding: 0; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
+#transport button { width: 42px; height: 40px; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #cfcfcf); color: #111; font-size: 17px; padding: 0; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
 #transport button.on { background: linear-gradient(#ffd27a, #f5a623); }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -321,7 +338,7 @@ textarea.lyricArea { width: 100%; min-height: 90px; border: 1px solid #999; bord
   <section class="win" id="melWin">
     <div class="gutter"><button class="rArr up" data-win="mel" data-dir="1" title="Higher">▲</button><svg id="melGut"></svg><button class="rArr dn" data-win="mel" data-dir="-1" title="Lower">▼</button></div>
     <div class="frame"><svg id="melSvg"></svg></div>
-    <div class="side"><button class="gear" data-win="mel" title="Melody settings">⚙</button><button class="sizer" data-win="mel" title="Window size">⏶⏷</button></div>
+    <div class="side"><button class="gear" data-win="mel" title="Melody settings">⚙</button><button class="sizer" data-win="mel" title="Shrink / close / open this window"><span class="sz"></span></button></div>
   </section>
 
   <div class="strip" id="rhyStrip">
@@ -340,20 +357,20 @@ textarea.lyricArea { width: 100%; min-height: 90px; border: 1px solid #999; bord
     </div>
   </div>
 
-  <div id="palette"></div>
+  <div id="palette"><div class="prow" id="palRow1"></div><div class="prow" id="palRow2"></div></div>
 
   <section class="win" id="accWin">
     <button class="winHead" data-win="acc">Accompaniment</button>
     <div class="gutter"><button class="rArr up" data-win="acc" data-dir="1" title="Higher">▲</button><svg id="accGut"></svg><button class="rArr dn" data-win="acc" data-dir="-1" title="Lower">▼</button></div>
     <div class="frame"><svg id="accSvg"></svg></div>
-    <div class="side"><button class="gear" data-win="acc" title="Accompaniment settings">⚙</button><button class="sizer" data-win="acc" title="Window size">⏶⏷</button></div>
+    <div class="side"><button class="gear" data-win="acc" title="Accompaniment settings">⚙</button><button class="sizer" data-win="acc" title="Shrink / close / open this window"><span class="sz"></span></button></div>
   </section>
 
   <section class="win" id="bassWin">
     <button class="winHead" data-win="bass">Bass</button>
     <div class="gutter"><button class="rArr up" data-win="bass" data-dir="1" title="Higher">▲</button><svg id="bassGut"></svg><button class="rArr dn" data-win="bass" data-dir="-1" title="Lower">▼</button></div>
     <div class="frame"><svg id="bassSvg"></svg></div>
-    <div class="side"><button class="gear" data-win="bass" title="Bass settings">⚙</button><button class="sizer" data-win="bass" title="Window size">⏶⏷</button></div>
+    <div class="side"><button class="gear" data-win="bass" title="Bass settings">⚙</button><button class="sizer" data-win="bass" title="Shrink / close / open this window"><span class="sz"></span></button></div>
   </section>
 
   <footer id="foot">
@@ -7597,14 +7614,16 @@ function metroClick(ctx, when, accent) {
 /* ═══════════════════════════════════════════════════════════════════════
    SECTION 8 · VIEW STATE, PREFERENCES, GEOMETRY  (one bar, four windows)
    ═══════════════════════════════════════════════════════════════════════ */
-const WIN = {                                     // rows shown per window, px per row [normal, compact]
-  s: { mel: [13, 11, 7], acc: [13, 6, 4], bass: [13, 6, 4] },
-  m: { mel: [13, 14, 9], acc: [13, 8, 5], bass: [13, 8, 5] },
-  l: { mel: [13, 18, 11], acc: [13, 10, 6], bass: [13, 10, 6] },
+const WIN = {                                     // rows per window, [min, max] px per row by window size
+  s: { mel: [13, 7, 16], acc: [13, 4, 10], bass: [13, 4, 10] },
+  m: { mel: [13, 8, 22], acc: [13, 5, 14], bass: [13, 5, 14] },
+  l: { mel: [13, 10, 28], acc: [13, 6, 18], bass: [13, 6, 18] },
 };
+const WIN_WEIGHT = { mel: 1.5, acc: 1, bass: 1 };
+const STEPS = { mel: 14, acc: 8, bass: 8 };      // computed by allocate()
 const WIN_PART = { mel: "melody", acc: "accomp", bass: "bass" };
 const WIN_LO = { mel: "melLo", acc: "accLo", bass: "bassLo" };
-Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", halfLines: false, winSize: "m", chordsDisp: "names", metro: "off", collapsed: { acc: true, bass: true }, lyricFont: "sans", viewSpan: 1, selChip: null, ghost: null, restNext: false, artic: null, slurFrom: null, softKb: ("ontouchstart" in window), popPos: null, mode: "melody" });
+Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", halfLines: false, winSize: "m", chordsDisp: "names", metro: "off", winState: { mel: "open", acc: "open", bass: "open" }, zoomWin: { mel: 1, acc: 1, bass: 1 }, lyricFont: "sans", viewSpan: 1, selChip: null, ghost: null, restNext: false, artic: null, slurFrom: null, softKb: ("ontouchstart" in window), popPos: null, mode: "melody" });
 const UNDO = { stack: [], last: null, max: 60 };
 const setMode = () => {};                          // engine shims (the old mode sheets are gone)
 const renderPanel = () => renderAll();
@@ -7612,10 +7631,10 @@ function loadPrefs() {
   const p = readJSON(STORE.prefs, {});
   S.theme = p.theme || "auto"; S.followWords = p.followWords !== false; S.noteStyle = p.noteStyle || "trad"; S.halfLines = !!p.halfLines;
   S.winSize = WIN[p.winSize] ? p.winSize : "m"; S.chordsDisp = p.chordsDisp || "names"; S.metro = p.metro || "off"; S.custom = p.custom || null; S.len = p.len || 1;
-  S.lyricFont = p.lyricFont || "sans"; S.collapsed = p.collapsed || { acc: true, bass: true }; S.midi = p.midi || {}; S.viewSpan = [1, 2, 3, 4].includes(p.viewSpan) ? p.viewSpan : 1; if (p.softKb != null) S.softKb = p.softKb;
+  S.lyricFont = p.lyricFont || "sans"; S.winState = Object.assign({ mel: "open", acc: "open", bass: "open" }, p.winState || {}); S.zoomWin = Object.assign({ mel: 1, acc: 1, bass: 1 }, p.zoomWin || {}); S.midi = p.midi || {}; S.viewSpan = [1, 2, 3, 4].includes(p.viewSpan) ? p.viewSpan : 1; if (p.softKb != null) S.softKb = p.softKb;
   applyTheme();
 }
-function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, followWords: S.followWords, noteStyle: S.noteStyle, halfLines: S.halfLines, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, collapsed: S.collapsed, midi: S.midi, viewSpan: S.viewSpan, softKb: S.softKb }); }
+function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, followWords: S.followWords, noteStyle: S.noteStyle, halfLines: S.halfLines, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb: S.softKb }); }
 function applyTheme() {
   const r = document.documentElement;
   if (S.theme === "dark") r.setAttribute("data-theme", "dark"); else r.removeAttribute("data-theme");
@@ -7629,7 +7648,29 @@ const gridStep = () => S.song.snap ? 0.5 : 0.25;
 const snapT = t => Math.round(t / gridStep()) * gridStep();
 const curBar = () => S.song.bars[S.bi];
 function viewOf(win) { const v = S.song.view; if (v.bassLo == null) v.bassLo = 36; return v[WIN_LO[win]]; }
-function rowsOf(win) { const [rows, step, cstep] = WIN[S.winSize][win]; return { rows, step: S.collapsed[win] ? cstep : step }; }
+function rowsOf(win) { const [rows] = WIN[S.winSize][win]; return { rows, step: STEPS[win] }; }
+/* share the screen among the open windows: melody weighs most; half windows count half; closed ones show a bar */
+function allocate() {
+  const vh = window.innerHeight, wide = window.matchMedia("(min-width: 860px) and (min-aspect-ratio: 5/4), (max-height: 520px) and (min-aspect-ratio: 5/4)").matches;
+  const h = id => ($(id) ? $(id).offsetHeight : 0);
+  const chromeMel = h("head") + h("nav") + h("beatRow") + h("rhyStrip") + h("lyrStrip") + h("palette") + 7 * 7 + 16, chromeBand = h("foot") + 7 * 3 + 30 + (wide ? 0 : 0);
+  const avail = Math.max(260, vh - (wide ? chromeMel : chromeMel + chromeBand));
+  const f = w => S.winState[w] === "closed" ? 0 : S.winState[w] === "half" ? 0.5 : 1;
+  const wins = ["mel", "acc", "bass"], sum = wins.reduce((a, w) => a + WIN_WEIGHT[w] * f(w), 0) || 1;
+  for (const w of wins) {
+    const [rows, lo, hi] = WIN[S.winSize][w];
+    if (!f(w)) { STEPS[w] = lo; continue; }
+    const share = wide && w !== "mel" ? Math.max(140, (vh - chromeBand) * WIN_WEIGHT[w] * f(w) / (wins.filter(x => x !== "mel").reduce((a, x) => a + WIN_WEIGHT[x] * f(x), 0) || 1))
+      : wide ? Math.max(160, vh - chromeMel) : avail * WIN_WEIGHT[w] * f(w) / sum;
+    STEPS[w] = clamp(Math.floor((share - 12) / rows * S.zoomWin[w] * 10) / 10, lo, hi);
+  }
+}
+function cycleWin(win) {
+  const order = ["open", "half", "closed"], cur = S.winState[win], next = order[(order.indexOf(cur) + 1) % 3];
+  if (next === "closed" && ["mel", "acc", "bass"].every(w => w === win || S.winState[w] === "closed")) { S.winState[win] = "open"; toast("One window always stays open"); }
+  else S.winState[win] = next;
+  savePrefs(); renderAll();
+}
 /* the window shows 1 or 4 bars (S.viewSpan) starting at S.bi: x is time, y is pitch */
 const viewFirst = () => S.viewSpan > 1 ? S.bi - ((S.bi - curRange().start) % S.viewSpan) : S.bi;
 const viewBars = () => { const f = viewFirst(), out = []; for (let i = 0; i < S.viewSpan; i++) if (f + i < S.song.bars.length) out.push(f + i); return out; };
@@ -7748,7 +7789,7 @@ function renderAll() {
   S.bi = clamp(S.bi, 0, S.song.bars.length - 1);
   if (S.si !== S.siLast && S.si !== sectionOfBar(S.bi) && S.song.sections[S.si]) S.bi = sectionRange(S.si).start;   // a section op moved us
   S.si = sectionOfBar(S.bi); S.siLast = S.si;
-  renderHeader(); renderNav(); renderWindows(); renderStrips(); renderBeatRow(); renderPalette();
+  renderHeader(); renderNav(); renderPalette(); allocate(); renderWindows(); renderStrips(); renderBeatRow();
   saveSoon();
 }
 function renderLights() { renderNav(); }
@@ -7774,14 +7815,14 @@ function drawStaff(svg, g, key) {
     const y = g.y(m), nat = !isBlack(m), pc = ((m % 12) + 12) % 12;
     if (pc === key.pc) svg.append(svgEl("rect", { x: 0, y: y - g.step / 2, width: g.W, height: g.step, fill: css("--box"), opacity: 0.09 }));
     else if (!nat) svg.append(svgEl("rect", { x: 0, y: y - g.step / 2, width: g.W, height: g.step, fill: css("--ink"), opacity: 0.035 }));
-    if (S.halfLines) svg.append(svgEl("line", { x1: 0, x2: g.W, y1: y, y2: y, stroke: css("--line"), "stroke-width": 1 }));   // every half step on a line
-    else svg.append(svgEl("line", { x1: 0, x2: g.W, y1: y + g.step / 2, y2: y + g.step / 2, stroke: css("--line"), "stroke-width": 1 }));   // one half step per space
+    const ly = Math.round(S.halfLines ? y : y + g.step / 2) + 0.5;
+    svg.append(svgEl("line", { class: "stl", x1: 0, x2: g.W, y1: ly, y2: ly, stroke: css("--line"), "stroke-width": 1 }));   // half steps on lines, or one half step per space
   }
-  if (!S.halfLines) svg.append(svgEl("line", { x1: 0, x2: g.W, y1: g.y(g.hi) - g.step / 2, y2: g.y(g.hi) - g.step / 2, stroke: css("--line"), "stroke-width": 1 }));
+  if (!S.halfLines) { const ty = Math.round(g.y(g.hi) - g.step / 2) + 0.5; svg.append(svgEl("line", { class: "stl", x1: 0, x2: g.W, y1: ty, y2: ty, stroke: css("--line"), "stroke-width": 1 })); }
   for (let k = 0; k < g.n; k++) {
     const bi = g.first + k;
-    for (let b = 1; b < g.B; b++) svg.append(svgEl("line", { x1: g.x(bi, b), x2: g.x(bi, b), y1: 0, y2: g.H, stroke: css("--beat"), "stroke-width": g.n > 1 ? 1 : 2, "stroke-dasharray": "2 3", opacity: g.n > 1 ? 0.5 : 1 }));
-    if (k > 0) svg.append(svgEl("line", { x1: g.x(bi, 0), x2: g.x(bi, 0), y1: 0, y2: g.H, stroke: css("--beat"), "stroke-width": 2 }));
+    for (let b = 1; b < g.B; b++) { const bx = Math.round(g.x(bi, b)); svg.append(svgEl("line", { class: "stl", x1: bx, x2: bx, y1: 0, y2: g.H, stroke: css("--beat"), "stroke-width": g.n > 1 ? 1 : 2, "stroke-dasharray": "2 3", opacity: g.n > 1 ? 0.5 : 1 })); }
+    if (k > 0) { const bx = Math.round(g.x(bi, 0)); svg.append(svgEl("line", { class: "stl", x1: bx, x2: bx, y1: 0, y2: g.H, stroke: css("--beat"), "stroke-width": 2 })); }
   }
 }
 function drawGutter(win, g, key) {
@@ -7881,8 +7922,10 @@ function tieArcAt(svg, x1, x2, y, color) { svg.append(svgEl("path", { d: `M ${x1
 
 function renderWindows() {
   const song = S.song, key = keyObj(song.key), bar = curBar(), bi = S.bi;
+  for (const w of ["mel", "acc", "bass"]) { const elw = $(w + "Win"); elw.classList.toggle("closed", S.winState[w] === "closed"); elw.classList.toggle("half", S.winState[w] === "half"); }
+  document.querySelector('.winHead[data-win="mel"]') || $("melWin").prepend(el("button", { class: "winHead", "data-win": "mel", onclick: () => openWinSettings("mel") }, "Melody"));
   /* ── melody window ── */
-  {
+  if (S.winState.mel !== "closed") {
     const g = geo("mel"), svg = $("melSvg"); drawStaff(svg, g, key); drawGutter("mel", g, key);
     const box = css("--box"), ink = css("--melody");
     svg.append(svgEl("rect", { class: "hit", x: 0, y: 0, width: g.W, height: g.H, fill: "transparent", "data-lane": "mel" }));
@@ -7923,11 +7966,14 @@ function renderWindows() {
   }
   /* ── accompaniment & bass windows ── */
   for (const win of ["acc", "bass"]) {
-    const part = WIN_PART[win], P = song.parts[part], g = geo(win), svg = $(win + "Svg");
+    const part = WIN_PART[win], P = song.parts[part];
+    const head0 = document.querySelector(`.winHead[data-win="${win}"]`);
+    if (S.winState[win] === "closed") { head0.textContent = `${part === "accomp" ? "Accompaniment" : "Bass"} – ${P.on ? P.inst : "off"}`; continue; }
+    const g = geo(win), svg = $(win + "Svg");
     drawStaff(svg, g, key); drawGutter(win, g, key);
     const color = css("--" + part);
     svg.append(svgEl("rect", { class: "hit", x: 0, y: 0, width: g.W, height: g.H, fill: "transparent", "data-lane": win }));
-    $(win + "Win").classList.toggle("compact", !!S.collapsed[win]);
+    $(win + "Win").classList.toggle("compact", g.step < 7);
     const head = document.querySelector(`.winHead[data-win="${win}"]`);
     head.textContent = `${part === "accomp" ? "Accompaniment" : "Bass"} – ${P.on ? P.inst + (bar.custom[part] ? " · custom" : P.pattern ? " · " + P.pattern : "") : "off"}`;
     if (!P.on) { svg.append(svgEl("text", { x: g.W / 2, y: g.H / 2 + 4, "text-anchor": "middle", "font-size": 11, fill: css("--ink2"), "font-family": "system-ui, sans-serif" }, "off — tap ⚙ to turn on")); continue; }
@@ -7959,7 +8005,7 @@ function renderWindows() {
   }
 }
 function renderStrips() {
-  const song = S.song, key = keyObj(song.key), g = GEO.mel, B = g.B, H = 36, bars = viewBars();
+  const song = S.song, key = keyObj(song.key), g = GEO.mel && S.winState.mel !== "closed" ? GEO.mel : geo("mel"), B = g.B, H = 36, bars = viewBars();
   const dividers = (svg, color, op) => { for (const bi of bars) { for (let b = 1; b < B; b++) svg.append(svgEl("line", { x1: g.x(bi, b), x2: g.x(bi, b), y1: 0, y2: H, stroke: color, "stroke-width": 1, "stroke-dasharray": "2 3", opacity: op * (g.n > 1 ? 0.6 : 1) })); if (bi > g.first) svg.append(svgEl("line", { x1: g.x(bi, 0), x2: g.x(bi, 0), y1: 0, y2: H, stroke: color, "stroke-width": 2, opacity: op })); } };
   /* rhythm strip: the slots as small glyphs, the ▶ marks where the next tap lands */
   {
@@ -8017,7 +8063,7 @@ function renderStrips() {
 }
 function renderBeatRow() {
   const rowEl = $("beatRow"), g = GEO.mel, song = S.song, bar = curBar(), bi = S.bi; rowEl.replaceChildren();
-  const frame = $("melWin").querySelector(".frame"), left = frame.offsetLeft;
+  const frame = $("melWin").querySelector(".frame"), left = S.winState.mel === "closed" ? $("rhyStrip").querySelector(".body").offsetLeft : frame.offsetLeft;
   const row = el("div", { class: "inner" }); rowEl.append(row); row.style.transform = `translateX(${-frame.scrollLeft}px)`;
   const r = curRange();
   if (S.viewSpan > 1) {
@@ -8041,12 +8087,16 @@ function renderBeatRow() {
   }
 }
 function renderPalette() {
-  const p = $("palette"); p.replaceChildren();
+  const r1 = $("palRow1"), r2 = $("palRow2"); r1.replaceChildren(); r2.replaceChildren();
+  let p = r1;
   const ev = selEv(), bar = curBar();
   const b = (t, fn, opts = {}) => p.append(el("button", Object.assign({ onclick: fn }, opts.attrs || {}, { class: (opts.cls || "") + (opts.on ? " on" : "") + (opts.warn ? " warn" : ""), title: opts.title, disabled: opts.disabled }), t));
   b("↶", undo, { cls: "undo", title: "Undo", disabled: !UNDO.stack.length });
   const sc = selChipObj();
   if (sc) {                                        // a word, letter, space or symbol on the Lyrics strip is selected
+    [[4, "𝅝"], [2, "𝅗𝅥"], [1, "♩"], [0.5, "♪"], [0.25, "𝅘𝅥𝅯"]].forEach(([v, gl]) => b(gl, () => tapLength(v), { on: S.len === v, title: `Next note: ${v} beat${v === 1 ? "" : "s"}` }));
+    b("·", tapDot, { on: S.dot, title: "Dotted" }); b("𝄽", tapRest, { on: S.restNext, title: "Rest" }); b("＋", appendFromStrip, { cls: "txt", title: "Add a box at the end of the rhythm" });
+    p = r2;
     const { bar, chip } = sc, fine = 0.125;
     p.append(el("span", { class: "who" }, chip.rest ? "rest" : chip.kind === "space" ? "space" : `“${chip.text}”`));
     b("◀", () => { setChipTime(bar, chip, chip.t - fine); renderAll(); }, { cls: "lyr", title: "Nudge left" });
@@ -8062,10 +8112,11 @@ function renderPalette() {
   b("·", tapDot, { on: ev ? isDotted(ev.d) : S.dot, title: "Dotted" });
   b("𝄽", tapRest, { on: S.restNext, title: ev ? "Turn into a rest" : S.ghost ? "Put a rest in the box" : "Rest: tap where it goes" });
   b("＋", appendFromStrip, { cls: "txt", title: "Add a box of this length at the end of the rhythm", disabled: !!ev });
-  p.append(el("span", { class: "gap" }));
+  p = r2;
   b("⌒", tapTie, { on: !!(ev && ev.tie), title: "Tie to the next note", disabled: !ev && !bar.ev.melody.length });
   for (const k of ["staccato", "tenuto", "slur"]) b(ARTIC[k].glyph, () => tapArtic(k), { cls: "art" + (S.artic === k ? " armed" : ""), on: !!(ev && (k === "slur" ? ev.slur : ev.artic === k)), title: S.artic === k ? `${ARTIC[k].label} armed — tap notes to mark them; tap again to return to note entry` : `${ARTIC[k].label}: tap before entering a note, or arm it and tap existing notes` });
-  if (S.artic && !ev) p.append(el("span", { class: "who" }, S.artic === "slur" ? (S.slurFrom ? "slur: tap the last note" : "slur: tap the first note") : `${ARTIC[S.artic].label}: tap notes`));
+  if (S.artic && !ev) p.append(el("span", { class: "hint" }, S.artic === "slur" ? (S.slurFrom ? "slur: tap the last note" : "slur: tap the first note") : `${ARTIC[S.artic].label}: tap notes`));
+  else if (!ev) p.append(el("span", { class: "hint" }, S.ghost ? "tap a pitch for the box" : "tap the stave for the next note"));
   if (ev) {                                        // editing tools appear for the selected note
     b("▲", () => transposeSel(1), { cls: "txt", title: "Up a half step", disabled: ev.rest || ev.m == null });
     b("▼", () => transposeSel(-1), { cls: "txt", title: "Down a half step", disabled: ev.rest || ev.m == null });
@@ -8327,7 +8378,13 @@ function initPointer() {
       if (win === "mel") tapMelody(at.bi, at.t, g.m(p.y)); else tapBand(win, at.bi, at.t, g.m(p.y));
     };
     svg.addEventListener("pointerup", up); svg.addEventListener("pointercancel", () => { dragCtx = null; });
-    svg.addEventListener("wheel", e => { e.preventDefault(); shiftView(win, e.deltaY > 0 ? -1 : 1); }, { passive: false });
+    svg.addEventListener("wheel", e => { e.preventDefault(); if (e.ctrlKey) { S.zoomWin[win] = clamp(S.zoomWin[win] * (e.deltaY > 0 ? 0.92 : 1.08), 0.5, 2.5); savePrefs(); renderAll(); } else shiftView(win, e.deltaY > 0 ? -1 : 1); }, { passive: false });
+    /* two-finger pinch: taller/shorter rows (vertical) or fewer/more bars (horizontal) */
+    const pts = new Map(); let pz = null;
+    svg.addEventListener("pointerdown", e => { if (e.pointerType !== "touch") return; pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (pts.size === 2) { dragCtx = null; const [a, b] = [...pts.values()]; pz = { d0: Math.max(20, Math.hypot(a.x - b.x, a.y - b.y)), dy0: Math.abs(a.y - b.y), dx0: Math.abs(a.x - b.x), z0: S.zoomWin[win], last: 1 }; } }, { capture: true });
+    svg.addEventListener("pointermove", e => { if (!pts.has(e.pointerId) || !pz) return; pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); const [a, b] = [...pts.values()]; const d = Math.max(20, Math.hypot(a.x - b.x, a.y - b.y)); pz.last = d / pz.d0; if (pz.dy0 >= pz.dx0) { const z = clamp(pz.z0 * pz.last, 0.5, 2.5); if (Math.abs(z - S.zoomWin[win]) > 0.02) { S.zoomWin[win] = z; allocate(); renderWindows(); renderStrips(); renderBeatRow(); } } }, { capture: true });
+    const pzEnd = e => { if (!pts.has(e.pointerId)) return; pts.delete(e.pointerId); if (pz && pts.size < 2) { if (pz.dx0 > pz.dy0 && (pz.last > 1.3 || pz.last < 0.77)) { S.viewSpan = clamp(S.viewSpan + (pz.last > 1 ? -1 : 1), 1, 4); } pz = null; savePrefs(); renderAll(); } };
+    svg.addEventListener("pointerup", pzEnd, { capture: true }); svg.addEventListener("pointercancel", pzEnd, { capture: true });
   }
   /* rhythm strip: tap a slot to select, tap empty space to insert a slot there */
   const rhy = $("rhySvg");
@@ -8359,13 +8416,14 @@ function initPointer() {
   });
   lyr.addEventListener("pointercancel", () => { ld = null; });
   window.addEventListener("resize", () => { if (S.song) renderAll(); });
+  if (window.visualViewport) window.visualViewport.addEventListener("resize", () => { if (S.song && !WE.on) renderAll(); });
 }
 /* register arrows and window gears/sizers */
 function initWindowChrome() {
   document.querySelectorAll(".rArr").forEach(b => b.addEventListener("click", () => shiftView(b.dataset.win, parseInt(b.dataset.dir, 10) * (b.dataset.win === "mel" ? 1 : 12))));
   document.querySelectorAll(".rArr").forEach(b => { let t = null; b.addEventListener("pointerdown", () => { t = setTimeout(() => { shiftView(b.dataset.win, parseInt(b.dataset.dir, 10) * 12); t = null; }, 450); }); const c = () => clearTimeout(t); b.addEventListener("pointerup", c); b.addEventListener("pointerleave", c); });
   document.querySelectorAll(".win .gear").forEach(b => b.addEventListener("click", () => openWinSettings(b.dataset.win)));
-  document.querySelectorAll(".win .sizer").forEach(b => b.addEventListener("click", () => { S.collapsed[b.dataset.win] = !S.collapsed[b.dataset.win]; renderAll(); }));
+  document.querySelectorAll(".win .sizer").forEach(b => b.addEventListener("click", () => cycleWin(b.dataset.win)));
   document.querySelectorAll(".winHead").forEach(b => b.addEventListener("click", () => openWinSettings(b.dataset.win)));
 }
 /* in-place word entry on the lyric strip */
@@ -8463,6 +8521,7 @@ function openSettings() {
     el("div", { class: "pLbl" }, "Window shows"), seg([[1, "1 bar"], [2, "2 bars"], [3, "3 bars"], [4, "4 bars"]], S.viewSpan, v => { S.viewSpan = v; savePrefs(); renderAll(); }),
     el("div", { class: "tiny" }, "More bars make the staves proportionately wider — swipe sideways to move along them; every window and strip scrolls together."),
     el("div", { class: "pLbl" }, "Window sizing"), seg([["s", "Small"], ["m", "Medium"], ["l", "Large"]], S.winSize, v => { S.winSize = v; savePrefs(); renderAll(); }),
+    el("div", { class: "mrow" }, el("button", { class: "btn sm", onclick: () => { S.zoomWin = { mel: 1, acc: 1, bass: 1 }; S.winState = { mel: "open", acc: "open", bass: "open" }; savePrefs(); renderAll(); openSettings(); } }, "Reset windows"), el("span", { class: "tiny" }, "Windows share the screen: melody gets the most. The button under each ⚙ shrinks, closes and reopens a window; pinch a window to zoom it.")),
     el("div", { class: "pLbl" }, "Chords displayed"), seg([["names", "Names (C, G7)"], ["roman", "Roman (I, V7)"], ["off", "Hidden"]], S.chordsDisp, v => { S.chordsDisp = v; S.song.showRoman = v === "roman"; savePrefs(); renderAll(); }),
     el("div", { class: "pLbl" }, "Notes appearance"), seg([["trad", "Traditional"], ["pill", "Pills"], ["circle", "Circles"]], S.noteStyle, v => { S.noteStyle = v; savePrefs(); renderAll(); }),
     el("div", { class: "mrow" }, toggle("Half steps on lines (every half step gets a line; off = one half step per space)", S.halfLines, v => { S.halfLines = v; savePrefs(); renderAll(); openSettings(); })),
