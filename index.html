@@ -7825,13 +7825,19 @@ function drawGhost(svg, g, bi, ghost, color) {
   else svg.append(svgEl("text", { x: (x0 + x1) / 2, y: g.H / 2 + 4, "text-anchor": "middle", "font-size": 10, fill: color, opacity: 0.8, "font-family": "system-ui, sans-serif", "pointer-events": "none" }, "tap a pitch"));
 }
 /* staccato dot / tenuto line on the notehead side away from the stem */
-function drawArtic(svg, g, x, m, artic, color) {
-  const st = g.step, rx = st * 0.55, hx = x + rx + 1, y = g.y(m), up = S.noteStyle !== "trad" || m < (g.lo + g.hi) / 2 + 0.5, ay = up ? y + st * 0.8 : y - st * 0.8;
+function stemUp(g, m, groups, e) {
+  if (S.noteStyle !== "trad") return false;                                  // no stems: marks go above
+  const gp = groups && e ? groups.find(x => x.evs.includes(e)) : null;
+  if (gp) { const avg = gp.evs.reduce((a, v) => a + v.m, 0) / gp.evs.length; return avg < (g.lo + g.hi) / 2 + 0.5; }
+  return m < (g.lo + g.hi) / 2 + 0.5;
+}
+function drawArtic(svg, g, x, m, artic, color, up) {
+  const st = g.step, rx = st * 0.55, hx = x + rx + 1, y = g.y(m), ay = up ? y + st * 0.8 : y - st * 0.8;   // stem up → mark below; stem down → mark above
   if (artic === "staccato") svg.append(svgEl("circle", { cx: hx, cy: ay, r: Math.max(1.6, st * 0.14), fill: color, "pointer-events": "none" }));
   else if (artic === "tenuto") svg.append(svgEl("line", { x1: hx - rx, x2: hx + rx, y1: ay, y2: ay, stroke: color, "stroke-width": 1.8, "stroke-linecap": "round", "pointer-events": "none" }));
 }
-function drawSlur(svg, g, x1, m1, x2, m2, color) {
-  const st = g.step, rx = st * 0.55, up = S.noteStyle !== "trad" || m1 < (g.lo + g.hi) / 2 + 0.5;   // stems up → slur under the heads
+function drawSlur(svg, g, x1, m1, x2, m2, color, up) {
+  const st = g.step, rx = st * 0.55;                                          // stems up → slur under the heads; stems down → over
   const ax = x1 + rx + 1, bx = x2 + rx + 1, ay = g.y(m1) + (up ? st * 0.9 : -st * 0.9), by = g.y(m2) + (up ? st * 0.9 : -st * 0.9);
   const cy = (ay + by) / 2 + (up ? 1 : -1) * Math.min(st * 1.6, Math.max(st * 0.8, (bx - ax) * 0.18));
   svg.append(svgEl("path", { d: `M ${ax} ${ay} Q ${(ax + bx) / 2} ${cy} ${bx} ${by}`, fill: "none", stroke: color, "stroke-width": 1.6, "stroke-linecap": "round", "pointer-events": "none" }));
@@ -7899,8 +7905,9 @@ function renderWindows() {
     groups.forEach(gp => drawBeamed(svg, g, gp, ink, e => g.x(bi, e.t) + 2));
     for (const e of bar.ev.melody) {
       if (e.rest || e.m == null || e.m < g.lo || e.m > g.hi) continue;
-      if (e.artic) drawArtic(svg, g, g.x(bi, e.t) + 2, e.m, e.artic, ink);
-      if (e.slur) { const end = bar.ev.melody.find(x => x.id === e.slur); if (end && end.m != null) drawSlur(svg, g, g.x(bi, e.t) + 2, e.m, g.x(bi, end.t) + 2, clamp(end.m, g.lo, g.hi), ink); }
+      const up = stemUp(g, e.m, groups, e);
+      if (e.artic) drawArtic(svg, g, g.x(bi, e.t) + 2, e.m, e.artic, ink, up);
+      if (e.slur) { const end = bar.ev.melody.find(x => x.id === e.slur); if (end && end.m != null) drawSlur(svg, g, g.x(bi, e.t) + 2, e.m, g.x(bi, end.t) + 2, clamp(end.m, g.lo, g.hi), ink, up); }
     }
     if (S.slurFrom && S.slurFrom.bi === bi && S.slurFrom.part === "melody") { const f = bar.ev.melody.find(x => x.id === S.slurFrom.id); if (f && f.m != null) svg.append(svgEl("circle", { cx: g.x(bi, f.t) + 2 + g.step * 0.55 + 1, cy: g.y(clamp(f.m, g.lo, g.hi)), r: g.step * 0.9, fill: "none", stroke: css("--box"), "stroke-width": 2, "stroke-dasharray": "3 2", "pointer-events": "none" })); }
     /* other voices, faint */
@@ -7927,8 +7934,9 @@ function renderWindows() {
       groups.forEach(gp => drawBeamed(svg, g, gp, color, e => g.x(bi, e.t) + 2));
       for (const e of bar.ev[part]) {
         if (e.rest || e.m < g.lo || e.m > g.hi) continue;
-        if (e.artic) drawArtic(svg, g, g.x(bi, e.t) + 2, e.m, e.artic, color);
-        if (e.slur) { const end = bar.ev[part].find(x => x.id === e.slur); if (end) drawSlur(svg, g, g.x(bi, e.t) + 2, e.m, g.x(bi, end.t) + 2, clamp(end.m, g.lo, g.hi), color); }
+        const up = stemUp(g, e.m, groups, e);
+        if (e.artic) drawArtic(svg, g, g.x(bi, e.t) + 2, e.m, e.artic, color, up);
+        if (e.slur) { const end = bar.ev[part].find(x => x.id === e.slur); if (end) drawSlur(svg, g, g.x(bi, e.t) + 2, e.m, g.x(bi, end.t) + 2, clamp(end.m, g.lo, g.hi), color, up); }
       }
       for (const e of [...bar.ev[part]].sort((a, b) => a.t - b.t)) {
         const x0 = g.x(bi, e.t) + 1, x1 = g.x(bi, e.t + Math.min(e.d, g.B - e.t)) - 2;
@@ -8196,7 +8204,8 @@ function tapMelody(bi, t, m) {
   const chain = chains(bar).find(c => !c.rest && t >= c.t - 1e-6 && t < c.t + c.d - 1e-6);
   if (chain) {
     S.ghost = null;
-    if (S.sel && S.sel.id === chain.head.id && chain.head.m === m) { S.sel = null; renderAll(); return; }
+    if (!(S.sel && S.sel.part === "melody" && chain.members.some(e => e.id === S.sel.id))) { S.sel = { bi, part: "melody", id: chain.head.id }; renderAll(); return; }   // first tap: select the box
+    if (chain.head.m === m) { S.sel = null; renderAll(); return; }                                                                                       // same pitch again: done
     setChainPitch(bar, chain, m); previewNote(m, "melody");
     if (S.artic && S.artic !== "slur" && chain.head.m == null) chain.head.artic = S.artic;
     S.sel = { bi, part: "melody", id: chain.head.id };
@@ -8305,7 +8314,8 @@ function initPointer() {
       const p = svgPoint(svg, e), g = GEO[win], at = g.at(p.x);
       S.selChip = null;
       if (d.ev && S.artic && !d.ev.rest && d.ev.m != null) { S.bi = d.bi; applyArtic(d.bi, d.part, d.ev); return; }
-      if (d.ev) { if (d.part === "melody" && d.ev.m != null && Math.abs(g.y(d.ev.m) - p.y) > g.step) tapMelody(d.bi, at.t, g.m(p.y)); else { S.bi = d.bi; select(d.bi, d.part, S.sel && S.sel.id === d.ev.id ? null : d.ev.id); } if (d.ev.m != null && !d.ev.rest && S.sel && S.sel.id === d.ev.id) previewNote(d.ev.m, d.part); return; }
+      if (d.ev && d.part === "melody" && !d.ev.rest) { tapMelody(d.bi, at.t, g.m(p.y)); return; }
+      if (d.ev) { S.bi = d.bi; select(d.bi, d.part, S.sel && S.sel.id === d.ev.id ? null : d.ev.id); if (d.ev.m != null && !d.ev.rest && S.sel && S.sel.id === d.ev.id) previewNote(d.ev.m, d.part); return; }
       if (win === "mel") tapMelody(at.bi, at.t, g.m(p.y)); else tapBand(win, at.bi, at.t, g.m(p.y));
     };
     svg.addEventListener("pointerup", up); svg.addEventListener("pointercancel", () => { dragCtx = null; });
@@ -8578,7 +8588,7 @@ function openHelp() {
   openModal("How it works", [
     h("Blank slate", "Give the song a title, then Setup… for genre, key, time signature and tempo. You work one bar at a time — ◀ ▶ or the dots move between bars; tap the bar name for sections."),
     h("Rhythm", "Tap a note length in the palette to add it to the rhythm; each note becomes an orange box in the melody window. ⌒ ties a note to the next one (or into the next bar). Tap a box to select it, then change its length, dot it, move it or delete it. Tap the Rhythm strip to insert at a beat."),
-    h("Melody", "Tap once on empty space: an orange box appears where the next note will go, flush against the note before it. Tap a pitch inside that box to place the note. Tap a pitch inside an existing box to give that note its pitch. To delete: tap the note to select it, then 🗑. ▲▼ beside the window change the register; hold for an octave."),
+    h("Melody", "A first tap only selects an area: on empty space it puts an orange box at the next free time, sized to the palette length; on an existing box it selects that note. A second tap inside the selected box sets the pitch (or changes it). To delete: select the box, then 🗑. ▲▼ beside the window change the register; hold for an octave."),
     h("Words", "Tap the Lyrics strip at a beat and type straight into it (↵ moves to the next note; tapping elsewhere keeps what you typed). Tap the Lyrics tag to paste a whole section. Words sit on the rhythm's notes; drag one to line it up; tap one to nudge, split into letters, edit or delete it."),
     h("Articulation", "• staccato, ‒ tenuto, ◠ slur. With a note selected, tap a mark to apply it. Otherwise tap a mark to arm it: notes you enter carry it, and tapping existing notes marks them; tap the mark again to finish. For a slur, tap the first note then the last."),
     h("Chords", "Chord names sit in the beat row; tap a beat there or use Chords… to set the chord at any beat. A chord holds until the next change."),
