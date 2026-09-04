@@ -6,14 +6,18 @@ Single-file, zero dependencies, works offline: open `index.html` in any modern b
 
 ## Using it
 
-1. **Words** — type or paste a section's lyrics and press *Place words*. They are split into syllables and spread across the bars. Drag any syllable on the stave to place it exactly.
-2. **Melody** — tap a pitch on the top stave; the highlighted word takes that note and the next word lights up. Tap a note to nudge, stretch or delete it.
-3. **Chords** — tap a chord name above a bar to open the chord builder. Chord names follow the key; Roman numerals are a toggle away.
-4. **Band** — bass, accompaniment and ensemble play genre patterns automatically. Switch a part to *Custom* to write its notes by hand (⛶ gives a full-screen stave).
-5. **Sections** — tap the current section's name for rename, length, omit, duplicate, copy/paste, reorder, delete. `+` adds a section.
-6. **Share** — Menu → *Share & export*: a link that carries the whole song, JSON backup, per-musician parts for a tablet on a music stand, and a karaoke-style performance mode.
+The screen is one bar at a time, laid out like the design mock: title, ☰ menu / **Setup…** / ⚙ settings, the bar bracket with ◀ ▶ and a dot per bar, the beat row (tap a beat for its chord), the **Melody** window, the **Rhythm** strip, the **Lyrics** strip, the note palette, then the **Accompaniment** and **Bass** windows and the Chords… / ▶ ⏸ ■ / Save… bar.
 
-The row of lights under the title shows every bar: green when every voice is full, white when empty, yellow in between.
+1. **Title and Setup…** — name the song, then Setup… for genre, key, time signature and tempo (a genre loads structure, chords and band patterns).
+2. **Rhythm** — tap a length in the palette to add a note to the rhythm; each one becomes an orange box in the melody window. ⌒ ties a note to the next (or into the next bar). Tap a box or the Rhythm strip to select a note and change its length, dot it, move or delete it.
+3. **Melody** — tap a pitch inside a box to give that note its pitch, or tap an empty spot to add a note at the palette length. Notes align with the rhythm on their left edge. ▲▼ beside a window move its register (hold for an octave); ⚙ sets instrument, sound and extra voices.
+4. **Words** — tap the Lyrics strip at a beat to type a word there (Enter moves to the next note), or tap the Lyrics tag to paste a whole section. Words sit on the rhythm's notes; drag one to line it up. `_` is a rest.
+5. **Chords** — tap a beat in the beat row or use Chords… for a per-beat grid. A chord holds until the next change.
+6. **Band** — Accompaniment and Bass follow genre patterns; ⚙ on each window sets instrument, sound, pattern, volume, or Custom to place notes yourself.
+7. **⚙ Settings** — theme (default, dark, custom colours), window sizing, chords displayed (names / Roman / hidden), note appearance (traditional / pills / circles), half steps on lines, metronome and count-in.
+8. **☰ Menu / Save…** — share a link, per-musician parts and performance mode; export/import files; save, open, copy and start songs.
+
+The dots under the bar bracket show each bar of the section: green when every voice is full, white when empty, yellow in between.
 
 ## Real instrument sounds
 
