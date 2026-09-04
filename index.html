@@ -152,6 +152,8 @@ svg text { pointer-events: none; }
 #palette button.on { background: linear-gradient(#6fb3ff, #2f7fd6); color: #fff; border-color: #1b4f8a; }
 #palette button.warn { color: var(--danger); }
 #palette button.undo { font-family: var(--sans); font-size: 17px; }
+#palette button.art { font-family: var(--serif); font-size: 16px; }
+#palette button.art.armed { background: linear-gradient(#ffd27a, #f5a623); border-color: #a86d10; }
 #palette button.lyr { font-family: var(--sans); font-size: 12px; font-weight: 600; min-width: 0; padding: 0 9px; }
 #palette button:disabled { opacity: .35; }
 #palette .gap { width: 8px; }
@@ -6898,7 +6900,7 @@ function partEvents(part, bi) {
   if (part === "melody") return melodyPlayEvents(bi);
   if (part === "sub") return subVocalEvents(bi).map(e => ({ ...e, ms: [e.m], vel: 0.7, sus: e.d * 0.95, auto: true }));
   if (part === "backup") return chordSegments(bi).map(seg => ({ t: seg.t, d: seg.d, ms: backupVoicing(bi, seg.ch), vel: 0.35, sus: seg.d * 0.97, auto: true })).filter(e => e.ms.length);
-  if (bar.custom[part]) return (bar.ev[part] || []).filter(e => !e.rest).map(e => ({ t: e.t, d: e.d, ms: [e.m], vel: 0.8, sus: e.d * autoRatio(e.d), src: e }));
+  if (bar.custom[part]) return (bar.ev[part] || []).filter(e => !e.rest).map(e => ({ t: e.t, d: e.d, ms: [e.m], vel: 0.8, sus: e.d * articFactor(e, autoRatio(e.d)), src: e }));
   if (part === "ensemble" && isCountermelodyInst(P.inst)) return callResponse(bi, 0, 55, 79).map(e => ({ ...e, ms: [e.m], vel: 0.55, sus: e.d * 0.9, auto: true }));
   const segs = chordSegments(bi); if (!segs.length) return [];
   const chAt = t => { let c = segs[0].ch; for (const sg of segs) if (sg.t <= t + 1e-6) c = sg.ch; return c; };
@@ -7499,7 +7501,7 @@ function openParts() {
 }
 function partNotesText(part, bi) {
   const song = S.song, key = keyObj(song.key), bar = song.bars[bi];
-  const fmt = evs => evs.sort((a, b) => a.t - b.t).map(e => e.rest ? `𝄽${durGlyph(e.d)}` : `${noteName(e.m, key)}${durGlyph(e.d)}${tiedOver(e) ? "⌒" : ""}`).join("  ");
+  const fmt = evs => evs.sort((a, b) => a.t - b.t).map(e => e.rest ? `𝄽${durGlyph(e.d)}` : `${noteName(e.m, key)}${durGlyph(e.d)}${e.tie ? "⌒" : ""}${e.artic === "staccato" ? "·" : e.artic === "tenuto" ? "‒" : ""}${e.slur ? "◠" : ""}`).join("  ");
   if (part === "melody") return fmt(bar.ev.melody.filter(e => e.rest || e.m != null));
   if (part === "sub") return fmt(subVocalEvents(bi));
   if (part === "backup") return chordSegments(bi).map(seg => backupVoicing(bi, seg.ch).map(m => noteName(m, key)).join(" ")).filter(Boolean).join(" | ");
@@ -7598,7 +7600,7 @@ const WIN = {                                     // rows shown per window, px p
 };
 const WIN_PART = { mel: "melody", acc: "accomp", bass: "bass" };
 const WIN_LO = { mel: "melLo", acc: "accLo", bass: "bassLo" };
-Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", halfLines: false, winSize: "m", chordsDisp: "names", metro: "off", collapsed: { acc: true, bass: true }, lyricFont: "sans", viewSpan: 1, selChip: null, ghost: null, restNext: false, softKb: ("ontouchstart" in window), popPos: null, mode: "melody" });
+Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", halfLines: false, winSize: "m", chordsDisp: "names", metro: "off", collapsed: { acc: true, bass: true }, lyricFont: "sans", viewSpan: 1, selChip: null, ghost: null, restNext: false, artic: null, slurFrom: null, softKb: ("ontouchstart" in window), popPos: null, mode: "melody" });
 const UNDO = { stack: [], last: null, max: 60 };
 const setMode = () => {};                          // engine shims (the old mode sheets are gone)
 const renderPanel = () => renderAll();
@@ -7718,11 +7720,16 @@ function melodyPlayEvents(bi) {
     if (c.rest || c.head.m == null || tiedFromPrev(bi, c)) continue;
     let d = c.d, k = bi;
     if (c.tieOut) { let cc = c; while (cc.tieOut && S.song.bars[k + 1]) { const nc = chains(S.song.bars[k + 1])[0]; if (!nc || nc.t > 1e-6 || nc.rest) break; d = r3(d + nc.d); cc = nc; k++; } }
-    out.push({ t: c.t, d, ms: [c.head.m], vel: 0.9, sus: d * 0.95, src: c.head });
+    out.push({ t: c.t, d, ms: [c.head.m], vel: c.head.artic === "staccato" ? 0.95 : 0.9, sus: d * articFactor(c.head, 0.95, underSlur(bar, c.head)), src: c.head });
   }
   return out;
 }
 const barSlotsSummary = bi => chains(S.song.bars[bi]).filter(c => !c.rest).length;
+/* articulation → how much of the written length sounds */
+function articFactor(e, base, slurred) { return e.artic === "staccato" ? 0.45 : e.artic === "tenuto" ? 1.0 : slurred ? 1.02 : base; }
+/* is this note inside a slur (from a slur's start up to, not including, its end)? */
+function underSlur(bar, e) { return bar.ev.melody.some(s => s.slur && s.t <= e.t + 1e-6 && (() => { const end = bar.ev.melody.find(x => x.id === s.slur); return end && e.t < end.t - 1e-6; })()); }
+const ARTIC = { staccato: { glyph: "•", label: "staccato" }, tenuto: { glyph: "‒", label: "tenuto" }, slur: { glyph: "◠", label: "slur" } };
 
 /* ═══════════════════════════════════════════════════════════════════════
    SECTION 10 · RENDERING
@@ -7817,6 +7824,18 @@ function drawGhost(svg, g, bi, ghost, color) {
   if (ghost.rest) svg.append(svgEl("text", { x: (x0 + x1) / 2, y: g.H / 2 + 6, "text-anchor": "middle", "font-size": Math.min(18, g.step * 1.4), fill: color, opacity: 0.7, "font-family": "Georgia, serif", "pointer-events": "none" }, "𝄽"));
   else svg.append(svgEl("text", { x: (x0 + x1) / 2, y: g.H / 2 + 4, "text-anchor": "middle", "font-size": 10, fill: color, opacity: 0.8, "font-family": "system-ui, sans-serif", "pointer-events": "none" }, "tap a pitch"));
 }
+/* staccato dot / tenuto line on the notehead side away from the stem */
+function drawArtic(svg, g, x, m, artic, color) {
+  const st = g.step, rx = st * 0.55, hx = x + rx + 1, y = g.y(m), up = S.noteStyle !== "trad" || m < (g.lo + g.hi) / 2 + 0.5, ay = up ? y + st * 0.8 : y - st * 0.8;
+  if (artic === "staccato") svg.append(svgEl("circle", { cx: hx, cy: ay, r: Math.max(1.6, st * 0.14), fill: color, "pointer-events": "none" }));
+  else if (artic === "tenuto") svg.append(svgEl("line", { x1: hx - rx, x2: hx + rx, y1: ay, y2: ay, stroke: color, "stroke-width": 1.8, "stroke-linecap": "round", "pointer-events": "none" }));
+}
+function drawSlur(svg, g, x1, m1, x2, m2, color) {
+  const st = g.step, rx = st * 0.55, up = S.noteStyle !== "trad" || m1 < (g.lo + g.hi) / 2 + 0.5;   // stems up → slur under the heads
+  const ax = x1 + rx + 1, bx = x2 + rx + 1, ay = g.y(m1) + (up ? st * 0.9 : -st * 0.9), by = g.y(m2) + (up ? st * 0.9 : -st * 0.9);
+  const cy = (ay + by) / 2 + (up ? 1 : -1) * Math.min(st * 1.6, Math.max(st * 0.8, (bx - ax) * 0.18));
+  svg.append(svgEl("path", { d: `M ${ax} ${ay} Q ${(ax + bx) / 2} ${cy} ${bx} ${by}`, fill: "none", stroke: color, "stroke-width": 1.6, "stroke-linecap": "round", "pointer-events": "none" }));
+}
 /* beam groups: eighths and shorter, contiguous, inside one beat (one dotted quarter in 6/8) */
 const beamGroupLen = () => S.song.sig === "6/8" ? 1.5 : 1;
 function beamGroups(evs) {
@@ -7878,6 +7897,12 @@ function renderWindows() {
       if (c.members.some(e => e.id === sel)) svg.append(svgEl("rect", { x: x0 - 1, y: g.y(m) - g.step, width: x1 - x0 + 2, height: g.step * 2, rx: 4, fill: "none", stroke: css("--accent"), "stroke-width": 1.5, "pointer-events": "none" }));
     }
     groups.forEach(gp => drawBeamed(svg, g, gp, ink, e => g.x(bi, e.t) + 2));
+    for (const e of bar.ev.melody) {
+      if (e.rest || e.m == null || e.m < g.lo || e.m > g.hi) continue;
+      if (e.artic) drawArtic(svg, g, g.x(bi, e.t) + 2, e.m, e.artic, ink);
+      if (e.slur) { const end = bar.ev.melody.find(x => x.id === e.slur); if (end && end.m != null) drawSlur(svg, g, g.x(bi, e.t) + 2, e.m, g.x(bi, end.t) + 2, clamp(end.m, g.lo, g.hi), ink); }
+    }
+    if (S.slurFrom && S.slurFrom.bi === bi && S.slurFrom.part === "melody") { const f = bar.ev.melody.find(x => x.id === S.slurFrom.id); if (f && f.m != null) svg.append(svgEl("circle", { cx: g.x(bi, f.t) + 2 + g.step * 0.55 + 1, cy: g.y(clamp(f.m, g.lo, g.hi)), r: g.step * 0.9, fill: "none", stroke: css("--box"), "stroke-width": 2, "stroke-dasharray": "3 2", "pointer-events": "none" })); }
     /* other voices, faint */
     if (song.parts.sub.on) for (const e of partEvents("sub", bi)) if (e.m >= g.lo && e.m <= g.hi) svg.append(svgEl("rect", { x: g.x(bi, e.t) + 2, y: g.y(e.m) - 2, width: Math.max(4, e.d * g.beatPx - 4), height: 4, rx: 2, fill: css("--sub"), opacity: 0.7, "pointer-events": "none" }));
     if (song.parts.backup.on) for (const e of partEvents("backup", bi)) for (const m of e.ms) if (m >= g.lo && m <= g.hi) svg.append(svgEl("rect", { x: g.x(bi, e.t) + 2, y: g.y(m) - 1.5, width: Math.max(4, e.d * g.beatPx - 4), height: 3, fill: css("--backup"), opacity: 0.5, "pointer-events": "none" }));
@@ -7900,6 +7925,11 @@ function renderWindows() {
     if (bar.custom[part]) {
       const groups = S.noteStyle === "trad" ? beamGroups(bar.ev[part].filter(e => e.m >= g.lo && e.m <= g.hi)) : [], beamed = new Set(groups.flatMap(gp => gp.evs.map(e => e.id)));
       groups.forEach(gp => drawBeamed(svg, g, gp, color, e => g.x(bi, e.t) + 2));
+      for (const e of bar.ev[part]) {
+        if (e.rest || e.m < g.lo || e.m > g.hi) continue;
+        if (e.artic) drawArtic(svg, g, g.x(bi, e.t) + 2, e.m, e.artic, color);
+        if (e.slur) { const end = bar.ev[part].find(x => x.id === e.slur); if (end) drawSlur(svg, g, g.x(bi, e.t) + 2, e.m, g.x(bi, end.t) + 2, clamp(end.m, g.lo, g.hi), color); }
+      }
       for (const e of [...bar.ev[part]].sort((a, b) => a.t - b.t)) {
         const x0 = g.x(bi, e.t) + 1, x1 = g.x(bi, e.t + Math.min(e.d, g.B - e.t)) - 2;
         if (e.rest) { svg.append(svgEl("rect", { class: "noteEl", x: x0, y: 2, width: Math.max(4, x1 - x0), height: g.H - 4, rx: 2, fill: "none", stroke: css("--ink2"), "stroke-dasharray": "3 3", "data-ev": e.id, "data-part": part, "data-bi": bi })); continue; }
@@ -8020,6 +8050,8 @@ function renderPalette() {
   b("＋", appendFromStrip, { cls: "txt", title: "Add a box of this length at the end of the rhythm", disabled: !!ev });
   p.append(el("span", { class: "gap" }));
   b("⌒", tapTie, { on: !!(ev && ev.tie), title: "Tie to the next note", disabled: !ev && !bar.ev.melody.length });
+  for (const k of ["staccato", "tenuto", "slur"]) b(ARTIC[k].glyph, () => tapArtic(k), { cls: "art" + (S.artic === k ? " armed" : ""), on: !!(ev && (k === "slur" ? ev.slur : ev.artic === k)), title: S.artic === k ? `${ARTIC[k].label} armed — tap notes to mark them; tap again to return to note entry` : `${ARTIC[k].label}: tap before entering a note, or arm it and tap existing notes` });
+  if (S.artic && !ev) p.append(el("span", { class: "who" }, S.artic === "slur" ? (S.slurFrom ? "slur: tap the last note" : "slur: tap the first note") : `${ARTIC[S.artic].label}: tap notes`));
   if (ev) {                                        // editing tools appear for the selected note
     b("▲", () => transposeSel(1), { cls: "txt", title: "Up a half step", disabled: ev.rest || ev.m == null });
     b("▼", () => transposeSel(-1), { cls: "txt", title: "Down a half step", disabled: ev.rest || ev.m == null });
@@ -8101,6 +8133,30 @@ function setDur(ev, nd) {
   if (S.sel.part === "melody") { bar.chips.forEach(c => { const n = chipNote(bar, c); if (n) c.t = n.t; }); bar.chips.sort((a, b) => a.t - b.t); bar.chips.forEach((c, i) => { c.d = r3((i < bar.chips.length - 1 ? bar.chips[i + 1].t : B) - c.t); }); syncNotesToChips(bar); }
   renderAll();
 }
+function tapArtic(kind) {
+  if (S.artic === kind) { S.artic = null; S.slurFrom = null; renderAll(); toast("Back to note entry"); return; }   // the armed mark's button always disarms
+  const ev = selEv();
+  if (ev && !ev.rest && ev.m != null) {                                  // a selected note takes the mark straight away
+    if (kind === "slur") { S.slurFrom = { bi: S.sel.bi, part: S.sel.part, id: ev.id }; S.artic = "slur"; S.sel = null; toast("Slur: now tap the last note"); renderAll(); return; }
+    ev.artic = ev.artic === kind ? undefined : kind; if (!ev.artic) delete ev.artic; renderAll(); return;
+  }
+  S.artic = S.artic === kind ? null : kind; S.slurFrom = null; S.sel = null; renderAll();
+  if (S.artic) toast(kind === "slur" ? "Slur armed: tap the first note, then the last" : `${ARTIC[kind].label} armed: tap notes to mark them, or enter notes — tap ${ARTIC[kind].glyph} again to finish`);
+}
+/* an armed articulation applied to a tapped note */
+function applyArtic(bi, part, ev) {
+  const bar = S.song.bars[bi];
+  if (ev.rest || ev.m == null) return;
+  if (S.artic === "slur") {
+    if (ev.slur && !S.slurFrom) { delete ev.slur; toast("Slur removed"); renderAll(); return; }
+    if (!S.slurFrom) { S.slurFrom = { bi, part, id: ev.id }; toast("Now tap the last note of the slur"); renderAll(); return; }
+    if (S.slurFrom.bi !== bi || S.slurFrom.part !== part) { toast("A slur stays within one bar and one part"); S.slurFrom = null; renderAll(); return; }
+    const from = bar.ev[part].find(x => x.id === S.slurFrom.id);
+    if (!from || from === ev) { S.slurFrom = null; renderAll(); return; }
+    const a = from.t < ev.t ? from : ev, z = from.t < ev.t ? ev : from; a.slur = z.id; S.slurFrom = null; renderAll(); return;
+  }
+  ev.artic = ev.artic === S.artic ? undefined : S.artic; if (!ev.artic) delete ev.artic; previewNote(ev.m, part); renderAll();
+}
 function tapTie() {
   let ev = selEv(), bar;
   if (!ev || S.sel.part !== "melody") { bar = curBar(); const c = chains(bar); if (!c.length) return; ev = c[c.length - 1].last; S.sel = { bi: S.bi, part: "melody", id: ev.id }; } else bar = S.song.bars[S.sel.bi];
@@ -8127,7 +8183,7 @@ function moveSel(dt) {
   if (S.sel.part === "melody") { const chip = bar.chips.find(c => c.id === ev.chip); if (chip) setChipTime(bar, chip, nt); else syncNotesToChips(bar); }
   renderAll();
 }
-function deleteSel() { const ev = selEv(); if (!ev) return; const bar = S.song.bars[S.sel.bi]; bar.ev[S.sel.part] = bar.ev[S.sel.part].filter(e => e.id !== ev.id); if (S.sel.part === "melody") { const prev = bar.ev.melody.filter(e => e.t < ev.t).sort((a, b) => b.t - a.t)[0]; if (prev && prev.tie) delete prev.tie; syncNotesToChips(bar); if (S.followWords) S.cursor = nextUnpitchedChip(S.sel.bi, null); } S.sel = null; renderAll(); }
+function deleteSel() { const ev = selEv(); if (!ev) return; const bar = S.song.bars[S.sel.bi]; bar.ev[S.sel.part] = bar.ev[S.sel.part].filter(e => e.id !== ev.id); bar.ev[S.sel.part].forEach(e => { if (e.slur === ev.id) delete e.slur; }); if (S.sel.part === "melody") { const prev = bar.ev.melody.filter(e => e.t < ev.t).sort((a, b) => b.t - a.t)[0]; if (prev && prev.tie) delete prev.tie; syncNotesToChips(bar); if (S.followWords) S.cursor = nextUnpitchedChip(S.sel.bi, null); } S.sel = null; renderAll(); }
 function ensureVisible(part, m) {
   const win = part === "melody" ? "mel" : part === "accomp" ? "acc" : "bass", { rows } = rowsOf(win), key = WIN_LO[win], lo = viewOf(win);
   if (m < lo + 1) S.song.view[key] = clamp(m - 2, 21, 108 - rows); else if (m > lo + rows - 2) S.song.view[key] = clamp(m - rows + 3, 21, 108 - rows);
@@ -8142,6 +8198,7 @@ function tapMelody(bi, t, m) {
     S.ghost = null;
     if (S.sel && S.sel.id === chain.head.id && chain.head.m === m) { S.sel = null; renderAll(); return; }
     setChainPitch(bar, chain, m); previewNote(m, "melody");
+    if (S.artic && S.artic !== "slur" && chain.head.m == null) chain.head.artic = S.artic;
     S.sel = { bi, part: "melody", id: chain.head.id };
     if (S.followWords) { const chip = bar.chips.find(c => c.id === chain.head.chip); S.cursor = chip ? nextUnpitchedChip(bi, chip.id) : (S.cursor || nextUnpitchedChip(bi, null)); }
     renderAll(); return;
@@ -8161,7 +8218,8 @@ function tapMelody(bi, t, m) {
   }
   S.ghost = null;
   if (S.restNext) { S.restNext = false; bar.ev.melody.push({ id: uid(), t: ts, d, rest: true }); syncNotesToChips(bar); renderAll(); return; }
-  const ev = { id: uid(), t: ts, d, m }; bar.ev.melody.push(ev); syncNotesToChips(bar); previewNote(m, "melody");
+  const ev = { id: uid(), t: ts, d, m }; if (S.artic && S.artic !== "slur") ev.artic = S.artic;
+  bar.ev.melody.push(ev); syncNotesToChips(bar); previewNote(m, "melody");
   S.sel = { bi, part: "melody", id: ev.id };
   if (S.followWords) S.cursor = nextUnpitchedChip(bi, ev.chip || null);
   renderAll();
@@ -8178,7 +8236,8 @@ function tapBand(win, bi, t, m) {
   if (!(gh && gh.part === part && gh.bi === bi && Math.abs(gh.t - ts) < 1e-6)) { S.ghost = { part, bi, t: ts, d }; S.sel = null; renderWindows(); renderPalette(); return; }
   S.ghost = null;
   bar.ev[part] = bar.ev[part].filter(e => !(e.rest && e.t < ts + d && e.t + e.d > ts));
-  const ev = { id: uid(), t: ts, d, m }; bar.ev[part].push(ev); previewNote(m, part); select(bi, part, ev.id);
+  const ev = { id: uid(), t: ts, d, m }; if (S.artic && S.artic !== "slur") ev.artic = S.artic;
+  bar.ev[part].push(ev); previewNote(m, part); select(bi, part, ev.id);
 }
 /* ── lyric pieces: split a syllable into letters, join back, delete without reflow ── */
 function selChipObj() { if (!S.selChip) return null; const bar = S.song.bars[S.selChip.bi]; const chip = bar && bar.chips.find(c => c.id === S.selChip.id); return chip ? { bar, chip } : null; }
@@ -8245,6 +8304,7 @@ function initPointer() {
       if (d.moved) { if (!d.ev && d.swipe === "h") { const dx = e.clientX - d.x0; if (Math.abs(dx) > 50) { S.bi = clamp(S.bi + (dx < 0 ? 1 : -1), 0, S.song.bars.length - 1); S.sel = null; } } renderAll(); return; }
       const p = svgPoint(svg, e), g = GEO[win], at = g.at(p.x);
       S.selChip = null;
+      if (d.ev && S.artic && !d.ev.rest && d.ev.m != null) { S.bi = d.bi; applyArtic(d.bi, d.part, d.ev); return; }
       if (d.ev) { if (d.part === "melody" && d.ev.m != null && Math.abs(g.y(d.ev.m) - p.y) > g.step) tapMelody(d.bi, at.t, g.m(p.y)); else { S.bi = d.bi; select(d.bi, d.part, S.sel && S.sel.id === d.ev.id ? null : d.ev.id); } if (d.ev.m != null && !d.ev.rest && S.sel && S.sel.id === d.ev.id) previewNote(d.ev.m, d.part); return; }
       if (win === "mel") tapMelody(at.bi, at.t, g.m(p.y)); else tapBand(win, at.bi, at.t, g.m(p.y));
     };
@@ -8256,7 +8316,7 @@ function initPointer() {
   rhy.addEventListener("pointerup", e => {
     const t = e.target, evId = t.getAttribute && t.getAttribute("data-ev");
     S.selChip = null;
-    if (evId) { const bi = parseInt(t.getAttribute("data-bi") || S.bi, 10); S.bi = bi; select(bi, "melody", S.sel && S.sel.id === evId ? null : evId); return; }
+    if (evId) { const bi = parseInt(t.getAttribute("data-bi") || S.bi, 10); S.bi = bi; const ev = S.song.bars[bi].ev.melody.find(x => x.id === evId); if (S.artic && ev && !ev.rest && ev.m != null) { applyArtic(bi, "melody", ev); return; } select(bi, "melody", S.sel && S.sel.id === evId ? null : evId); return; }
     const p = svgPoint(rhy, e), at = GEO.mel.at(p.x); S.bi = at.bi; S.ghost = null; const rest = S.restNext; S.restNext = false; insertSlotAt(at.bi, at.t, noteLenBeats(), rest);
   });
   /* lyric strip: drag a word, tap to edit or add */
@@ -8520,6 +8580,7 @@ function openHelp() {
     h("Rhythm", "Tap a note length in the palette to add it to the rhythm; each note becomes an orange box in the melody window. ⌒ ties a note to the next one (or into the next bar). Tap a box to select it, then change its length, dot it, move it or delete it. Tap the Rhythm strip to insert at a beat."),
     h("Melody", "Tap once on empty space: an orange box appears where the next note will go, flush against the note before it. Tap a pitch inside that box to place the note. Tap a pitch inside an existing box to give that note its pitch. To delete: tap the note to select it, then 🗑. ▲▼ beside the window change the register; hold for an octave."),
     h("Words", "Tap the Lyrics strip at a beat and type straight into it (↵ moves to the next note; tapping elsewhere keeps what you typed). Tap the Lyrics tag to paste a whole section. Words sit on the rhythm's notes; drag one to line it up; tap one to nudge, split into letters, edit or delete it."),
+    h("Articulation", "• staccato, ‒ tenuto, ◠ slur. With a note selected, tap a mark to apply it. Otherwise tap a mark to arm it: notes you enter carry it, and tapping existing notes marks them; tap the mark again to finish. For a slur, tap the first note then the last."),
     h("Chords", "Chord names sit in the beat row; tap a beat there or use Chords… to set the chord at any beat. A chord holds until the next change."),
     h("Accompaniment & Bass", "Play genre patterns automatically; ⚙ on each window sets instrument, sound, pattern, volume, or Custom to place notes yourself."),
     h("Settings ⚙", "Theme, window sizing, chords display, note appearance (traditional, pills, circles), half steps on lines, metronome."),
@@ -8638,7 +8699,7 @@ async function boot() {
     const tag = (document.activeElement && document.activeElement.tagName) || "";
     if (["INPUT", "TEXTAREA", "SELECT"].includes(tag) || $("overlay").classList.contains("on")) return;
     if (e.key === " ") { e.preventDefault(); $("playBtn").click(); }
-    else if (e.key === "Escape") { S.sel = null; S.ghost = null; closeWordEdit(); renderAll(); }
+    else if (e.key === "Escape") { S.sel = null; S.ghost = null; S.artic = null; S.slurFrom = null; closeWordEdit(); renderAll(); }
     else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); undo(); }
     else if (e.key === "ArrowLeft" && !S.sel) { e.preventDefault(); if (S.bi > 0) { S.bi--; renderAll(); } }
     else if (e.key === "ArrowRight" && !S.sel) { e.preventDefault(); if (S.bi < S.song.bars.length - 1) { S.bi++; renderAll(); } }

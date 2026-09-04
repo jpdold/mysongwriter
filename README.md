@@ -14,6 +14,8 @@ The screen is one bar at a time, laid out like the design mock: title, ☰ menu 
 4. **Words** — tap the Lyrics strip at a beat and type straight into the strip (↵ moves to the next note; tapping elsewhere keeps what you typed), or tap the Lyrics tag to paste a whole section. The editor has its own QWERTY keyboard with a symbols page (’ — … ‿ _ 𝄽) and an accents page; ⌨ switches to the phone's keyboard. Words sit on the rhythm's notes; drag one to line it up. Tap a word to select it: nudge it, split it into letters you can drag one by one, edit or delete it (the rest stays put). `_` is a rest.
 5. **Chords** — tap a beat in the beat row or use Chords… for a per-beat grid. A chord holds until the next change.
 6. **Band** — Accompaniment and Bass follow genre patterns; ⚙ on each window sets instrument, sound, pattern, volume, or Custom to place notes yourself.
+Articulation: • staccato, ‒ tenuto and ◠ slur sit in the palette. With a note selected, a tap applies the mark; otherwise a tap arms it so entered notes carry it and tapping existing notes marks them, and a second tap returns to note entry. Slurs: tap the first note, then the last. Playback shortens staccato, holds tenuto and plays slurred notes legato.
+
 Notes follow standard engraving: eighths and shorter are beamed per beat (per dotted quarter in 6/8), sixteenths get a second beam, and stems point down above the middle of the window.
 
 7. **⚙ Settings** — theme (default, dark, custom colours), window shows 1 bar (beats) or 4 bars, window sizing, chords displayed (names / Roman / hidden), note appearance (traditional / pills / circles), half steps on lines, lyrics font, metronome and count-in.
