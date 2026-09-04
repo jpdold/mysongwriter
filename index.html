@@ -113,32 +113,35 @@ svg text { pointer-events: none; }
 #beatRow .beat:active b { background: var(--accent); }
 
 /* ── windows ── */
-.win { position: relative; display: grid; grid-template-columns: 30px 1fr 22px; gap: 0 3px; align-items: stretch; }
+.win { position: relative; display: grid; grid-template-columns: 42px 1fr 22px; gap: 0 3px; align-items: stretch; }
 .win .gutter { position: relative; }
-.win .gutter svg { display: block; width: 30px; }
+.win .gutter svg { display: block; width: 42px; }
 .win .frame { background: var(--paper); border: 2px solid #111; border-radius: 3px; box-shadow: inset 0 0 0 2px #fff, inset 0 2px 8px rgba(0,0,0,.28), 0 1px 0 rgba(255,255,255,.15);
   overflow: hidden; position: relative; }
 .win .frame svg { display: block; width: 100%; touch-action: none; }
 .win .side { display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 2px 0; }
 .win .gear, .win .sizer { width: 22px; height: 22px; border: none; background: none; color: var(--on-ground); font-size: 17px; padding: 0; line-height: 1; opacity: .85; }
 .win .sizer { font-size: 13px; letter-spacing: -2px; }
-.win .rArr { width: 30px; height: 14px; border: none; background: none; color: var(--on-ground); font-size: 12px; padding: 0; line-height: 1; position: absolute; left: 0; }
+.win .rArr { width: 42px; height: 14px; border: none; background: none; color: var(--on-ground); font-size: 12px; padding: 0; line-height: 1; position: absolute; left: 0; }
 .win .rArr.up { top: -2px; } .win .rArr.dn { bottom: -2px; }
 .winHead { position: absolute; left: 50%; transform: translateX(-50%); top: -9px; z-index: 2; background: #111; color: #fff; font-size: 10.5px; font-weight: 700;
   letter-spacing: .06em; padding: 1px 12px; border-radius: 3px; white-space: nowrap; text-transform: uppercase; border: none; }
 #accWin, #bassWin { margin-top: 10px; }
+.win.compact .gutter svg text { font-size: 7px; }
 .win.playing .frame { box-shadow: inset 0 0 0 2px var(--box), inset 0 2px 8px rgba(0,0,0,.28); }
 
 /* ── strips ── */
-.strip { display: grid; grid-template-columns: 30px 1fr 22px; gap: 0 3px; align-items: center; }
+.strip { display: grid; grid-template-columns: 42px 1fr 22px; gap: 0 3px; align-items: center; }
 .strip .tag { justify-self: stretch; height: 22px; display: grid; place-items: center; background: var(--tag); color: var(--tag-ink); border: 1px solid #2c5; border-radius: 3px;
-  font-size: 9px; font-weight: 700; letter-spacing: .02em; text-transform: none; padding: 0; }
+  font-size: 10px; font-weight: 700; letter-spacing: 0; text-transform: none; padding: 0 2px; white-space: nowrap; overflow: hidden; }
 .strip .tag:active { filter: brightness(1.1); }
 .strip .body { border: 2px solid #111; border-radius: 3px; overflow: hidden; position: relative; }
 .strip .body svg { display: block; width: 100%; touch-action: none; }
 #rhyStrip .body { background: var(--ground2); }
 #lyrStrip .body { background: var(--lyric); box-shadow: 0 0 0 2px var(--tag) inset; }
 #lyrStrip .body svg text { font-family: var(--sans); font-weight: 700; fill: var(--lyric-ink); }
+#lyrStrip.serif .body svg text, #wordEdit.serif input { font-family: var(--serif); font-weight: 600; }
+#lyrStrip.smallcaps .body svg text, #wordEdit.smallcaps input { font-family: var(--serif); font-variant: small-caps; font-weight: 700; letter-spacing: .02em; }
 
 /* ── palette: note lengths + editing tools ── */
 #palette { display: flex; gap: 4px; align-items: center; justify-content: center; flex-wrap: wrap; padding: 2px 0; }
@@ -148,6 +151,7 @@ svg text { pointer-events: none; }
 #palette button.txt { font-family: var(--sans); font-size: 12px; font-weight: 600; }
 #palette button.on { background: linear-gradient(#6fb3ff, #2f7fd6); color: #fff; border-color: #1b4f8a; }
 #palette button.warn { color: var(--danger); }
+#palette button.undo { font-family: var(--sans); font-size: 17px; }
 #palette button:disabled { opacity: .35; }
 #palette .gap { width: 8px; }
 #palette .who { font-size: 11px; color: var(--on-ground2); min-width: 44px; text-align: center; font-variant-numeric: tabular-nums; }
@@ -324,7 +328,6 @@ textarea.lyricArea { width: 100%; min-height: 90px; border: 1px solid #999; bord
     <div id="transport">
       <button id="playBtn" title="Play (hold for the whole song)">▶</button>
       <button id="pauseBtn" title="Pause / resume">⏸</button>
-      <button id="stopBtn" title="Stop">■</button>
     </div>
     <button class="bigBtn" id="saveBtn">Save…</button>
   </footer>
@@ -7561,23 +7564,25 @@ function metroClick(ctx, when, accent) {
 /* ═══════════════════════════════════════════════════════════════════════
    SECTION 8 · VIEW STATE, PREFERENCES, GEOMETRY  (one bar, four windows)
    ═══════════════════════════════════════════════════════════════════════ */
-const WIN = {                                     // rows shown per window, px per row by window size
-  s: { mel: [13, 11], acc: [13, 6], bass: [13, 6] },
-  m: { mel: [13, 14], acc: [13, 8], bass: [13, 8] },
-  l: { mel: [13, 18], acc: [13, 10], bass: [13, 10] },
+const WIN = {                                     // rows shown per window, px per row [normal, compact]
+  s: { mel: [13, 11, 7], acc: [13, 6, 4], bass: [13, 6, 4] },
+  m: { mel: [13, 14, 9], acc: [13, 8, 5], bass: [13, 8, 5] },
+  l: { mel: [13, 18, 11], acc: [13, 10, 6], bass: [13, 10, 6] },
 };
 const WIN_PART = { mel: "melody", acc: "accomp", bass: "bass" };
 const WIN_LO = { mel: "melLo", acc: "accLo", bass: "bassLo" };
-Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", halfLines: false, winSize: "m", chordsDisp: "names", metro: "off", collapsed: {}, popPos: null, mode: "melody" });
+Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", halfLines: false, winSize: "m", chordsDisp: "names", metro: "off", collapsed: { acc: true, bass: true }, lyricFont: "sans", popPos: null, mode: "melody" });
+const UNDO = { stack: [], last: null, max: 60 };
 const setMode = () => {};                          // engine shims (the old mode sheets are gone)
 const renderPanel = () => renderAll();
 function loadPrefs() {
   const p = readJSON(STORE.prefs, {});
   S.theme = p.theme || "auto"; S.followWords = p.followWords !== false; S.noteStyle = p.noteStyle || "trad"; S.halfLines = !!p.halfLines;
   S.winSize = WIN[p.winSize] ? p.winSize : "m"; S.chordsDisp = p.chordsDisp || "names"; S.metro = p.metro || "off"; S.custom = p.custom || null; S.len = p.len || 1;
+  S.lyricFont = p.lyricFont || "sans"; S.collapsed = p.collapsed || { acc: true, bass: true }; S.midi = p.midi || {};
   applyTheme();
 }
-function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, followWords: S.followWords, noteStyle: S.noteStyle, halfLines: S.halfLines, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len }); }
+function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, followWords: S.followWords, noteStyle: S.noteStyle, halfLines: S.halfLines, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, collapsed: S.collapsed, midi: S.midi }); }
 function applyTheme() {
   const r = document.documentElement;
   if (S.theme === "dark") r.setAttribute("data-theme", "dark"); else r.removeAttribute("data-theme");
@@ -7591,7 +7596,7 @@ const gridStep = () => S.song.snap ? 0.5 : 0.25;
 const snapT = t => Math.round(t / gridStep()) * gridStep();
 const curBar = () => S.song.bars[S.bi];
 function viewOf(win) { const v = S.song.view; if (v.bassLo == null) v.bassLo = 36; return v[WIN_LO[win]]; }
-function rowsOf(win) { const [rows, step] = WIN[S.winSize][win]; return { rows: S.collapsed[win] ? Math.ceil(rows / 2) : rows, step }; }
+function rowsOf(win) { const [rows, step, cstep] = WIN[S.winSize][win]; return { rows, step: S.collapsed[win] ? cstep : step }; }
 /* one bar, one window: x is time, y is pitch */
 let GEO = {};
 function geo(win) {
@@ -7694,6 +7699,10 @@ const barSlotsSummary = bi => chains(S.song.bars[bi]).filter(c => !c.rest).lengt
    ═══════════════════════════════════════════════════════════════════════ */
 function renderAll() {
   if (!S.song) return;
+  const snap = JSON.stringify(S.song);
+  if (UNDO.last && snap !== UNDO.last && UNDO.songId === S.song.id) { UNDO.stack.push(UNDO.last); if (UNDO.stack.length > UNDO.max) UNDO.stack.shift(); }
+  if (UNDO.songId !== S.song.id) UNDO.stack = [];
+  UNDO.last = snap; UNDO.songId = S.song.id;
   S.bi = clamp(S.bi, 0, S.song.bars.length - 1);
   if (S.si !== S.siLast && S.si !== sectionOfBar(S.bi) && S.song.sections[S.si]) S.bi = sectionRange(S.si).start;   // a section op moved us
   S.si = sectionOfBar(S.bi); S.siLast = S.si;
@@ -7721,19 +7730,23 @@ function drawStaff(svg, g, key) {
   for (let m = g.lo; m <= g.hi; m++) {
     const y = g.y(m), nat = !isBlack(m), pc = ((m % 12) + 12) % 12;
     if (pc === key.pc) svg.append(svgEl("rect", { x: 0, y: y - g.step / 2, width: g.W, height: g.step, fill: css("--box"), opacity: 0.09 }));
-    if (nat || S.halfLines) svg.append(svgEl("line", { x1: 0, x2: g.W, y1: y, y2: y, stroke: css("--line"), "stroke-width": nat ? 1 : 0.7, opacity: nat ? 1 : 0.55 }));
-    else if (g.step >= 10) svg.append(svgEl("line", { x1: 0, x2: g.W, y1: y, y2: y, stroke: css("--line-soft"), "stroke-width": 0.5, "stroke-dasharray": "2 4" }));
+    else if (!nat) svg.append(svgEl("rect", { x: 0, y: y - g.step / 2, width: g.W, height: g.step, fill: css("--ink"), opacity: 0.035 }));
+    if (S.halfLines) svg.append(svgEl("line", { x1: 0, x2: g.W, y1: y, y2: y, stroke: css("--line"), "stroke-width": 1 }));   // every half step on a line
+    else svg.append(svgEl("line", { x1: 0, x2: g.W, y1: y + g.step / 2, y2: y + g.step / 2, stroke: css("--line"), "stroke-width": 1 }));   // one half step per space
   }
+  if (!S.halfLines) svg.append(svgEl("line", { x1: 0, x2: g.W, y1: g.y(g.hi) - g.step / 2, y2: g.y(g.hi) - g.step / 2, stroke: css("--line"), "stroke-width": 1 }));
   for (let b = 1; b < g.B; b++) svg.append(svgEl("line", { x1: g.x(b), x2: g.x(b), y1: 0, y2: g.H, stroke: css("--beat"), "stroke-width": 2, "stroke-dasharray": "2 3" }));
 }
 function drawGutter(win, g, key) {
-  const gut = $(win + "Gut"); gut.replaceChildren(); gut.setAttribute("height", g.H); gut.setAttribute("viewBox", `0 0 30 ${g.H}`);
+  const gut = $(win + "Gut"); gut.replaceChildren(); gut.setAttribute("height", g.H); gut.setAttribute("viewBox", `0 0 42 ${g.H}`);
   const ink = css("--on-ground");
   for (let m = g.lo; m <= g.hi; m++) {
     const y = g.y(m), pc = ((m % 12) + 12) % 12;
-    if (!isBlack(m)) gut.append(svgEl("text", { x: 26, y: y + (g.step >= 10 ? 4 : 3), "text-anchor": "end", "font-size": g.step >= 10 ? 11 : 8, "font-weight": pc === 0 ? 700 : 500, fill: ink, "font-family": "system-ui, sans-serif" }, pc === 0 ? noteName(m, key) : pcName(m, key)));
-    else if (g.step >= 12) gut.append(svgEl("text", { x: 26, y: y + 3, "text-anchor": "end", "font-size": 7.5, fill: css("--on-ground2"), "font-family": "system-ui, sans-serif" }, "#/♭"));
+    if (g.step < 7 && pc !== 0 && pc !== 7) continue;                     // compact: C and G only
+    if (!isBlack(m)) gut.append(svgEl("text", { x: 38, y: y + (g.step >= 10 ? 4 : 3), "text-anchor": "end", "font-size": g.step >= 10 ? 11 : g.step >= 7 ? 8 : 7, "font-weight": pc === 0 ? 700 : 500, fill: ink, "font-family": "system-ui, sans-serif" }, pc === 0 ? noteName(m, key) : pcName(m, key)));
+    else if (g.step >= 12) gut.append(svgEl("text", { x: 38, y: y + 3, "text-anchor": "end", "font-size": 7.5, fill: css("--on-ground2"), "font-family": "system-ui, sans-serif" }, "#/♭"));
   }
+  gut.append(svgEl("line", { x1: 41, x2: 41, y1: 0, y2: g.H, stroke: css("--on-ground2"), "stroke-width": 0.5, opacity: 0.5 }));
 }
 /* a note in the chosen appearance, left-aligned on its start */
 function drawNote(svg, g, x, m, d, color, attrs, opts = {}) {
@@ -7798,6 +7811,7 @@ function renderWindows() {
     drawStaff(svg, g, key); drawGutter(win, g, key);
     const color = css("--" + part), sel = S.sel && S.sel.bi === bi && S.sel.part === part ? S.sel.id : null;
     svg.append(svgEl("rect", { class: "hit", x: 0, y: 0, width: g.W, height: g.H, fill: "transparent", "data-lane": win }));
+    $(win + "Win").classList.toggle("compact", !!S.collapsed[win]);
     const head = document.querySelector(`.winHead[data-win="${win}"]`);
     head.textContent = `${part === "accomp" ? "Accompaniment" : "Bass"} – ${P.on ? P.inst + (bar.custom[part] ? " · custom" : P.pattern ? " · " + P.pattern : "") : "off"}`;
     if (!P.on) { svg.append(svgEl("text", { x: g.W / 2, y: g.H / 2 + 4, "text-anchor": "middle", "font-size": 11, fill: css("--ink2"), "font-family": "system-ui, sans-serif" }, "off — tap ⚙ to turn on")); continue; }
@@ -7843,6 +7857,8 @@ function renderStrips() {
   /* lyrics strip */
   {
     const svg = $("lyrSvg"); svg.replaceChildren(); svg.setAttribute("height", H); svg.setAttribute("viewBox", `0 0 ${g.W} ${H}`);
+    $("lyrStrip").classList.toggle("serif", S.lyricFont === "serif"); $("lyrStrip").classList.toggle("smallcaps", S.lyricFont === "smallcaps");
+    $("wordEdit").classList.toggle("serif", S.lyricFont === "serif"); $("wordEdit").classList.toggle("smallcaps", S.lyricFont === "smallcaps");
     svg.append(svgEl("rect", { class: "hit", x: 0, y: 0, width: g.W, height: H, fill: "transparent", "data-lane": "lyr" }));
     for (let b = 1; b < B; b++) svg.append(svgEl("line", { x1: g.x(b), x2: g.x(b), y1: 0, y2: H, stroke: "#fff", "stroke-width": 1, "stroke-dasharray": "2 3", opacity: 0.45 }));
     const cursorId = S.cursor && S.cursor.bi === bi ? S.cursor.chipId : null;
@@ -7875,6 +7891,7 @@ function renderPalette() {
   const p = $("palette"); p.replaceChildren();
   const ev = selEv(), bar = curBar();
   const b = (t, fn, opts = {}) => p.append(el("button", Object.assign({ onclick: fn }, opts.attrs || {}, { class: (opts.cls || "") + (opts.on ? " on" : "") + (opts.warn ? " warn" : ""), title: opts.title, disabled: opts.disabled }), t));
+  b("↶", undo, { cls: "undo", title: "Undo", disabled: !UNDO.stack.length });
   [[4, "𝅝"], [2, "𝅗𝅥"], [1, "♩"], [0.5, "♪"], [0.25, "𝅘𝅥𝅯"]].forEach(([v, gl]) => b(gl, () => tapLength(v), { on: ev ? Math.abs(baseLen(ev.d) - v) < 1e-6 : S.len === v, title: ev ? `Make it ${v} beat${v === 1 ? "" : "s"}` : `Next note: ${v} beat${v === 1 ? "" : "s"} — tap to add it to the rhythm` }));
   b("·", tapDot, { on: ev ? isDotted(ev.d) : S.dot, title: "Dotted" });
   b("𝄽", tapRest, { title: ev ? "Turn into a rest" : "Add a rest to the rhythm" });
@@ -8026,14 +8043,23 @@ function initPointer() {
       const t = e.target, evId = t.getAttribute && (t.getAttribute("data-ev") || (t.parentNode.getAttribute && t.parentNode.getAttribute("data-ev")));
       const part = evId ? (t.getAttribute("data-part") || t.parentNode.getAttribute("data-part")) : null;
       const ev = evId ? S.song.bars[S.bi].ev[part].find(x => x.id === evId) : null;
-      dragCtx = { win, svg, x0: e.clientX, y0: e.clientY, moved: false, ev, part, t0: ev ? ev.t : 0, m0: ev ? ev.m : null, id: e.pointerId };
+      dragCtx = { win, svg, x0: e.clientX, y0: e.clientY, moved: false, ev, part, t0: ev ? ev.t : 0, m0: ev ? ev.m : null, id: e.pointerId, lo0: viewOf(win), swipe: null };
       try { svg.setPointerCapture(e.pointerId); } catch (err) {}
     });
     svg.addEventListener("pointermove", e => {
-      if (!dragCtx || dragCtx.svg !== svg || !dragCtx.ev || e.pointerId !== dragCtx.id) return;
+      if (!dragCtx || dragCtx.svg !== svg || e.pointerId !== dragCtx.id) return;
       const dx = e.clientX - dragCtx.x0, dy = e.clientY - dragCtx.y0;
       if (!dragCtx.moved && Math.hypot(dx, dy) < 8) return;
       dragCtx.moved = true;
+      if (!dragCtx.ev) {                                   // empty space: swipe scrolls the register (up/down) or turns the bar (sideways)
+        if (!dragCtx.swipe) dragCtx.swipe = Math.abs(dy) >= Math.abs(dx) ? "v" : "h";
+        if (dragCtx.swipe === "v") {
+          const g = GEO[win], r = svg.getBoundingClientRect(), rows = Math.round(dy * (g.W / r.width) / g.step), { rows: n } = rowsOf(win);
+          const next = clamp(dragCtx.lo0 + rows, 21, 108 - n);
+          if (next !== viewOf(win)) { S.song.view[WIN_LO[win]] = next; renderWindows(); renderStrips(); }
+        }
+        return;
+      }
       const g = GEO[win], r = svg.getBoundingClientRect(), sc = g.W / r.width, ev = dragCtx.ev, bar = S.song.bars[S.bi];
       if (!ev.rest && dragCtx.m0 != null) { const m = clamp(dragCtx.m0 - Math.round(dy * sc / g.step), g.lo, g.hi); if (m !== ev.m) { if (dragCtx.part === "melody") setChainPitch(bar, chainOf(bar, ev), m); else ev.m = m; previewNote(m, dragCtx.part); } }
       const nt = r3(clamp(snapT(dragCtx.t0 + dx * sc / g.beatPx), 0, g.B - ev.d));
@@ -8044,12 +8070,13 @@ function initPointer() {
     const up = e => {
       if (!dragCtx || dragCtx.svg !== svg || e.pointerId !== dragCtx.id) return;
       const d = dragCtx; dragCtx = null;
-      if (d.moved) { renderAll(); return; }
+      if (d.moved) { if (!d.ev && d.swipe === "h") { const dx = e.clientX - d.x0; if (Math.abs(dx) > 50) { S.bi = clamp(S.bi + (dx < 0 ? 1 : -1), 0, S.song.bars.length - 1); S.sel = null; } } renderAll(); return; }
       const p = svgPoint(svg, e), g = GEO[win];
       if (d.ev) { if (d.part === "melody" && d.ev.m != null && Math.abs(g.y(d.ev.m) - p.y) > g.step) tapMelody(g.t(p.x), g.m(p.y)); else select(S.bi, d.part, S.sel && S.sel.id === d.ev.id ? null : d.ev.id); if (d.ev.m != null && !d.ev.rest && S.sel && S.sel.id === d.ev.id) previewNote(d.ev.m, d.part); return; }
       if (win === "mel") tapMelody(g.t(p.x), g.m(p.y)); else tapBand(win, g.t(p.x), g.m(p.y));
     };
     svg.addEventListener("pointerup", up); svg.addEventListener("pointercancel", () => { dragCtx = null; });
+    svg.addEventListener("wheel", e => { e.preventDefault(); shiftView(win, e.deltaY > 0 ? -1 : 1); }, { passive: false });
   }
   /* rhythm strip: tap a slot to select, tap empty space to insert a slot there */
   const rhy = $("rhySvg");
@@ -8135,7 +8162,8 @@ function openSettings() {
     el("div", { class: "pLbl" }, "Window sizing"), seg([["s", "Small"], ["m", "Medium"], ["l", "Large"]], S.winSize, v => { S.winSize = v; savePrefs(); renderAll(); }),
     el("div", { class: "pLbl" }, "Chords displayed"), seg([["names", "Names (C, G7)"], ["roman", "Roman (I, V7)"], ["off", "Hidden"]], S.chordsDisp, v => { S.chordsDisp = v; S.song.showRoman = v === "roman"; savePrefs(); renderAll(); }),
     el("div", { class: "pLbl" }, "Notes appearance"), seg([["trad", "Traditional"], ["pill", "Pills"], ["circle", "Circles"]], S.noteStyle, v => { S.noteStyle = v; savePrefs(); renderAll(); }),
-    el("div", { class: "mrow" }, toggle("Half steps on lines (every semitone gets a line)", S.halfLines, v => { S.halfLines = v; savePrefs(); renderAll(); openSettings(); })),
+    el("div", { class: "mrow" }, toggle("Half steps on lines (every half step gets a line; off = one half step per space)", S.halfLines, v => { S.halfLines = v; savePrefs(); renderAll(); openSettings(); })),
+    el("div", { class: "pLbl" }, "Lyrics font"), seg([["sans", "Current"], ["serif", "Serif"], ["smallcaps", "Small caps"]], S.lyricFont, v => { S.lyricFont = v; savePrefs(); renderAll(); }),
     el("div", { class: "pLbl" }, "Metronome"), seg([["off", "Off"], ["on", "Click while playing"], ["countin", "Count-in + click"]], S.metro, v => { S.metro = v; savePrefs(); }),
     el("div", { class: "pLbl" }, "Entry"),
     el("div", { class: "mrow" }, toggle("Snap to beat (half-beats)", S.song.snap, v => { S.song.snap = v; renderAll(); openSettings(); }), toggle("Follow words when pitching", S.followWords, v => { S.followWords = v; savePrefs(); if (v) S.cursor = nextUnpitchedChip(S.bi, null); renderAll(); openSettings(); })),
@@ -8149,10 +8177,11 @@ function openWinSettings(win) {
   const row = el("div", { class: "pRow" }, instSel);
   const banks = [...SAMPLES.meta.keys()];
   if (banks.length || P.bank) { const snd = el("select", { class: "sel", onchange: e => { P.bank = e.target.value || null; if (P.bank) ensureBankDecoded(P.bank).then(unloadUnusedBanks); saveSoon(); } }); snd.append(el("option", { value: "" }, "Built-in sound")); banks.forEach(b => snd.append(el("option", { value: b, selected: b === P.bank }, "♪ " + b))); row.append(snd); }
-  row.append(el("button", { class: "btn sm", onclick: () => { closeModal(); openSampler(); } }, "Samples…"));
+  row.append(el("button", { class: "btn sm", title: "Import a sound library (mp3/wav samples) from this device and assign it to a part", onclick: () => { closeModal(); openSampler(); } }, "＋ Add a sound library…"));
   body.push(el("div", { class: "mrow" }, toggle(part === "melody" ? "Melody plays back" : "Part is on", P.on, v => { P.on = v; if (v && P.bank) ensureBankDecoded(P.bank); renderAll(); openWinSettings(win); })));
   body.push(el("div", { class: "pLbl" }, "Instrument & sound"), row);
   body.push(el("div", { class: "pRow" }, el("span", { class: "tiny" }, "Volume"), el("input", { type: "range", min: 0, max: 1, step: 0.05, value: P.vol, style: "width:140px", oninput: e => { P.vol = parseFloat(e.target.value); saveSoon(); } })));
+  body.push(el("div", { class: "pLbl" }, "MIDI controller"), midiRow(part, win));
   if (part === "melody") {
     const { start, end } = curRange();
     body.push(el("div", { class: "pLbl" }, "Register"), el("div", { class: "pRow" }, el("span", { class: "tiny" }, `Window shows ${noteName(viewOf("mel"), keyObj(song.key))}–${noteName(viewOf("mel") + rowsOf("mel").rows - 1, keyObj(song.key))} — use ▲▼ beside the window (hold for an octave)`)));
@@ -8274,6 +8303,62 @@ function openHelp() {
   ]);
 }
 
+/* ── undo: restore the last idle snapshot ── */
+function undo() {
+  if (!UNDO.stack.length) { toast("Nothing to undo"); return; }
+  const snap = UNDO.stack.pop();
+  S.song = upgradeSong(JSON.parse(snap)); UNDO.last = snap; S.sel = null;
+  if (S.followWords) S.cursor = nextUnpitchedChip(S.bi, null);
+  renderAll(); toast("Undone");
+}
+
+/* ── MIDI controller (Web MIDI): a keyboard pitches the melody or places band notes ── */
+const MIDI = { access: null, inputs: [], ports: new Map() };
+function midiInit() { if (!navigator.requestMIDIAccess || !Object.values(S.midi || {}).some(Boolean)) return; midiConnect().catch(() => {}); }
+async function midiConnect() {
+  if (!navigator.requestMIDIAccess) throw new Error("no midi");
+  if (!MIDI.access) { MIDI.access = await navigator.requestMIDIAccess({ sysex: false }); MIDI.access.onstatechange = () => { midiRefresh(); }; }
+  midiRefresh();
+}
+function midiRefresh() {
+  MIDI.inputs = MIDI.access ? [...MIDI.access.inputs.values()] : [];
+  MIDI.inputs.forEach(inp => { inp.onmidimessage = e => midiMessage(inp.id, e.data); });
+}
+function midiMessage(portId, data) {
+  const st = data[0] & 0xf0, note = data[1], vel = data[2];
+  if (st !== 0x90 || vel === 0) return;
+  const part = Object.keys(S.midi || {}).find(p => S.midi[p] === portId); if (!part) return;
+  if (document.getElementById("overlay").classList.contains("on")) return;
+  midiNote(part, note, vel / 127);
+}
+function midiNote(part, m, vel) {
+  const bar = curBar(), bi = S.bi, B = barBeats();
+  if (part === "melody") {
+    const sel = selEv();
+    let chain = sel && S.sel.part === "melody" && !sel.rest ? chainOf(bar, sel) : null;
+    if (!chain) chain = chains(bar).find(c => !c.rest && c.head.m == null && !tiedFromPrev(bi, c)) || null;
+    if (chain) { setChainPitch(bar, chain, m); S.sel = null; const next = chains(bar).find(c => !c.rest && c.head.m == null && !tiedFromPrev(bi, c)); if (next) S.sel = { bi, part: "melody", id: next.head.id }; }
+    else { const t = rhythmEnd(bar); if (t >= B - 1e-6) { toast("Bar is full"); return; } bar.ev.melody.push({ id: uid(), t, d: Math.min(noteLenBeats(), freeSpan(bar, t)), m }); }
+    syncNotesToChips(bar); if (S.followWords) S.cursor = nextUnpitchedChip(bi, null);
+  } else {
+    if (!bar.custom[part]) { toast(`${PART_META[part].label}: switch to Custom to record notes`); return; }
+    const last = [...bar.ev[part]].sort((a, b) => a.t - b.t).pop(), t = last ? r3(last.t + last.d) : 0;
+    if (t >= B - 1e-6) { toast("Bar is full"); return; }
+    bar.ev[part].push({ id: uid(), t, d: Math.min(noteLenBeats(), B - t), m });
+  }
+  previewNote(m, part); ensureVisible(part, m); renderAll();
+}
+function midiRow(part, win) {
+  const row = el("div", { class: "pRow tight" });
+  if (!navigator.requestMIDIAccess) { row.append(el("span", { class: "tiny" }, "Web MIDI isn't available in this browser (Chrome, Edge and Opera support it; iOS Safari doesn't).")); return row; }
+  const sel = el("select", { class: "sel", onchange: e => { S.midi = S.midi || {}; S.midi[part] = e.target.value || null; savePrefs(); if (S.midi[part]) midiConnect().then(() => toast("MIDI connected: play a key to pitch the next note")).catch(() => toast("MIDI access was refused")); } });
+  sel.append(el("option", { value: "" }, MIDI.access ? "No controller" : "Not connected"));
+  MIDI.inputs.forEach(inp => sel.append(el("option", { value: inp.id, selected: S.midi && S.midi[part] === inp.id }, inp.name || inp.id)));
+  row.append(sel, el("button", { class: "btn sm", onclick: () => midiConnect().then(() => { toast(MIDI.inputs.length ? `${MIDI.inputs.length} controller${MIDI.inputs.length === 1 ? "" : "s"} found` : "No MIDI controllers found — plug one in"); openWinSettings(win); }).catch(() => toast("MIDI access was refused")) }, MIDI.access ? "Rescan" : "Connect…"));
+  row.append(el("span", { class: "tiny" }, part === "melody" ? "Keys pitch the selected or next empty rhythm box, or add notes at the palette length." : "Keys add notes at the palette length (Custom mode)."));
+  return row;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════
    SECTION 14 · BOOT
    ═══════════════════════════════════════════════════════════════════════ */
@@ -8306,9 +8391,9 @@ async function boot() {
   let holdT = null, held = false; const pb = $("playBtn");
   pb.addEventListener("pointerdown", () => { held = false; holdT = setTimeout(() => { held = true; if (S.playing) stopPlayback(); playSong(); toast("Playing the whole song"); }, 550); });
   const pbUp = () => clearTimeout(holdT); pb.addEventListener("pointerup", pbUp); pb.addEventListener("pointerleave", pbUp); pb.addEventListener("pointercancel", pbUp);
-  pb.addEventListener("click", () => { if (held) return; if (S.playing) { stopPlayback(); return; } const { end } = curRange(), list = []; for (let i = S.bi; i < end; i++) list.push(i); startPlayback(list); });
+  pb.addEventListener("click", () => { if (held) return; if (S.playing) { stopPlayback(); $("pauseBtn").classList.remove("on"); if (audioCtx && audioCtx.state === "suspended") audioCtx.resume(); return; } const { end } = curRange(), list = []; for (let i = S.bi; i < end; i++) list.push(i); startPlayback(list); });
   $("pauseBtn").addEventListener("click", () => { if (!S.playing || !audioCtx) return; if (audioCtx.state === "running") { audioCtx.suspend(); $("pauseBtn").classList.add("on"); } else { audioCtx.resume(); $("pauseBtn").classList.remove("on"); } });
-  $("stopBtn").addEventListener("click", () => { stopPlayback(); $("pauseBtn").classList.remove("on"); if (audioCtx && audioCtx.state === "suspended") audioCtx.resume(); });
+  midiInit();
   $("overlay").addEventListener("click", e => { if (e.target === $("overlay")) closeModal(); });
   initPointer(); initWindowChrome(); initWordEdit();
   window.addEventListener("keydown", e => {
@@ -8316,6 +8401,7 @@ async function boot() {
     if (["INPUT", "TEXTAREA", "SELECT"].includes(tag) || $("overlay").classList.contains("on")) return;
     if (e.key === " ") { e.preventDefault(); $("playBtn").click(); }
     else if (e.key === "Escape") { S.sel = null; closeWordEdit(); renderAll(); }
+    else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); undo(); }
     else if (e.key === "ArrowLeft" && !S.sel) { e.preventDefault(); if (S.bi > 0) { S.bi--; renderAll(); } }
     else if (e.key === "ArrowRight" && !S.sel) { e.preventDefault(); if (S.bi < S.song.bars.length - 1) { S.bi++; renderAll(); } }
     else if (S.sel) {
