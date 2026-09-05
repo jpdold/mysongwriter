@@ -452,7 +452,7 @@ textarea.lyricArea { width: 100%; min-height: 90px; border: 1px solid #999; bord
   </div>
 
   <div class="strip" id="lyrStrip">
-    <button class="tag" id="lyrTag" title="Words">Lyrics</button>
+    <button class="tag" id="lyrTag" title="Type words at the active beat">Lyrics</button>
     <div class="body"><svg id="lyrSvg"></svg><input id="lyrInline" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="word"><div id="weCaret"></div></div>
     <span></span>
     <div id="wordEdit">
@@ -9348,7 +9348,7 @@ async function boot() {
   scrollers.forEach(sc => sc.addEventListener("scroll", () => { if (syncing) return; syncing = true; scrollers.forEach(o => { if (o !== sc) o.scrollLeft = sc.scrollLeft; }); const inner = $("beatRow").querySelector(".inner"); if (inner) inner.style.transform = `translateX(${-sc.scrollLeft}px)`; syncing = false; }, { passive: true }));
   $("barLabel").addEventListener("click", openSectionOps);
   $("rhyTag").addEventListener("click", openRhythmMenu);
-  $("lyrTag").addEventListener("click", openWords);
+  $("lyrTag").addEventListener("click", () => { const bi = S.active ? S.active.bi : S.bi, t = S.active ? S.active.beat : 0; S.selChip = null; if (WE.on && WE.bi === bi && Math.abs(WE.t - t) < 1e-6) { closeWordEdit(); renderStrips(); return; } openWordEdit(bi, t); });   // type at the active beat, right on the strip
   $("chordsBtn").addEventListener("click", openChordsSheet);
   $("saveBtn").addEventListener("click", openLibrary);
   let holdT = null, held = false; const pb = $("playBtn");
