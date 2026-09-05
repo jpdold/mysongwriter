@@ -106,6 +106,10 @@ svg text { pointer-events: none; }
 #topTransport { justify-self: center; display: flex; gap: 6px; }
 #topTransport button { width: 52px; height: 34px; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #cfcfcf); color: #111; font-size: 17px; padding: 0; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
 #topTransport button.on { background: linear-gradient(#ffd27a, #f5a623); }
+#tempo { display: flex; align-items: center; margin-left: 4px; border: 1.5px solid #141414; border-radius: 4px; overflow: hidden; height: 34px; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
+#topTransport #tempo button { width: 30px; height: 34px; border: none; border-radius: 0; box-shadow: none; font-size: 18px; font-weight: 700; }
+#topTransport #tempo button#tempoLbl { width: auto; min-width: 58px; padding: 0 4px; font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; background: #111; color: #fff; }
+#topTransport #tempo button:active { background: linear-gradient(#ffd27a, #f5a623); }
 #app { overflow-x: hidden; }
 .btn.warn { background: #c8402f; color: #fff; border-color: #a93226; }
 #app > * { min-width: 0; }                     /* no child may widen the column: text and svgs never push the staves about */
@@ -358,7 +362,7 @@ textarea.lyricArea { width: 100%; min-height: 90px; border: 1px solid #999; bord
 
 /* inline word editor on the lyric strip */
 #lyrStrip { position: relative; }
-#wordEdit { position: absolute; z-index: 9; display: none; flex-direction: column; gap: 4px; background: #fff; border: 2px solid var(--tag); border-radius: 8px; padding: 4px 6px; box-shadow: 0 4px 16px rgba(0,0,0,.4); color: #111; top: 100%; margin-top: 3px; max-width: 100%; }
+#wordEdit { position: fixed; z-index: 70; display: none; flex-direction: column; gap: 4px; background: #fff; border: 2px solid var(--tag); border-radius: 8px 8px 0 0; padding: 4px 6px calc(6px + env(safe-area-inset-bottom)); box-shadow: 0 -4px 16px rgba(0,0,0,.4); color: #111; left: 0 !important; right: 0; bottom: 0; top: auto; margin: 0 auto; max-width: 560px; }
 #wordEdit.on { display: flex; }
 #wordEdit .weRow { display: flex; align-items: center; gap: 4px; }
 #wordEdit .weRow .flex { flex: 1; }
@@ -385,7 +389,7 @@ textarea.lyricArea { width: 100%; min-height: 90px; border: 1px solid #999; bord
 #wordEdit .weKeys button.go { background: var(--accent); color: #fff; border-color: var(--accent); }
 #wordEdit.native .weKeys { display: none; }
 #wordEdit button.kb.on { background: #cfe3fb; }
-#wordEdit { width: 100%; left: 0 !important; }
+#wordEdit { width: 100%; }
 #wordEdit .lbl2 { font-size: 10px; color: #555; white-space: nowrap; }
 #wordEdit input { width: 130px; border: none; background: none; font-family: var(--serif); font-size: 16px; font-weight: 700; padding: 3px 2px; outline: none; color: #111; }
 #wordEdit button { width: 28px; height: 28px; border: none; border-radius: 6px; background: #e6e6e6; font-size: 13px; padding: 0; color: #111; }
@@ -426,7 +430,7 @@ textarea.lyricArea { width: 100%; min-height: 90px; border: 1px solid #999; bord
   <header id="head">
     <input id="songTitle" type="text" placeholder="“My Song Title”" autocomplete="off" spellcheck="false" aria-label="Song title">
     <button class="iconBtn" id="menuBtn" title="Menu" aria-label="Menu">☰</button>
-    <div id="topTransport"><button id="playBtn" title="Play from this bar (hold for the whole song)">▶</button><button id="pauseBtn" title="Pause / resume">⏸</button></div>
+    <div id="topTransport"><button id="playBtn" title="Play from this bar (hold for the whole song)">▶</button><button id="pauseBtn" title="Pause / resume">⏸</button><div id="tempo" title="Tempo"><button id="tempoDn" aria-label="Slower">−</button><button id="tempoLbl" title="Tap to type a tempo">♩=120</button><button id="tempoUp" aria-label="Faster">+</button></div></div>
     <button class="iconBtn" id="gearBtn" title="Settings" aria-label="Settings"><svg class="ico"><use href="#icoGear"/></svg></button>
   </header>
 
@@ -7739,10 +7743,10 @@ function loadPrefs() {
   const p = readJSON(STORE.prefs, {});
   S.theme = p.theme || "auto"; S.followWords = p.followWords !== false; S.noteStyle = p.noteStyle || "trad"; S.noteSize = NOTE_SCALE[p.noteSize] ? p.noteSize : "m"; S.halfLines = p.halfLines == null ? true : !!p.halfLines; S.ftp = Object.assign({}, FTP_DEFAULT, p.ftp || {});
   S.winSize = WIN[p.winSize] ? p.winSize : "m"; S.chordsDisp = p.chordsDisp || "names"; S.metro = p.metro || "off"; S.custom = p.custom || null; S.len = p.len || 1;
-  S.lyricFont = p.lyricFont || "sans"; S.winState = Object.assign({ mel: "open", acc: "closed", bass: "closed" }, p.winState || {}); S.zoomWin = Object.assign({ mel: 1, acc: 1, bass: 1 }, p.zoomWin || {}); S.midi = p.midi || {}; S.viewSpan = [1, 2, 3, 4].includes(p.viewSpan) ? p.viewSpan : 1; if (p.softKb != null) S.softKb = p.softKb; S.layout = p.layout === "stack" ? "stack" : "rolled";
+  S.lyricFont = p.lyricFont || "sans"; S.winState = Object.assign({ mel: "open", acc: "closed", bass: "closed" }, p.winState || {}); S.zoomWin = Object.assign({ mel: 1, acc: 1, bass: 1 }, p.zoomWin || {}); S.midi = p.midi || {}; S.viewSpan = [1, 2, 3, 4].includes(p.viewSpan) ? p.viewSpan : 1; if (p.softKb != null) S.softKb = p.softKb2 == null ? true : !!p.softKb2;   // the app keyboard, on unless switched off S.layout = p.layout === "stack" ? "stack" : "rolled";
   applyTheme();
 }
-function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, ftp: S.ftp, halfLines: S.halfLines, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb: S.softKb, layout: S.layout }); }
+function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, ftp: S.ftp, halfLines: S.halfLines, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, layout: S.layout }); }
 function applyTheme() {
   const r = document.documentElement;
   if (S.theme === "dark") r.setAttribute("data-theme", "dark"); else r.removeAttribute("data-theme");
@@ -7875,12 +7879,24 @@ function distributeChips(bar) {
   bar.chips.forEach((c, i) => { c.d = r3((i < n - 1 ? bar.chips[i + 1].t : B) - c.t); if (c.d <= 0) c.d = 0.25; });
   syncNotesToChips(bar);
 }
+const chipBeats = (c, g) => Math.max(c.span || 0, (chipW(c) + 3) / g.beatPx);       // the room a chip takes, in beats
 function setChipTime(bar, chip, t) {
-  const i = bar.chips.indexOf(chip), B = barBeats(S.song.bars.indexOf(bar)), gap = chip.kind ? 0.0625 : 0.25;
-  const lo = i > 0 ? bar.chips[i - 1].t + gap : 0, hi = i < bar.chips.length - 1 ? bar.chips[i + 1].t - gap : B - gap;
-  chip.t = r3(clamp(t, lo, hi));
+  const i = bar.chips.indexOf(chip), bi = S.song.bars.indexOf(bar), B = barBeats(bi), g = GEO.mel || geo("mel"), gap = chip.kind ? 0.0625 : 0.125;
+  const lo = i > 0 ? bar.chips[i - 1].t + Math.max(gap, chipBeats(bar.chips[i - 1], g)) : 0;
+  const hi = i < bar.chips.length - 1 ? bar.chips[i + 1].t - Math.max(gap, chipBeats(chip, g)) : B - gap;
+  chip.t = r3(clamp(t, Math.ceil(lo * 16 - 1e-6) / 16, Math.floor(hi * 16 + 1e-6) / 16));   // the room, on a sixteenth grid
   bar.chips.forEach((c, k) => { c.d = r3((k < bar.chips.length - 1 ? bar.chips[k + 1].t : B) - c.t); if (c.d <= 0) c.d = 0.25; });
   syncNotesToChips(bar);
+}
+/* after words are placed: shove any chip that would sit on top of the one before it */
+function resolveChipOverlaps(bar) {
+  const bi = S.song.bars.indexOf(bar), B = barBeats(bi), g = GEO.mel || geo("mel");
+  bar.chips.sort((a, b) => a.t - b.t);
+  for (let i = 1; i < bar.chips.length; i++) {
+    const p = bar.chips[i - 1], c = bar.chips[i], min = r3(p.t + chipBeats(p, g));
+    if (c.t < min - 1e-6) c.t = r3(Math.min(Math.ceil(min * 16) / 16, B - 0.125));
+  }
+  refitChips(bar);
 }
 const chipPitched = (bar, chip) => { const n = chipNote(bar, chip); return !!n && (n.rest || n.m != null); };
 function nextUnpitchedChip(fromBi, afterChipId) {
@@ -8208,7 +8224,7 @@ function renderWindows() {
     const groups = S.noteStyle === "trad" ? beamGroups(bar.ev.melody.filter(e => e.m != null && e.m >= g.lo && e.m <= g.hi)) : [], beamed = new Set(groups.flatMap(gp => gp.evs.map(e => e.id)));
     const cur = S.cursor && S.cursor.bi === bi ? bar.chips.find(c => c.id === S.cursor.chipId) : null;
     if (cur && S.followWords) svg.append(svgEl("rect", { x: g.x(bi, cur.t), y: 0, width: Math.max(6, cur.d * g.beatPx), height: g.H, fill: box, opacity: 0.12, "pointer-events": "none" }));
-    if (S.active && S.active.bi === bi) svg.append(svgEl("rect", { x: g.x(bi, S.active.beat), y: 0, width: g.x(bi, Math.min(barBeats(bi), S.active.beat + 1)) - g.x(bi, S.active.beat), height: g.H, fill: css("--box"), opacity: 0.13, "pointer-events": "none" }));
+    if (S.active && S.active.bi === bi) { const ax = g.x(bi, S.active.beat), aw = g.x(bi, Math.min(barBeats(bi), S.active.beat + 1)) - ax; svg.append(svgEl("rect", { x: ax, y: 0, width: aw, height: g.H, fill: css("--box"), opacity: 0.28, "pointer-events": "none" }), svgEl("rect", { x: ax + 1, y: 1, width: aw - 2, height: g.H - 2, fill: "none", stroke: css("--box"), "stroke-width": 2, opacity: 0.9, "pointer-events": "none" })); }
     if (S.ghost && S.ghost.part === "melody" && S.ghost.bi === bi) drawGhost(svg, g, bi, S.ghost, box);
     for (const c of chains(bar)) {
       const x0 = g.x(bi, c.t) + 1, x1 = g.x(bi, c.t + c.d) - 2, selected = c.members.some(e => e.id === sel);
@@ -8254,7 +8270,7 @@ function renderWindows() {
     if (!P.on) { svg.append(svgEl("text", { x: g.W / 2, y: g.H / 2 + 4, "text-anchor": "middle", "font-size": 11, fill: css("--ink2"), "font-family": "system-ui, sans-serif" }, "off — tap ⚙ to turn on")); continue; }
     for (const bi of viewBars()) {
     const bar = song.bars[bi], sel = S.sel && S.sel.bi === bi && S.sel.part === part ? S.sel.id : null;
-    if (S.active && S.active.bi === bi) svg.append(svgEl("rect", { x: g.x(bi, S.active.beat), y: 0, width: g.x(bi, Math.min(barBeats(bi), S.active.beat + 1)) - g.x(bi, S.active.beat), height: g.H, fill: css("--box"), opacity: 0.13, "pointer-events": "none" }));
+    if (S.active && S.active.bi === bi) { const ax = g.x(bi, S.active.beat), aw = g.x(bi, Math.min(barBeats(bi), S.active.beat + 1)) - ax; svg.append(svgEl("rect", { x: ax, y: 0, width: aw, height: g.H, fill: css("--box"), opacity: 0.28, "pointer-events": "none" }), svgEl("rect", { x: ax + 1, y: 1, width: aw - 2, height: g.H - 2, fill: "none", stroke: css("--box"), "stroke-width": 2, opacity: 0.9, "pointer-events": "none" })); }
     if (S.ghost && S.ghost.part === part && S.ghost.bi === bi) drawGhost(svg, g, bi, S.ghost, color);
     if (bar.custom[part]) {
       const groups = S.noteStyle === "trad" ? beamGroups(bar.ev[part].filter(e => e.m >= g.lo && e.m <= g.hi)) : [], beamed = new Set(groups.flatMap(gp => gp.evs.map(e => e.id)));
@@ -8380,7 +8396,7 @@ function renderBeatRow() {
   }
 }
 function renderPalette() {
-  renderFtp();
+  renderFtp(); renderTempo();
   const r1 = $("palRow1"), r2 = $("palRow2"); r1.replaceChildren(); r2.replaceChildren();
   let p = r1;
   const ev = selEv(), bar = curBar();
@@ -8717,7 +8733,7 @@ function initPointer() {
   });
   lyr.addEventListener("pointerup", e => {
     if (!ld || e.pointerId !== ld.id) return; const d = ld; ld = null;
-    if (d.moved) { renderAll(); return; }
+    if (d.moved) { S.selChip = null; renderAll(); return; }                 // the bar goes with the release; tap again to bring it back
     const p = svgPoint(lyr, e), at = GEO.mel.at(p.x);
     S.sel = null;
     if (d.chip) { if (S.selChip && S.selChip.id === d.chip.id) openWordEdit(d.bi, d.chip.t, d.chip); else { S.selChip = { bi: d.bi, id: d.chip.id }; S.bi = d.bi; closeWordEdit(); renderAll(); } }
@@ -8743,6 +8759,7 @@ const weInput = () => $("lyrInline");
 function openWordEdit(bi, t, chip) {
   const box = $("wordEdit"), inp = weInput(), lbl = box.querySelector(".lbl2"), bar = S.song.bars[bi], B = barBeats(bi);
   if (WE.on && WE.dirty) commitWordEdit(false, true);
+  if (!WE.on) WE.firstChip = null;                                       // a fresh keyboard session: the first word typed will be the one selected on close
   if (t >= B - 1e-6) { closeWordEdit(); return; }
   const attacks = chains(bar).filter(c => !c.rest).map(c => c.t), near = attacks.find(a => Math.abs(a - t) < 0.3);
   WE.on = true; WE.bi = bi; WE.t = chip ? chip.t : near != null ? near : clamp(S.song.snap ? Math.round(t * 2) / 2 : Math.round(t * 4) / 4, 0, B - 0.25); WE.dirty = false;
@@ -8805,22 +8822,27 @@ function renderWeKeys() {
   bottom.append(key("↵", () => commitWordEdit(true), "wide go", "place and move on"));
   k.append(bottom);
 }
-function closeWordEdit() { if (WE.on && WE.dirty) { commitWordEdit(false, true); return; } WE.on = false; WE.wid = null; WE.chipId = null; $("wordEdit").classList.remove("on"); weInput().classList.remove("on"); weCaret(); }
+function closeWordEdit() {
+  if (WE.on && WE.dirty) { commitWordEdit(false, true); return; }
+  const was = WE.on; WE.on = false; WE.wid = null; WE.chipId = null; $("wordEdit").classList.remove("on"); weInput().classList.remove("on"); weCaret();
+  const f = WE.firstChip; WE.firstChip = null;
+  if (was && f && S.song.bars[f.bi] && S.song.bars[f.bi].chips.some(c => c.id === f.id)) { S.selChip = { bi: f.bi, id: f.id }; S.bi = f.bi; renderAll(); }   // the first word you typed is ready to move or stretch
+}
 function commitWordEdit(advance, quiet) {
   if (!WE.on) return;
   const inp = weInput(), text = WE.chipId ? inp.value : inp.value.trim(), bi = WE.bi, bar = S.song.bars[bi];
   WE.dirty = false;
   let nextT;
-  if (WE.chipId) {                                                     // one loose piece: its text changes in place (empty deletes it)
+  if (WE.chipId) { WE.firstChip = WE.firstChip || { bi, id: WE.chipId };                                                     // one loose piece: its text changes in place (empty deletes it)
     const c = bar.chips.find(x => x.id === WE.chipId);
     if (c) { if (!text) bar.chips = bar.chips.filter(x => x !== c); else { c.text = text; c.kind = text === " " ? "space" : /[\p{L}\p{N}]/u.test(text) ? "letter" : "sym"; } refitChips(bar); }
     nextT = barBeats(bi); WE.chipId = null;
-  } else nextT = insertWordsAt(bi, WE.t, text);
+  } else { const before = new Set(bar.chips.map(c => c.id)); nextT = insertWordsAt(bi, WE.t, text); resolveChipOverlaps(bar); if (!WE.firstChip) { const fresh = bar.chips.filter(c => !before.has(c.id)); if (fresh.length) WE.firstChip = { bi, id: fresh[0].id }; } }
   syncNotesToChips(bar);
   if (S.followWords) S.cursor = nextUnpitchedChip(bi, null);
-  if (quiet) { WE.on = false; WE.wid = null; $("wordEdit").classList.remove("on"); inp.classList.remove("on"); renderAll(); return; }
+  if (quiet) { WE.on = false; WE.wid = null; $("wordEdit").classList.remove("on"); inp.classList.remove("on"); const f = WE.firstChip; WE.firstChip = null; if (f && S.song.bars[f.bi] && S.song.bars[f.bi].chips.some(c => c.id === f.id)) { S.selChip = { bi: f.bi, id: f.id }; S.bi = f.bi; } renderAll(); return; }
   renderAll();
-  if (advance) { const attacks = chains(bar).filter(c => !c.rest).map(c => c.t), na = attacks.find(a => a > WE.t + 1e-6 && !bar.chips.some(c => Math.abs(c.t - a) < 1e-6)); if (na != null) openWordEdit(bi, na); else if (nextT < barBeats(bi)) openWordEdit(bi, nextT); else if (bi + 1 < S.song.bars.length && viewBars().includes(bi + 1)) openWordEdit(bi + 1, 0); else { WE.on = false; WE.wid = null; $("wordEdit").classList.remove("on"); weInput().classList.remove("on"); renderStrips(); } }
+  if (advance) { const attacks = chains(bar).filter(c => !c.rest).map(c => c.t), na = attacks.find(a => a > WE.t + 1e-6 && !bar.chips.some(c => Math.abs(c.t - a) < 1e-6)); if (na != null) openWordEdit(bi, na); else if (nextT < barBeats(bi)) openWordEdit(bi, nextT); else if (bi + 1 < S.song.bars.length) { S.bi = bi + 1; renderAll(); openWordEdit(bi + 1, 0); } else openWordEdit(bi, WE.t); }
   else { WE.on = false; WE.wid = null; $("wordEdit").classList.remove("on"); weInput().classList.remove("on"); renderStrips(); }
 }
 function initWordEdit() {
@@ -9215,6 +9237,17 @@ function renderFtp() {
   P.cur.textContent = ev && ev.rest ? "rest" : noteName(m, key);
   P.del.title = ev ? "Delete the selected note" : `Clear beat ${beat + 1}`;
 }
+/* ── tempo on the main display: −/+ nudge by one, hold to keep going, tap the number to type ── */
+function setTempo(v) { const song = S.song; song.bpm = clamp(Math.round(v), 40, 220); song.bpmCustom = true; renderTempo(); saveNow(); }
+function renderTempo() { const l = $("tempoLbl"); if (l && S.song) l.textContent = `♩=${S.song.bpm || 120}`; }
+function wireTempo() {
+  [[$("tempoDn"), -1], [$("tempoUp"), 1]].forEach(([b, d]) => {
+    if (!b) return; let t = null, iv = null; const stop = () => { clearTimeout(t); clearInterval(iv); t = iv = null; };
+    b.addEventListener("pointerdown", e => { e.preventDefault(); setTempo((S.song.bpm || 120) + d); t = setTimeout(() => { iv = setInterval(() => setTempo((S.song.bpm || 120) + d), 90); }, 450); });
+    ["pointerup", "pointerleave", "pointercancel"].forEach(ev => b.addEventListener(ev, stop));
+  });
+  const l = $("tempoLbl"); if (l) l.addEventListener("click", () => promptModal("Tempo (beats per minute)", String(S.song.bpm || 120), v => { const n = parseInt(v, 10); if (n) setTempo(n); }));
+}
 /* full screen: hides the address bar on Android / desktop; iPhone Safari has no such API,
    so there the answer is Share → Add to Home Screen, which opens the app without any browser bars */
 function toggleFullscreen() {
@@ -9227,6 +9260,8 @@ function openHelp() {
   const h = (t, d) => el("div", { style: "margin:8px 0" }, el("b", {}, t), el("div", { class: "tiny", style: "font-size:13px;color:#444" }, d));
   openModal("How it works", [
     h("Pickup & repeats", "Setup → Pickup adds a short bar (½, 1 or 2 beats) before beat 1. Tap the bar name → Repeat this section to play a section several times."),
+    h("Typing words", "Tap Lyrics: the keyboard opens at the active beat. Type a word and press ↵ — it lands on the strip and the keyboard moves to the next spot, staying open. Close the keyboard with ✕ and the first word you typed is already selected, ready to nudge with ◀ ▶, drag, or stretch by its handle."),
+    h("Tempo", "♩= in the top row shows the tempo. − and + change it by one (hold to keep going); tap the number to type one."),
     h("Lyric chips", "Every syllable, letter, space or mark on the Lyrics strip is a chip. Drag one to move it — words land on beats and note starts, loose letters move freely. Tap a chip to select it, then drag the handle on its right edge to stretch it over the beats it covers, or shrink it back. Tap a selected chip to edit it: a word shows its hyphens, so you can add, move or remove them; a loose letter edits on its own. The cursor in the editor is a still white bar."),
     h("Chords (stacked notes)", "Turn on Chord in the tools, then tap other pitches in the same time column as a note to stack them; each gets the same length and ties. Works in the melody and in Custom band bars. Tap Chord again to go back to single notes."),
     h("Floating palette", "⧉ at the end of the tools pops them out into a small palette you can drag anywhere (the stave keeps its size). ◀ ▶ step by the chosen note length (eighths step half a beat) and also stop at every note start — tap the label to step through bars instead. The yellow box shows the pitch; ▲ ▼ change it. Tap PITCH to flip the arrows to SELECT, which moves between the notes stacked at that spot; tap again to go back. Tap a note length once to choose it (the box takes that size); tap the chosen length again to enter the note at the box, or, when a note is selected, to give that note the length. M / A / B pick the window, 🗑 deletes, ▶ plays the bar, Rhythm and Lyrics open those tools, ⚙ sets its size and side, ⤶ pops it back in. While it is out, the stave and strips do not take taps."),
@@ -9355,6 +9390,7 @@ async function boot() {
   scrollers.forEach(sc => sc.addEventListener("scroll", () => { if (syncing) return; syncing = true; scrollers.forEach(o => { if (o !== sc) o.scrollLeft = sc.scrollLeft; }); const inner = $("beatRow").querySelector(".inner"); if (inner) inner.style.transform = `translateX(${-sc.scrollLeft}px)`; syncing = false; }, { passive: true }));
   $("barLabel").addEventListener("click", openSectionOps);
   $("rhyTag").addEventListener("click", openRhythmMenu);
+  wireTempo();
   $("lyrTag").addEventListener("click", () => { const bi = S.active ? S.active.bi : S.bi, t = S.active ? S.active.beat : 0; S.selChip = null; if (WE.on && WE.bi === bi && Math.abs(WE.t - t) < 1e-6) { closeWordEdit(); renderStrips(); return; } openWordEdit(bi, t); });   // type at the active beat, right on the strip
   $("chordsBtn").addEventListener("click", openChordsSheet);
   $("saveBtn").addEventListener("click", openLibrary);
