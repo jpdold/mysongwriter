@@ -107,6 +107,10 @@ svg text { pointer-events: none; }
 #topTransport button { width: 52px; height: 34px; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #cfcfcf); color: #111; font-size: 17px; padding: 0; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
 #topTransport button.on { background: linear-gradient(#ffd27a, #f5a623); }
 #app { overflow-x: hidden; }
+#app > * { min-width: 0; }                     /* no child may widen the column: text and svgs never push the staves about */
+#palette { min-width: 0; overflow: hidden; }
+#palette .prow { min-width: 0; overflow: hidden; }
+#palette .hint, #palette .who { min-width: 0; flex: 1 1 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #songTitle { grid-column: 1 / -1; justify-self: center; width: min(100%, 360px); text-align: center; font-size: 22px; line-height: 1.2;
   background: var(--paper); color: var(--ink); border: 1.5px solid #141414; border-radius: 4px; padding: 4px 10px; font-family: var(--sans); box-shadow: inset 0 1px 3px rgba(0,0,0,.15), 0 2px 5px rgba(0,0,0,.25); }
 #songTitle::placeholder { color: #999; font-style: italic; }
@@ -8180,7 +8184,7 @@ function renderWindows() {
 }
 function renderStrips() {
   const song = S.song, key = keyObj(song.key), g = GEO.mel && S.winState.mel !== "closed" ? GEO.mel : geo("mel"), B = g.B, H = 36, bars = viewBars();
-  const dividers = (svg, color, op) => { for (const bi of bars) { for (let b = 1; b < barBeats(bi); b++) svg.append(svgEl("line", { x1: g.x(bi, b), x2: g.x(bi, b), y1: 0, y2: H, stroke: color, "stroke-width": 2, "stroke-dasharray": "5 4", opacity: op * (g.n > 1 ? 0.7 : 1) })); if (bi > g.first) svg.append(svgEl("line", { x1: g.x(bi, 0), x2: g.x(bi, 0), y1: 0, y2: H, stroke: color, "stroke-width": 2, opacity: op })); } if (g.totalBeats < g.B - 1e-6) { const ex = g.x(bars[bars.length - 1], barBeats(bars[bars.length - 1])); svg.append(svgEl("line", { x1: ex, x2: ex, y1: 0, y2: H, stroke: color, "stroke-width": 2, opacity: op })); } };
+  const dividers = (svg, color, op) => { for (const bi of bars) { for (let b = 1; b < barBeats(bi); b++) { const bx = Math.round(g.x(bi, b)); svg.append(svgEl("line", { x1: bx, x2: bx, y1: 0, y2: H, stroke: color, "stroke-width": 2, "stroke-dasharray": "5 4", opacity: op * (g.n > 1 ? 0.7 : 1), "shape-rendering": "crispEdges" })); } if (bi > g.first) svg.append(svgEl("line", { x1: Math.round(g.x(bi, 0)), x2: Math.round(g.x(bi, 0)), y1: 0, y2: H, stroke: color, "stroke-width": 2, opacity: op, "shape-rendering": "crispEdges" })); } if (g.totalBeats < g.B - 1e-6) { const ex = g.x(bars[bars.length - 1], barBeats(bars[bars.length - 1])); svg.append(svgEl("line", { x1: ex, x2: ex, y1: 0, y2: H, stroke: color, "stroke-width": 2, opacity: op })); } };
   /* rhythm strip: the slots as small glyphs, the ▶ marks where the next tap lands */
   {
     const svg = $("rhySvg"); svg.replaceChildren(); svg.setAttribute("height", H); svg.setAttribute("viewBox", `0 0 ${g.W} ${H}`); svg.setAttribute("width", g.W); svg.style.width = g.W + "px"; svg.style.touchAction = g.n > 1 ? "pan-x" : "none";
