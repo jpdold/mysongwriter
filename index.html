@@ -169,7 +169,8 @@ svg text { pointer-events: none; }
 .win.closed .side { flex-direction: row; gap: 6px; grid-column: 3; }
 .win.closed .winHead { position: static; transform: none; justify-self: start; grid-column: 2; }
 #melWin.closed::before { content: ""; grid-column: 1; }
-.win .rArr { width: 42px; height: 14px; border: none; background: none; color: var(--on-ground); font-size: 12px; padding: 0; line-height: 1; position: absolute; left: 0; }
+.win .rArr { width: 42px; height: 14px; border: none; background: none; color: rgba(255,255,255,.4); font-size: 11px; font-weight: 700; padding: 0; line-height: 1; position: absolute; left: 0; letter-spacing: 0; }
+.win .rArr:active { color: #fff; }
 .win .rArr.up { top: -2px; } .win .rArr.dn { bottom: -2px; }
 .winHead { position: absolute; left: 50%; transform: translateX(-50%); top: -9px; z-index: 2; background: #111; color: #fff; font-size: 10.5px; font-weight: 700; height: 18px; line-height: 16px;
   letter-spacing: .06em; padding: 0 12px; border-radius: 3px; white-space: nowrap; text-transform: uppercase; border: 1px solid #000; max-width: calc(100% - 100px); overflow: hidden; text-overflow: ellipsis; }
@@ -373,7 +374,7 @@ textarea.lyricArea { width: 100%; min-height: 90px; border: 1px solid #999; bord
   <div id="beatRow"></div>
 
   <section class="win" id="melWin">
-    <div class="gutter"><button class="rArr up" data-win="mel" data-dir="1" title="Higher">▲</button><svg id="melGut"></svg><button class="rArr dn" data-win="mel" data-dir="-1" title="Lower">▼</button></div>
+    <div class="gutter"><button class="rArr up" data-win="mel" data-dir="1" title="Higher">︿</button><svg id="melGut"></svg><button class="rArr dn" data-win="mel" data-dir="-1" title="Lower">﹀</button></div>
     <div class="frame"><svg id="melSvg"></svg></div>
     <div class="side"><button class="gear" data-win="mel" title="Melody settings">⚙</button><button class="sizer" data-win="mel" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="mel" title="Hear the melody alone">▶</button><button class="focus" data-win="mel" title="Give this window the whole screen">⛶</button></div>
   </section>
@@ -398,14 +399,14 @@ textarea.lyricArea { width: 100%; min-height: 90px; border: 1px solid #999; bord
 
   <section class="win" id="accWin">
     <button class="winHead" data-win="acc">Accompaniment</button>
-    <div class="gutter"><button class="rArr up" data-win="acc" data-dir="1" title="Higher">▲</button><svg id="accGut"></svg><button class="rArr dn" data-win="acc" data-dir="-1" title="Lower">▼</button></div>
+    <div class="gutter"><button class="rArr up" data-win="acc" data-dir="1" title="Higher">︿</button><svg id="accGut"></svg><button class="rArr dn" data-win="acc" data-dir="-1" title="Lower">﹀</button></div>
     <div class="frame"><svg id="accSvg"></svg></div>
     <div class="side"><button class="gear" data-win="acc" title="Accompaniment settings">⚙</button><button class="sizer" data-win="acc" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="acc" title="Hear the accompaniment alone">▶</button><button class="focus" data-win="acc" title="Give this window the whole screen">⛶</button></div>
   </section>
 
   <section class="win" id="bassWin">
     <button class="winHead" data-win="bass">Bass</button>
-    <div class="gutter"><button class="rArr up" data-win="bass" data-dir="1" title="Higher">▲</button><svg id="bassGut"></svg><button class="rArr dn" data-win="bass" data-dir="-1" title="Lower">▼</button></div>
+    <div class="gutter"><button class="rArr up" data-win="bass" data-dir="1" title="Higher">︿</button><svg id="bassGut"></svg><button class="rArr dn" data-win="bass" data-dir="-1" title="Lower">﹀</button></div>
     <div class="frame"><svg id="bassSvg"></svg></div>
     <div class="side"><button class="gear" data-win="bass" title="Bass settings">⚙</button><button class="sizer" data-win="bass" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="bass" title="Hear the bass alone">▶</button><button class="focus" data-win="bass" title="Give this window the whole screen">⛶</button></div>
   </section>
