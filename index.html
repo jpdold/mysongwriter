@@ -161,6 +161,9 @@ svg text { pointer-events: none; }
 #app.focus-mel :is(#accWin, #bassWin, #foot), #app.focus-acc :is(#melWin, #rhyStrip, #lyrStrip, #palette, #bassWin, #foot), #app.focus-bass :is(#melWin, #rhyStrip, #lyrStrip, #palette, #accWin, #foot) { display: none !important; }
 .win.closed .solo { display: none; }
 .win .gear { width: 24px; height: 24px; border: none; background: none; color: var(--on-ground); font-size: 17px; padding: 0; line-height: 1; opacity: .9; }
+.ico { width: 1em; height: 1em; display: block; margin: auto; pointer-events: none; }
+#gearBtn .ico { width: 22px; height: 22px; }
+.win .gear .ico { width: 16px; height: 16px; }
 .win .sizer { width: 24px; height: 24px; padding: 0; border: 1px solid rgba(255,255,255,.35); border-radius: 4px; background: rgba(0,0,0,.25); color: var(--on-ground); display: grid; place-items: center; }
 .win .sizer .sz { display: block; width: 12px; height: 9px; border: 1.5px solid currentColor; border-radius: 1px; position: relative; }
 .win.half .sizer .sz { height: 5px; }
@@ -358,11 +361,12 @@ textarea.lyricArea { width: 100%; min-height: 90px; border: 1px solid #999; bord
 <body>
 <div id="app">
 
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="icoGear" viewBox="0 0 16 16"><path d="M13.27 6.82 L15.03 7.01 L15.03 8.99 L13.27 9.18 L12.56 10.89 L13.67 12.27 L12.27 13.67 L10.89 12.56 L9.18 13.27 L8.99 15.03 L7.01 15.03 L6.82 13.27 L5.11 12.56 L3.73 13.67 L2.33 12.27 L3.44 10.89 L2.73 9.18 L0.97 8.99 L0.97 7.01 L2.73 6.82 L3.44 5.11 L2.33 3.73 L3.73 2.33 L5.11 3.44 L6.82 2.73 L7.01 0.97 L8.99 0.97 L9.18 2.73 L10.89 3.44 L12.27 2.33 L13.67 3.73 L12.56 5.11 Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="8" cy="8" r="2.4" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol></svg>
   <header id="head">
     <input id="songTitle" type="text" placeholder="“My Song Title”" autocomplete="off" spellcheck="false" aria-label="Song title">
     <button class="iconBtn" id="menuBtn" title="Menu" aria-label="Menu">☰</button>
     <div id="topTransport"><button id="playBtn" title="Play from this bar (hold for the whole song)">▶</button><button id="pauseBtn" title="Pause / resume">⏸</button></div>
-    <button class="iconBtn" id="gearBtn" title="Settings" aria-label="Settings">⚙</button>
+    <button class="iconBtn" id="gearBtn" title="Settings" aria-label="Settings"><svg class="ico"><use href="#icoGear"/></svg></button>
   </header>
 
   <div id="nav">
@@ -377,7 +381,7 @@ textarea.lyricArea { width: 100%; min-height: 90px; border: 1px solid #999; bord
   <section class="win" id="melWin">
     <div class="gutter"><button class="rArr up" data-win="mel" data-dir="1" title="Higher">︿</button><svg id="melGut"></svg><button class="rArr dn" data-win="mel" data-dir="-1" title="Lower">﹀</button></div>
     <div class="frame"><svg id="melSvg"></svg></div>
-    <div class="side"><button class="gear" data-win="mel" title="Melody settings">⚙</button><button class="sizer" data-win="mel" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="mel" title="Hear the melody alone">▶</button><button class="focus" data-win="mel" title="Give this window the whole screen">⛶</button></div>
+    <div class="side"><button class="gear" data-win="mel" title="Melody settings"><svg class="ico"><use href="#icoGear"/></svg></button><button class="sizer" data-win="mel" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="mel" title="Hear the melody alone">▶</button><button class="focus" data-win="mel" title="Give this window the whole screen">⛶</button></div>
   </section>
 
   <div class="strip" id="rhyStrip">
@@ -402,14 +406,14 @@ textarea.lyricArea { width: 100%; min-height: 90px; border: 1px solid #999; bord
     <button class="winHead" data-win="acc">Accompaniment</button>
     <div class="gutter"><button class="rArr up" data-win="acc" data-dir="1" title="Higher">︿</button><svg id="accGut"></svg><button class="rArr dn" data-win="acc" data-dir="-1" title="Lower">﹀</button></div>
     <div class="frame"><svg id="accSvg"></svg></div>
-    <div class="side"><button class="gear" data-win="acc" title="Accompaniment settings">⚙</button><button class="sizer" data-win="acc" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="acc" title="Hear the accompaniment alone">▶</button><button class="focus" data-win="acc" title="Give this window the whole screen">⛶</button></div>
+    <div class="side"><button class="gear" data-win="acc" title="Accompaniment settings"><svg class="ico"><use href="#icoGear"/></svg></button><button class="sizer" data-win="acc" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="acc" title="Hear the accompaniment alone">▶</button><button class="focus" data-win="acc" title="Give this window the whole screen">⛶</button></div>
   </section>
 
   <section class="win" id="bassWin">
     <button class="winHead" data-win="bass">Bass</button>
     <div class="gutter"><button class="rArr up" data-win="bass" data-dir="1" title="Higher">︿</button><svg id="bassGut"></svg><button class="rArr dn" data-win="bass" data-dir="-1" title="Lower">﹀</button></div>
     <div class="frame"><svg id="bassSvg"></svg></div>
-    <div class="side"><button class="gear" data-win="bass" title="Bass settings">⚙</button><button class="sizer" data-win="bass" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="bass" title="Hear the bass alone">▶</button><button class="focus" data-win="bass" title="Give this window the whole screen">⛶</button></div>
+    <div class="side"><button class="gear" data-win="bass" title="Bass settings"><svg class="ico"><use href="#icoGear"/></svg></button><button class="sizer" data-win="bass" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="bass" title="Hear the bass alone">▶</button><button class="focus" data-win="bass" title="Give this window the whole screen">⛶</button></div>
   </section>
 
   <footer id="foot">
