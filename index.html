@@ -107,6 +107,7 @@ svg text { pointer-events: none; }
 #topTransport button { width: 52px; height: 34px; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #cfcfcf); color: #111; font-size: 17px; padding: 0; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
 #topTransport button.on { background: linear-gradient(#ffd27a, #f5a623); }
 #app { overflow-x: hidden; }
+.btn.warn { background: #c8402f; color: #fff; border-color: #a93226; }
 #app > * { min-width: 0; }                     /* no child may widen the column: text and svgs never push the staves about */
 #palette { min-width: 0; overflow: hidden; }
 #palette .prow { min-width: 0; overflow: hidden; }
@@ -8867,7 +8868,7 @@ function openChordsSheet() {
 function openLibrary() {
   const song = S.song, name = el("input", { class: "txt", type: "text", value: song.title, placeholder: "Song title", style: "flex:1" });
   const body = [el("div", { class: "pRow" }, name, el("button", { class: "btn acc", onclick: () => { song.title = name.value.trim(); saveNow(); renderHeader(); closeModal(); toast("Saved"); } }, "Save"))];
-  body.push(el("div", { class: "pRow" }, el("button", { class: "btn sm", onclick: () => confirmModal("Start a new song? This one stays saved.", () => { saveNow(); S.song = newSong(); S.bi = 0; S.sel = null; S.cursor = null; saveNow(); closeModal(); renderAll(); }, "New song") }, "✚ New song"),
+  body.push(el("div", { class: "pRow" }, el("button", { class: "btn sm", onclick: startNewSong }, "✚ New song"),
     el("button", { class: "btn sm", onclick: () => { const c = JSON.parse(JSON.stringify(song)); c.id = uid(); c.title = (song.title || "Untitled") + " copy"; S.song = upgradeSong(c); saveNow(); closeModal(); renderAll(); toast("Copy made"); } }, "⧉ Save a copy")));
   body.push(el("div", { class: "pLbl" }, "Your songs"));
   const songs = listSongs();
@@ -8876,11 +8877,20 @@ function openLibrary() {
     el("button", { class: "btn sm ghost danger", disabled: s.id === song.id, onclick: () => confirmModal(`Delete “${s.title || "Untitled song"}”?`, () => { deleteSong(s.id); openLibrary(); }, "Delete") }, "✕"))));
   openModal("Save & open", body);
 }
+/* New song: keep the current one (save first), drop the unsaved changes, or cancel */
+function startNewSong() {
+  const song = S.song, saved = !!readJSON(STORE.songs, {})[song.id], title = song.title ? `“${song.title}”` : "this song";
+  const go = () => { closeModal(); S.song = newSong(); S.bi = 0; S.sel = null; S.cursor = null; S.ghost = null; S.active = null; S.justEntered = null; saveNow(); renderAll(); openSongSetup(); };
+  openModal("New song", el("p", { style: "font-size:16px;margin:6px 0 4px" }, saved ? `Save your latest changes to ${title} before starting a new song? Without saving, ${title} stays as it was last saved.` : `${title} has not been saved yet. Save it before starting a new song?`),
+    [el("button", { class: "btn", onclick: closeModal }, "Cancel"),
+     el("button", { class: "btn warn", onclick: go }, "Don't save"),
+     el("button", { class: "btn acc", onclick: () => { saveNow(); go(); } }, "Save & start new")]);
+}
 function openMenu() {
   const item = (ic, label, fn) => el("button", { onclick: () => { closeModal(); fn(); } }, el("span", { class: "ic" }, ic), label);
   const file = el("input", { type: "file", accept: ".json,application/json", style: "display:none", onchange: e => { const f = e.target.files[0]; if (!f) return; f.text().then(txt => { try { const s = upgradeSong(JSON.parse(txt)); s.id = uid(); S.song = s; S.bi = 0; S.sel = null; saveNow(); loadSongBanks(); renderAll(); toast("Imported"); } catch (err) { toast("That file isn't a song"); } }); } });
   openModal("My Song Writer", [el("div", { class: "menuList" },
-    item("✚", "New song…", () => confirmModal("Start a new song? The current one stays saved.", () => { saveNow(); S.song = newSong(); S.bi = 0; S.sel = null; S.cursor = null; S.ghost = null; saveNow(); renderAll(); openSongSetup(); }, "New song")),
+    item("✚", "New song…", startNewSong),
     item("♫", "Song setup — name, genre, key, time, tempo", openSongSetup),
     item("⇪", "Share — link, parts, performance mode", openShare),
     item("⬇", "Export .json", () => downloadJSON(S.song, ((S.song.title || "song").replace(/[^\w\- ]+/g, "").trim() || "song") + ".mysong.json")),
