@@ -251,7 +251,8 @@ svg text { pointer-events: none; }
 #ftp .pitch { display: flex; flex-direction: column; align-items: center; width: 40px; }
 #ftp .pitch .pBtn { width: 34px; min-width: 34px; height: 34px; border: none; background: none; color: #111; font-size: 24px; padding: 0; }
 #ftp .pitch .pBtn:active { color: #fff; }
-#ftp .pitch .pLbl { flex: 1; width: 22px; background: #111; color: #fff; writing-mode: vertical-rl; text-orientation: mixed; display: grid; place-items: center; font-size: 11px; font-weight: 700; letter-spacing: .12em; border-radius: 3px; margin: 2px 0; }
+#ftp .pitch .pLbl { flex: 1; width: 22px; min-width: 22px; height: auto; padding: 0; background: #111; color: #fff; writing-mode: vertical-rl; text-orientation: mixed; display: grid; place-items: center; font-size: 11px; font-weight: 700; letter-spacing: .12em; border-radius: 3px; border: 1px solid #000; margin: 2px 0; }
+#ftp .pitch .pLbl.on { background: linear-gradient(#6fb3ff, #2f7fd6); border-color: #1b4f8a; }
 #ftp .pitch .pCur { width: 34px; height: 24px; margin-top: 4px; background: #ffe600; color: #111; font-weight: 800; font-size: 12px; border: 1.5px solid #111; border-radius: 3px; display: grid; place-items: center; }
 #ftp .tag { height: 24px; min-width: 0; padding: 0 6px; background: var(--tag); border-color: #3f6f18; color: #143; font-weight: 800; font-size: 12px; font-family: var(--sans); }
 #ftp .ftpIn { width: 30px; min-width: 30px; height: 26px; font-size: 15px; }
@@ -8949,7 +8950,15 @@ function openMenu() {
    The inset palette hides (its space is kept, so nothing rescales); the stave and strips stop taking taps.
    ═══════════════════════════════════════════════════════════════════════ */
 const PART_WIN = { melody: "mel", accomp: "acc", bass: "bass" };
-const FTP_DEFAULT = { on: false, size: "m", side: "right", x: null, y: null, nav: "beat", m: 60 };
+const FTP_DEFAULT = { on: false, size: "m", side: "right", x: null, y: null, nav: "beat", m: 60, t: 0, mode: "pitch" };
+/* where the arrows stop in a bar: every beat start and every note start for the part */
+function ftpStops(bi, part) {
+  const B = barBeats(bi), set = new Set();
+  for (let b = 0; b < B - 1e-6; b++) set.add(b);
+  chains(S.song.bars[bi], part).forEach(c => set.add(r3(c.t)));
+  return [...set].sort((a, b) => a - b);
+}
+const beatLabel = t => { const f = r3(t - Math.floor(t)), fr = { 0.25: "¼", 0.5: "½", 0.75: "¾" }[f]; return `${Math.floor(t) + 1}${f ? (fr || "+" + f) : ""}`; };
 const ftpPart = () => S.activePart || "melody";
 let FTP = null;                                                        // the built element and its parts
 function ensureWinOpen(win) {
@@ -8968,9 +8977,9 @@ function openFtp(silent) {
   const le = S.lastEntered && S.song.bars[S.lastEntered.bi] && (S.song.bars[S.lastEntered.bi].ev[S.lastEntered.part] || []).some(e => e.id === S.lastEntered.id) ? S.lastEntered : lastNoteInSong();
   if (le) {
     const ev = S.song.bars[le.bi].ev[le.part].find(e => e.id === le.id);
-    S.activePart = le.part; S.active = { bi: le.bi, beat: beatOf(le.bi, ev.t) }; S.bi = le.bi; S.sel = { bi: le.bi, part: le.part, id: ev.id };
+    S.activePart = le.part; S.active = { bi: le.bi, beat: beatOf(le.bi, ev.t) }; S.ftp.t = r3(ev.t); S.bi = le.bi; S.sel = { bi: le.bi, part: le.part, id: ev.id };
     if (ev.m != null) S.ftp.m = ev.m; S.len = baseLen(ev.d); S.dot = isDotted(ev.d);
-  } else { S.activePart = "melody"; S.active = { bi: 0, beat: 0 }; S.bi = 0; S.sel = null; S.ftp.m = 60; S.len = 1; S.dot = false; }
+  } else { S.activePart = "melody"; S.active = { bi: 0, beat: 0 }; S.ftp.t = 0; S.bi = 0; S.sel = null; S.ftp.m = 60; S.len = 1; S.dot = false; }
   ensureWinOpen(PART_WIN[S.activePart]); S.ghost = null; S.justEntered = null; S.artic = null; S.slurFrom = null;
   savePrefs(); renderAll(); ftpRefreshBox();
   if (!silent) toast("Floating palette — drag its top bar to move it");
@@ -8983,26 +8992,42 @@ function ftpRefreshBox() {
   if (!S.sel) showBox(S.active.bi, ftpPart(), true); else { S.ghost = null; renderWindows(); }
   renderFtp();
 }
-function ftpGoto(bi, beat) {
-  const part = ftpPart(), bar = S.song.bars[bi];
-  S.active = { bi, beat }; S.bi = bi; S.ghost = null; S.justEntered = null;
-  const b1 = Math.min(barBeats(bi), beat + 1), cs = chains(bar, part).filter(c => c.t >= beat - 1e-6 && c.t < b1 - 1e-6);
-  const c = cs.find(x => !x.rest) || cs[0];
+function ftpGoto(bi, t) {
+  const part = ftpPart(), bar = S.song.bars[bi]; t = r3(clamp(t, 0, Math.max(0, barBeats(bi) - 0.001)));
+  S.active = { bi, beat: beatOf(bi, t) }; S.ftp.t = t; S.bi = bi; S.ghost = null; S.justEntered = null;
+  const cs = chains(bar, part).filter(c => Math.abs(c.t - t) < 1e-6).sort((a, b) => (a.head.m == null ? -1 : a.head.m) - (b.head.m == null ? -1 : b.head.m));
+  const c = cs.find(x => !x.rest) || cs[0];                                  // a note starting right here is selected (lowest of a chord)
   if (c) { S.sel = { bi, part, id: c.head.id }; if (c.head.m != null) S.ftp.m = c.head.m; S.len = baseLen(c.head.d); S.dot = isDotted(c.head.d); }
   else S.sel = null;
   renderAll(); ftpRefreshBox();
 }
 function ftpNav(dir) {
-  let { bi, beat } = S.active || { bi: S.bi, beat: 0 };
-  if (S.ftp.nav === "bar") { bi += dir; beat = 0; }
-  else { beat += dir; if (beat < 0) { bi--; beat = bi >= 0 ? Math.ceil(barBeats(bi)) - 1 : 0; } else if (beat >= Math.ceil(barBeats(bi))) { bi++; beat = 0; } }
+  let bi = S.active ? S.active.bi : S.bi, t = S.ftp.t || 0;
+  if (S.ftp.nav === "bar") { bi += dir; t = 0; }
+  else {
+    const stops = ftpStops(bi, ftpPart()), next = dir > 0 ? stops.find(s => s > t + 1e-6) : [...stops].reverse().find(s => s < t - 1e-6);
+    if (next != null) t = next;
+    else { bi += dir; if (bi >= 0 && bi < S.song.bars.length) { const st = ftpStops(bi, ftpPart()); t = dir > 0 ? st[0] : st[st.length - 1]; } }
+  }
   if (bi < 0 || bi >= S.song.bars.length) { toast(bi < 0 ? "This is the first bar" : "This is the last bar"); return; }
-  ftpGoto(bi, beat);
+  ftpGoto(bi, t);
+}
+/* select mode for the arrows: move the selection up and down the notes that start here (a chord) */
+function ftpSelectStep(dir) {
+  const bi = S.active ? S.active.bi : S.bi, part = ftpPart(), bar = S.song.bars[bi], t = S.ftp.t || 0;
+  const cs = chains(bar, part).filter(c => Math.abs(c.t - t) < 1e-6 && !c.rest && c.head.m != null).sort((a, b) => a.head.m - b.head.m);
+  if (!cs.length) { toast("No notes start here — ◀ ▶ reach the notes"); return; }
+  const ev = selEv(); let i = ev ? cs.findIndex(c => c.members.includes(ev)) : -1;
+  if (i < 0) i = dir > 0 ? -1 : cs.length;
+  i += dir;
+  if (i < 0 || i >= cs.length) { toast(dir > 0 ? "That is the top note here" : "That is the bottom note here"); return; }
+  const c = cs[i]; S.sel = { bi, part, id: c.head.id }; S.ftp.m = c.head.m; S.len = baseLen(c.head.d); S.dot = isDotted(c.head.d);
+  previewNote(c.head.m, part); ensureVisible(part, c.head.m); S.ghost = null; renderAll(); renderFtp();
 }
 function ftpSetPart(part) {
   if (part !== "melody" && !S.song.parts[part].on) { toast(`${PART_META[part].label} is off — turn it on in ⚙ beside its window`); return; }
   S.activePart = part; ensureWinOpen(PART_WIN[part]); savePrefs();
-  ftpGoto(S.active ? S.active.bi : S.bi, S.active ? S.active.beat : 0);
+  ftpGoto(S.active ? S.active.bi : S.bi, S.ftp.t || 0);
 }
 /* a length button: alters the selected note, or confirms a new note at the box with the current pitch */
 function ftpDuration(v) {
@@ -9016,7 +9041,7 @@ function ftpEnter() {
   if (!sp) { toast("This beat is full — ▶ moves to the next"); return; }
   const plan = planSpan(bi, sp.ts, sp.d, part); if (plan.deny) { noticeModal(plan.deny); return; }
   const ev = placeSpan(plan.pieces, part, S.ftp.m, S.artic && S.artic !== "slur" ? S.artic : null); previewNote(S.ftp.m, part);
-  S.justEntered = { bi, beat: S.active.beat, part }; S.sel = null; S.ghost = null;
+  S.justEntered = { bi, beat: S.active.beat, part }; S.sel = null; S.ghost = null; S.ftp.t = r3(sp.ts);
   if (S.followWords && part === "melody") S.cursor = nextUnpitchedChip(bi, ev.chip || null);
   renderAll(); ftpRefreshBox();
 }
@@ -9026,14 +9051,15 @@ function ftpRest() {
   const bi = S.active.bi, bar = S.song.bars[bi], sp = melodySpot(bar, bi);
   if (!sp) { toast("This beat is full — ▶ moves to the next"); return; }
   bar.ev.melody.push({ id: uid(), t: sp.ts, d: Math.min(sp.d, freeSpan(bar, sp.ts)), rest: true }); syncNotesToChips(bar);
-  S.justEntered = { bi, beat: S.active.beat, part }; S.sel = null; S.ghost = null; renderAll(); ftpRefreshBox();
+  S.justEntered = { bi, beat: S.active.beat, part }; S.sel = null; S.ghost = null; S.ftp.t = r3(sp.ts); renderAll(); ftpRefreshBox();
 }
 function ftpPitch(dir) {
+  if (S.ftp.mode === "select") { ftpSelectStep(dir); return; }
   const ev = selEv();
   if (ev && !ev.rest && ev.m != null) { transposeSel(dir); S.ftp.m = selEv().m; renderFtp(); return; }
   S.ftp.m = clamp(S.ftp.m + dir, 21, 108); previewNote(S.ftp.m, ftpPart()); ensureVisible(ftpPart(), S.ftp.m); savePrefs(); renderAll(); ftpRefreshBox();
 }
-function ftpDelete() { if (selEv()) deleteSel(); else clearActiveBeat(); if (S.active) ftpGoto(S.active.bi, S.active.beat); }
+function ftpDelete() { if (selEv()) deleteSel(); else clearActiveBeat(); if (S.active) ftpGoto(S.active.bi, S.ftp.t || 0); }
 function ftpPlayBar() { if (S.playing) { stopPlayback(); renderFtp(); return; } startPlayback([S.bi]); renderFtp(); }
 function ftpPlace(x, y) {
   const r = FTP.box.getBoundingClientRect();
@@ -9078,9 +9104,10 @@ function buildFtp() {
   const pitch = el("div", { class: "pitch" });
   P.up = el("button", { class: "pBtn", title: "Pitch up a half step (hold to keep going)" }, "▲"); P.dn = el("button", { class: "pBtn", title: "Pitch down a half step (hold to keep going)" }, "▼");
   P.cur = el("div", { class: "pCur" }, "C4");
-  pitch.append(P.up, el("div", { class: "pLbl" }, "PITCH"), P.dn, P.cur);
+  P.mode = el("button", { class: "pLbl", onclick: () => { S.ftp.mode = S.ftp.mode === "select" ? "pitch" : "select"; renderFtp(); toast(S.ftp.mode === "select" ? "Arrows now move between the notes that start here" : "Arrows now change the pitch"); }, title: "Tap to flip the arrows between changing the pitch and selecting between notes" }, "PITCH");
+  pitch.append(P.up, P.mode, P.dn, P.cur);
   [[P.up, 1], [P.dn, -1]].forEach(([b, d]) => { let t = null, iv = null; const stop = () => { clearTimeout(t); clearInterval(iv); t = iv = null; };
-    b.addEventListener("pointerdown", e => { e.preventDefault(); ftpPitch(d); t = setTimeout(() => { iv = setInterval(() => ftpPitch(d), 110); }, 420); });
+    b.addEventListener("pointerdown", e => { e.preventDefault(); ftpPitch(d); if (S.ftp.mode !== "select") t = setTimeout(() => { iv = setInterval(() => ftpPitch(d), 110); }, 420); });
     ["pointerup", "pointerleave", "pointercancel"].forEach(ev => b.addEventListener(ev, stop)); });
   box.append(el("div", { class: "main" }, grid, pitch));
   P.rhy = el("button", { class: "tag", onclick: openRhythmMenu, title: "Rhythm options for this bar" }, "Rhythm");
@@ -9102,9 +9129,11 @@ function renderFtp() {
   const P = FTP, part = ftpPart(), ev = selEv(), key = keyObj(S.song.key);
   P.box.className = `size-${S.ftp.size} side-${S.ftp.side}`;
   Object.entries(P.parts).forEach(([p, b]) => b.classList.toggle("on", p === part));
-  const bi = S.active ? S.active.bi : S.bi, beat = S.active ? S.active.beat : 0;
-  P.lbl.textContent = S.ftp.nav === "bar" ? `BAR ${barNo(bi)}` : `BEAT ${beat + 1} · BAR ${barNo(bi)}`;
-  P.prev.disabled = bi === 0 && (S.ftp.nav === "bar" || beat === 0); P.next.disabled = bi === S.song.bars.length - 1 && (S.ftp.nav === "bar" || beat >= Math.ceil(barBeats(bi)) - 1);
+  const bi = S.active ? S.active.bi : S.bi, beat = S.active ? S.active.beat : 0, t = S.ftp.t || 0, stops = ftpStops(bi, part);
+  P.lbl.textContent = S.ftp.nav === "bar" ? `BAR ${barNo(bi)}` : `BEAT ${beatLabel(t)} · BAR ${barNo(bi)}`;
+  P.prev.disabled = bi === 0 && (S.ftp.nav === "bar" || t <= stops[0] + 1e-6); P.next.disabled = bi === S.song.bars.length - 1 && (S.ftp.nav === "bar" || t >= stops[stops.length - 1] - 1e-6);
+  P.mode.textContent = S.ftp.mode === "select" ? "SELECT" : "PITCH"; P.mode.classList.toggle("on", S.ftp.mode === "select");
+  P.up.title = S.ftp.mode === "select" ? "Select the next note up in this chord" : "Pitch up a half step (hold to keep going)"; P.dn.title = S.ftp.mode === "select" ? "Select the next note down in this chord" : "Pitch down a half step (hold to keep going)";
   P.play.classList.toggle("on", !!S.playing); P.play.textContent = S.playing ? "■" : "▶";
   const len = ev ? baseLen(ev.d) : S.len;
   ["4", "2", "1", "0.5", "0.25"].forEach(k => P.g[k].classList.toggle("on", Math.abs(len - parseFloat(k)) < 1e-6));
@@ -9130,7 +9159,7 @@ function openHelp() {
   openModal("How it works", [
     h("Pickup & repeats", "Setup → Pickup adds a short bar (½, 1 or 2 beats) before beat 1. Tap the bar name → Repeat this section to play a section several times."),
     h("Chords (stacked notes)", "Turn on Chord in the tools, then tap other pitches in the same time column as a note to stack them; each gets the same length and ties. Works in the melody and in Custom band bars. Tap Chord again to go back to single notes."),
-    h("Floating palette", "⧉ at the end of the tools pops them out into a small palette you can drag anywhere (the stave keeps its size). ◀ ▶ step through beats — tap the label to step through bars instead — and the yellow box shows the pitch; ▲ ▼ change it. Tap a note length to enter that note at the box, or, when a note is selected, to change its length. M / A / B pick the window, 🗑 deletes, ▶ plays the bar, Rhythm and Lyrics open those tools, ⚙ sets its size and side, ⤶ pops it back in. While it is out, the stave and strips do not take taps."),
+    h("Floating palette", "⧉ at the end of the tools pops them out into a small palette you can drag anywhere (the stave keeps its size). ◀ ▶ stop at every beat and every note start, off-beats included — tap the label to step through bars instead — and the yellow box shows the pitch; ▲ ▼ change it. Tap PITCH to flip the arrows to SELECT, which moves between the notes stacked at that spot; tap again to go back. Tap a note length to enter that note at the box, or, when a note is selected, to change its length. M / A / B pick the window, 🗑 deletes, ▶ plays the bar, Rhythm and Lyrics open those tools, ⚙ sets its size and side, ⤶ pops it back in. While it is out, the stave and strips do not take taps."),
     h("Entering notes", "Tap a beat once: it becomes the active beat and the dashed box appears there, sized to the picked length. Tap the pitch you want and the note is placed at the box. Only the active beat takes notes; other beats wait for their own tap."),
     h("Clearing a beat", "With a beat active and no note selected, 🗑 in the tools removes every note, rest or slot that starts in that beat for the part you activated it in, including any tied run-on into later bars. ↶ undoes it."),
     h("After an entry", "Once the first note is in, every further tap in that beat places another note straight away at the next free spot, with the picked length — no box in between. Tap a note itself to select it for changes. Tap another beat to move on."),
