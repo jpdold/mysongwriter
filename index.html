@@ -8398,7 +8398,8 @@ function renderPalette() {
     p.append(el("span", { class: "who" }, `“${chip.text.trim()}”`));
     b("◀", () => { setChipTime(bar, chip, chip.t - fine); renderAll(); }, { cls: "lyr", title: "Nudge left", disabled: chip.locked });
     b("▶", () => { setChipTime(bar, chip, chip.t + fine); renderAll(); }, { cls: "lyr", title: "Nudge right", disabled: chip.locked });
-    b("Edit", () => openWordEdit(S.selChip.bi, chip.t, chip), { cls: "lyr", title: "Change the text", disabled: chip.locked });
+    const sbi = S.song.bars.indexOf(bar);
+    b("Edit", () => { S.selChip = { bi: sbi, id: chip.id }; openWordEdit(sbi, chip.t, chip); }, { cls: "lyr", title: "Change the text", disabled: chip.locked });
     b(chip.locked ? "🔓" : "🔒", () => { chip.locked = !chip.locked; renderAll(); }, { cls: "txt lock" + (chip.locked ? " on" : ""), title: chip.locked ? "Unlock" : "Lock in place" });
     b("🗑", () => deleteChip(bar, chip), { warn: true, title: "Delete", disabled: chip.locked });
     b("✕", () => { S.selChip = null; renderAll(); }, { cls: "txt", title: "Done" });
