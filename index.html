@@ -7940,11 +7940,11 @@ function clearActiveBeat() {
 }
 /* chord mode: another pitch at the same time as an existing note, with the same length (and ties) */
 function addChordNote(bi, chain, m, part) {
-  const bar = S.song.bars[bi], copy = (e, into) => { const n = { id: uid(), t: e.t, d: e.d, m }; if (e.tie) n.tie = true; if (e.artic) n.artic = e.artic; into.push(n); };
+  let first = null; const bar = S.song.bars[bi], copy = (e, into) => { const n = { id: uid(), t: e.t, d: e.d, m }; if (e.tie) n.tie = true; if (e.artic) n.artic = e.artic; into.push(n); if (!first) first = n; };
   chain.members.forEach(e => copy(e, bar.ev[part]));
   if (chain.tieOut) { const nb = S.song.bars[bi + 1]; if (nb && (part === "melody" || nb.custom[part])) { const nc = chains(nb, part).find(c => c.t < 1e-6 && !c.rest); if (nc) nc.members.forEach(e => copy(e, nb.ev[part])); } }
   if (part === "melody") syncNotesToChips(bar);
-  previewNote(m, part); S.sel = null; S.ghost = null; S.justEntered = { bi, beat: beatOf(bi, chain.t), part }; renderAll();
+  previewNote(m, part); S.sel = first ? { bi, part, id: first.id } : null; S.ghost = null; S.justEntered = { bi, beat: beatOf(bi, chain.t), part }; renderAll();
 }
 const hasPitchAt = (bar, part, t, m) => chains(bar, part).some(c => !c.rest && Math.abs(c.t - t) < 1e-6 && c.head.m === m);
 /* a plain notice with one OK button */
@@ -8573,10 +8573,10 @@ function tapMelody(bi, t, m) {
   const gh = S.ghost, direct = !!(S.justEntered && S.justEntered.bi === bi && S.justEntered.beat === S.active.beat && S.justEntered.part === "melody");
   if (!direct && !(gh && gh.part === "melody" && gh.bi === bi && Math.abs(gh.t - sp.ts) < 1e-6)) { showBox(bi, "melody"); return; }
   let d = direct ? sp.d : gh.d; const ts = direct ? sp.ts : gh.t; S.ghost = null;
-  if (S.restNext) { S.restNext = false; d = Math.min(d, freeSpan(bar, ts)); bar.ev.melody.push({ id: uid(), t: ts, d, rest: true }); syncNotesToChips(bar); S.justEntered = { bi, beat: S.active.beat, part: "melody" }; renderAll(); return; }
+  if (S.restNext) { S.restNext = false; d = Math.min(d, freeSpan(bar, ts)); const rid = uid(); bar.ev.melody.push({ id: rid, t: ts, d, rest: true }); syncNotesToChips(bar); S.justEntered = { bi, beat: S.active.beat, part: "melody" }; S.sel = { bi, part: "melody", id: rid }; renderAll(); return; }
   const plan = planSpan(bi, ts, d); if (plan.deny) { renderAll(); noticeModal(plan.deny); return; }
   const ev = placeSpan(plan.pieces, "melody", m, S.artic && S.artic !== "slur" ? S.artic : null); previewNote(m, "melody"); S.justEntered = { bi, beat: S.active.beat, part: "melody" };
-  S.sel = null;                                                         // entry continues; tap the note to edit it
+  S.sel = { bi, part: "melody", id: ev.id };                             // the new note stays selected: change its pitch or length now; a tap on the stave lets it go
   if (S.followWords) S.cursor = nextUnpitchedChip(bi, ev.chip || null);
   renderAll();
 }
@@ -8593,7 +8593,7 @@ function tapBand(win, bi, t, m) {
   if (!direct && !(gh && gh.part === part && gh.bi === bi && beatOf(bi, gh.t) === S.active.beat)) { showBox(bi, part); return; }   // first tap: the box at the next free spot in this beat
   const ts = direct ? spot : gh.t, d = direct ? noteLenBeats() : gh.d; S.ghost = null;    // then: pitch from the tap, time from the box — or straight in, after the first note
   const plan = planSpan(bi, ts, d, part); if (plan.deny) { renderAll(); noticeModal(plan.deny); return; }
-  placeSpan(plan.pieces, part, m, S.artic && S.artic !== "slur" ? S.artic : null); previewNote(m, part); S.sel = null; S.justEntered = { bi, beat: S.active.beat, part }; renderAll();
+  const head = placeSpan(plan.pieces, part, m, S.artic && S.artic !== "slur" ? S.artic : null); previewNote(m, part); S.sel = { bi, part, id: head.id }; S.justEntered = { bi, beat: S.active.beat, part }; renderAll();
 }
 /* ── lyric pieces: split a syllable into letters, join back, delete without reflow ── */
 function selChipObj() { if (!S.selChip) return null; const bar = S.song.bars[S.selChip.bi]; const chip = bar && bar.chips.find(c => c.id === S.selChip.id); return chip ? { bar, chip } : null; }
@@ -9225,7 +9225,7 @@ function openHelp() {
     h("Floating palette", "⧉ at the end of the tools pops them out into a small palette you can drag anywhere (the stave keeps its size). ◀ ▶ step by the chosen note length (eighths step half a beat) and also stop at every note start — tap the label to step through bars instead. The yellow box shows the pitch; ▲ ▼ change it. Tap PITCH to flip the arrows to SELECT, which moves between the notes stacked at that spot; tap again to go back. Tap a note length once to choose it (the box takes that size); tap the chosen length again to enter the note at the box, or, when a note is selected, to give that note the length. M / A / B pick the window, 🗑 deletes, ▶ plays the bar, Rhythm and Lyrics open those tools, ⚙ sets its size and side, ⤶ pops it back in. While it is out, the stave and strips do not take taps."),
     h("Entering notes", "Tap a beat once: it becomes the active beat and the dashed box appears there, sized to the picked length. Tap the pitch you want and the note is placed at the box. Only the active beat takes notes; other beats wait for their own tap."),
     h("Clearing a beat", "With a beat active and no note selected, 🗑 in the tools removes every note, rest or slot that starts in that beat for the part you activated it in, including any tied run-on into later bars. ↶ undoes it."),
-    h("After an entry", "Once the first note is in, every further tap in that beat places another note straight away at the next free spot, with the picked length — no box in between. Tap a note itself to select it for changes. Tap another beat to move on."),
+    h("After an entry", "A note you have just placed stays selected, so the tools change its pitch or length at once, and a tap on another row in its column re-pitches it. A tap anywhere else on the stave lets it go: in the same beat that tap places the next note straight away at the next free spot, with the picked length; in another beat it activates that beat."),
     h("Long notes", "A note longer than the room left in its beat runs on through the following beats, and into the next bars, tied — as long as those beats are empty. If something is already in the way, or the song ends first, the note is refused with a message saying there is not enough space."),
     h("Full screen", "☰ → Full screen hides the browser bars (Android, desktop). On iPhone, use Share → Add to Home Screen; the icon then opens the app with no address bar at all."),
     h("Blank slate", "☰ → New song… opens Setup for name, genre, key, time signature and tempo (☰ → Song setup changes them later). You work one bar at a time — ◀ ▶ or the dots move between bars; tap the bar name for sections. ▶ at the top plays from this bar; the small ▶ beside each window plays that part alone."),
