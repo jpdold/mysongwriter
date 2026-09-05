@@ -7865,6 +7865,42 @@ function bandPlayEvents(part, bi) {
 const beatOf = (bi, t) => Math.min(Math.floor(t + 1e-6), Math.max(0, Math.ceil(barBeats(bi)) - 1));
 const inActive = (bi, t) => !!S.active && S.active.bi === bi && beatOf(bi, t) === S.active.beat;
 function activate(bi, t) { S.active = { bi, beat: beatOf(bi, t) }; S.bi = bi; S.sel = null; S.ghost = null; S.selChip = null; renderAll(); }
+/* a plain notice with one OK button */
+function noticeModal(text) { openModal(null, el("p", { style: "font-size:16px;margin:6px 0 4px" }, text), [el("button", { class: "btn acc", onclick: closeModal }, "OK")]); }
+/* where a note of length d starting at (bi, t) would go: pieces per bar, tied on — or why it cannot.
+   A long note fills the beats after it, and runs on into following bars, only while those beats are empty. */
+function planSpan(bi, t, d, part = "melody") {
+  const pieces = []; let left = r3(d), b = bi, at = t;
+  while (left > 1e-6) {
+    const bar = S.song.bars[b];
+    if (!bar) return { deny: "Not enough space remaining — the song ends before this note would." };
+    if (part !== "melody" && b !== bi && !bar.custom[part]) return { deny: `Not enough space remaining — bar ${barNo(b)} still follows its ${PART_META[part].label.toLowerCase()} pattern. Set that bar to Custom first.` };
+    const room = r3(Math.min(left, barBeats(b) - at));
+    if (room <= 1e-6) return { deny: "Not enough space remaining." };
+    const evs = bar.ev[part] || [];
+    if (evs.some(e => (part === "melody" || !e.rest) && e.t < at + room - 1e-6 && e.t + e.d > at + 1e-6)) return { deny: `Not enough space remaining — ${b === bi ? "a later beat in this bar" : "bar " + barNo(b)} already has something there. Pick a shorter note, or clear the way first.` };
+    pieces.push({ bi: b, t: at, d: room }); left = r3(left - room); b++; at = 0;
+  }
+  return { pieces };
+}
+function placeSpan(pieces, part, m, artic) {
+  let head = null;
+  pieces.forEach((p, k) => {
+    const bar = S.song.bars[p.bi];
+    if (part !== "melody") bar.ev[part] = bar.ev[part].filter(e => !(e.rest && e.t < p.t + p.d - 1e-6 && e.t + e.d > p.t + 1e-6));
+    const ev = { id: uid(), t: p.t, d: p.d, m }; if (k < pieces.length - 1) ev.tie = true; if (k === 0 && artic) ev.artic = artic;
+    bar.ev[part].push(ev); if (part === "melody") syncNotesToChips(bar); if (k === 0) head = ev;
+  });
+  return head;
+}
+/* the box follows the picked length; a length that no longer fits is refused */
+function refitGhost() {
+  const gh = S.ghost; if (!gh) return true;
+  if (gh.rest) { gh.d = Math.min(noteLenBeats(), freeSpan(S.song.bars[gh.bi], gh.t)); return true; }
+  const plan = planSpan(gh.bi, gh.t, noteLenBeats(), gh.part);
+  if (plan.deny) { S.ghost = null; renderAll(); noticeModal(plan.deny); return false; }
+  gh.d = noteLenBeats(); return true;
+}
 /* the first free spot inside the active beat for a new note of the picked length */
 function freeSpotInBeat(bar, bi, beat, part = "melody") {
   const B = barBeats(bi), b0 = beat, b1 = Math.min(B, beat + 1), evs = [...(bar.ev[part] || [])].sort((a, b) => a.t - b.t);
@@ -8304,10 +8340,10 @@ function tapLength(v) {
   S.len = v; savePrefs();                                              // the picked length stays until it's changed
   if (ev && S.sel.part === "melody") { setDur(ev, isDotted(ev.d) ? v * 1.5 : v); return; }
   if (ev) { setDur(ev, v); return; }
-  if (S.ghost) { const bar = S.song.bars[S.ghost.bi]; S.ghost.d = Math.min(noteLenBeats(), S.ghost.part === "melody" ? freeSpan(bar, S.ghost.t) : barBeats(S.ghost.bi) - S.ghost.t); renderWindows(); }
+  if (S.ghost) { const bar = S.song.bars[S.ghost.bi]; if (!refitGhost()) return; renderWindows(); }
   renderPalette();
 }
-function tapDot() { const ev = selEv(); if (ev) { setDur(ev, isDotted(ev.d) ? ev.d / 1.5 : ev.d * 1.5); return; } S.dot = !S.dot; if (S.ghost) { const bar = S.song.bars[S.ghost.bi]; S.ghost.d = Math.min(noteLenBeats(), S.ghost.part === "melody" ? freeSpan(bar, S.ghost.t) : barBeats(S.ghost.bi) - S.ghost.t); renderWindows(); } renderPalette(); }
+function tapDot() { const ev = selEv(); if (ev) { setDur(ev, isDotted(ev.d) ? ev.d / 1.5 : ev.d * 1.5); return; } S.dot = !S.dot; if (S.ghost) { const bar = S.song.bars[S.ghost.bi]; if (!refitGhost()) return; renderWindows(); } renderPalette(); }
 function tapRest() {
   const ev = selEv();
   if (ev) { ev.rest = !ev.rest; if (ev.rest) { delete ev.m; delete ev.tie; } else ev.m = null; syncNotesToChips(S.song.bars[S.sel.bi]); renderAll(); return; }
@@ -8410,17 +8446,19 @@ function tapMelody(bi, t, m) {
   /* a new note goes to the first free spot inside the active beat, flush against what's already there */
   let ts = cur && !chipPitched(bar, cur) && inActive(bi, cur.t) && !overlaps(bar, cur.t, 0.25) ? cur.t : freeSpotInBeat(bar, bi, S.active.beat);
   if (ts == null) { toast("This beat is full — tap another beat to activate it"); return; }
-  let d = Math.min(cur && !chipPitched(bar, cur) && Math.abs(cur.t - ts) < 1e-6 ? Math.max(0.25, Math.min(noteLenBeats(), cur.d)) : noteLenBeats(), freeSpan(bar, ts));
-  /* first tap: show the box at the next free time; second tap anywhere: the note takes that pitch, at the box's time */
+  let d = cur && !chipPitched(bar, cur) && Math.abs(cur.t - ts) < 1e-6 ? Math.max(0.25, Math.min(noteLenBeats(), cur.d)) : noteLenBeats();
+  /* first tap: show the box at the next free time; second tap anywhere: the note takes that pitch, at the box's time.
+     A note longer than the room left runs on through the following beats and bars while they are empty; otherwise it is refused. */
   const gh = S.ghost;
   if (!(gh && gh.part === "melody" && gh.bi === bi && Math.abs(gh.t - ts) < 1e-6)) {
+    if (S.restNext) d = Math.min(d, freeSpan(bar, ts));
+    else { const plan = planSpan(bi, ts, d); if (plan.deny) { noticeModal(plan.deny); return; } }
     S.ghost = { part: "melody", bi, t: ts, d, rest: S.restNext }; S.sel = null; renderWindows(); renderPalette(); return;
   }
-  d = Math.min(gh.d, freeSpan(bar, ts)); ts = gh.t;
-  S.ghost = null;
-  if (S.restNext) { S.restNext = false; bar.ev.melody.push({ id: uid(), t: ts, d, rest: true }); syncNotesToChips(bar); renderAll(); return; }
-  const ev = { id: uid(), t: ts, d, m }; if (S.artic && S.artic !== "slur") ev.artic = S.artic;
-  bar.ev.melody.push(ev); syncNotesToChips(bar); previewNote(m, "melody");
+  ts = gh.t; S.ghost = null;
+  if (S.restNext) { S.restNext = false; d = Math.min(gh.d, freeSpan(bar, ts)); bar.ev.melody.push({ id: uid(), t: ts, d, rest: true }); syncNotesToChips(bar); renderAll(); return; }
+  const plan = planSpan(bi, ts, gh.d); if (plan.deny) { renderAll(); noticeModal(plan.deny); return; }
+  const ev = placeSpan(plan.pieces, "melody", m, S.artic && S.artic !== "slur" ? S.artic : null); previewNote(m, "melody");
   S.sel = null;                                                         // entry continues; tap the note to edit it
   if (S.followWords) S.cursor = nextUnpitchedChip(bi, ev.chip || null);
   renderAll();
@@ -8435,13 +8473,12 @@ function tapBand(win, bi, t, m) {
   if (!(gh && gh.part === part && gh.bi === bi && beatOf(bi, gh.t) === S.active.beat)) {   // first tap: the box at the next free spot in this beat
     const spot = freeSpotInBeat(bar, bi, S.active.beat, part);
     if (spot == null) { toast("This beat is full for the " + PART_META[part].short.toLowerCase() + " — select a note to change it"); return; }
-    S.ghost = { part, bi, t: spot, d: Math.min(noteLenBeats(), B - spot) }; S.sel = null; renderWindows(); renderPalette(); return;
+    const plan = planSpan(bi, spot, noteLenBeats(), part); if (plan.deny) { noticeModal(plan.deny); return; }
+    S.ghost = { part, bi, t: spot, d: noteLenBeats() }; S.sel = null; renderWindows(); renderPalette(); return;
   }
-  const ts = gh.t, d = Math.min(gh.d, B - ts);                                           // second tap anywhere in the beat: pitch from the tap, time from the box
-  S.ghost = null;
-  bar.ev[part] = bar.ev[part].filter(e => !(e.rest && e.t < ts + d && e.t + e.d > ts));
-  const ev = { id: uid(), t: ts, d, m }; if (S.artic && S.artic !== "slur") ev.artic = S.artic;
-  bar.ev[part].push(ev); previewNote(m, part); S.sel = null; renderAll();
+  S.ghost = null;                                                                        // second tap anywhere in the beat: pitch from the tap, time from the box
+  const plan = planSpan(bi, gh.t, gh.d, part); if (plan.deny) { renderAll(); noticeModal(plan.deny); return; }
+  placeSpan(plan.pieces, part, m, S.artic && S.artic !== "slur" ? S.artic : null); previewNote(m, part); S.sel = null; renderAll();
 }
 /* ── lyric pieces: split a syllable into letters, join back, delete without reflow ── */
 function selChipObj() { if (!S.selChip) return null; const bar = S.song.bars[S.selChip.bi]; const chip = bar && bar.chips.find(c => c.id === S.selChip.id); return chip ? { bar, chip } : null; }
@@ -8813,6 +8850,7 @@ function openHelp() {
   const h = (t, d) => el("div", { style: "margin:8px 0" }, el("b", {}, t), el("div", { class: "tiny", style: "font-size:13px;color:#444" }, d));
   openModal("How it works", [
     h("Pickup & repeats", "Setup → Pickup adds a short bar (½, 1 or 2 beats) before beat 1. Tap the bar name → Repeat this section to play a section several times."),
+    h("Long notes", "A note longer than the room left in its beat runs on through the following beats, and into the next bars, tied — as long as those beats are empty. If something is already in the way, or the song ends first, the note is refused with a message saying there is not enough space."),
     h("Full screen", "☰ → Full screen hides the browser bars (Android, desktop). On iPhone, use Share → Add to Home Screen; the icon then opens the app with no address bar at all."),
     h("Blank slate", "☰ → New song… opens Setup for name, genre, key, time signature and tempo (☰ → Song setup changes them later). You work one bar at a time — ◀ ▶ or the dots move between bars; tap the bar name for sections. ▶ at the top plays from this bar; the small ▶ beside each window plays that part alone."),
     h("Rhythm", "Tap a note length in the palette to add it to the rhythm; each note becomes an orange box in the melody window. ⌒ ties a note to the next one (or into the next bar). Tap a box to select it, then change its length, dot it, move it or delete it. Tap the Rhythm strip to insert at a beat."),
