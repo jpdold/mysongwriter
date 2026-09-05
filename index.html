@@ -220,6 +220,45 @@ svg text { pointer-events: none; }
 #palette .prow button.txt { padding: 0; }
 #palette .prow .who { margin-left: 4px; }
 #palette .prow button.chord { width: auto; min-width: 44px; flex: 0 0 auto; padding: 0 7px; }
+/* ── floating tool palette ── */
+#app.ftp #palette { visibility: hidden; }
+#app.ftp .win .frame svg, #app.ftp #rhySvg, #app.ftp #lyrSvg { pointer-events: none; }
+#ftp { position: fixed; z-index: 60; left: 0; top: 0; width: 196px; background: #3fb5f2; border: 2px solid #0d2f45; border-radius: 6px; box-shadow: 0 6px 18px rgba(0,0,0,.45); padding: 0 5px 5px; user-select: none; -webkit-user-select: none; transform-origin: top left; touch-action: none; font-family: var(--sans); }
+#ftp[hidden] { display: none; }
+#ftp.size-s { transform: scale(.82); } #ftp.size-l { transform: scale(1.2); }
+#ftp .ftpGrip { height: 14px; display: grid; place-items: center; color: rgba(0,0,0,.45); font-size: 10px; letter-spacing: 2px; cursor: grab; touch-action: none; }
+#ftp .ftpGrip:active { cursor: grabbing; }
+#ftp .row { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
+#ftp button { border: 1px solid #222; background: linear-gradient(#fff, #d9d9d9); color: #111; border-radius: 4px; height: 30px; min-width: 30px; padding: 0 4px; font-size: 17px; line-height: 1; display: grid; place-items: center; }
+#ftp button:disabled { opacity: .35; }
+#ftp button.on { background: linear-gradient(#6fb3ff, #2f7fd6); color: #fff; border-color: #1b4f8a; }
+#ftp button.warn { color: var(--danger); }
+#ftp .seg3 { display: flex; border: 1.5px solid #111; border-radius: 4px; overflow: hidden; }
+#ftp .seg3 button { border: none; border-radius: 0; width: 30px; min-width: 30px; height: 26px; font-weight: 800; font-size: 15px; background: linear-gradient(#f4f4f4, #cfcfcf); }
+#ftp .seg3 button.on { background: #111; color: #fff; }
+#ftp .sp { flex: 1; }
+#ftp .ftpLbl { flex: 1; min-width: 0; height: 26px; background: #111; color: #fff; font-size: 10px; font-weight: 700; letter-spacing: .03em; border-radius: 3px; border: 1px solid #000; white-space: nowrap; overflow: hidden; padding: 0 2px; }
+#ftp .arrow { width: 26px; min-width: 26px; height: 26px; border: none; background: none; color: #111; font-size: 18px; }
+#ftp .ftpPlay { width: 34px; min-width: 34px; height: 26px; font-size: 13px; }
+#ftp .main { display: flex; gap: 5px; align-items: stretch; margin-bottom: 4px; }
+#ftp.side-left .main { flex-direction: row-reverse; }
+#ftp .grid { display: grid; grid-template-columns: repeat(3, 40px); gap: 4px; padding: 4px; background: #0d2f45; border-radius: 4px; }
+#ftp .grid button { width: 40px; min-width: 40px; height: 34px; font-size: 19px; }
+#ftp .grid button.art { font-family: var(--serif); font-size: 16px; }
+#ftp .grid button.art.armed { background: linear-gradient(#ffd27a, #f5a623); border-color: #a86d10; }
+#ftp .grid button.undo { font-size: 16px; }
+#ftp .grid button.txt { font-size: 14px; font-weight: 700; }
+#ftp .pitch { display: flex; flex-direction: column; align-items: center; width: 40px; }
+#ftp .pitch .pBtn { width: 34px; min-width: 34px; height: 34px; border: none; background: none; color: #111; font-size: 24px; padding: 0; }
+#ftp .pitch .pBtn:active { color: #fff; }
+#ftp .pitch .pLbl { flex: 1; width: 22px; background: #111; color: #fff; writing-mode: vertical-rl; text-orientation: mixed; display: grid; place-items: center; font-size: 11px; font-weight: 700; letter-spacing: .12em; border-radius: 3px; margin: 2px 0; }
+#ftp .pitch .pCur { width: 34px; height: 24px; margin-top: 4px; background: #ffe600; color: #111; font-weight: 800; font-size: 12px; border: 1.5px solid #111; border-radius: 3px; display: grid; place-items: center; }
+#ftp .tag { height: 24px; min-width: 0; padding: 0 6px; background: var(--tag); border-color: #3f6f18; color: #143; font-weight: 800; font-size: 12px; font-family: var(--sans); }
+#ftp .ftpIn { width: 30px; min-width: 30px; height: 26px; font-size: 15px; }
+#ftp .ftpHead button.icon { width: 30px; min-width: 30px; height: 26px; }
+#ftp .ftpHead .ico { width: 16px; height: 16px; }
+#palette .prow button.pop { margin-left: auto; font-size: 16px; }
+
 #palette .prow .hint { font-size: 11px; color: var(--on-ground2); text-align: center; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #palette button { min-width: 28px; height: 28px; border: 1px solid #222; background: linear-gradient(#fff, #d9d9d9); color: #111; border-radius: 4px; font-size: 18px; padding: 0 6px;
   font-family: var(--music), var(--serif); box-shadow: 0 1px 2px rgba(0,0,0,.4); }
@@ -7684,18 +7723,18 @@ const STEPS = { mel: 14, acc: 8, bass: 8 };      // computed by allocate()
 const WIN_PART = { mel: "melody", acc: "accomp", bass: "bass" };
 const WIN_LO = { mel: "melLo", acc: "accLo", bass: "bassLo" };
 const NOTE_SCALE = { s: 0.62, m: 0.85, l: 1.25 }; const NS = () => NOTE_SCALE[S.noteSize] || 1;   // note size: heads only, the stave never changes
-Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", noteSize: "m", chordMode: false, justEntered: null, activePart: "melody", halfLines: false, winSize: "m", chordsDisp: "names", metro: "off", winState: { mel: "open", acc: "closed", bass: "closed" }, zoomWin: { mel: 1, acc: 1, bass: 1 }, lyricFont: "sans", viewSpan: 1, layout: "rolled", selChip: null, ghost: null, restNext: false, artic: null, slurFrom: null, active: null, softKb: ("ontouchstart" in window), popPos: null, mode: "melody" });
+Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", noteSize: "m", chordMode: false, justEntered: null, activePart: "melody", lastEntered: null, ftp: null, halfLines: false, winSize: "m", chordsDisp: "names", metro: "off", winState: { mel: "open", acc: "closed", bass: "closed" }, zoomWin: { mel: 1, acc: 1, bass: 1 }, lyricFont: "sans", viewSpan: 1, layout: "rolled", selChip: null, ghost: null, restNext: false, artic: null, slurFrom: null, active: null, softKb: ("ontouchstart" in window), popPos: null, mode: "melody" });
 const UNDO = { stack: [], last: null, max: 60 };
 const setMode = () => {};                          // engine shims (the old mode sheets are gone)
 const renderPanel = () => renderAll();
 function loadPrefs() {
   const p = readJSON(STORE.prefs, {});
-  S.theme = p.theme || "auto"; S.followWords = p.followWords !== false; S.noteStyle = p.noteStyle || "trad"; S.noteSize = NOTE_SCALE[p.noteSize] ? p.noteSize : "m"; S.halfLines = !!p.halfLines;
+  S.theme = p.theme || "auto"; S.followWords = p.followWords !== false; S.noteStyle = p.noteStyle || "trad"; S.noteSize = NOTE_SCALE[p.noteSize] ? p.noteSize : "m"; S.halfLines = !!p.halfLines; S.ftp = Object.assign({}, FTP_DEFAULT, p.ftp || {});
   S.winSize = WIN[p.winSize] ? p.winSize : "m"; S.chordsDisp = p.chordsDisp || "names"; S.metro = p.metro || "off"; S.custom = p.custom || null; S.len = p.len || 1;
   S.lyricFont = p.lyricFont || "sans"; S.winState = Object.assign({ mel: "open", acc: "closed", bass: "closed" }, p.winState || {}); S.zoomWin = Object.assign({ mel: 1, acc: 1, bass: 1 }, p.zoomWin || {}); S.midi = p.midi || {}; S.viewSpan = [1, 2, 3, 4].includes(p.viewSpan) ? p.viewSpan : 1; if (p.softKb != null) S.softKb = p.softKb; S.layout = p.layout === "stack" ? "stack" : "rolled";
   applyTheme();
 }
-function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, halfLines: S.halfLines, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb: S.softKb, layout: S.layout }); }
+function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, ftp: S.ftp, halfLines: S.halfLines, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb: S.softKb, layout: S.layout }); }
 function applyTheme() {
   const r = document.documentElement;
   if (S.theme === "dark") r.setAttribute("data-theme", "dark"); else r.removeAttribute("data-theme");
@@ -7926,6 +7965,7 @@ function placeSpan(pieces, part, m, artic) {
     const ev = { id: uid(), t: p.t, d: p.d, m }; if (k < pieces.length - 1) ev.tie = true; if (k === 0 && artic) ev.artic = artic;
     bar.ev[part].push(ev); if (part === "melody") syncNotesToChips(bar); if (k === 0) head = ev;
   });
+  S.lastEntered = { part, bi: pieces[0].bi, id: head.id };
   return head;
 }
 /* the box follows the picked length; a length that no longer fits is refused */
@@ -7948,15 +7988,15 @@ function melodySpot(bar, bi) {
   return { ts, d };
 }
 /* the entry box for the picked length at the next free spot in the active beat; false when nothing fits */
-function showBox(bi, part = "melody") {
+function showBox(bi, part = "melody", quiet = false) {
   const bar = S.song.bars[bi]; if (!S.active || S.active.bi !== bi) return false;
   if (part !== "melody" && (!S.song.parts[part].on || !bar.custom[part])) return false;
   const sp = part === "melody" ? melodySpot(bar, bi) : (() => { const t = freeSpotInBeat(bar, bi, S.active.beat, part); return t == null ? null : { ts: t, d: noteLenBeats() }; })();
-  if (!sp) { toast("This beat is full — tap another beat"); return false; }
+  if (!sp) { if (!quiet) toast("This beat is full — tap another beat"); return false; }
   let { ts, d } = sp;
   const rest = part === "melody" && S.restNext;
   if (rest) d = Math.min(d, freeSpan(bar, ts));
-  else { const plan = planSpan(bi, ts, d, part); if (plan.deny) { noticeModal(plan.deny); return false; } }
+  else { const plan = planSpan(bi, ts, d, part); if (plan.deny) { if (!quiet) noticeModal(plan.deny); return false; } }
   S.ghost = { part, bi, t: ts, d, rest }; S.sel = null; renderWindows(); renderPalette(); return true;
 }
 /* the first free spot inside the active beat for a new note of the picked length */
@@ -8082,6 +8122,7 @@ function drawGhost(svg, g, bi, ghost, color) {
   const x0 = g.x(bi, ghost.t) + 1, x1 = g.x(bi, ghost.t + ghost.d) - 2;
   svg.append(svgEl("rect", { x: x0, y: 2, width: Math.max(4, x1 - x0), height: g.H - 4, rx: 2, fill: color, "fill-opacity": 0.18, stroke: color, "stroke-width": 2.2, "stroke-dasharray": "6 3", "pointer-events": "none" }));
   if (ghost.rest) svg.append(svgEl("text", { x: (x0 + x1) / 2, y: g.H / 2 + 6, "text-anchor": "middle", "font-size": Math.min(18, g.step * 1.4), fill: color, opacity: 0.7, "font-family": "Georgia, serif", "pointer-events": "none" }, "𝄽"));
+  else if (S.ftp && S.ftp.on && ghost.part === ftpPart()) { const m = S.ftp.m; if (m >= g.lo && m <= g.hi) svg.append(svgEl("rect", { x: x0, y: g.y(m) - g.step / 2 + 1, width: Math.max(4, x1 - x0), height: g.step - 2, rx: 3, fill: color, opacity: 0.5, "pointer-events": "none" })); }
   else svg.append(svgEl("text", { x: (x0 + x1) / 2, y: g.H / 2 + 4, "text-anchor": "middle", "font-size": 10, fill: color, opacity: 0.8, "font-family": "system-ui, sans-serif", "pointer-events": "none" }, "tap a pitch"));
 }
 /* staccato dot / tenuto line on the notehead side away from the stem */
@@ -8314,6 +8355,7 @@ function renderBeatRow() {
   }
 }
 function renderPalette() {
+  renderFtp();
   const r1 = $("palRow1"), r2 = $("palRow2"); r1.replaceChildren(); r2.replaceChildren();
   let p = r1;
   const ev = selEv(), bar = curBar();
@@ -8355,6 +8397,7 @@ function renderPalette() {
     b("✕", () => { S.sel = null; renderAll(); }, { cls: "txt", title: "Done" });
     p.append(el("span", { class: "who" }, (ev.rest ? "rest" : ev.m == null ? "slot" : noteName(ev.m, keyObj(S.song.key))) + " " + durGlyph(ev.d)));
   }
+  b("⧉", () => openFtp(), { cls: "txt pop", title: "Pop the tools out into a floating palette" });
 }
 function updatePlayhead() {
   const pp = S.playPos;
@@ -8901,6 +8944,179 @@ function openMenu() {
     item("✚", "Add a section", openAddSection),
     item("?", "How it works", openHelp)), file]);
 }
+/* ═══════════════════════════════════════════════════════════════════════
+   FLOATING TOOL PALETTE — a draggable palette that drives entry without touching the stave.
+   The inset palette hides (its space is kept, so nothing rescales); the stave and strips stop taking taps.
+   ═══════════════════════════════════════════════════════════════════════ */
+const PART_WIN = { melody: "mel", accomp: "acc", bass: "bass" };
+const FTP_DEFAULT = { on: false, size: "m", side: "right", x: null, y: null, nav: "beat", m: 60 };
+const ftpPart = () => S.activePart || "melody";
+let FTP = null;                                                        // the built element and its parts
+function ensureWinOpen(win) {
+  if (S.layout === "rolled") ["mel", "acc", "bass"].forEach(w => { S.winState[w] = w === win ? "open" : "closed"; });
+  else if (S.winState[win] === "closed") S.winState[win] = "open";
+}
+function lastNoteInSong() {
+  for (const part of ["melody", "accomp", "bass"]) for (let bi = S.song.bars.length - 1; bi >= 0; bi--) {
+    const evs = (S.song.bars[bi].ev[part] || []).filter(e => !e.rest && e.m != null);
+    if (evs.length) { const ev = evs.reduce((a, e) => e.t > a.t ? e : a); return { part, bi, id: ev.id }; }
+  }
+  return null;
+}
+function openFtp(silent) {
+  S.ftp.on = true; $("app").classList.add("ftp"); buildFtp();
+  const le = S.lastEntered && S.song.bars[S.lastEntered.bi] && (S.song.bars[S.lastEntered.bi].ev[S.lastEntered.part] || []).some(e => e.id === S.lastEntered.id) ? S.lastEntered : lastNoteInSong();
+  if (le) {
+    const ev = S.song.bars[le.bi].ev[le.part].find(e => e.id === le.id);
+    S.activePart = le.part; S.active = { bi: le.bi, beat: beatOf(le.bi, ev.t) }; S.bi = le.bi; S.sel = { bi: le.bi, part: le.part, id: ev.id };
+    if (ev.m != null) S.ftp.m = ev.m; S.len = baseLen(ev.d); S.dot = isDotted(ev.d);
+  } else { S.activePart = "melody"; S.active = { bi: 0, beat: 0 }; S.bi = 0; S.sel = null; S.ftp.m = 60; S.len = 1; S.dot = false; }
+  ensureWinOpen(PART_WIN[S.activePart]); S.ghost = null; S.justEntered = null; S.artic = null; S.slurFrom = null;
+  savePrefs(); renderAll(); ftpRefreshBox();
+  if (!silent) toast("Floating palette — drag its top bar to move it");
+}
+function closeFtp() { S.ftp.on = false; $("app").classList.remove("ftp"); if (FTP) FTP.box.hidden = true; S.ghost = null; savePrefs(); renderAll(); }
+/* the box (and the pitch row) for the active beat, quietly */
+function ftpRefreshBox() {
+  if (!S.ftp.on || !S.active) return;
+  ensureVisible(ftpPart(), S.ftp.m);
+  if (!S.sel) showBox(S.active.bi, ftpPart(), true); else { S.ghost = null; renderWindows(); }
+  renderFtp();
+}
+function ftpGoto(bi, beat) {
+  const part = ftpPart(), bar = S.song.bars[bi];
+  S.active = { bi, beat }; S.bi = bi; S.ghost = null; S.justEntered = null;
+  const b1 = Math.min(barBeats(bi), beat + 1), cs = chains(bar, part).filter(c => c.t >= beat - 1e-6 && c.t < b1 - 1e-6);
+  const c = cs.find(x => !x.rest) || cs[0];
+  if (c) { S.sel = { bi, part, id: c.head.id }; if (c.head.m != null) S.ftp.m = c.head.m; S.len = baseLen(c.head.d); S.dot = isDotted(c.head.d); }
+  else S.sel = null;
+  renderAll(); ftpRefreshBox();
+}
+function ftpNav(dir) {
+  let { bi, beat } = S.active || { bi: S.bi, beat: 0 };
+  if (S.ftp.nav === "bar") { bi += dir; beat = 0; }
+  else { beat += dir; if (beat < 0) { bi--; beat = bi >= 0 ? Math.ceil(barBeats(bi)) - 1 : 0; } else if (beat >= Math.ceil(barBeats(bi))) { bi++; beat = 0; } }
+  if (bi < 0 || bi >= S.song.bars.length) { toast(bi < 0 ? "This is the first bar" : "This is the last bar"); return; }
+  ftpGoto(bi, beat);
+}
+function ftpSetPart(part) {
+  if (part !== "melody" && !S.song.parts[part].on) { toast(`${PART_META[part].label} is off — turn it on in ⚙ beside its window`); return; }
+  S.activePart = part; ensureWinOpen(PART_WIN[part]); savePrefs();
+  ftpGoto(S.active ? S.active.bi : S.bi, S.active ? S.active.beat : 0);
+}
+/* a length button: alters the selected note, or confirms a new note at the box with the current pitch */
+function ftpDuration(v) {
+  if (selEv()) { tapLength(v); ftpRefreshBox(); return; }
+  S.len = v; savePrefs(); ftpEnter();
+}
+function ftpEnter() {
+  const part = ftpPart(), bi = S.active.bi, bar = S.song.bars[bi];
+  if (part !== "melody" && !bar.custom[part]) { toast(`${PART_META[part].label} follows its pattern in this bar — switch it to Custom in ⚙ beside its window`); return; }
+  const sp = part === "melody" ? melodySpot(bar, bi) : (t => t == null ? null : { ts: t, d: noteLenBeats() })(freeSpotInBeat(bar, bi, S.active.beat, part));
+  if (!sp) { toast("This beat is full — ▶ moves to the next"); return; }
+  const plan = planSpan(bi, sp.ts, sp.d, part); if (plan.deny) { noticeModal(plan.deny); return; }
+  const ev = placeSpan(plan.pieces, part, S.ftp.m, S.artic && S.artic !== "slur" ? S.artic : null); previewNote(S.ftp.m, part);
+  S.justEntered = { bi, beat: S.active.beat, part }; S.sel = null; S.ghost = null;
+  if (S.followWords && part === "melody") S.cursor = nextUnpitchedChip(bi, ev.chip || null);
+  renderAll(); ftpRefreshBox();
+}
+function ftpRest() {
+  if (selEv()) { tapRest(); ftpRefreshBox(); return; }
+  const part = ftpPart(); if (part !== "melody") { toast("Rests are written in the melody; the band simply has no note there"); return; }
+  const bi = S.active.bi, bar = S.song.bars[bi], sp = melodySpot(bar, bi);
+  if (!sp) { toast("This beat is full — ▶ moves to the next"); return; }
+  bar.ev.melody.push({ id: uid(), t: sp.ts, d: Math.min(sp.d, freeSpan(bar, sp.ts)), rest: true }); syncNotesToChips(bar);
+  S.justEntered = { bi, beat: S.active.beat, part }; S.sel = null; S.ghost = null; renderAll(); ftpRefreshBox();
+}
+function ftpPitch(dir) {
+  const ev = selEv();
+  if (ev && !ev.rest && ev.m != null) { transposeSel(dir); S.ftp.m = selEv().m; renderFtp(); return; }
+  S.ftp.m = clamp(S.ftp.m + dir, 21, 108); previewNote(S.ftp.m, ftpPart()); ensureVisible(ftpPart(), S.ftp.m); savePrefs(); renderAll(); ftpRefreshBox();
+}
+function ftpDelete() { if (selEv()) deleteSel(); else clearActiveBeat(); if (S.active) ftpGoto(S.active.bi, S.active.beat); }
+function ftpPlayBar() { if (S.playing) { stopPlayback(); renderFtp(); return; } startPlayback([S.bi]); renderFtp(); }
+function ftpPlace(x, y) {
+  const r = FTP.box.getBoundingClientRect();
+  x = clamp(x, 0, Math.max(0, window.innerWidth - r.width)); y = clamp(y, 0, Math.max(0, window.innerHeight - r.height));
+  FTP.box.style.left = x + "px"; FTP.box.style.top = y + "px"; S.ftp.x = x; S.ftp.y = y;
+}
+function ftpDefaultPlace() {
+  const pr = $("palette").getBoundingClientRect(), r = FTP.box.getBoundingClientRect();
+  ftpPlace(pr.right - r.width, Math.min(pr.top, window.innerHeight - r.height));
+}
+function openFtpSettings() {
+  const seg = (opts, cur, fn) => { const s = el("div", { class: "seg sm" }); opts.forEach(([v, l]) => s.append(el("button", { class: cur === v ? "on" : "", onclick: () => { fn(v); openFtpSettings(); } }, l))); return s; };
+  openModal("Floating palette", [
+    el("div", { class: "pLbl" }, "Size"), seg([["s", "Small"], ["m", "Medium"], ["l", "Large"]], S.ftp.size, v => { S.ftp.size = v; savePrefs(); renderFtp(); }),
+    el("div", { class: "pLbl" }, "Pitch arrows"), seg([["right", "Right side"], ["left", "Left side"]], S.ftp.side, v => { S.ftp.side = v; savePrefs(); renderFtp(); }),
+    el("div", { class: "pLbl" }, "Step through"), seg([["beat", "Beats"], ["bar", "Bars"]], S.ftp.nav, v => { S.ftp.nav = v; savePrefs(); renderFtp(); }),
+    el("div", { class: "mrow" }, el("button", { class: "btn sm", onclick: () => { ftpDefaultPlace(); savePrefs(); closeModal(); } }, "Put it back over the tools"),
+      el("button", { class: "btn sm", onclick: () => { closeModal(); closeFtp(); } }, "Pop back in")),
+    el("div", { class: "tiny" }, "Drag the dotted bar at the top to move the palette anywhere.")]);
+}
+function buildFtp() {
+  if (FTP) { FTP.box.hidden = false; if (S.ftp.x == null) ftpDefaultPlace(); else ftpPlace(S.ftp.x, S.ftp.y); renderFtp(); return; }
+  const box = el("div", { id: "ftp" }), P = {};
+  const grip = el("div", { class: "ftpGrip", title: "Drag to move" }, "• • • • •");
+  const seg = el("div", { class: "seg3" }); P.parts = {};
+  [["melody", "M"], ["accomp", "A"], ["bass", "B"]].forEach(([p, l]) => { P.parts[p] = el("button", { onclick: () => ftpSetPart(p), title: PART_META[p].label }, l); seg.append(P.parts[p]); });
+  P.del = el("button", { class: "icon warn", onclick: ftpDelete, title: "Delete the selected note (or clear the beat)" }, "🗑");
+  const gearSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); gearSvg.setAttribute("class", "ico"); const use = document.createElementNS("http://www.w3.org/2000/svg", "use"); use.setAttribute("href", "#icoGear"); gearSvg.append(use);
+  P.gear = el("button", { class: "icon", onclick: openFtpSettings, title: "Palette size, arrow side, position" }, gearSvg);
+  box.append(grip, el("div", { class: "row ftpHead" }, seg, el("span", { class: "sp" }), P.del, P.gear));
+  P.prev = el("button", { class: "arrow", onclick: () => ftpNav(-1), title: "Previous" }, "◀");
+  P.lbl = el("button", { class: "ftpLbl", onclick: () => { S.ftp.nav = S.ftp.nav === "beat" ? "bar" : "beat"; savePrefs(); renderFtp(); toast(S.ftp.nav === "beat" ? "Arrows step through beats" : "Arrows step through bars"); }, title: "Tap to switch between stepping by beat and by bar" }, "BEAT 1");
+  P.next = el("button", { class: "arrow", onclick: () => ftpNav(1), title: "Next" }, "▶");
+  P.play = el("button", { class: "ftpPlay", onclick: ftpPlayBar, title: "Play this bar" }, "▶");
+  box.append(el("div", { class: "row" }, P.prev, P.lbl, P.next, P.play));
+  const grid = el("div", { class: "grid" }); P.g = {};
+  const cell = (key, label, fn, cls, title) => { P.g[key] = el("button", { class: cls || "", onclick: fn, title }, label); grid.append(P.g[key]); };
+  cell("rest", "𝄽", ftpRest, "", "Rest"); cell("staccato", ARTIC.staccato.glyph, () => { tapArtic("staccato"); renderFtp(); }, "art", "Staccato"); cell("2", "𝅗𝅥", () => ftpDuration(2), "", "Half note");
+  cell("dot", "·", () => { tapDot(); renderFtp(); }, "", "Dotted"); cell("tenuto", ARTIC.tenuto.glyph, () => { tapArtic("tenuto"); renderFtp(); }, "art", "Tenuto"); cell("0.5", "♪", () => ftpDuration(0.5), "", "Eighth note");
+  cell("slur", ARTIC.slur.glyph, () => { tapArtic("slur"); renderFtp(); }, "art", "Slur"); cell("tie", "⌒", () => { tapTie(); renderFtp(); }, "", "Tie to the next note"); cell("1", "♩", () => ftpDuration(1), "", "Quarter note");
+  cell("4", "𝅝", () => ftpDuration(4), "", "Whole note"); cell("0.25", "𝅘𝅥𝅯", () => ftpDuration(0.25), "", "Sixteenth note"); cell("undo", "↶", () => { undo(); ftpRefreshBox(); }, "undo", "Undo");
+  const pitch = el("div", { class: "pitch" });
+  P.up = el("button", { class: "pBtn", title: "Pitch up a half step (hold to keep going)" }, "▲"); P.dn = el("button", { class: "pBtn", title: "Pitch down a half step (hold to keep going)" }, "▼");
+  P.cur = el("div", { class: "pCur" }, "C4");
+  pitch.append(P.up, el("div", { class: "pLbl" }, "PITCH"), P.dn, P.cur);
+  [[P.up, 1], [P.dn, -1]].forEach(([b, d]) => { let t = null, iv = null; const stop = () => { clearTimeout(t); clearInterval(iv); t = iv = null; };
+    b.addEventListener("pointerdown", e => { e.preventDefault(); ftpPitch(d); t = setTimeout(() => { iv = setInterval(() => ftpPitch(d), 110); }, 420); });
+    ["pointerup", "pointerleave", "pointercancel"].forEach(ev => b.addEventListener(ev, stop)); });
+  box.append(el("div", { class: "main" }, grid, pitch));
+  P.rhy = el("button", { class: "tag", onclick: openRhythmMenu, title: "Rhythm options for this bar" }, "Rhythm");
+  P.lyr = el("button", { class: "tag", onclick: () => { const bi = S.active ? S.active.bi : S.bi, t = S.active ? S.active.beat : 0; openWordEdit(bi, t); }, title: "Type words at this beat" }, "Lyrics");
+  P.back = el("button", { class: "ftpIn", onclick: closeFtp, title: "Pop the tools back into place" }, "⤶");
+  box.append(el("div", { class: "row", style: "margin-bottom:0" }, P.rhy, P.lyr, el("span", { class: "sp" }), P.back));
+  let drag = null;
+  grip.addEventListener("pointerdown", e => { const r = box.getBoundingClientRect(); drag = { id: e.pointerId, dx: e.clientX - r.left, dy: e.clientY - r.top }; try { grip.setPointerCapture(e.pointerId); } catch (err) {} e.preventDefault(); });
+  grip.addEventListener("pointermove", e => { if (!drag || e.pointerId !== drag.id) return; ftpPlace(e.clientX - drag.dx, e.clientY - drag.dy); });
+  ["pointerup", "pointercancel"].forEach(ev => grip.addEventListener(ev, e => { if (drag && e.pointerId === drag.id) { drag = null; savePrefs(); } }));
+  window.addEventListener("resize", () => { if (S.ftp.on && FTP && S.ftp.x != null) ftpPlace(S.ftp.x, S.ftp.y); });
+  document.body.append(box); FTP = Object.assign({ box }, P);
+  if (S.ftp.x == null) ftpDefaultPlace(); else ftpPlace(S.ftp.x, S.ftp.y);
+  renderFtp();
+}
+function renderFtp() {
+  if (!S.ftp || !S.ftp.on) return;
+  if (!FTP) { buildFtp(); return; }
+  const P = FTP, part = ftpPart(), ev = selEv(), key = keyObj(S.song.key);
+  P.box.className = `size-${S.ftp.size} side-${S.ftp.side}`;
+  Object.entries(P.parts).forEach(([p, b]) => b.classList.toggle("on", p === part));
+  const bi = S.active ? S.active.bi : S.bi, beat = S.active ? S.active.beat : 0;
+  P.lbl.textContent = S.ftp.nav === "bar" ? `BAR ${barNo(bi)}` : `BEAT ${beat + 1} · BAR ${barNo(bi)}`;
+  P.prev.disabled = bi === 0 && (S.ftp.nav === "bar" || beat === 0); P.next.disabled = bi === S.song.bars.length - 1 && (S.ftp.nav === "bar" || beat >= Math.ceil(barBeats(bi)) - 1);
+  P.play.classList.toggle("on", !!S.playing); P.play.textContent = S.playing ? "■" : "▶";
+  const len = ev ? baseLen(ev.d) : S.len;
+  ["4", "2", "1", "0.5", "0.25"].forEach(k => P.g[k].classList.toggle("on", Math.abs(len - parseFloat(k)) < 1e-6));
+  P.g.dot.classList.toggle("on", ev ? isDotted(ev.d) : S.dot);
+  P.g.rest.classList.toggle("on", !!(ev && ev.rest));
+  P.g.tie.classList.toggle("on", !!(ev && ev.tie));
+  for (const k of ["staccato", "tenuto", "slur"]) { P.g[k].classList.toggle("armed", S.artic === k); P.g[k].classList.toggle("on", !!(ev && (k === "slur" ? ev.slur : ev.artic === k))); }
+  P.g.undo.disabled = !UNDO.stack.length;
+  const m = ev && ev.m != null ? ev.m : S.ftp.m;
+  P.cur.textContent = ev && ev.rest ? "rest" : noteName(m, key);
+  P.del.title = ev ? "Delete the selected note" : `Clear beat ${beat + 1}`;
+}
 /* full screen: hides the address bar on Android / desktop; iPhone Safari has no such API,
    so there the answer is Share → Add to Home Screen, which opens the app without any browser bars */
 function toggleFullscreen() {
@@ -8914,6 +9130,7 @@ function openHelp() {
   openModal("How it works", [
     h("Pickup & repeats", "Setup → Pickup adds a short bar (½, 1 or 2 beats) before beat 1. Tap the bar name → Repeat this section to play a section several times."),
     h("Chords (stacked notes)", "Turn on Chord in the tools, then tap other pitches in the same time column as a note to stack them; each gets the same length and ties. Works in the melody and in Custom band bars. Tap Chord again to go back to single notes."),
+    h("Floating palette", "⧉ at the end of the tools pops them out into a small palette you can drag anywhere (the stave keeps its size). ◀ ▶ step through beats — tap the label to step through bars instead — and the yellow box shows the pitch; ▲ ▼ change it. Tap a note length to enter that note at the box, or, when a note is selected, to change its length. M / A / B pick the window, 🗑 deletes, ▶ plays the bar, Rhythm and Lyrics open those tools, ⚙ sets its size and side, ⤶ pops it back in. While it is out, the stave and strips do not take taps."),
     h("Entering notes", "Tap a beat once: it becomes the active beat and the dashed box appears there, sized to the picked length. Tap the pitch you want and the note is placed at the box. Only the active beat takes notes; other beats wait for their own tap."),
     h("Clearing a beat", "With a beat active and no note selected, 🗑 in the tools removes every note, rest or slot that starts in that beat for the part you activated it in, including any tied run-on into later bars. ↶ undoes it."),
     h("After an entry", "Once the first note is in, every further tap in that beat places another note straight away at the next free spot, with the picked length — no box in between. Tap a note itself to select it for changes. Tap another beat to move on."),

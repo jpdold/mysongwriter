@@ -25,6 +25,10 @@ Windows share the screen: the melody gets the most room and Accompaniment and Ba
 
 The dots under the bar bracket show each bar of the section: green when every voice is full, white when empty, yellow in between.
 
+## Floating tool palette
+
+⧉ at the end of the tools pops them out into a small draggable palette. The stave keeps its size and stops taking taps; you step through beats (or bars) with ◀ ▶, set the pitch with ▲ ▼, and tap a note length to enter the note at the dashed box, or to change a selected note's length. M / A / B pick the window, ⚙ sets the palette's size and which side the pitch arrows sit, ⤶ pops it back in.
+
 ## Running without the browser bars
 
 - **Android / desktop:** ☰ → *Full screen* hides the address bar (tap again, or press Esc, to leave).
