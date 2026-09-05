@@ -7683,7 +7683,7 @@ const STEPS = { mel: 14, acc: 8, bass: 8 };      // computed by allocate()
 const WIN_PART = { mel: "melody", acc: "accomp", bass: "bass" };
 const WIN_LO = { mel: "melLo", acc: "accLo", bass: "bassLo" };
 const NOTE_SCALE = { s: 0.62, m: 0.85, l: 1.25 }; const NS = () => NOTE_SCALE[S.noteSize] || 1;   // note size: heads only, the stave never changes
-Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", noteSize: "m", chordMode: false, justEntered: null, halfLines: false, winSize: "m", chordsDisp: "names", metro: "off", winState: { mel: "open", acc: "closed", bass: "closed" }, zoomWin: { mel: 1, acc: 1, bass: 1 }, lyricFont: "sans", viewSpan: 1, layout: "rolled", selChip: null, ghost: null, restNext: false, artic: null, slurFrom: null, active: null, softKb: ("ontouchstart" in window), popPos: null, mode: "melody" });
+Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", noteSize: "m", chordMode: false, justEntered: null, activePart: "melody", halfLines: false, winSize: "m", chordsDisp: "names", metro: "off", winState: { mel: "open", acc: "closed", bass: "closed" }, zoomWin: { mel: 1, acc: 1, bass: 1 }, lyricFont: "sans", viewSpan: 1, layout: "rolled", selChip: null, ghost: null, restNext: false, artic: null, slurFrom: null, active: null, softKb: ("ontouchstart" in window), popPos: null, mode: "melody" });
 const UNDO = { stack: [], last: null, max: 60 };
 const setMode = () => {};                          // engine shims (the old mode sheets are gone)
 const renderPanel = () => renderAll();
@@ -7870,7 +7870,26 @@ function bandPlayEvents(part, bi) {
 /* the one active beat: only it takes taps; everything else just becomes active when tapped */
 const beatOf = (bi, t) => Math.min(Math.floor(t + 1e-6), Math.max(0, Math.ceil(barBeats(bi)) - 1));
 const inActive = (bi, t) => !!S.active && S.active.bi === bi && beatOf(bi, t) === S.active.beat;
-function activate(bi, t) { S.active = { bi, beat: beatOf(bi, t) }; S.bi = bi; S.sel = null; S.ghost = null; S.selChip = null; S.justEntered = null; renderAll(); }
+function activate(bi, t, part = "melody") { S.active = { bi, beat: beatOf(bi, t) }; S.activePart = part; S.bi = bi; S.sel = null; S.ghost = null; S.selChip = null; S.justEntered = null; renderAll(); }
+/* clear the active beat: every note, rest or slot that starts in it goes, along with any tied continuation in later bars */
+function clearActiveBeat() {
+  if (!S.active) return;
+  const { bi, beat } = S.active, part = S.activePart || "melody", bar = S.song.bars[bi], b1 = Math.min(barBeats(bi), beat + 1);
+  const heads = chains(bar, part).filter(c => c.t >= beat - 1e-6 && c.t < b1 - 1e-6);
+  if (!heads.length) { toast("Nothing starts in this beat"); return; }
+  const ids = new Set(heads.flatMap(c => c.members.map(e => e.id)));
+  bar.ev[part] = bar.ev[part].filter(e => !ids.has(e.id));
+  heads.filter(c => c.tieOut).forEach(() => {
+    let b = bi + 1;
+    while (S.song.bars[b]) {
+      const nb = S.song.bars[b], nc = chains(nb, part).find(c => c.t < 1e-6 && !c.rest); if (!nc) break;
+      nb.ev[part] = nb.ev[part].filter(e => !nc.members.includes(e)); if (part === "melody") syncNotesToChips(nb);
+      if (!nc.tieOut) break; b++;
+    }
+  });
+  if (part === "melody") syncNotesToChips(bar);
+  S.sel = null; S.ghost = null; S.justEntered = null; renderAll(); toast(`Beat ${beat + 1} cleared — ↶ brings it back`);
+}
 /* chord mode: another pitch at the same time as an existing note, with the same length (and ties) */
 function addChordNote(bi, chain, m, part) {
   const bar = S.song.bars[bi], copy = (e, into) => { const n = { id: uid(), t: e.t, d: e.d, m }; if (e.tie) n.tie = true; if (e.artic) n.artic = e.artic; into.push(n); };
@@ -8325,6 +8344,7 @@ function renderPalette() {
   for (const k of ["staccato", "tenuto", "slur"]) b(ARTIC[k].glyph, () => tapArtic(k), { cls: "art" + (S.artic === k ? " armed" : ""), on: !!(ev && (k === "slur" ? ev.slur : ev.artic === k)), title: S.artic === k ? `${ARTIC[k].label} armed — tap notes to mark them; tap again to return to note entry` : `${ARTIC[k].label}: tap before entering a note, or arm it and tap existing notes` });
   if (S.artic && !ev) p.append(el("span", { class: "hint" }, S.artic === "slur" ? (S.slurFrom ? "slur: tap the last note" : "slur: tap the first note") : `${ARTIC[S.artic].label}: tap notes`));
   else if (!ev) p.append(el("span", { class: "hint" }, S.ghost ? "tap a pitch for the box" : S.active ? `beat ${S.active.beat + 1} active — tap it for a box` : "tap a beat: the box appears"));
+  if (!ev && S.active && !S.artic) b("🗑", clearActiveBeat, { warn: true, title: `Clear beat ${S.active.beat + 1} — removes the ${PART_META[S.activePart || "melody"].label.toLowerCase()} notes that start in it` });
   if (ev) {                                        // editing tools appear for the selected note
     b("▲", () => transposeSel(1), { cls: "txt", title: "Up a half step", disabled: ev.rest || ev.m == null });
     b("▼", () => transposeSel(-1), { cls: "txt", title: "Down a half step", disabled: ev.rest || ev.m == null });
@@ -8466,7 +8486,7 @@ function ensureVisible(part, m) {
 function shiftView(win, delta) { const { rows } = rowsOf(win), key = WIN_LO[win]; S.song.view[key] = clamp(viewOf(win) + delta, 21, 108 - rows); renderAll(); }
 /* a tap on the melody window: pitch a slot, or make a slot with a pitch */
 function tapMelody(bi, t, m) {
-  if (!inActive(bi, t)) activate(bi, t);                                 // one tap: the beat wakes and the box appears
+  if (!inActive(bi, t)) activate(bi, t); S.activePart = "melody";        // one tap: the beat wakes and the box appears
   S.bi = bi;
   const bar = S.song.bars[bi], B = barBeats(bi);
   const chain = chains(bar).find(c => !c.rest && t >= c.t - 1e-6 && t < c.t + c.d - 1e-6);
@@ -8499,9 +8519,9 @@ function tapMelody(bi, t, m) {
   renderAll();
 }
 function tapBand(win, bi, t, m) {
-  if (!inActive(bi, t)) activate(bi, t);                                 // one tap: the beat wakes and the box appears
-  S.bi = bi;
   const part = WIN_PART[win], bar = S.song.bars[bi], P = S.song.parts[part], B = barBeats(bi);
+  if (!inActive(bi, t)) activate(bi, t, part); S.activePart = part;      // one tap: the beat wakes and the box appears
+  S.bi = bi;
   if (!P.on) { openWinSettings(win); return; }
   if (!bar.custom[part]) { toast(`${PART_META[part].label} follows its pattern — switch it to Custom in ⚙ to place notes`); return; }
   if (S.chordMode) { const ch = chains(bar, part).find(c => !c.rest && t >= c.t - 1e-6 && t < c.t + c.d - 1e-6); if (ch) { if (!hasPitchAt(bar, part, ch.t, m)) addChordNote(bi, ch, m, part); return; } }
@@ -8582,7 +8602,7 @@ function initPointer() {
       const p = svgPoint(svg, e), g = GEO[win], at = g.at(p.x);
       S.selChip = null;
       if (d.ev && S.artic && !d.ev.rest && d.ev.m != null) { S.bi = d.bi; applyArtic(d.bi, d.part, d.ev); return; }   // slurs and marks may reach into locked beats
-      if (d.locked) { activate(at.bi, at.t); showBox(at.bi, WIN_PART[win]); return; }
+      if (d.locked) { activate(at.bi, at.t, WIN_PART[win]); showBox(at.bi, WIN_PART[win]); return; }
       if (d.ev && d.part === "melody" && !d.ev.rest) { tapMelody(d.bi, at.t, g.m(p.y)); return; }
       if (d.ev) { S.bi = d.bi; select(d.bi, d.part, S.sel && S.sel.id === d.ev.id ? null : d.ev.id); if (d.ev.m != null && !d.ev.rest && S.sel && S.sel.id === d.ev.id) previewNote(d.ev.m, d.part); return; }
       if (win === "mel") tapMelody(at.bi, at.t, g.m(p.y)); else tapBand(win, at.bi, at.t, g.m(p.y));
@@ -8885,6 +8905,7 @@ function openHelp() {
     h("Pickup & repeats", "Setup → Pickup adds a short bar (½, 1 or 2 beats) before beat 1. Tap the bar name → Repeat this section to play a section several times."),
     h("Chords (stacked notes)", "Turn on Chord in the tools, then tap other pitches in the same time column as a note to stack them; each gets the same length and ties. Works in the melody and in Custom band bars. Tap Chord again to go back to single notes."),
     h("Entering notes", "Tap a beat once: it becomes the active beat and the dashed box appears there, sized to the picked length. Tap the pitch you want and the note is placed at the box. Only the active beat takes notes; other beats wait for their own tap."),
+    h("Clearing a beat", "With a beat active and no note selected, 🗑 in the tools removes every note, rest or slot that starts in that beat for the part you activated it in, including any tied run-on into later bars. ↶ undoes it."),
     h("After an entry", "Once the first note is in, every further tap in that beat places another note straight away at the next free spot, with the picked length — no box in between. Tap a note itself to select it for changes. Tap another beat to move on."),
     h("Long notes", "A note longer than the room left in its beat runs on through the following beats, and into the next bars, tied — as long as those beats are empty. If something is already in the way, or the song ends first, the note is refused with a message saying there is not enough space."),
     h("Full screen", "☰ → Full screen hides the browser bars (Android, desktop). On iPhone, use Share → Add to Home Screen; the icon then opens the app with no address bar at all."),
