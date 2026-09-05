@@ -111,9 +111,10 @@ svg text { pointer-events: none; }
 #setupBtn:active { background: linear-gradient(#cfe3fb, #f7fbff); }
 
 /* ── bar navigation (bracket) ── */
-#nav { display: grid; grid-template-columns: 34px 1fr 34px; align-items: center; gap: 4px; }
-#nav .arrow { height: 30px; border: none; background: none; color: var(--on-ground); font-size: 20px; border-radius: 6px; }
-#nav .arrow:disabled { opacity: .3; }
+#nav { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; gap: 6px; }
+#nav .arrow { width: 44px; height: 34px; padding: 0; border: 1.5px solid #141414; border-radius: 5px; background: linear-gradient(#fff, #cfcfcf); color: #111; font-size: 18px; line-height: 1; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
+#nav .arrow:active { background: linear-gradient(#ffd27a, #f5a623); }
+#nav .arrow:disabled { opacity: .35; box-shadow: none; }
 #bracket { position: relative; height: 30px; }
 #bracket::before { content: ""; position: absolute; left: 0; right: 0; top: 14px; height: 10px; border: 2px solid var(--tag); border-bottom: none; border-radius: 3px 3px 0 0; }
 #barLabel { position: absolute; left: 50%; top: 1px; transform: translateX(-50%); background: #111; color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .06em;
