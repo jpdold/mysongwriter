@@ -8067,8 +8067,12 @@ function drawStaff(svg, g, key) {
   for (let m = g.lo; m <= g.hi; m++) {
     const y = g.y(m), nat = !isBlack(m), pc = ((m % 12) + 12) % 12;
     if (pc === key.pc) svg.append(svgEl("rect", { x: 0, y: y - g.step / 2, width: g.W, height: g.step, fill: css("--box-soft"), opacity: 0.1 }));
-    const ly = Math.round(S.halfLines ? y : y + g.step / 2) + 0.5;
-    svg.append(svgEl("line", { class: "stl", x1: 0, x2: g.W, y1: ly, y2: ly, stroke: css("--line"), "stroke-width": nat || S.halfLines ? 2 : 1, opacity: nat || S.halfLines ? 1 : 0.7 }));   // half steps on lines, or one half step per space
+    if (S.halfLines) {                                                    // lines and spaces: every other half step sits on a line, the rest in the spaces between
+      if (m % 2 === 0) { const ly = Math.round(y) + 0.5; svg.append(svgEl("line", { class: "stl", x1: 0, x2: g.W, y1: ly, y2: ly, stroke: css("--line"), "stroke-width": 2 })); }
+      continue;
+    }
+    const ly = Math.round(y + g.step / 2) + 0.5;
+    svg.append(svgEl("line", { class: "stl", x1: 0, x2: g.W, y1: ly, y2: ly, stroke: css("--line"), "stroke-width": nat ? 2 : 1, opacity: nat ? 1 : 0.7 }));   // one half step per space
   }
   if (!S.halfLines) { const ty = Math.round(g.y(g.hi) - g.step / 2) + 0.5; svg.append(svgEl("line", { class: "stl", x1: 0, x2: g.W, y1: ty, y2: ty, stroke: css("--line"), "stroke-width": 2 })); }
   g.bars.forEach((bi, k) => {
@@ -8807,7 +8811,7 @@ function openSettings() {
     el("div", { class: "pLbl" }, "Chords displayed"), seg([["names", "Names (C, G7)"], ["roman", "Roman (I, V7)"], ["off", "Hidden"]], S.chordsDisp, v => { S.chordsDisp = v; S.song.showRoman = v === "roman"; savePrefs(); renderAll(); }),
     el("div", { class: "pLbl" }, "Notes appearance"), seg([["trad", "Traditional"], ["pill", "Pills"], ["circle", "Circles"]], S.noteStyle, v => { S.noteStyle = v; savePrefs(); renderAll(); }),
     el("div", { class: "pLbl" }, "Note size"), seg([["s", "Small"], ["m", "Medium"], ["l", "Large"]], S.noteSize, v => { S.noteSize = v; savePrefs(); renderAll(); }),
-    el("div", { class: "mrow" }, toggle("Half steps on lines (every half step gets a line; off = one half step per space)", S.halfLines, v => { S.halfLines = v; savePrefs(); renderAll(); openSettings(); })),
+    el("div", { class: "mrow" }, toggle("Lines and spaces (half steps alternate line, space, line, space; off = one half step per space)", S.halfLines, v => { S.halfLines = v; savePrefs(); renderAll(); openSettings(); })),
     el("div", { class: "pLbl" }, "Lyrics keyboard"), seg([[true, "App keyboard (QWERTY + symbols)"], [false, "Phone's keyboard"]], S.softKb, v => { S.softKb = v; savePrefs(); }),
     el("div", { class: "pLbl" }, "Lyrics font"), seg([["sans", "Current"], ["serif", "Serif"], ["smallcaps", "Small caps"]], S.lyricFont, v => { S.lyricFont = v; savePrefs(); renderAll(); }),
     el("div", { class: "pLbl" }, "Metronome"), seg([["off", "Off"], ["on", "Click while playing"], ["countin", "Count-in + click"]], S.metro, v => { S.metro = v; savePrefs(); }),
