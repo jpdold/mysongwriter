@@ -364,7 +364,10 @@ textarea.lyricArea { width: 100%; min-height: 90px; border: 1px solid #999; bord
 #wordEdit .weRow .flex { flex: 1; }
 #wordEdit .weRow button { width: 32px; height: 30px; }
 #lyrInline { position: absolute; top: 3px; height: 30px; display: none; border: none; outline: none; background: rgba(255,255,255,.18); border-radius: 4px; padding: 0 3px;
-  font-family: var(--sans); font-weight: 700; font-size: 16px; color: #fff; caret-color: #fff; min-width: 40px; }
+  font-family: var(--sans); font-weight: 700; font-size: 16px; color: #fff; caret-color: transparent; min-width: 40px; }
+#weCaret { position: absolute; top: 8px; width: 2px; height: 20px; background: #fff; border-radius: 1px; display: none; pointer-events: none; z-index: 3; }
+#weCaret.on { display: block; }
+#lyrSvg rect.chip { cursor: grab; } #lyrSvg rect.grip { cursor: ew-resize; }
 #lyrInline.on { display: block; }
 #lyrInline::placeholder { color: rgba(255,255,255,.6); font-weight: 400; }
 #lyrStrip.serif #lyrInline { font-family: var(--serif); font-weight: 600; }
@@ -450,7 +453,7 @@ textarea.lyricArea { width: 100%; min-height: 90px; border: 1px solid #999; bord
 
   <div class="strip" id="lyrStrip">
     <button class="tag" id="lyrTag" title="Words">Lyrics</button>
-    <div class="body"><svg id="lyrSvg"></svg><input id="lyrInline" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="word"></div>
+    <div class="body"><svg id="lyrSvg"></svg><input id="lyrInline" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="word"><div id="weCaret"></div></div>
     <span></span>
     <div id="wordEdit">
       <div class="weRow"><span class="lbl2"></span><span class="flex"></span><button class="kb" title="Switch between the app keyboard and the phone's keyboard">⌨</button><button class="rest" title="Rest — nothing sung here">𝄽</button><button class="close" title="Done (Esc)">✕</button></div>
@@ -7697,7 +7700,7 @@ const _chipW = new Map(); let _measureCtx = null;
 function chipW(c) {
   if (c.rest) return 22;
   let w = _chipW.get(c.text);
-  if (w == null) { if (!_measureCtx) { _measureCtx = document.createElement("canvas").getContext("2d"); _measureCtx.font = "700 15px -apple-system, 'Segoe UI', Roboto, Arial, sans-serif"; } w = Math.ceil(_measureCtx.measureText(c.text).width) + 12; _chipW.set(c.text, w); }
+  if (w == null) { if (!_measureCtx) { _measureCtx = document.createElement("canvas").getContext("2d"); _measureCtx.font = "700 16px -apple-system, 'Segoe UI', Roboto, Arial, sans-serif"; } w = Math.ceil(_measureCtx.measureText(c.text).width) + 6; _chipW.set(c.text, w); }
   return w;
 }
 function reloadGenreChords() {
@@ -8318,21 +8321,27 @@ function renderStrips() {
       const bar = song.bars[bi], cursorId = S.cursor && S.cursor.bi === bi ? S.cursor.chipId : null, selId = S.selChip && S.selChip.bi === bi ? S.selChip.id : null;
       bar.chips.forEach((c, i) => {
         any = true;
+        /* every chip is a pill you can grab: tight round the text, or stretched to the span it was given */
         const x = g.x(bi, c.t) + 3, tw = chipW(c), isCur = c.id === cursorId, isSel = c.id === selId;
-        if (isCur) svg.append(svgEl("rect", { x: x - 2, y: 4, width: tw - 4, height: H - 8, rx: 5, fill: css("--box"), opacity: 0.9, "pointer-events": "none" }));
-        if (isSel) svg.append(svgEl("rect", { x: x - 3, y: 3, width: tw - 2, height: H - 6, rx: 5, fill: "#fff", opacity: 0.35, stroke: "#fff", "stroke-width": 1.5, "pointer-events": "none" }));
-        svg.append(svgEl("rect", { class: "chip", x: x - 2, y: 2, width: Math.max(tw - 4, 14), height: H - 4, rx: 5, fill: "transparent", "data-chip": c.id, "data-bi": bi }));
-        const editing = WE.on && WE.bi === bi && WE.wid != null && chipWordIds(bar)[i] === WE.wid;
-        if (!editing) svg.append(svgEl("text", { x, y: 24, "font-size": 16, fill: isCur ? "#222" : "#fff", "font-weight": 700, "font-family": "system-ui, sans-serif", opacity: c.kind === "space" ? 0.55 : 1 }, c.rest ? "𝄽" : c.kind === "space" ? "␣" : c.text));
+        const nextT = i < bar.chips.length - 1 ? bar.chips[i + 1].t : barBeats(bi);
+        const pw = Math.max(tw, c.span ? Math.min(c.span, nextT - c.t) * g.beatPx - 3 : 0), px = x - 3;
+        svg.append(svgEl("rect", { class: "chip", x: px, y: 3, width: pw, height: H - 6, rx: 6, fill: isCur ? css("--box") : "#fff", "fill-opacity": isCur ? 0.92 : isSel ? 0.42 : 0.2, stroke: "#fff", "stroke-width": isSel ? 1.5 : 0.8, "stroke-opacity": isSel ? 1 : 0.5, "data-chip": c.id, "data-bi": bi }));
+        const editing = WE.on && WE.bi === bi && (WE.chipId ? c.id === WE.chipId : WE.wid != null && chipWordIds(bar)[i] === WE.wid);
+        if (!editing) svg.append(svgEl("text", { x, y: 24, "font-size": 16, fill: isCur ? "#222" : "#fff", "font-weight": 700, "font-family": "system-ui, sans-serif", opacity: c.kind === "space" ? 0.55 : 1, "pointer-events": "none" }, c.rest ? "𝄽" : c.kind === "space" ? "␣" : c.text));
+        if (isSel) {                                                // the right edge is a handle: drag it to stretch or shrink the chip
+          svg.append(svgEl("rect", { class: "grip", x: px + pw - 9, y: 3, width: 9, height: H - 6, rx: 3, fill: "#fff", "fill-opacity": 0.9, "data-grip": c.id, "data-bi": bi }));
+          svg.append(svgEl("line", { x1: px + pw - 4.5, x2: px + pw - 4.5, y1: 11, y2: H - 11, stroke: "#2f7fd6", "stroke-width": 1.6, "pointer-events": "none" }));
+        }
         if (c.kind) return;                                        // letters, spaces and symbols carry no hyphens or extenders
-        if (c.pos === "begin" || c.pos === "middle") { const nx = i < bar.chips.length - 1 ? g.x(bi, bar.chips[i + 1].t) + 3 : g.x(bi, barBeats(bi)); const gap = nx - (x + tw - 6); const n = Math.max(1, Math.floor(gap / 40)); for (let k = 1; k <= n; k++) svg.append(svgEl("text", { x: x + tw - 6 + gap * k / (n + 1), y: 24, "text-anchor": "middle", "font-size": 16, fill: "#fff", "font-weight": 700 }, "-")); }
-        else if (c.pos === "end" || c.pos === "single") { const n = chipNote(bar, c); if (n && !n.rest) { const ch = chainOf(bar, n); const endX = g.x(bi, ch.t + ch.d) - 4; if ((ch.members.length > 1 || ch.d >= 2) && endX - (x + tw - 4) > 12) svg.append(svgEl("line", { x1: x + tw - 4, x2: endX, y1: 25, y2: 25, stroke: "#fff", "stroke-width": 1.5, "stroke-linecap": "round" })); } }
+        if (c.pos === "begin" || c.pos === "middle") { const nx = i < bar.chips.length - 1 ? g.x(bi, bar.chips[i + 1].t) : g.x(bi, barBeats(bi)); const gap = nx - (px + pw); if (gap > 8) { const n = Math.max(1, Math.floor(gap / 40)); for (let k = 1; k <= n; k++) svg.append(svgEl("text", { x: px + pw + gap * k / (n + 1), y: 24, "text-anchor": "middle", "font-size": 16, fill: "#fff", "font-weight": 700, "pointer-events": "none" }, "-")); } }
+        else if (c.pos === "end" || c.pos === "single") { const n = chipNote(bar, c); if (n && !n.rest) { const ch = chainOf(bar, n); const endX = g.x(bi, ch.t + ch.d) - 4; if ((ch.members.length > 1 || ch.d >= 2) && endX - (px + pw) > 12) svg.append(svgEl("line", { x1: px + pw + 3, x2: endX, y1: 25, y2: 25, stroke: "#fff", "stroke-width": 1.5, "stroke-linecap": "round", "pointer-events": "none" })); } }
       });
     }
     if (!any) svg.append(svgEl("text", { x: g.W1 / 2, y: 23, "text-anchor": "middle", "font-size": 11, fill: "rgba(255,255,255,.75)", "font-weight": 400 }, "tap to type words at a beat"));
   }
   const ph = $("lyrSvg"); ph.append(svgEl("line", { id: "lyrHead", x1: -5, x2: -5, y1: 0, y2: H, stroke: "#fff", "stroke-width": 2, "pointer-events": "none" }));
   if (WE.on) { const inp = weInput(); if (viewBars().includes(WE.bi)) { inp.classList.add("on"); const x = g.x(WE.bi, WE.t); inp.style.left = clamp(x + 1, 0, Math.max(0, g.W - inp.offsetWidth - 2)) + "px"; } else inp.classList.remove("on"); }
+  weCaret();
 }
 function renderBeatRow() {
   const rowEl = $("beatRow"), song = S.song, bar = curBar(), bi = S.bi; rowEl.replaceChildren();
@@ -8681,13 +8690,21 @@ function initPointer() {
   });
   /* lyric strip: drag a word, tap to edit or add */
   const lyr = $("lyrSvg"); let ld = null;
-  lyr.addEventListener("pointerdown", e => { const id = e.target.getAttribute && e.target.getAttribute("data-chip"); const bi = id ? parseInt(e.target.getAttribute("data-bi"), 10) : S.bi; const chip = id ? S.song.bars[bi].chips.find(c => c.id === id) : null; ld = { id: e.pointerId, x0: e.clientX, chip, bi, t0: chip ? chip.t : 0, moved: false }; try { lyr.setPointerCapture(e.pointerId); } catch (err) {} });
+  lyr.addEventListener("pointerdown", e => { const T = e.target, gid = T.getAttribute && T.getAttribute("data-grip"), id = gid || (T.getAttribute && T.getAttribute("data-chip")); const bi = id ? parseInt(T.getAttribute("data-bi"), 10) : S.bi; const chip = id ? S.song.bars[bi].chips.find(c => c.id === id) : null; ld = { id: e.pointerId, x0: e.clientX, chip, bi, t0: chip ? chip.t : 0, moved: false, grip: !!gid }; try { lyr.setPointerCapture(e.pointerId); } catch (err) {} });
+  /* a landing spot: a beat line or a note start when one is close, else the nearest eighth */
+  const snapT = (bar, bi, t, reach) => { const B = barBeats(bi), marks = []; for (let b = 0; b <= B; b++) marks.push(b); chains(bar).filter(c => !c.rest).forEach(c => marks.push(c.t)); const near = marks.sort((a, b) => Math.abs(a - t) - Math.abs(b - t)).find(m => Math.abs(m - t) < reach); return near != null ? near : Math.round(t * 8) / 8; };
   lyr.addEventListener("pointermove", e => {
     if (!ld || !ld.chip || e.pointerId !== ld.id) return;
     const dx = e.clientX - ld.x0; if (!ld.moved && Math.abs(dx) < 6) return; ld.moved = true;
     const g = stripGeo(), r = lyr.getBoundingClientRect(), raw = ld.t0 + dx * (g.W / r.width) / g.beatPx, bar = S.song.bars[ld.bi];
-    if (ld.chip.kind) setChipTime(bar, ld.chip, Math.round(raw * 16) / 16);          // letters move freely, in 1/16 beats
-    else { const attacks = chains(bar).filter(c => !c.rest).map(c => c.t), near = attacks.sort((a, b) => Math.abs(a - raw) - Math.abs(b - raw)).find(a => Math.abs(a - raw) < 0.45); setChipTime(bar, ld.chip, near != null ? near : Math.round(raw * 16) / 16); }
+    if (ld.grip) {                                                                    // stretch or shrink: the right edge lands on beats and notes
+      const pt = g.at(svgPoint(lyr, e).x), endT = pt.bi === ld.bi ? pt.t : pt.bi > ld.bi ? barBeats(ld.bi) : 0;
+      const i = bar.chips.indexOf(ld.chip), nextT = i < bar.chips.length - 1 ? bar.chips[i + 1].t : barBeats(ld.bi);
+      ld.chip.span = r3(clamp(snapT(bar, ld.bi, endT, 0.12) - ld.chip.t, 0.125, nextT - ld.chip.t));
+      if (ld.chip.span <= chipW(ld.chip) / g.beatPx + 1e-6) delete ld.chip.span;      // shrunk back to its own width: no span at all
+    }
+    else if (ld.chip.kind) setChipTime(bar, ld.chip, Math.round(raw * 16) / 16);     // letters move freely, in 1/16 beats
+    else setChipTime(bar, ld.chip, snapT(bar, ld.bi, raw, 0.3));                      // words land on beats and notes, else eighths
     S.selChip = { bi: ld.bi, id: ld.chip.id };
     renderStrips(); renderWindows();
   });
@@ -8722,9 +8739,10 @@ function openWordEdit(bi, t, chip) {
   if (t >= B - 1e-6) { closeWordEdit(); return; }
   const attacks = chains(bar).filter(c => !c.rest).map(c => c.t), near = attacks.find(a => Math.abs(a - t) < 0.3);
   WE.on = true; WE.bi = bi; WE.t = chip ? chip.t : near != null ? near : clamp(S.song.snap ? Math.round(t * 2) / 2 : Math.round(t * 4) / 4, 0, B - 0.25); WE.dirty = false;
-  let existing = ""; WE.wid = null;
+  let existing = ""; WE.wid = null; WE.chipId = null;
   const at = bar.chips.findIndex(c => Math.abs(c.t - WE.t) < 1e-6);
-  if (at >= 0) { const wid = chipWordIds(bar); WE.wid = wid[at]; existing = bar.chips.filter((c, i) => wid[i] === wid[at]).map(c => c.rest ? REST_MARK : c.text).join(""); }
+  if (chip && chip.kind) { WE.chipId = chip.id; existing = chip.kind === "space" ? " " : chip.text; }   // a loose letter or mark: edit just that piece
+  else if (at >= 0) { const wid = chipWordIds(bar); WE.wid = wid[at]; existing = bar.chips.filter((c, i) => wid[i] === wid[at]).map(c => c.rest ? REST_MARK : c.kind ? c.text : c.text + (c.pos === "begin" || c.pos === "middle" ? "-" : "")).join(""); }   // hyphens come back so they can be moved or added
   inp.value = existing; S.bi = bi;
   lbl.textContent = `Bar ${bi - curRange().start + 1} · beat ${Math.floor(WE.t) + 1}${WE.t % 1 ? "+" : ""}`;
   box.classList.add("on"); renderWeKeys(); renderStrips();
@@ -8732,9 +8750,19 @@ function openWordEdit(bi, t, chip) {
   inp.classList.add("on"); sizeInline();
   inp.style.left = clamp(x + 1, 0, Math.max(0, g.W - inp.offsetWidth - 2)) + "px";
   if (x < bodyEl.scrollLeft || x > bodyEl.scrollLeft + bodyEl.clientWidth - 60) bodyEl.scrollLeft = Math.max(0, x - 40);
-  setTimeout(() => { inp.focus(); const n = inp.value.length; try { inp.setSelectionRange(n, n); } catch (e) {} }, 20);
+  setTimeout(() => { inp.focus(); const n = inp.value.length; try { inp.setSelectionRange(n, n); } catch (e) {} weCaret(); }, 20);
 }
-function sizeInline() { const inp = weInput(); inp.style.width = Math.max(44, chipW({ text: inp.value || "word" }) + 8) + "px"; }   // grows with what you type — beats don't box it in
+function sizeInline() { const inp = weInput(); inp.style.width = Math.max(44, chipW({ text: inp.value || "word" }) + 8) + "px"; weCaret(); }
+/* a still caret drawn where the insertion point is (the field's own blinking caret is hidden) */
+let _caretCtx = null;
+function weCaret() {
+  const inp = weInput(), car = $("weCaret"); if (!car) return;
+  if (!WE.on || !inp.classList.contains("on")) { car.classList.remove("on"); return; }
+  if (!_caretCtx) _caretCtx = document.createElement("canvas").getContext("2d");
+  _caretCtx.font = getComputedStyle(inp).font;
+  const s = inp.selectionStart == null ? inp.value.length : inp.selectionStart, w = _caretCtx.measureText(inp.value.slice(0, s)).width;
+  car.style.left = Math.round(inp.offsetLeft + 3 + w - inp.scrollLeft) + "px"; car.classList.add("on");
+}   // grows with what you type — beats don't box it in
 /* the app's own keyboard: QWERTY, a symbols page for lyricists' marks, an accents page. The phone's keyboard is a toggle (⌨). */
 const WE_PAGES = {
   abc: ["q w e r t y u i o p", "a s d f g h j k l", "⇧ z x c v b n m ⌫"],
@@ -8770,12 +8798,17 @@ function renderWeKeys() {
   bottom.append(key("↵", () => commitWordEdit(true), "wide go", "place and move on"));
   k.append(bottom);
 }
-function closeWordEdit() { if (WE.on && WE.dirty) { commitWordEdit(false, true); return; } WE.on = false; WE.wid = null; $("wordEdit").classList.remove("on"); weInput().classList.remove("on"); }
+function closeWordEdit() { if (WE.on && WE.dirty) { commitWordEdit(false, true); return; } WE.on = false; WE.wid = null; WE.chipId = null; $("wordEdit").classList.remove("on"); weInput().classList.remove("on"); weCaret(); }
 function commitWordEdit(advance, quiet) {
   if (!WE.on) return;
-  const inp = weInput(), text = inp.value.trim(), bi = WE.bi, bar = S.song.bars[bi];
+  const inp = weInput(), text = WE.chipId ? inp.value : inp.value.trim(), bi = WE.bi, bar = S.song.bars[bi];
   WE.dirty = false;
-  const nextT = insertWordsAt(bi, WE.t, text);
+  let nextT;
+  if (WE.chipId) {                                                     // one loose piece: its text changes in place (empty deletes it)
+    const c = bar.chips.find(x => x.id === WE.chipId);
+    if (c) { if (!text) bar.chips = bar.chips.filter(x => x !== c); else { c.text = text; c.kind = text === " " ? "space" : /[\p{L}\p{N}]/u.test(text) ? "letter" : "sym"; } refitChips(bar); }
+    nextT = barBeats(bi); WE.chipId = null;
+  } else nextT = insertWordsAt(bi, WE.t, text);
   syncNotesToChips(bar);
   if (S.followWords) S.cursor = nextUnpitchedChip(bi, null);
   if (quiet) { WE.on = false; WE.wid = null; $("wordEdit").classList.remove("on"); inp.classList.remove("on"); renderAll(); return; }
@@ -8788,6 +8821,8 @@ function initWordEdit() {
   box.querySelector("button.kb").addEventListener("click", () => { S.softKb = !S.softKb; savePrefs(); renderWeKeys(); if (!S.softKb) { inp.blur(); setTimeout(() => inp.focus(), 30); } });
   inp.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === "Tab") { e.preventDefault(); commitWordEdit(true); } else if (e.key === "Escape") { e.preventDefault(); WE.dirty = false; closeWordEdit(); } });
   inp.addEventListener("input", () => { WE.dirty = true; sizeInline(); });
+  document.addEventListener("selectionchange", () => { if (WE.on) weCaret(); });
+  ["keyup", "click", "focus"].forEach(ev => inp.addEventListener(ev, () => weCaret()));
   inp.addEventListener("blur", () => { setTimeout(() => { if (WE.on && document.activeElement !== inp && !box.contains(document.activeElement)) { if (WE.dirty) commitWordEdit(false, true); else closeWordEdit(); } }, 120); });
   inp.addEventListener("pointerdown", e => e.stopPropagation());
   rest.addEventListener("click", () => { inp.value = REST_MARK; WE.dirty = true; commitWordEdit(true); });
@@ -9185,6 +9220,7 @@ function openHelp() {
   const h = (t, d) => el("div", { style: "margin:8px 0" }, el("b", {}, t), el("div", { class: "tiny", style: "font-size:13px;color:#444" }, d));
   openModal("How it works", [
     h("Pickup & repeats", "Setup → Pickup adds a short bar (½, 1 or 2 beats) before beat 1. Tap the bar name → Repeat this section to play a section several times."),
+    h("Lyric chips", "Every syllable, letter, space or mark on the Lyrics strip is a chip. Drag one to move it — words land on beats and note starts, loose letters move freely. Tap a chip to select it, then drag the handle on its right edge to stretch it over the beats it covers, or shrink it back. Tap a selected chip to edit it: a word shows its hyphens, so you can add, move or remove them; a loose letter edits on its own. The cursor in the editor is a still white bar."),
     h("Chords (stacked notes)", "Turn on Chord in the tools, then tap other pitches in the same time column as a note to stack them; each gets the same length and ties. Works in the melody and in Custom band bars. Tap Chord again to go back to single notes."),
     h("Floating palette", "⧉ at the end of the tools pops them out into a small palette you can drag anywhere (the stave keeps its size). ◀ ▶ step by the chosen note length (eighths step half a beat) and also stop at every note start — tap the label to step through bars instead. The yellow box shows the pitch; ▲ ▼ change it. Tap PITCH to flip the arrows to SELECT, which moves between the notes stacked at that spot; tap again to go back. Tap a note length once to choose it (the box takes that size); tap the chosen length again to enter the note at the box, or, when a note is selected, to give that note the length. M / A / B pick the window, 🗑 deletes, ▶ plays the bar, Rhythm and Lyrics open those tools, ⚙ sets its size and side, ⤶ pops it back in. While it is out, the stave and strips do not take taps."),
     h("Entering notes", "Tap a beat once: it becomes the active beat and the dashed box appears there, sized to the picked length. Tap the pitch you want and the note is placed at the box. Only the active beat takes notes; other beats wait for their own tap."),
