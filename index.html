@@ -365,6 +365,7 @@ textarea.lyricArea { width: 100%; min-height: 90px; border: 1px solid #999; bord
 #lyrStrip { position: relative; }
 #wordEdit { position: fixed; z-index: 70; display: none; flex-direction: column; gap: 4px; background: #fff; border: 2px solid var(--tag); border-radius: 8px 8px 0 0; padding: 4px 6px calc(6px + env(safe-area-inset-bottom)); box-shadow: 0 -4px 16px rgba(0,0,0,.4); color: #111; left: 0 !important; right: 0; bottom: 0; top: auto; margin: 0 auto; max-width: 560px; }
 #wordEdit.on { display: flex; }
+body.kbOpen #app { padding-bottom: 330px; }              /* room to scroll the strip up above the docked keyboard */
 #wordEdit .weGrip { height: 26px; margin: -2px -4px 0; display: grid; place-items: center; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
 #wordEdit .weGrip:active { cursor: grabbing; }
 #wordEdit .weGrip span { width: 64px; height: 7px; border-radius: 4px; background: #b5b5b5; box-shadow: inset 0 1px 0 #fff, 0 1px 0 #888; }
@@ -8739,21 +8740,73 @@ function initWindowChrome() {
 const WE = { on: false, bi: 0, t: 0, wid: null, dirty: false };
 const weInput = () => $("lyrInline");
 function openWordEdit(bi, t, chip) {
-  /* the keyboard: a fresh word starts at the left edge of the strip; an existing chip edits in place (a locked one only shows) */
+  /* the keyboard: a fresh word starts at the first free spot from t (the left edge, or after the last word);
+     an existing chip edits in place (a locked one only shows). The box never sits on another chip. */
   const box = $("wordEdit"), inp = weInput(), lbl = box.querySelector(".lbl2"), bar = S.song.bars[bi];
   if (WE.on && WE.dirty) commitWordEdit(false, true);
   if (!WE.on) WE.firstChip = null;                                       // a fresh keyboard session: the first word typed will be the one selected on close
-  WE.on = true; WE.bi = bi; WE.dirty = false; WE.wid = null; WE.chipId = chip ? chip.id : null; WE.t = chip ? chip.t : 0;
+  normalizeLyrics(bar);
+  WE.on = true; WE.bi = bi; WE.dirty = false; WE.wid = null; WE.chipId = chip ? chip.id : null;
+  const g = stripGeo();
+  WE.t = chip ? chip.t : (entrySpot(bar, bi, t || 0, ENTRY_MIN) ?? entrySpot(bar, bi, 0, ENTRY_MIN) ?? 0);
   inp.value = chip ? chip.text : ""; inp.disabled = !!(chip && chip.locked); S.bi = bi; S.selChip = chip ? { bi, id: chip.id } : null;
-  lbl.textContent = chip ? (chip.locked ? "Locked · 🔒 unlocks" : "Editing · ↵ keeps it · 🔒 locks it") : `Bar ${barNo(bi)} · type a word, ↵ makes a chip`;
+  lbl.textContent = chip ? (chip.locked ? "Locked · 🔒 unlocks" : "Editing · ↵ keeps it · Split at the cursor · 🔒 locks it") : `Bar ${barNo(bi)} · beat ${beatLabel(WE.t)} · ↵ makes the chip · ⇥ next beat`;
   box.classList.add("on"); renderWeKeys(); applyKbPos(); renderStrips();
-  const g = stripGeo(), bodyEl = $("lyrStrip").querySelector(".body"), x = chip ? g.x(bi, chip.t) : 0;
+  const bodyEl = $("lyrStrip").querySelector(".body"), x = g.x(bi, WE.t);
   inp.classList.add("on"); sizeInline();
   inp.style.left = clamp(x + 1, 0, Math.max(0, g.W - inp.offsetWidth - 2)) + "px";
   if (x < bodyEl.scrollLeft || x > bodyEl.scrollLeft + bodyEl.clientWidth - 60) bodyEl.scrollLeft = Math.max(0, x - 40);
   setTimeout(() => { if (!inp.disabled) { inp.focus(); const n = inp.value.length; try { inp.setSelectionRange(n, n); } catch (e) {} } weCaret(); }, 20);
 }
-function sizeInline() { const inp = weInput(); inp.style.width = Math.max(44, chipW({ text: inp.value || "word" }) + 8) + "px"; weCaret(); }
+const ENTRY_MIN = 0.25;                                                  // the smallest room the entry box asks for, in beats
+/* the first t at or after `from` where a chip `w` beats wide fits without touching another; null when the bar has no such spot */
+function entrySpot(bar, bi, from, w) {
+  const g = stripGeo(), B = barBeats(bi), sorted = [...bar.chips].sort((a, b) => a.t - b.t);
+  let start = Math.max(0, from);
+  for (const o of sorted) {
+    const oEnd = o.t + chipBeats(o, g);
+    if (oEnd <= start + 1e-6) continue;                                  // entirely before us
+    if (start + w <= o.t + 1e-6) break;                                  // we fit before this one
+    start = oEnd;                                                        // else skip past it
+  }
+  start = Math.ceil(start * 16 - 1e-6) / 16;
+  const next = sorted.find(o => o.t + chipBeats(o, g) > start + 1e-6);
+  if (start + w > B + 1e-6 || (next && start + w > next.t + 1e-6)) return null;
+  return r3(start);
+}
+/* keep the entry box on a free spot as the word grows */
+function repositionEntry() {
+  if (!WE.on || WE.chipId) return;
+  const inp = weInput(), bar = S.song.bars[WE.bi], g = stripGeo(), w = Math.max(ENTRY_MIN, (chipW({ text: inp.value || "w" }) + 3) / g.beatPx);
+  const t = entrySpot(bar, WE.bi, WE.t, w); if (t == null || Math.abs(t - WE.t) < 1e-6) return;
+  WE.t = t; const x = g.x(WE.bi, t); inp.style.left = clamp(x + 1, 0, Math.max(0, g.W - inp.offsetWidth - 2)) + "px"; weCaret();
+}
+/* ⇥: the entry box jumps to the next beat line that is free */
+function weTab() {
+  if (!WE.on) return;
+  if (WE.chipId) { toast("Finish this chip first (↵), then ⇥ moves on"); return; }
+  const bar = S.song.bars[WE.bi], B = barBeats(WE.bi);
+  for (let b = Math.floor(WE.t + 1e-6) + 1; b < B; b++) { const t = entrySpot(bar, WE.bi, b, ENTRY_MIN); if (t != null && Math.abs(t - b) < 1e-6) { openWordEdit(WE.bi, b); return; } }
+  if (WE.bi + 1 < S.song.bars.length) { S.bi = WE.bi + 1; renderAll(); openWordEdit(WE.bi + 1, 0); toast(`Bar ${barNo(WE.bi)}`); return; }
+  toast("No free beat left");
+}
+/* Split: the chip being edited breaks in two at the cursor; the right half lands just after the left */
+function weSplit() {
+  if (!WE.on || !WE.chipId) { toast("Tap a chip, tap Edit, put the cursor where it should break, then Split"); return; }
+  const inp = weInput(), bar = S.song.bars[WE.bi], c = bar.chips.find(x => x.id === WE.chipId); if (!c || c.locked) return;
+  const at = inp.selectionStart == null ? inp.value.length : inp.selectionStart, text = inp.value;
+  const left = text.slice(0, at).replace(/\s+$/, ""), right = text.slice(at).replace(/^\s+/, "");
+  if (!left || !right) { toast("Put the cursor inside the word, between the two parts"); return; }
+  const keep = c.text; c.text = left;
+  const g = stripGeo(), t = entrySpot(bar, WE.bi, c.t + chipBeats(c, g), (chipW({ text: right }) + 3) / g.beatPx);
+  if (t == null) { c.text = keep; toast("No room for the second part in this bar"); return; }
+  const n = { id: uid(), text: right, t, locked: false }; bar.chips.push(n); bar.chips.sort((a, b) => a.t - b.t); bar.lyric = lyricFromChips(bar);
+  WE.chipId = null; WE.dirty = false; inp.value = ""; renderAll();
+  openWordEdit(WE.bi, n.t + chipBeats(n, g)); S.selChip = { bi: WE.bi, id: n.id }; renderStrips(); renderPalette();
+}
+/* ← → on the keyboard: move the cursor inside the word */
+function weMoveCaret(d) { const inp = weInput(); if (inp.disabled) return; const s = inp.selectionStart == null ? inp.value.length : inp.selectionStart; const n = clamp(s + d, 0, inp.value.length); inp.focus(); try { inp.setSelectionRange(n, n); } catch (e) {} weCaret(); }
+function sizeInline() { const inp = weInput(); inp.style.width = Math.max(44, chipW({ text: inp.value || "word" }) + 8) + "px"; repositionEntry(); weCaret(); }
 /* a still caret drawn where the insertion point is (the field's own blinking caret is hidden) */
 let _caretCtx = null;
 function weCaret() {
@@ -8791,52 +8844,59 @@ function renderWeKeys() {
     });
     k.append(r);
   });
+  const tools = el("div", { class: "krow" });
+  tools.append(key("◀", () => weMoveCaret(-1), "wide", "cursor left"));
+  tools.append(key("▶", () => weMoveCaret(1), "wide", "cursor right"));
+  tools.append(key("Split", weSplit, "wide", "split this chip in two at the cursor"));
+  tools.append(key("⇥", weTab, "wide", "jump to the next free beat"));
+  k.append(tools);
   const bottom = el("div", { class: "krow" });
   bottom.append(key(wePage === "abc" ? "?!’" : "abc", () => { wePage = wePage === "abc" ? "sym" : "abc"; renderWeKeys(); }, "wide", "symbols"));
   bottom.append(key(wePage === "acc" ? "abc" : "àéñ", () => { wePage = wePage === "acc" ? "abc" : "acc"; renderWeKeys(); }, "wide", "accents"));
   bottom.append(key("space", () => insert(" "), "space"));
   const lockedNow = (() => { const bar = S.song.bars[WE.bi]; const c = bar && (WE.chipId ? bar.chips.find(x => x.id === WE.chipId) : S.selChip && S.selChip.bi === WE.bi ? bar.chips.find(x => x.id === S.selChip.id) : null); return !!(c && c.locked); })();
-  bottom.append(key(lockedNow ? "🔓" : "🔒", toggleLyricLock, "wide lock" + (lockedNow ? " on" : ""), lockedNow ? "unlock this chip" : "lock this chip in place"));
+  tools.append(key(lockedNow ? "🔓" : "🔒", toggleLyricLock, "wide lock" + (lockedNow ? " on" : ""), lockedNow ? "unlock this chip" : "lock this chip in place"));
   bottom.append(key("↵", () => commitWordEdit(true), "wide go", "make the chip"));
   k.append(bottom);
 }
 function closeWordEdit() {
   if (WE.on && WE.dirty) { commitWordEdit(false, true); return; }
-  const was = WE.on; WE.on = false; WE.wid = null; WE.chipId = null; $("wordEdit").classList.remove("on"); weInput().classList.remove("on"); weCaret();
+  const was = WE.on; WE.on = false; WE.wid = null; WE.chipId = null; $("wordEdit").classList.remove("on"); weInput().classList.remove("on"); weCaret(); document.body.classList.remove("kbOpen");
   const f = WE.firstChip; WE.firstChip = null;
   if (was && f && S.song.bars[f.bi] && S.song.bars[f.bi].chips.some(c => c.id === f.id)) { S.selChip = { bi: f.bi, id: f.id }; S.bi = f.bi; renderAll(); }   // the first word you typed is ready to move or stretch
 }
 function commitWordEdit(advance, quiet) {
-  /* ↵: the text becomes a chip at the first free spot (or updates the chip being edited); the keyboard stays open for the next word */
+  /* ↵: the text becomes a chip at the entry spot (or updates the chip being edited); the box moves on to just after it */
   if (!WE.on) return;
   const inp = weInput(), raw = inp.value.replace(/^\s+|\s+$/g, ""), bi = WE.bi, bar = S.song.bars[bi];
   WE.dirty = false;
-  const finish = () => { WE.on = false; WE.wid = null; WE.chipId = null; inp.disabled = false; $("wordEdit").classList.remove("on"); inp.classList.remove("on"); const f = WE.firstChip; WE.firstChip = null; if (f && S.song.bars[f.bi] && S.song.bars[f.bi].chips.some(c => c.id === f.id)) { S.selChip = { bi: f.bi, id: f.id }; S.bi = f.bi; } weCaret(); renderAll(); };
+  const finish = () => { WE.on = false; WE.wid = null; WE.chipId = null; inp.disabled = false; $("wordEdit").classList.remove("on"); inp.classList.remove("on"); document.body.classList.remove("kbOpen"); const f = WE.firstChip; WE.firstChip = null; if (f && S.song.bars[f.bi] && S.song.bars[f.bi].chips.some(c => c.id === f.id)) { S.selChip = { bi: f.bi, id: f.id }; S.bi = f.bi; } weCaret(); renderAll(); };
+  let nextT = WE.t;
   if (WE.chipId) {
     const c = bar.chips.find(x => x.id === WE.chipId);
     if (c && !c.locked) { if (!raw) bar.chips = bar.chips.filter(x => x !== c); else { c.text = raw; resolveChipOverlaps(bar); } }
     if (c && !WE.firstChip) WE.firstChip = { bi, id: c.id };
+    if (c) nextT = c.t + chipBeats(c, stripGeo());
     WE.chipId = null;
   } else if (raw) {
-    const c = addLyricChip(bar, bi, raw);
-    if (!c) { toast("No room left in this bar — slide a chip along, or use the next bar"); if (quiet) finish(); return; }
+    const c = addLyricChip(bar, bi, raw, WE.t);
+    if (!c) { toast("No room for that here — ⇥ to a later beat, or the next bar"); if (quiet) finish(); return; }
     if (!WE.firstChip) WE.firstChip = { bi, id: c.id };
+    nextT = c.t + chipBeats(c, stripGeo());
   }
   bar.lyric = lyricFromChips(bar); inp.value = ""; inp.disabled = false;
   if (quiet) { finish(); return; }
-  renderAll(); openWordEdit(bi, 0);
+  renderAll(); openWordEdit(bi, Math.ceil(nextT * 16 - 1e-6) / 16);
+}
+/* a new chip lands at the first spot from `from` (default the left edge) wide enough for it; null when nothing fits */
+function addLyricChip(bar, bi, text, from = 0) {
+  const g = stripGeo(), c = { id: uid(), text, t: 0, locked: false }, w = chipBeats(c, g);
+  normalizeLyrics(bar);
+  const t = entrySpot(bar, bi, from, w) ?? entrySpot(bar, bi, 0, w);
+  if (t == null) return null;
+  c.t = t; bar.chips.push(c); bar.chips.sort((a, b) => a.t - b.t); return c;
 }
 /* a new chip lands at the first gap wide enough for it, scanning left to right; null when the bar is full */
-function addLyricChip(bar, bi, text) {
-  const g = stripGeo(), c = { id: uid(), text, t: 0, locked: false }, w = chipBeats(c, g), B = barBeats(bi);
-  normalizeLyrics(bar); const sorted = [...bar.chips].sort((a, b) => a.t - b.t);
-  let start = 0;
-  for (const o of sorted) { if (start + w <= o.t - 0.03) break; start = Math.max(start, o.t + chipBeats(o, g)); }
-  start = Math.ceil(start * 16 - 1e-6) / 16;
-  const next = sorted.find(o => o.t > start + 1e-6);
-  if (start + w > B + 1e-6 || (next && start + w > next.t + 1e-6)) return null;
-  c.t = r3(start); bar.chips.push(c); bar.chips.sort((a, b) => a.t - b.t); return c;
-}
 /* lock / unlock from the keyboard: the chip being edited, else the selected one */
 function toggleLyricLock() {
   if (!WE.on) return;
@@ -8857,7 +8917,7 @@ function normalizeLyrics(bar) {
 function initWordEdit() {
   const box = $("wordEdit"), inp = weInput(), close = box.querySelector("button.close");
   box.querySelector("button.kb").addEventListener("click", () => { S.softKb = !S.softKb; savePrefs(); renderWeKeys(); if (!S.softKb) { inp.blur(); setTimeout(() => inp.focus(), 30); } });
-  inp.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === "Tab") { e.preventDefault(); commitWordEdit(true); } else if (e.key === "Escape") { e.preventDefault(); WE.dirty = false; closeWordEdit(); } });
+  inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); commitWordEdit(true); } else if (e.key === "Tab") { e.preventDefault(); weTab(); } else if (e.key === "Escape") { e.preventDefault(); WE.dirty = false; closeWordEdit(); } });
   inp.addEventListener("input", () => { WE.dirty = true; sizeInline(); });
   document.addEventListener("selectionchange", () => { if (WE.on) weCaret(); });
   ["keyup", "click", "focus"].forEach(ev => inp.addEventListener(ev, () => weCaret()));
@@ -8885,7 +8945,16 @@ function placeKb(x, y) {
   box.style.left = x + "px"; box.style.top = y + "px";
 }
 function dockKb() { const box = $("wordEdit"); box.classList.remove("floating"); box.style.left = ""; box.style.top = ""; }
-function applyKbPos() { if (S.kbPos) placeKb(S.kbPos.x, S.kbPos.y); else dockKb(); }
+function applyKbPos() { if (S.kbPos) placeKb(S.kbPos.x, S.kbPos.y); else dockKb(); keepStripClear(); }
+function keepStripClear() {
+  document.body.classList.add("kbOpen");
+  requestAnimationFrame(() => {
+    const box = $("wordEdit"), strip = $("lyrStrip"); if (!box.classList.contains("on")) return;
+    const kr = box.getBoundingClientRect(), sr = strip.getBoundingClientRect();
+    if (S.kbPos) return;                                                   // floating: the user put it where they want it
+    if (sr.bottom > kr.top - 6) window.scrollBy(0, sr.bottom - (kr.top - 6));
+  });
+}
 
 /* ═══════════════════════════════════════════════════════════════════════
    SECTION 13 · SHEETS — settings, window settings, words, rhythm, chords, library, menu
@@ -9290,6 +9359,7 @@ function openHelp() {
     h("Pickup & repeats", "Setup → Pickup adds a short bar (½, 1 or 2 beats) before beat 1. Tap the bar name → Repeat this section to play a section several times."),
     h("Moving the keyboard", "Drag the grey bar at the top of the keyboard to put it anywhere; drop it near the bottom of the screen to dock it there again. It remembers where you left it. The floating palette moves by its bar in the same way."),
     h("Typing words", "Tap Lyrics: the keyboard opens with the entry box at the left edge of the strip. Type a word and press ↵ — it becomes a chip at the first free spot, and the keyboard stays open for the next word. Close it with ✕ and the first word you typed is already selected."),
+    h("Keyboard keys", "◀ ▶ move the cursor inside the word. ⇥ jumps the entry box to the next free beat line (and on into the next bar). Split breaks the chip you are editing in two at the cursor, the second half landing right after the first. The entry box only ever sits on free space, so nothing can be typed over a chip, locked or not."),
     h("Placing words", "Words have no bearing on the notes; you line them up by eye. Drag a chip anywhere along the strip — it clicks onto a beat line when close, and never overlaps another chip. To spread a word so its syllables sit under their notes, edit it and put spaces inside it (the space bar, as many as you like); it stays one chip. When a word sits right, press the gold 🔒 on the keyboard to lock it in place; select it and press 🔒 again to unlock. A locked chip cannot move or be edited."),
     h("Tempo", "♩= in the top row shows the tempo. − and + change it by one (hold to keep going); tap the number to type one."),
     h("Chords (stacked notes)", "Turn on Chord in the tools, then tap other pitches in the same time column as a note to stack them; each gets the same length and ties. Works in the melody and in Custom band bars. Tap Chord again to go back to single notes."),
