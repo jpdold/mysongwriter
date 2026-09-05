@@ -25,6 +25,11 @@ Windows share the screen: the melody gets the most room and Accompaniment and Ba
 
 The dots under the bar bracket show each bar of the section: green when every voice is full, white when empty, yellow in between.
 
+## Running without the browser bars
+
+- **Android / desktop:** ☰ → *Full screen* hides the address bar (tap again, or press Esc, to leave).
+- **Any phone, best option:** add the page to your Home Screen (Chrome: ⋮ → *Add to Home screen*; iPhone Safari: Share → *Add to Home Screen*). The icon then opens the app on its own, with no address bar in either orientation. `manifest.webmanifest` and `icons/` provide the name and icon for that.
+
 ## Real instrument sounds
 
 Menu → *Sounds & samples* imports instrument recordings from your device into the browser's IndexedDB; nothing is downloaded by the app. Each part then picks its sound in Band (built-in synth or a sample bank).

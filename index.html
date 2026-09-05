@@ -7,6 +7,9 @@
 <meta name="theme-color" content="#5a5c5f">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%235a5c5f'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='white' font-family='Georgia'%3E%E2%99%AA%3C/text%3E%3C/svg%3E">
 <style>
 /* ═══════════════════════════════════════════════════════════════════════
@@ -8786,14 +8789,24 @@ function openMenu() {
     item("⬇", "Export .json", () => downloadJSON(S.song, ((S.song.title || "song").replace(/[^\w\- ]+/g, "").trim() || "song") + ".mysong.json")),
     item("⬆", "Import .json", () => file.click()),
     item("💾", "Save", () => { saveNow(); toast("Saved"); }),
+    item("⛶", document.fullscreenElement ? "Leave full screen" : "Full screen — hides the browser bars", toggleFullscreen),
     item("▤", "Sections — add, rename, reorder", openSectionOps),
     item("✚", "Add a section", openAddSection),
     item("?", "How it works", openHelp)), file]);
+}
+/* full screen: hides the address bar on Android / desktop; iPhone Safari has no such API,
+   so there the answer is Share → Add to Home Screen, which opens the app without any browser bars */
+function toggleFullscreen() {
+  if (document.fullscreenElement) { document.exitFullscreen(); return; }
+  const root = document.documentElement, req = root.requestFullscreen || root.webkitRequestFullscreen;
+  if (!req) { toast("Add to Home Screen (Share → Add to Home Screen) to run without the address bar"); return; }
+  Promise.resolve(req.call(root, { navigationUI: "hide" })).catch(() => toast("Add to Home Screen (Share → Add to Home Screen) to run without the address bar"));
 }
 function openHelp() {
   const h = (t, d) => el("div", { style: "margin:8px 0" }, el("b", {}, t), el("div", { class: "tiny", style: "font-size:13px;color:#444" }, d));
   openModal("How it works", [
     h("Pickup & repeats", "Setup → Pickup adds a short bar (½, 1 or 2 beats) before beat 1. Tap the bar name → Repeat this section to play a section several times."),
+    h("Full screen", "☰ → Full screen hides the browser bars (Android, desktop). On iPhone, use Share → Add to Home Screen; the icon then opens the app with no address bar at all."),
     h("Blank slate", "☰ → New song… opens Setup for name, genre, key, time signature and tempo (☰ → Song setup changes them later). You work one bar at a time — ◀ ▶ or the dots move between bars; tap the bar name for sections. ▶ at the top plays from this bar; the small ▶ beside each window plays that part alone."),
     h("Rhythm", "Tap a note length in the palette to add it to the rhythm; each note becomes an orange box in the melody window. ⌒ ties a note to the next one (or into the next bar). Tap a box to select it, then change its length, dot it, move it or delete it. Tap the Rhythm strip to insert at a beat."),
     h("One active beat", "Tap a beat on any stave to make it the active beat (tinted across all three). Only the active beat takes taps: tap it once to show the box for the next note, tap a pitch to enter the note; tap a note or rest there to select it, then change, move or delete it with the palette. Everything outside the active beat is locked — tapping it just moves the active beat. Ties and slurs may still reach into locked beats."),
