@@ -69,6 +69,7 @@ svg text { pointer-events: none; }
 #rollBar { grid-area: rollbar; display: none; gap: 6px; }
 /* rolled-up view: three labelled bars across the top; open staves drop down beneath; strips and tools follow */
 #app.rolled { max-width: 560px !important; grid-template-columns: 1fr !important; grid-template-areas: "head" "nav" "rollbar" "beats" "mel" "acc" "bass" "rhy" "lyr" "pal" "foot" !important; }
+@media (min-width: 860px) and (min-aspect-ratio: 5/4), (max-height: 520px) and (min-aspect-ratio: 5/4) { #app.rolled { max-width: 1180px !important; padding-left: 16px; padding-right: 16px; } #app.rolled .win .focus { display: none !important; } }
 #app.rolled #rollBar { display: flex; }
 #app.rolled .win.closed { display: none !important; }
 #app.rolled .win .sizer { display: none; }
@@ -7659,7 +7660,7 @@ const WIN_WEIGHT = { mel: 1.5, acc: 1, bass: 1 };
 const STEPS = { mel: 14, acc: 8, bass: 8 };      // computed by allocate()
 const WIN_PART = { mel: "melody", acc: "accomp", bass: "bass" };
 const WIN_LO = { mel: "melLo", acc: "accLo", bass: "bassLo" };
-Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", halfLines: false, winSize: "m", chordsDisp: "names", metro: "off", winState: { mel: "open", acc: "open", bass: "open" }, zoomWin: { mel: 1, acc: 1, bass: 1 }, lyricFont: "sans", viewSpan: 1, layout: "stack", selChip: null, ghost: null, restNext: false, artic: null, slurFrom: null, active: null, softKb: ("ontouchstart" in window), popPos: null, mode: "melody" });
+Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", halfLines: false, winSize: "m", chordsDisp: "names", metro: "off", winState: { mel: "open", acc: "closed", bass: "closed" }, zoomWin: { mel: 1, acc: 1, bass: 1 }, lyricFont: "sans", viewSpan: 1, layout: "rolled", selChip: null, ghost: null, restNext: false, artic: null, slurFrom: null, active: null, softKb: ("ontouchstart" in window), popPos: null, mode: "melody" });
 const UNDO = { stack: [], last: null, max: 60 };
 const setMode = () => {};                          // engine shims (the old mode sheets are gone)
 const renderPanel = () => renderAll();
@@ -7667,7 +7668,7 @@ function loadPrefs() {
   const p = readJSON(STORE.prefs, {});
   S.theme = p.theme || "auto"; S.followWords = p.followWords !== false; S.noteStyle = p.noteStyle || "trad"; S.halfLines = !!p.halfLines;
   S.winSize = WIN[p.winSize] ? p.winSize : "m"; S.chordsDisp = p.chordsDisp || "names"; S.metro = p.metro || "off"; S.custom = p.custom || null; S.len = p.len || 1;
-  S.lyricFont = p.lyricFont || "sans"; S.winState = Object.assign({ mel: "open", acc: "open", bass: "open" }, p.winState || {}); S.zoomWin = Object.assign({ mel: 1, acc: 1, bass: 1 }, p.zoomWin || {}); S.midi = p.midi || {}; S.viewSpan = [1, 2, 3, 4].includes(p.viewSpan) ? p.viewSpan : 1; if (p.softKb != null) S.softKb = p.softKb; S.layout = p.layout === "rolled" ? "rolled" : "stack";
+  S.lyricFont = p.lyricFont || "sans"; S.winState = Object.assign({ mel: "open", acc: "closed", bass: "closed" }, p.winState || {}); S.zoomWin = Object.assign({ mel: 1, acc: 1, bass: 1 }, p.zoomWin || {}); S.midi = p.midi || {}; S.viewSpan = [1, 2, 3, 4].includes(p.viewSpan) ? p.viewSpan : 1; if (p.softKb != null) S.softKb = p.softKb; S.layout = p.layout === "stack" ? "stack" : "rolled";
   applyTheme();
 }
 function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, followWords: S.followWords, noteStyle: S.noteStyle, halfLines: S.halfLines, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb: S.softKb, layout: S.layout }); }
@@ -7687,9 +7688,9 @@ function viewOf(win) { const v = S.song.view; if (v.bassLo == null) v.bassLo = 3
 function rowsOf(win) { const [rows] = WIN[S.winSize][win]; return { rows, step: STEPS[win] }; }
 /* share the screen among the open windows: melody weighs most; half windows count half; closed ones show a bar */
 function allocate() {
-  const vh = window.innerHeight, wide = window.matchMedia("(min-width: 860px) and (min-aspect-ratio: 5/4), (max-height: 520px) and (min-aspect-ratio: 5/4)").matches;
+  const vh = window.innerHeight, wide = S.layout !== "rolled" && window.matchMedia("(min-width: 860px) and (min-aspect-ratio: 5/4), (max-height: 520px) and (min-aspect-ratio: 5/4)").matches;
   const h = id => ($(id) ? $(id).offsetHeight : 0);
-  const chromeMel = h("head") + h("nav") + h("beatRow") + h("rhyStrip") + h("lyrStrip") + h("palette") + 7 * 7 + 16, chromeBand = h("foot") + 7 * 3 + 30 + (wide ? 0 : 0);
+  const chromeMel = h("head") + h("nav") + h("rollBar") + h("beatRow") + h("rhyStrip") + h("lyrStrip") + h("palette") + 7 * 7 + 16, chromeBand = h("foot") + 7 * 3 + 30 + (wide ? 0 : 0);
   const avail = Math.max(260, vh - (wide ? chromeMel : chromeMel + chromeBand));
   const f = w => S.winState[w] === "closed" ? 0 : S.winState[w] === "half" ? 0.5 : 1;
   const wins = ["mel", "acc", "bass"], sum = wins.reduce((a, w) => a + WIN_WEIGHT[w] * f(w), 0) || 1;
@@ -7698,7 +7699,7 @@ function allocate() {
     return;
   }
   for (const w of wins) {
-    const [rows, lo, hi0] = WIN[S.winSize][w], hi = wide && w !== "mel" ? Math.max(hi0, WIN[S.winSize].mel[2]) : hi0;
+    const [rows, lo, hi0] = WIN[S.winSize][w], hi = (wide || S.layout === "rolled") && w !== "mel" ? Math.max(hi0, WIN[S.winSize].mel[2]) : hi0;
     if (!f(w)) { STEPS[w] = lo; continue; }
     const bandAvail = vh - h("head") - h("nav") - h("foot") - 7 * 5 - 44;
     const share = wide && w !== "mel" ? Math.max(120, bandAvail * WIN_WEIGHT[w] * f(w) / (wins.filter(x => x !== "mel").reduce((a, x) => a + WIN_WEIGHT[x] * f(x), 0) || 1))
@@ -8641,7 +8642,7 @@ function openSettings() {
     el("div", { class: "pLbl" }, "Window shows"), seg([[1, "1 bar"], [2, "2 bars"], [3, "3 bars"], [4, "4 bars"]], S.viewSpan, v => { S.viewSpan = v; savePrefs(); renderAll(); }),
     el("div", { class: "tiny" }, "More bars make the staves proportionately wider — swipe sideways to move along them; every window and strip scrolls together."),
     el("div", { class: "pLbl" }, "Window sizing"), seg([["s", "Small"], ["m", "Medium"], ["l", "Large"]], S.winSize, v => { S.winSize = v; savePrefs(); renderAll(); }),
-    el("div", { class: "mrow" }, el("button", { class: "btn sm", onclick: () => { S.zoomWin = { mel: 1, acc: 1, bass: 1 }; S.winState = { mel: "open", acc: "open", bass: "open" }; savePrefs(); renderAll(); openSettings(); } }, "Reset windows"), el("span", { class: "tiny" }, "Windows share the screen: melody gets the most. The button under each ⚙ shrinks, closes and reopens a window; pinch a window to zoom it.")),
+    el("div", { class: "mrow" }, el("button", { class: "btn sm", onclick: () => { S.zoomWin = { mel: 1, acc: 1, bass: 1 }; S.winState = S.layout === "rolled" ? { mel: "open", acc: "closed", bass: "closed" } : { mel: "open", acc: "open", bass: "open" }; savePrefs(); renderAll(); openSettings(); } }, "Reset windows"), el("span", { class: "tiny" }, "Windows share the screen: melody gets the most. The button under each ⚙ shrinks, closes and reopens a window; pinch a window to zoom it.")),
     el("div", { class: "pLbl" }, "Chords displayed"), seg([["names", "Names (C, G7)"], ["roman", "Roman (I, V7)"], ["off", "Hidden"]], S.chordsDisp, v => { S.chordsDisp = v; S.song.showRoman = v === "roman"; savePrefs(); renderAll(); }),
     el("div", { class: "pLbl" }, "Notes appearance"), seg([["trad", "Traditional"], ["pill", "Pills"], ["circle", "Circles"]], S.noteStyle, v => { S.noteStyle = v; savePrefs(); renderAll(); }),
     el("div", { class: "mrow" }, toggle("Half steps on lines (every half step gets a line; off = one half step per space)", S.halfLines, v => { S.halfLines = v; savePrefs(); renderAll(); openSettings(); })),

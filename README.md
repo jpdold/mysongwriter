@@ -20,7 +20,7 @@ Notes follow standard engraving: eighths and shorter are beamed per beat (per do
 
 Windows share the screen: the melody gets the most room and Accompaniment and Bass split the rest. The small button under each window's ⚙ cycles it open → half → closed (one window always stays open) and the others take up the space. Pinch a window with two fingers to zoom its rows (sideways pinch changes how many bars show). On a wide screen the ⛶ button under a window's controls gives that window the whole screen; tap it again to go back.
 
-7. **⚙ Settings** — view (stacked staves, or **rolled up**: three labelled bars across the top with + / − to open and close each stave, with the strips and tools underneath), theme (default, dark, custom colours), window shows 1, 2, 3 or 4 bars (more bars widen the staves; everything scrolls together), window sizing, chords displayed (names / Roman / hidden), note appearance (traditional / pills / circles), half steps on lines, lyrics font, metronome and count-in.
+7. **⚙ Settings** — view: **rolled up** (the default — Melody, Accompaniment and Bass as three labelled bars across the top with + / − to open and close each stave; the melody starts open) or stacked staves; theme (default, dark, custom colours), window shows 1, 2, 3 or 4 bars (more bars widen the staves; everything scrolls together), window sizing, chords displayed (names / Roman / hidden), note appearance (traditional / pills / circles), half steps on lines, lyrics font, metronome and count-in.
 8. **☰ Menu / Save…** — share a link, per-musician parts and performance mode; export/import files; save, open, copy and start songs.
 
 The dots under the bar bracket show each bar of the section: green when every voice is full, white when empty, yellow in between.
