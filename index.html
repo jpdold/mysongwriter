@@ -224,6 +224,9 @@ svg text { pointer-events: none; }
 #palette .prow button.txt { padding: 0; }
 #palette .prow .who { margin-left: 4px; }
 #palette .prow button.chord { width: auto; min-width: 44px; flex: 0 0 auto; padding: 0 7px; }
+#palette .prow button.wide { width: auto; min-width: 48px; flex: 0 0 auto; padding: 0 8px; }
+#palette .prow button.lyr.warn { color: var(--danger); }
+#palette .prow .gap { flex: 0 0 8px; }
 /* ── floating tool palette ── */
 #app.ftp #palette { visibility: hidden; }
 #app.ftp .win .frame svg, #app.ftp #rhySvg, #app.ftp #lyrSvg { pointer-events: none; }
@@ -476,7 +479,7 @@ body.kbOpen #app { padding-bottom: 330px; }              /* room to scroll the s
     </div>
   </div>
 
-  <div id="palette"><div class="prow" id="palRow1"></div><div class="prow" id="palRow2"></div></div>
+  <div id="palette"><div class="prow" id="palRow1"></div><div class="prow" id="palRow2"></div><div class="prow" id="palRow3"></div></div>
 
   <section class="win" id="accWin">
     <button class="winHead" data-win="acc">Accompaniment</button>
@@ -7727,7 +7730,7 @@ const NOTE_SCALE = { s: 0.62, m: 0.85, l: 1.25 }; const NS = () => NOTE_SCALE[S.
 const HK = () => S.halfLines ? 1.55 : 1;         // lines-and-spaces: heads grow to fill a space (two rows)
 const STEP_K = { s: 0.94, m: 1, l: 1.06 };       // row height nudges a little with the note size
 Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", noteSize: "m", chordMode: false, justEntered: null, activePart: "melody", lastEntered: null, ftp: null, mv: null, halfLines: true, winSize: "m", chordsDisp: "names", metro: "off", winState: { mel: "open", acc: "closed", bass: "closed" }, zoomWin: { mel: 1, acc: 1, bass: 1 }, lyricFont: "sans", viewSpan: 1, layout: "rolled", selChip: null, ghost: null, restNext: false, artic: null, slurFrom: null, active: null, softKb: ("ontouchstart" in window), popPos: null, mode: "melody" });
-const UNDO = { stack: [], last: null, max: 60 };
+const UNDO = { stack: [], redo: [], last: null, max: 60 };
 const setMode = () => {};                          // engine shims (the old mode sheets are gone)
 const renderPanel = () => renderAll();
 function loadPrefs() {
@@ -8058,8 +8061,9 @@ function renderRollBar() {
 function renderAll() {
   if (!S.song) return;
   const snap = JSON.stringify(S.song);
-  if (UNDO.last && snap !== UNDO.last && UNDO.songId === S.song.id) { UNDO.stack.push(UNDO.last); if (UNDO.stack.length > UNDO.max) UNDO.stack.shift(); }
-  if (UNDO.songId !== S.song.id) UNDO.stack = [];
+  if (UNDO.last && snap !== UNDO.last && UNDO.songId === S.song.id) { UNDO.stack.push(UNDO.last); if (UNDO.stack.length > UNDO.max) UNDO.stack.shift(); if (!UNDO.replaying) UNDO.redo = []; }
+  UNDO.replaying = false;
+  if (UNDO.songId !== S.song.id) { UNDO.stack = []; UNDO.redo = []; }
   UNDO.last = snap; UNDO.songId = S.song.id;
   S.bi = clamp(S.bi, 0, S.song.bars.length - 1);
   if (S.si !== S.siLast && S.si !== sectionOfBar(S.bi) && S.song.sections[S.si]) S.bi = sectionRange(S.si).start;   // a section op moved us
@@ -8387,11 +8391,11 @@ function renderBeatRow() {
 }
 function renderPalette() {
   renderFtp(); renderTempo();
-  const r1 = $("palRow1"), r2 = $("palRow2"); r1.replaceChildren(); r2.replaceChildren();
+  const r1 = $("palRow1"), r2 = $("palRow2"), r3 = $("palRow3"); r1.replaceChildren(); r2.replaceChildren(); r3.replaceChildren();
+  renderRow3(r3);
   let p = r1;
   const ev = selEv(), bar = curBar();
   const b = (t, fn, opts = {}) => p.append(el("button", Object.assign({ onclick: fn }, opts.attrs || {}, { class: (opts.cls || "") + (opts.on ? " on" : "") + (opts.warn ? " warn" : ""), title: opts.title, disabled: opts.disabled }), t));
-  b("↶", undo, { cls: "undo", title: "Undo", disabled: !UNDO.stack.length });
   const sc = selChipObj();
   if (sc) {                                        // a word, letter, space or symbol on the Lyrics strip is selected
     [[4, "𝅝"], [2, "𝅗𝅥"], [1, "♩"], [0.5, "♪"], [0.25, "𝅘𝅥𝅯"]].forEach(([v, gl]) => b(gl, () => tapLength(v), { on: S.len === v, title: `Next note: ${v} beat${v === 1 ? "" : "s"}` }));
@@ -8413,6 +8417,15 @@ function renderPalette() {
   b("𝄽", tapRest, { on: S.restNext, title: ev ? "Turn into a rest" : S.ghost ? "Put a rest in the box" : "Rest: tap where it goes" });
   b("＋", appendFromStrip, { cls: "txt", title: "Add a box of this length at the end of the rhythm", disabled: !!ev });
   p = r2;
+  if (S.mv && S.mv.mode === "delete") {
+    b("Run", () => delRun("run"), { cls: "lyr", warn: true, disabled: S.mv.start == null, title: "Delete what is in the picked run" });
+    b("Bar", () => delRun("bar"), { cls: "lyr", warn: true, title: `Delete everything in bar ${barNo(S.bi)}` });
+    b("Section", () => delRun("section"), { cls: "lyr", warn: true, title: "Delete everything in this section" });
+    b(S.mv.allParts ? "All" : PART_META[S.mv.part].short, () => { S.mv.allParts = !S.mv.allParts; renderPalette(); }, { cls: "lyr", on: S.mv.allParts, title: S.mv.allParts ? "Deleting from all parts and the words — tap for this part only" : `Deleting from the ${PART_META[S.mv.part].label.toLowerCase()} only — tap for all parts and the words` });
+    p.append(el("span", { class: "hint" }, S.mv.start == null ? "tap first and last beat, then Run" : mvLabel()));
+    b("✕", mvCancel, { cls: "txt", title: "Leave delete mode" });
+    return;
+  }
   if (S.mv) {
     b("◀", () => mvShift(-1), { cls: "txt", title: "Move the run one beat earlier" });
     b("▶", () => mvShift(1), { cls: "txt", title: "Move the run one beat later" });
@@ -8420,7 +8433,6 @@ function renderPalette() {
     b("✕", mvCancel, { cls: "txt", title: "Leave move mode" });
     return;
   }
-  b("Move", mvStart, { cls: "lyr", on: !!S.mv, title: "Move beats: pick a run of beats, then ◀ ▶ shift what is in them into empty space" });
   b("Chord", () => { S.chordMode = !S.chordMode; renderPalette(); }, { cls: "lyr chord", on: S.chordMode, title: S.chordMode ? "Chord mode on — tapping another pitch at a note's time stacks it; tap to turn off" : "Chord mode: stack more pitches on a note" });
   b("⌒", tapTie, { on: !!(ev && ev.tie), title: "Tie to the next note", disabled: !ev && !bar.ev.melody.length });
   for (const k of ["staccato", "tenuto", "slur"]) b(ARTIC[k].glyph, () => tapArtic(k), { cls: "art" + (S.artic === k ? " armed" : ""), on: !!(ev && (k === "slur" ? ev.slur : ev.artic === k)), title: S.artic === k ? `${ARTIC[k].label} armed — tap notes to mark them; tap again to return to note entry` : `${ARTIC[k].label}: tap before entering a note, or arm it and tap existing notes` });
@@ -9363,11 +9375,36 @@ function wireTempo() {
    ═══════════════════════════════════════════════════════════════════════ */
 const barAbs = bi => { let a = 0; for (let k = 0; k < bi; k++) a += barBeats(k); return a; };
 function absToBar(abs) { let a = 0; for (let bi = 0; bi < S.song.bars.length; bi++) { const B = barBeats(bi); if (abs < a + B - 1e-6) return { bi, t: r3(abs - a) }; a += B; } return null; }
-function mvStart() {
-  if (S.mv) { mvCancel(); return; }
-  S.mv = { part: S.activePart || "melody", start: null, end: null, moved: false };
+function mvStart(mode = "move") {
+  if (S.mv && S.mv.mode === mode) { mvCancel(); return; }
+  S.mv = { mode, part: S.activePart || "melody", start: null, end: null, moved: false, allParts: false };
   S.sel = null; S.ghost = null; S.active = null; S.justEntered = null; renderAll();
-  toast("Move: tap the first beat of the run (part-way in, if you like), then the last beat");
+  toast(mode === "delete" ? "Delete: tap the first beat of the run, then the last — or use Bar / Section" : "Move: tap the first beat of the run (part-way in, if you like), then the last beat");
+}
+/* the third tools row: undo, redo, and the two run tools */
+function renderRow3(r3) {
+  const b = (t, fn, opts = {}) => r3.append(el("button", { onclick: fn, class: (opts.cls || "") + (opts.on ? " on" : "") + (opts.warn ? " warn" : ""), title: opts.title, disabled: opts.disabled }, t));
+  b("UNDO", undo, { cls: "lyr wide", title: "Undo", disabled: !UNDO.stack.length });
+  b("REDO", redo, { cls: "lyr wide", title: "Redo", disabled: !UNDO.redo.length });
+  r3.append(el("span", { class: "gap" }));
+  b("Move", () => mvStart("move"), { cls: "lyr wide", on: !!(S.mv && S.mv.mode === "move"), title: "Move beats: pick a run of beats, then ◀ ▶ shift what is in them into empty space" });
+  b("Delete", () => mvStart("delete"), { cls: "lyr wide", on: !!(S.mv && S.mv.mode === "delete"), warn: !(S.mv && S.mv.mode === "delete"), title: "Delete part or all of a beat, a bar or a section" });
+}
+/* delete what the picker points at */
+function delRun(scope) {
+  const mv = S.mv; if (!mv) return;
+  let start, end, label;
+  if (scope === "run") { if (mv.start == null) { toast("Tap the first and last beat first"); return; } start = mv.start; end = mv.end; label = "the picked beats"; }
+  else if (scope === "bar") { start = barAbs(S.bi); end = start + barBeats(S.bi); label = `bar ${barNo(S.bi)}`; }
+  else { const r = sectionRange(sectionOfBar(S.bi)); start = barAbs(r.start); end = barAbs(r.end); label = "this section"; }
+  const parts = mv.allParts ? ["melody", "accomp", "bass", "ensemble"] : [mv.part];
+  const go = () => {
+    let n = 0;
+    parts.forEach(part => { const grp = mvGroup(part, start, end); grp.forEach(o => { const bar = S.song.bars[o.bi]; bar.ev[part] = bar.ev[part].filter(e => e !== o.e); n++; }); });
+    if (mv.allParts) S.song.bars.forEach((bar, bi) => { const a = barAbs(bi), keep = bar.chips.filter(c => !(a + c.t >= start - 1e-6 && a + c.t < end - 1e-6)); n += bar.chips.length - keep.length; bar.chips = keep; });
+    S.mv = null; S.sel = null; S.ghost = null; renderAll(); toast(n ? `Deleted ${n} from ${label} — UNDO brings it back` : `Nothing to delete in ${label}`);
+  };
+  if (scope === "section") confirmModal(`Delete everything in ${label}${mv.allParts ? " (all parts and words)" : " (" + PART_META[mv.part].label.toLowerCase() + ")"}?`, go, "Delete"); else go();
 }
 function mvCancel() { S.mv = null; renderAll(); }
 function mvLock() { S.mv = null; renderAll(); toast("Locked in"); }
@@ -9376,8 +9413,8 @@ function mvTap(win, bi, t) {
   const part = WIN_PART[win], mv = S.mv;
   if (mv.part !== part) { mv.part = part; mv.start = mv.end = null; mv.moved = false; }
   const abs = barAbs(bi) + t, b0 = barAbs(bi) + Math.floor(t + 1e-6), b1 = b0 + 1;
-  if (mv.start != null && abs >= mv.start - 1e-6 && abs < mv.end - 1e-6) { mvLock(); return; }   // a tap on the group: lock it in
-  if (mv.moved) { mvLock(); return; }
+  if (mv.mode !== "delete" && mv.start != null && abs >= mv.start - 1e-6 && abs < mv.end - 1e-6) { mvLock(); return; }   // a tap on the group: lock it in
+  if (mv.mode !== "delete" && mv.moved) { mvLock(); return; }
   if (mv.start == null) { const q = Math.round(t * 4) / 4, frac = q - Math.floor(q); mv.start = barAbs(bi) + (frac < 0.125 ? Math.floor(t) : q); mv.end = b1; }
   else if (b1 <= mv.start + 1e-6) mv.start = b0;                                                // reaching back: whole beats
   else mv.end = Math.max(mv.end, b1);                                                            // reaching forward: through that beat
@@ -9385,16 +9422,16 @@ function mvTap(win, bi, t) {
   S.active = null; S.sel = null; S.ghost = null; renderAll();
 }
 /* everything of the part that starts inside the run, plus tied continuations that hang off its end */
-function mvGroup() {
-  const mv = S.mv, part = mv.part, out = [];
-  S.song.bars.forEach((bar, bi) => { const a = barAbs(bi); (bar.ev[part] || []).forEach(e => { const s = a + e.t; if (s >= mv.start - 1e-6 && s < mv.end - 1e-6) out.push({ e, bi, abs: s }); }); });
+function mvGroup(part, start, end) {
+  const out = [];
+  S.song.bars.forEach((bar, bi) => { const a = barAbs(bi); (bar.ev[part] || []).forEach(e => { const s = a + e.t; if (s >= start - 1e-6 && s < end - 1e-6) out.push({ e, bi, abs: s }); }); });
   let grew = true;
   while (grew) { grew = false; for (const it of [...out]) { if (!it.e.tie || it.e.rest || Math.abs(it.e.t + it.e.d - barBeats(it.bi)) > 1e-6) continue; const nb = S.song.bars[it.bi + 1]; if (!nb) continue; const nx = (nb.ev[part] || []).find(e => e.t < 1e-6 && !e.rest && e.m === it.e.m); if (nx && !out.some(o => o.e === nx)) { out.push({ e: nx, bi: it.bi + 1, abs: barAbs(it.bi + 1) }); grew = true; } } }
   return out;
 }
 function mvShift(dir) {
   const mv = S.mv; if (!mv || mv.start == null) { toast("Select the beats first"); return; }
-  const group = mvGroup(); if (!group.length) { toast("Nothing in those beats to move"); return; }
+  const group = mvGroup(mv.part, mv.start, mv.end); if (!group.length) { toast("Nothing in those beats to move"); return; }
   const delta = dir, a0 = absToBar(mv.start), r = sectionRange(sectionOfBar(a0.bi)), lo = barAbs(r.start), hi = barAbs(r.end);
   const gStart = Math.min(mv.start, ...group.map(o => o.abs)), gEnd = Math.max(mv.end, ...group.map(o => o.abs + o.e.d));
   if (gStart + delta < lo - 1e-6 || gEnd + delta > hi + 1e-6) { toast("That is the edge of the section"); return; }
@@ -9433,8 +9470,9 @@ function drawMoveSel(svg, g, bi, part) {
   if (!S.mv || S.mv.part !== part || S.mv.start == null) return;
   const a = barAbs(bi), s = Math.max(S.mv.start, a), e = Math.min(S.mv.end, a + barBeats(bi)); if (e <= s + 1e-6) return;
   const x0 = g.x(bi, s - a), x1 = g.x(bi, e - a);
-  svg.append(svgEl("rect", { x: x0, y: 1, width: x1 - x0, height: g.H - 2, fill: "#2f7fd6", opacity: 0.22, "pointer-events": "none" }),
-             svgEl("rect", { x: x0 + 1, y: 2, width: x1 - x0 - 2, height: g.H - 4, fill: "none", stroke: "#2f7fd6", "stroke-width": 2.5, "stroke-dasharray": S.mv.moved ? "" : "8 4", "pointer-events": "none" }));
+  const col = S.mv.mode === "delete" ? "#d9362b" : "#2f7fd6";
+  svg.append(svgEl("rect", { x: x0, y: 1, width: x1 - x0, height: g.H - 2, fill: col, opacity: 0.22, "pointer-events": "none" }),
+             svgEl("rect", { x: x0 + 1, y: 2, width: x1 - x0 - 2, height: g.H - 4, fill: "none", stroke: col, "stroke-width": 2.5, "stroke-dasharray": S.mv.moved ? "" : "8 4", "pointer-events": "none" }));
 }
 /* full screen: hides the address bar on Android / desktop; iPhone Safari has no such API,
    so there the answer is Share → Add to Home Screen, which opens the app without any browser bars */
@@ -9456,6 +9494,7 @@ function openHelp() {
     h("Chords (stacked notes)", "Turn on Chord in the tools, then tap other pitches in the same time column as a note to stack them; each gets the same length and ties. Works in the melody and in Custom band bars. Tap Chord again to go back to single notes."),
     h("Floating palette", "⧉ at the end of the tools pops them out into a small palette you can drag anywhere (the stave keeps its size). ◀ ▶ step by the chosen note length (eighths step half a beat) and also stop at every note start — tap the label to step through bars instead. The yellow box shows the pitch; ▲ ▼ change it. Tap PITCH to flip the arrows to SELECT, which moves between the notes stacked at that spot; tap again to go back. Tap a note length once to choose it (the box takes that size); tap the chosen length again to enter the note at the box, or, when a note is selected, to give that note the length. M / A / B pick the window, 🗑 deletes, ▶ plays the bar, Rhythm and Lyrics open those tools, ⚙ sets its size and side, ⤶ pops it back in. While it is out, the stave and strips do not take taps."),
     h("Entering notes", "Tap a beat once: it becomes the active beat and the dashed box appears there, sized to the picked length. Tap the pitch you want and the note is placed at the box. Only the active beat takes notes; other beats wait for their own tap."),
+    h("Deleting", "Tap Delete in the tools. Then either tap the first and last beat of a run (the first part-way in, if you like) and press Run, or press Bar or Section to clear the whole current bar or section. The part button chooses the window you picked on only, or all parts plus the words. UNDO brings anything back; REDO puts it away again."),
     h("Moving beats", "Tap Move in the tools, then tap the first beat of the run — part-way into it if the run should start on an off-beat — and the last beat. The run must be one unbroken stretch. ◀ ▶ shift everything in it (in the window you picked it on) a beat earlier or later, staying inside the section and only into empty space; notes that cross a bar line are tied over it. Tap the group once to lock it in. ✕ leaves move mode."),
     h("Clearing a beat", "With a beat active and no note selected, 🗑 in the tools removes every note, rest or slot that starts in that beat for the part you activated it in, including any tied run-on into later bars. ↶ undoes it."),
     h("After an entry", "A note you have just placed stays selected, so the tools change its pitch or length at once, and a tap on another row in its column re-pitches it. A tap anywhere else on the stave lets it go: in the same beat that tap places the next note straight away at the next free spot, with the picked length; in another beat it activates that beat."),
@@ -9485,10 +9524,15 @@ function playSolo(win, btn) {
 /* ── undo: restore the last idle snapshot ── */
 function undo() {
   if (!UNDO.stack.length) { toast("Nothing to undo"); return; }
-  const snap = UNDO.stack.pop();
-  S.song = upgradeSong(JSON.parse(snap)); UNDO.last = snap; S.sel = null;
-  if (S.followWords) S.cursor = nextUnpitchedChip(S.bi, null);
+  const snap = UNDO.stack.pop(); if (UNDO.last) UNDO.redo.push(UNDO.last);
+  S.song = upgradeSong(JSON.parse(snap)); UNDO.last = snap; UNDO.replaying = true; S.sel = null; S.mv = null; S.ghost = null;
   renderAll(); toast("Undone");
+}
+function redo() {
+  if (!UNDO.redo.length) { toast("Nothing to redo"); return; }
+  const snap = UNDO.redo.pop(); if (UNDO.last) UNDO.stack.push(UNDO.last);
+  S.song = upgradeSong(JSON.parse(snap)); UNDO.last = snap; UNDO.replaying = true; S.sel = null; S.mv = null; S.ghost = null;
+  renderAll(); toast("Redone");
 }
 
 /* ── MIDI controller (Web MIDI): a keyboard pitches the melody or places band notes ── */
