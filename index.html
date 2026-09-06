@@ -191,6 +191,10 @@ svg text { pointer-events: none; }
 .win .rArr { width: 16px; height: 16px; flex: 0 0 16px; align-self: center; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #cfcfcf); color: #111; font-size: 12px; font-weight: 800; padding: 0; line-height: 13px; position: static; margin: 0 auto; letter-spacing: 0; box-shadow: 0 2px 4px rgba(0,0,0,.4); z-index: 1; display: grid; place-items: center; }
 .win .rArr:active { background: linear-gradient(#ffd27a, #f5a623); }
 .win .rArr.up { margin-bottom: 1px; } .win .rArr.dn { margin-top: 1px; }
+.win .rArr { font-size: 0; position: relative; }
+.win .rArr::before { content: ""; position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; border-left: 2px solid #111; border-top: 2px solid #111; }   /* a drawn chevron sits dead centre */
+.win .rArr.up::before { transform: translate(-50%, -30%) rotate(45deg); }
+.win .rArr.dn::before { transform: translate(-50%, -70%) rotate(225deg); }
 .win .gutter svg text { paint-order: stroke; stroke: var(--ground); stroke-width: 2px; stroke-linejoin: round; }
 .winHead { position: absolute; left: 50%; transform: translateX(-50%); top: -9px; z-index: 2; background: #111; color: #fff; font-size: 10.5px; font-weight: 700; height: 18px; line-height: 16px;
   letter-spacing: .06em; padding: 0 12px; border-radius: 3px; white-space: nowrap; text-transform: uppercase; border: 1px solid #000; max-width: calc(100% - 100px); overflow: hidden; text-overflow: ellipsis; }
