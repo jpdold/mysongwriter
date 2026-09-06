@@ -7901,7 +7901,8 @@ function distributeChips(bar) {
   bar.chips.forEach((c, i) => { c.d = r3((i < n - 1 ? bar.chips[i + 1].t : B) - c.t); if (c.d <= 0) c.d = 0.25; });
   syncNotesToChips(bar);
 }
-const chipBeats = (c, g) => (chipW(c) + 3) / g.beatPx;                               // the room a chip takes, in beats
+const chipMinW = c => Math.ceil(chipW(c) * 0.72);                                    // how narrow a chip may be squeezed and still read
+const chipBeats = (c, g) => (chipMinW(c) + 3) / g.beatPx;                            // the room a chip needs, in beats
 function setChipTime(bar, chip, t) {
   const i = bar.chips.indexOf(chip), bi = S.song.bars.indexOf(bar), B = barBeats(bi), g = GEO.mel || geo("mel"), gap = 0.0625;
   const lo = i > 0 ? bar.chips[i - 1].t + Math.max(gap, chipBeats(bar.chips[i - 1], g)) : 0;
@@ -8248,7 +8249,7 @@ function renderWindows() {
     const cur = S.cursor && S.cursor.bi === bi ? bar.chips.find(c => c.id === S.cursor.chipId) : null;
     if (cur && S.followWords) svg.append(svgEl("rect", { x: g.x(bi, cur.t), y: 0, width: Math.max(6, cur.d * g.beatPx), height: g.H, fill: box, opacity: 0.12, "pointer-events": "none" }));
     if (S.active && S.active.bi === bi) { const ax = g.x(bi, S.active.beat), aw = g.x(bi, Math.min(barBeats(bi), S.active.beat + 1)) - ax; svg.append(svgEl("rect", { x: ax, y: 0, width: aw, height: g.H, fill: css("--box"), opacity: 0.28, "pointer-events": "none" }), svgEl("rect", { x: ax + 1, y: 1, width: aw - 2, height: g.H - 2, fill: "none", stroke: css("--box"), "stroke-width": 2, opacity: 0.9, "pointer-events": "none" })); }
-    drawMoveSel(svg, g, bi, "melody");
+    drawMoveSel(svg, g, bi, "melody"); drawSpanBands(svg, g, bi, "melody");
     if (S.ghost && S.ghost.part === "melody" && S.ghost.bi === bi) drawGhost(svg, g, bi, S.ghost, box);
     for (const c of chains(bar)) {
       const x0 = g.x(bi, c.t) + 1, x1 = g.x(bi, c.t + c.d) - 2, selected = c.members.some(e => e.id === sel);
@@ -8295,7 +8296,7 @@ function renderWindows() {
     for (const bi of viewBars()) {
     const bar = song.bars[bi], sel = S.sel && S.sel.bi === bi && S.sel.part === part ? S.sel.id : null;
     if (S.active && S.active.bi === bi) { const ax = g.x(bi, S.active.beat), aw = g.x(bi, Math.min(barBeats(bi), S.active.beat + 1)) - ax; svg.append(svgEl("rect", { x: ax, y: 0, width: aw, height: g.H, fill: css("--box"), opacity: 0.28, "pointer-events": "none" }), svgEl("rect", { x: ax + 1, y: 1, width: aw - 2, height: g.H - 2, fill: "none", stroke: css("--box"), "stroke-width": 2, opacity: 0.9, "pointer-events": "none" })); }
-    drawMoveSel(svg, g, bi, part);
+    drawMoveSel(svg, g, bi, part); drawSpanBands(svg, g, bi, part);
     if (S.ghost && S.ghost.part === part && S.ghost.bi === bi) drawGhost(svg, g, bi, S.ghost, color);
     if (bar.custom[part]) {
       const groups = S.noteStyle === "trad" ? beamGroups(bar.ev[part].filter(e => e.m >= g.lo && e.m <= g.hi)) : [], beamed = new Set(groups.flatMap(gp => gp.evs.map(e => e.id)));
@@ -8372,10 +8373,12 @@ function renderStrips() {
       bar.chips.forEach(c => {
         any = true;
         /* a chip is free text: a pill hugging the words, with the spaces you typed kept, and a gold edge once it is locked */
-        const x = g.x(bi, c.t) + 3, pw = chipW(c), isSel = c.id === selId, px = x - 3;
+        const x = g.x(bi, c.t) + 3, natW = chipW(c), isSel = c.id === selId, px = x - 3;
+        const nxt = bar.chips.filter(o => o.t > c.t + 1e-6).sort((a, b) => a.t - b.t)[0], roomPx = ((nxt ? nxt.t : barBeats(bi)) - c.t) * g.beatPx - 3;
+        const pw = Math.max(chipMinW(c), Math.min(natW, roomPx)), squeezed = pw < natW - 0.5;      // squeezed between neighbours: the text condenses to fit
         svg.append(svgEl("rect", { class: "chip", x: px, y: 3, width: pw, height: H - 6, rx: 6, fill: "#fff", "fill-opacity": isSel ? 0.42 : 0.2, stroke: c.locked ? "#f5c518" : "#fff", "stroke-width": c.locked ? 2 : isSel ? 1.5 : 0.8, "stroke-opacity": c.locked ? 1 : isSel ? 1 : 0.5, "data-chip": c.id, "data-bi": bi }));
         const editing = WE.on && WE.bi === bi && WE.chipId === c.id;
-        if (!editing) svg.append(svgEl("text", { x, y: 24, "font-size": 16, fill: "#fff", "font-weight": 700, "font-family": "system-ui, sans-serif", "xml:space": "preserve", style: "white-space:pre", "pointer-events": "none" }, c.text));
+        if (!editing) svg.append(svgEl("text", Object.assign({ x, y: 24, "font-size": 16, fill: "#fff", "font-weight": 700, "font-family": "system-ui, sans-serif", "xml:space": "preserve", style: "white-space:pre", "pointer-events": "none" }, squeezed ? { textLength: Math.max(8, pw - 6), lengthAdjust: "spacingAndGlyphs" } : {}), c.text));
         if (c.locked) svg.append(svgEl("text", { x: px + pw - 3, y: 11, "text-anchor": "end", "font-size": 8, fill: "#f5c518", "pointer-events": "none" }, "🔒"));
       });
     }
@@ -8627,7 +8630,7 @@ function tapMelody(bi, t, m) {
   const chain = chains(bar).find(c => !c.rest && t >= c.t - 1e-6 && t < c.t + c.d - 1e-6);
   if (chain) {
     S.ghost = null;
-    if (!inActive(bi, chain.t)) { toast("That note starts in a locked beat — tap its beat first"); return; }
+    if (!inActive(bi, chain.t)) { activate(bi, chain.t); S.activePart = "melody"; S.sel = { bi, part: "melody", id: chain.head.id }; renderAll(); return; }   // a tap along a long note: its own beat wakes and it is selected
     if (S.chordMode && chain.head.m != null && !hasPitchAt(bar, "melody", chain.t, m)) { addChordNote(bi, chain, m, "melody"); return; }
     if (!(S.sel && S.sel.part === "melody" && chain.members.some(e => e.id === S.sel.id))) { S.sel = { bi, part: "melody", id: chain.head.id }; renderAll(); return; }   // first tap: select the box
     if (chain.head.m === m) { S.sel = null; renderAll(); return; }                                                                                       // same pitch again: done
@@ -8739,7 +8742,7 @@ function initPointer() {
       S.selChip = null;
       if (S.mv) { mvTap(win, at.bi, at.t); return; }                                                                    // move mode: taps pick the run, or lock it in
       if (d.ev && S.artic && !d.ev.rest && d.ev.m != null) { S.bi = d.bi; applyArtic(d.bi, d.part, d.ev); return; }   // slurs and marks may reach into locked beats
-      if (d.locked) { activate(at.bi, at.t, WIN_PART[win]); showBox(at.bi, WIN_PART[win]); return; }
+      if (d.locked) { if (d.ev) { activate(d.bi, d.ev.t, d.part); S.sel = { bi: d.bi, part: d.part, id: d.ev.id }; renderAll(); return; } activate(at.bi, at.t, WIN_PART[win]); showBox(at.bi, WIN_PART[win]); return; }
       if (d.ev && d.part === "melody" && !d.ev.rest) { tapMelody(d.bi, at.t, g.m(p.y)); return; }
       if (d.ev) { S.bi = d.bi; select(d.bi, d.part, S.sel && S.sel.id === d.ev.id ? null : d.ev.id); if (d.ev.m != null && !d.ev.rest && S.sel && S.sel.id === d.ev.id) previewNote(d.ev.m, d.part); return; }
       if (win === "mel") tapMelody(at.bi, at.t, g.m(p.y)); else tapBand(win, at.bi, at.t, g.m(p.y));
@@ -8808,11 +8811,12 @@ function openWordEdit(bi, t, chip) {
      an existing chip edits in place (a locked one only shows). The box never sits on another chip. */
   const box = $("wordEdit"), inp = weInput(), lbl = box.querySelector(".lbl2"), bar = S.song.bars[bi];
   if (WE.on && WE.dirty) commitWordEdit(false, true);
-  if (!WE.on) WE.firstChip = null;                                       // a fresh keyboard session: the first word typed will be the one selected on close
+  if (!WE.on) { WE.firstChip = null; WE.lastChip = null; }               // a fresh keyboard session: the first word typed will be the one selected on close
   normalizeLyrics(bar);
   WE.on = true; WE.bi = bi; WE.dirty = false; WE.wid = null; WE.chipId = chip ? chip.id : null;
   const g = stripGeo();
-  WE.t = chip ? chip.t : (entrySpot(bar, bi, t || 0, ENTRY_MIN) ?? entrySpot(bar, bi, 0, ENTRY_MIN) ?? 0);
+  const afterLast = bar.chips.reduce((m, c) => Math.max(m, c.t + chipBeats(c, g)), 0);
+  WE.t = chip ? chip.t : (entrySpot(bar, bi, Math.max(t || 0, Math.ceil(afterLast * 16 - 1e-6) / 16), ENTRY_MIN) ?? 0);
   inp.value = chip ? chip.text : ""; inp.disabled = !!(chip && chip.locked); S.bi = bi; S.selChip = chip ? { bi, id: chip.id } : null;
   lbl.textContent = chip ? (chip.locked ? "Locked · 🔒 unlocks" : "Editing · ↵ keeps it · Split at the cursor · 🔒 locks it") : `Bar ${barNo(bi)} · beat ${beatLabel(WE.t)} · ↵ makes the chip · ⇥ next beat`;
   box.classList.add("on"); renderWeKeys(); applyKbPos(); renderStrips();
@@ -8948,12 +8952,12 @@ function commitWordEdit(advance, quiet) {
     const c = bar.chips.find(x => x.id === WE.chipId);
     if (c && !c.locked) { if (!raw) bar.chips = bar.chips.filter(x => x !== c); else { c.text = raw; resolveChipOverlaps(bar); } }
     if (c && !WE.firstChip) WE.firstChip = { bi, id: c.id };
-    if (c) nextT = c.t + chipBeats(c, stripGeo());
+    if (c) { nextT = c.t + chipBeats(c, stripGeo()); WE.lastChip = c.id; }
     WE.chipId = null;
   } else if (raw) {
     const c = addLyricChip(bar, bi, raw, WE.t);
     if (!c) { toast("No room for that here — ⇥ to a later beat, or the next bar"); if (quiet) finish(); return; }
-    if (!WE.firstChip) WE.firstChip = { bi, id: c.id };
+    if (!WE.firstChip) WE.firstChip = { bi, id: c.id }; WE.lastChip = c.id;
     nextT = c.t + chipBeats(c, stripGeo());
   }
   bar.lyric = lyricFromChips(bar); inp.value = ""; inp.disabled = false;
@@ -8962,23 +8966,27 @@ function commitWordEdit(advance, quiet) {
 }
 /* a new chip lands at the first spot from `from` (default the left edge) wide enough for it; null when nothing fits */
 function addLyricChip(bar, bi, text, from = 0) {
-  const g = stripGeo(), c = { id: uid(), text, t: 0, locked: false }, w = chipBeats(c, g);
+  const g = stripGeo(), c = { id: uid(), text, t: 0, locked: false }, wNat = (chipW(c) + 3) / g.beatPx, wMin = chipBeats(c, g);
   normalizeLyrics(bar);
-  const t = entrySpot(bar, bi, from, w) ?? entrySpot(bar, bi, 0, w);
+  const t = entrySpot(bar, bi, from, wNat) ?? entrySpot(bar, bi, from, wMin);
   if (t == null) return null;
   c.t = t; bar.chips.push(c); bar.chips.sort((a, b) => a.t - b.t); return c;
 }
 /* a new chip lands at the first gap wide enough for it, scanning left to right; null when the bar is full */
 /* lock / unlock from the keyboard: the chip being edited, else the selected one */
 function toggleLyricLock() {
+  /* 🔒 on the keyboard: locks the chip being edited, the selected chip, the word just typed (it becomes a chip first), or the last chip made */
   if (!WE.on) return;
-  const inp = weInput(), bar = S.song.bars[WE.bi];
-  const c = WE.chipId ? bar.chips.find(x => x.id === WE.chipId) : S.selChip && S.selChip.bi === WE.bi ? bar.chips.find(x => x.id === S.selChip.id) : null;
-  if (!c) { toast("Select a chip first — or type a word and press ↵, then 🔒"); return; }
+  const inp = weInput(), find = id => S.song.bars[WE.bi].chips.find(x => x.id === id);
+  let c = WE.chipId ? find(WE.chipId) : S.selChip && S.selChip.bi === WE.bi ? find(S.selChip.id) : null;
+  if (!c && !WE.chipId && inp.value.replace(/\s/g, "")) { commitWordEdit(true); c = WE.lastChip ? find(WE.lastChip) : null; }
+  if (!c && WE.lastChip) c = find(WE.lastChip);
+  if (!c) { toast("Type a word first, or tap a chip"); return; }
+  const bar = S.song.bars[WE.bi];
   if (c.locked) { c.locked = false; WE.chipId = c.id; WE.t = c.t; inp.disabled = false; inp.value = c.text; S.selChip = { bi: WE.bi, id: c.id }; renderWeKeys(); renderAll(); toast("Unlocked — it can move and be edited again"); setTimeout(() => inp.focus(), 20); return; }
   if (WE.chipId === c.id) { const raw = inp.value.replace(/^\s+|\s+$/g, ""); if (raw) c.text = raw; resolveChipOverlaps(bar); }
   c.locked = true; WE.chipId = null; WE.dirty = false; inp.value = ""; inp.disabled = false; bar.lyric = lyricFromChips(bar);
-  renderAll(); openWordEdit(WE.bi, 0); toast("Locked in place");
+  renderAll(); openWordEdit(WE.bi, c.t + chipBeats(c, stripGeo())); toast("Locked in place");
 }
 /* lyrics are free text now: old syllable, letter and rest chips just become plain chips */
 function normalizeLyrics(bar) {
@@ -9532,6 +9540,16 @@ function mergeTiedPieces(part, from, to) {
     }
   }
 }
+/* a note that runs on past its beat: the beats it covers get a translucent white band top and bottom */
+function drawSpanBands(svg, g, bi, part) {
+  const bar = S.song.bars[bi], B = barBeats(bi);
+  for (const c of chains(bar, part)) {
+    if (c.rest) continue;
+    const from = Math.floor(c.t + 1e-6) + 1, to = Math.min(B, c.t + c.d); if (to <= from + 1e-6) continue;
+    const x0 = g.x(bi, from), x1 = g.x(bi, to);
+    [0, g.H - 8].forEach(y => svg.append(svgEl("rect", { x: x0 + 0.5, y: y + 0.5, width: x1 - x0 - 1, height: 7, fill: "#fff", "fill-opacity": 0.75, stroke: "rgba(0,0,0,.28)", "stroke-width": 1, "pointer-events": "none" })));
+  }
+}
 function drawMoveSel(svg, g, bi, part) {
   if (!S.mv || S.mv.part !== part || S.mv.start == null) return;
   const a = barAbs(bi), col = S.mv.mode === "delete" ? "#d9362b" : "#2f7fd6";
@@ -9747,6 +9765,7 @@ function openHelp() {
     h("Chords (stacked notes)", "Turn on Chord in the tools, then tap other pitches in the same time column as a note to stack them; each gets the same length and ties. Works in the melody and in Custom band bars. Tap Chord again to go back to single notes."),
     h("Floating palette", "⧉ at the end of the tools pops them out into a small palette you can drag anywhere (the stave keeps its size). ◀ ▶ step by the chosen note length (eighths step half a beat) and also stop at every note start — tap the label to step through bars instead. The yellow box shows the pitch; ▲ ▼ change it. Tap PITCH to flip the arrows to SELECT, which moves between the notes stacked at that spot; tap again to go back. Tap a note length once to choose it (the box takes that size); tap the chosen length again to enter the note at the box, or, when a note is selected, to give that note the length. M / A / B pick the window, 🗑 deletes, ▶ plays the bar, Rhythm and Lyrics open those tools, ⚙ sets its size and side, ⤶ pops it back in. While it is out, the stave and strips do not take taps."),
     h("Rests", "𝄽 in the tools: while you are entering (a box is showing, or the beat has just taken a note) it puts a rest at the next free spot, in the melody or in a Custom band bar. On a note you selected yourself it turns that note into a rest, and back again. With no beat active it arms a rest for your next tap on a stave or the Rhythm strip."),
+    h("Notes that run on", "A note that runs on past its beat marks the beats it covers with a white band along the top and bottom of the stave. Tap anywhere along it and it is selected, with its own beat woken."),
     h("Entering notes", "Tap a beat once: it becomes the active beat and the dashed box appears there, sized to the picked length. Tap the pitch you want and the note is placed at the box. Only the active beat takes notes; other beats wait for their own tap."),
     h("Time signature calculator", "☰ → Time signature calculator. Tap note and rest values onto a free strip one at a time — dots, double dots and ties apply to the selected or last entry. − + set the tempo (the song's own), ▶ Hear rhythm taps it out, and Calculate ranks the time signatures that fit, showing how the rhythm falls into bars for each; green lines are bar lines between entries, orange ones cut through a note that would be tied over. Separately, Send to song as melody slots writes the rhythm into the melody from the current bar on as pitch-less boxes, cut by the song's own bars, asking first if it would replace anything."),
     h("Deleting", "Tap Delete in the tools. Then either tap the first and last beat of a run (tap either again to open it into quarters and pick the exact start or end) and press Run, or press Bar or Section to clear the whole current bar or section. The part button chooses the window you picked on only, or all parts plus the words. UNDO brings anything back; REDO puts it away again."),
