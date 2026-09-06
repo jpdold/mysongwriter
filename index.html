@@ -8341,6 +8341,13 @@ function renderStrips() {
     const svg = $("rhySvg"); svg.replaceChildren(); svg.setAttribute("height", H); svg.setAttribute("viewBox", `0 0 ${g.W} ${H}`); svg.setAttribute("width", g.W); svg.style.width = g.W + "px"; svg.style.touchAction = g.n > 1 ? "pan-x" : "none";
     svg.append(svgEl("rect", { class: "hit", x: 0, y: 0, width: g.W, height: H, fill: "transparent", "data-lane": "rhy" }));
     dividers(svg, "#ddd", 0.6);
+    for (const bi of bars) for (const c of chains(song.bars[bi])) {                 // a slot that runs on past its beat: the beats it covers stay lit
+      if (c.rest) continue;
+      const from = Math.floor(c.t + 1e-6) + 1, to = Math.min(barBeats(bi), c.t + c.d); if (to <= from + 1e-6) continue;
+      const x0 = g.x(bi, from), x1 = g.x(bi, to);
+      svg.append(svgEl("rect", { x: x0, y: 0, width: x1 - x0, height: H, fill: "#fff", opacity: 0.16, "pointer-events": "none" }));
+      [0, H - 5].forEach(y => svg.append(svgEl("rect", { x: x0 + 0.5, y: y + 0.5, width: x1 - x0 - 1, height: 4, fill: "#fff", "fill-opacity": 0.7, stroke: "rgba(0,0,0,.35)", "stroke-width": 1, "pointer-events": "none" })));
+    }
     if (S.active && bars.includes(S.active.bi)) svg.append(svgEl("rect", { x: g.x(S.active.bi, S.active.beat), y: 0, width: g.x(S.active.bi, Math.min(barBeats(S.active.bi), S.active.beat + 1)) - g.x(S.active.bi, S.active.beat), height: H, fill: css("--box"), opacity: 0.22, "pointer-events": "none" }));
     const mini = { step: 6, y: () => 23, x: g.x, beatPx: g.beatPx, lo: 0, hi: 1, W: g.W, H };
     for (const bi of bars) {
