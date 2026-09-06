@@ -8301,7 +8301,8 @@ function renderWindows() {
       const groups = S.noteStyle === "trad" ? beamGroups(bar.ev[part].filter(e => e.m >= g.lo && e.m <= g.hi)) : [], beamed = new Set(groups.flatMap(gp => gp.evs.map(e => e.id)));
       groups.forEach(gp => drawBeamed(svg, g, gp, color, e => g.x(bi, e.t) + 2));
       for (const c of chains(bar, part)) {
-        if (c.rest || c.head.m == null) continue;
+        if (c.rest) { const rx0 = g.x(bi, c.t) + 3, ry = g.H / 2, sel = S.sel && S.sel.part === part && S.sel.id === c.head.id; svg.append(svgEl("rect", { class: "noteEl", x: rx0, y: ry - 12, width: Math.max(10, c.d * g.beatPx - 6), height: 24, rx: 4, fill: sel ? color : "none", "fill-opacity": sel ? 0.25 : 0, stroke: color, "stroke-width": 1.2, "stroke-dasharray": "3 3", "data-ev": c.head.id, "data-part": part, "data-bi": bi, style: "pointer-events:all" }), svgEl("text", { x: rx0 + 4, y: ry + 6, "font-size": 16, fill: color, "font-family": "Georgia, serif", "pointer-events": "none" }, "𝄽")); continue; }
+        if (c.head.m == null) continue;
         const m = clamp(c.head.m, g.lo, g.hi);
         c.members.forEach((e, k) => { if (e.tie) { const nx = k < c.members.length - 1 ? g.x(bi, c.members[k + 1].t) + 2 + g.step * 0.55 * NS() * HK() : g.x(bi, barBeats(bi)) + (g.bars.includes(bi + 1) ? 2 + g.step * 0.55 * NS() * HK() : 0); tieArcAt(svg, g.x(bi, e.t) + 2 + g.step * 0.55 * NS() * HK(), nx, g.y(m) + g.step * 0.5, color); } });
         if (tiedFromPrev(bi, c, part) && bi === g.first) tieArcAt(svg, 0, g.x(bi, c.t) + 1 + g.step * 0.55 * NS() * HK(), g.y(m) + g.step * 0.5, color);
@@ -8523,12 +8524,27 @@ function tapLength(v) {
 }
 function tapDot() { const ev = selEv(); if (ev) { setDur(ev, isDotted(ev.d) ? ev.d / 1.5 : ev.d * 1.5); return; } S.dot = !S.dot; if (S.ghost) { const bar = S.song.bars[S.ghost.bi]; if (!refitGhost()) return; renderWindows(); } renderPalette(); }
 function tapRest() {
-  const ev = selEv();
-  if (ev) { ev.rest = !ev.rest; if (ev.rest) { delete ev.m; delete ev.tie; } else ev.m = null; syncNotesToChips(S.song.bars[S.sel.bi]); renderAll(); return; }
-  if (S.ghost && S.ghost.part === "melody") {                     // a rest goes straight into the box that's waiting
-    const bar = S.song.bars[S.ghost.bi]; bar.ev.melody.push({ id: uid(), t: S.ghost.t, d: S.ghost.d, rest: true }); syncNotesToChips(bar); S.ghost = null; renderAll(); return;
+  /* 𝄽 while entering (a box is showing, or the beat has just taken a note): a rest goes in at the next free spot.
+     𝄽 on a note you tapped yourself: that note becomes a rest (and back). Otherwise it arms a rest for the next tap. */
+  const ev = selEv(), part = S.activePart || "melody";
+  const entering = !!(S.active && (S.ghost || (S.justEntered && S.justEntered.bi === S.active.bi && S.justEntered.beat === S.active.beat)));
+  if (ev && !entering) {
+    ev.rest = !ev.rest; if (ev.rest) { delete ev.m; delete ev.tie; delete ev.artic; } else ev.m = null;
+    if (S.sel.part === "melody") syncNotesToChips(S.song.bars[S.sel.bi]); renderAll(); return;
   }
-  S.restNext = !S.restNext; renderPalette(); if (S.restNext) toast("Tap where the rest goes — in the melody window or the Rhythm strip");
+  if (S.active) { placeRestNow(S.sel && entering ? S.sel.part : part); return; }
+  S.restNext = !S.restNext; renderPalette(); if (S.restNext) toast("Tap where the rest goes — on a stave or the Rhythm strip");
+}
+/* a rest at the next free spot of the active beat, in the given part */
+function placeRestNow(part) {
+  const bi = S.active.bi, bar = S.song.bars[bi];
+  if (part !== "melody") { if (!S.song.parts[part].on) { toast(`${PART_META[part].label} is off`); return; } if (!bar.custom[part]) { toast(`${PART_META[part].label} follows its pattern here — switch this bar to Custom first`); return; } }
+  const sp = part === "melody" ? melodySpot(bar, bi) : (t => t == null ? null : { ts: t, d: noteLenBeats() })(freeSpotInBeat(bar, bi, S.active.beat, part));
+  if (!sp) { toast("This beat is full"); return; }
+  const room = part === "melody" ? freeSpan(bar, sp.ts) : (() => { const nx = (bar.ev[part] || []).filter(e => e.t > sp.ts + 1e-6).sort((a, b) => a.t - b.t)[0]; return r3((nx ? nx.t : barBeats(bi)) - sp.ts); })();
+  const ev = { id: uid(), t: sp.ts, d: Math.max(0.25, Math.min(sp.d, room)), rest: true };
+  bar.ev[part].push(ev); if (part === "melody") syncNotesToChips(bar);
+  S.ghost = null; S.restNext = false; S.sel = { bi, part, id: ev.id }; S.justEntered = { bi, beat: S.active.beat, part }; renderAll();
 }
 /* rhythm strip: add a box (or a rest) at the ▶ cursor of the current bar */
 function appendFromStrip() { const rest = S.restNext; S.restNext = false; appendSlot(noteLenBeats(), rest); }
@@ -8649,6 +8665,7 @@ function tapBand(win, bi, t, m) {
   if (spot == null) { toast("This beat is full for the " + PART_META[part].short.toLowerCase() + " — select a note to change it"); return; }
   if (!direct && !(gh && gh.part === part && gh.bi === bi && beatOf(bi, gh.t) === S.active.beat)) { showBox(bi, part); return; }   // first tap: the box at the next free spot in this beat
   const ts = direct ? spot : gh.t, d = direct ? noteLenBeats() : gh.d; S.ghost = null;    // then: pitch from the tap, time from the box — or straight in, after the first note
+  if (S.restNext) { S.restNext = false; const nx = (bar.ev[part] || []).filter(e => e.t > ts + 1e-6).sort((a, b) => a.t - b.t)[0]; const rd = Math.max(0.25, Math.min(d, r3((nx ? nx.t : B) - ts))); const rev = { id: uid(), t: ts, d: rd, rest: true }; bar.ev[part].push(rev); S.sel = { bi, part, id: rev.id }; S.justEntered = { bi, beat: S.active.beat, part }; renderAll(); return; }
   const plan = planSpan(bi, ts, d, part); if (plan.deny) { renderAll(); noticeModal(plan.deny); return; }
   const head = placeSpan(plan.pieces, part, m, S.artic && S.artic !== "slur" ? S.artic : null); previewNote(m, part); S.sel = { bi, part, id: head.id }; S.justEntered = { bi, beat: S.active.beat, part }; renderAll();
 }
@@ -8851,6 +8868,13 @@ function weSplit() {
   WE.chipId = null; WE.dirty = false; inp.value = ""; renderAll();
   openWordEdit(WE.bi, n.t + chipBeats(n, g)); S.selChip = { bi: WE.bi, id: n.id }; renderStrips(); renderPalette();
 }
+/* 𝄽 on the keyboard: a rest chip at the entry spot (or the rest sign typed into the chip being edited) */
+function weRestChip() {
+  if (!WE.on) return;
+  const inp = weInput();
+  if (WE.chipId) { if (inp.disabled) return; const s = inp.selectionStart == null ? inp.value.length : inp.selectionStart; inp.value = inp.value.slice(0, s) + "𝄽" + inp.value.slice(s); WE.dirty = true; sizeInline(); inp.focus(); try { inp.setSelectionRange(s + 2, s + 2); } catch (e) {} return; }
+  inp.value = "𝄽"; WE.dirty = true; commitWordEdit(true);
+}
 /* ← → on the keyboard: move the cursor inside the word */
 function weMoveCaret(d) { const inp = weInput(); if (inp.disabled) return; const s = inp.selectionStart == null ? inp.value.length : inp.selectionStart; const n = clamp(s + d, 0, inp.value.length); inp.focus(); try { inp.setSelectionRange(n, n); } catch (e) {} weCaret(); }
 function sizeInline() { const inp = weInput(); inp.style.width = Math.max(44, chipW({ text: inp.value || "word" }) + 8) + "px"; repositionEntry(); weCaret(); }
@@ -8896,6 +8920,7 @@ function renderWeKeys() {
   tools.append(key("▶", () => weMoveCaret(1), "wide", "cursor right"));
   tools.append(key("Split", weSplit, "wide", "split this chip in two at the cursor"));
   tools.append(key("⇥", weTab, "wide", "jump to the next free beat"));
+  tools.append(key("𝄽", weRestChip, "wide sym", "a rest chip — nothing sung here"));
   k.append(tools);
   const bottom = el("div", { class: "krow" });
   bottom.append(key(wePage === "abc" ? "?!’" : "abc", () => { wePage = wePage === "abc" ? "sym" : "abc"; renderWeKeys(); }, "wide", "symbols"));
@@ -9716,11 +9741,12 @@ function openHelp() {
     h("Pickup & repeats", "Setup → Pickup adds a short bar (½, 1 or 2 beats) before beat 1. Tap the bar name → Repeat this section to play a section several times."),
     h("Moving the keyboard", "Drag the grey bar at the top of the keyboard to put it anywhere; drop it near the bottom of the screen to dock it there again. It remembers where you left it. The floating palette moves by its bar in the same way."),
     h("Typing words", "Tap Lyrics: the keyboard opens with the entry box at the left edge of the strip. Type a word and press ↵ — it becomes a chip at the first free spot, and the keyboard stays open for the next word. Close it with ✕ and the first word you typed is already selected."),
-    h("Keyboard keys", "◀ ▶ move the cursor inside the word. ⇥ jumps the entry box to the next free beat line (and on into the next bar). Split breaks the chip you are editing in two at the cursor, the second half landing right after the first. The entry box only ever sits on free space, so nothing can be typed over a chip, locked or not."),
+    h("Keyboard keys", "𝄽 drops a rest chip at the entry spot — a chip like any other, for a beat with nothing sung. ◀ ▶ move the cursor inside the word. ⇥ jumps the entry box to the next free beat line (and on into the next bar). Split breaks the chip you are editing in two at the cursor, the second half landing right after the first. The entry box only ever sits on free space, so nothing can be typed over a chip, locked or not."),
     h("Placing words", "Words have no bearing on the notes; you line them up by eye. Drag a chip anywhere along the strip — it clicks onto a beat line when close, and never overlaps another chip. To spread a word so its syllables sit under their notes, edit it and put spaces inside it (the space bar, as many as you like); it stays one chip. When a word sits right, press the gold 🔒 on the keyboard to lock it in place; select it and press 🔒 again to unlock. A locked chip cannot move or be edited."),
     h("Tempo", "♩= in the top row shows the tempo. − and + change it by one (hold to keep going); tap the number to type one."),
     h("Chords (stacked notes)", "Turn on Chord in the tools, then tap other pitches in the same time column as a note to stack them; each gets the same length and ties. Works in the melody and in Custom band bars. Tap Chord again to go back to single notes."),
     h("Floating palette", "⧉ at the end of the tools pops them out into a small palette you can drag anywhere (the stave keeps its size). ◀ ▶ step by the chosen note length (eighths step half a beat) and also stop at every note start — tap the label to step through bars instead. The yellow box shows the pitch; ▲ ▼ change it. Tap PITCH to flip the arrows to SELECT, which moves between the notes stacked at that spot; tap again to go back. Tap a note length once to choose it (the box takes that size); tap the chosen length again to enter the note at the box, or, when a note is selected, to give that note the length. M / A / B pick the window, 🗑 deletes, ▶ plays the bar, Rhythm and Lyrics open those tools, ⚙ sets its size and side, ⤶ pops it back in. While it is out, the stave and strips do not take taps."),
+    h("Rests", "𝄽 in the tools: while you are entering (a box is showing, or the beat has just taken a note) it puts a rest at the next free spot, in the melody or in a Custom band bar. On a note you selected yourself it turns that note into a rest, and back again. With no beat active it arms a rest for your next tap on a stave or the Rhythm strip."),
     h("Entering notes", "Tap a beat once: it becomes the active beat and the dashed box appears there, sized to the picked length. Tap the pitch you want and the note is placed at the box. Only the active beat takes notes; other beats wait for their own tap."),
     h("Time signature calculator", "☰ → Time signature calculator. Tap note and rest values onto a free strip one at a time — dots, double dots and ties apply to the selected or last entry. − + set the tempo (the song's own), ▶ Hear rhythm taps it out, and Calculate ranks the time signatures that fit, showing how the rhythm falls into bars for each; green lines are bar lines between entries, orange ones cut through a note that would be tied over. Separately, Send to song as melody slots writes the rhythm into the melody from the current bar on as pitch-less boxes, cut by the song's own bars, asking first if it would replace anything."),
     h("Deleting", "Tap Delete in the tools. Then either tap the first and last beat of a run (tap either again to open it into quarters and pick the exact start or end) and press Run, or press Bar or Section to clear the whole current bar or section. The part button chooses the window you picked on only, or all parts plus the words. UNDO brings anything back; REDO puts it away again."),
