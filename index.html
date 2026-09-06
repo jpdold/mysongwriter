@@ -487,13 +487,13 @@ body.kbOpen #app { padding-bottom: 330px; }              /* room to scroll the s
   </section>
 
   <div class="strip" id="rhyStrip">
-    <button class="tag" id="rhyTag" title="Rhythm options">Rhythm</button>
+    <span class="tag" id="rhyTag">Rhythm</span>
     <div class="body"><svg id="rhySvg"></svg></div>
     <span></span>
   </div>
 
   <div class="strip" id="lyrStrip">
-    <button class="tag" id="lyrTag" title="Type words at the active beat">Lyrics</button>
+    <span class="tag" id="lyrTag">Lyrics</span>
     <div class="body"><svg id="lyrSvg"></svg><input id="lyrInline" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"><div id="weCaret"></div></div>
     <span></span>
     <div id="wordEdit">
@@ -9386,7 +9386,7 @@ function buildFtp() {
     b.addEventListener("pointerdown", e => { e.preventDefault(); ftpPitch(d); if (S.ftp.mode !== "select") t = setTimeout(() => { iv = setInterval(() => ftpPitch(d), 110); }, 420); });
     ["pointerup", "pointerleave", "pointercancel"].forEach(ev => b.addEventListener(ev, stop)); });
   box.append(el("div", { class: "main" }, grid, pitch));
-  P.rhy = el("button", { class: "tag", onclick: openRhythmMenu, title: "Rhythm options for this bar" }, "Rhythm");
+  P.rhy = el("button", { class: "tag", onclick: () => { const st = $("rhyStrip"); if (st) st.scrollIntoView({ block: "center", behavior: "smooth" }); }, title: "Show the Rhythm strip" }, "Rhythm");
   P.lyr = el("button", { class: "tag", onclick: () => { const bi = S.active ? S.active.bi : S.bi, t = S.active ? S.active.beat : 0; openWordEdit(bi, t); }, title: "Type words at this beat" }, "Lyrics");
   P.back = el("button", { class: "ftpIn", onclick: closeFtp, title: "Pop the tools back into place" }, "⤶");
   box.append(el("div", { class: "row", style: "margin-bottom:0" }, P.rhy, P.lyr, el("span", { class: "sp" }), P.back));
@@ -9765,7 +9765,7 @@ function openHelp() {
   openModal("How it works", [
     h("Pickup & repeats", "Setup → Pickup adds a short bar (½, 1 or 2 beats) before beat 1. Tap the bar name → Repeat this section to play a section several times."),
     h("Moving the keyboard", "Drag the grey bar at the top of the keyboard to put it anywhere; drop it near the bottom of the screen to dock it there again. It remembers where you left it. The floating palette moves by its bar in the same way."),
-    h("Typing words", "Tap Lyrics: the keyboard opens with the entry box at the left edge of the strip. Type a word and press ↵ — it becomes a chip at the first free spot, and the keyboard stays open for the next word. Close it with ✕ and the first word you typed is already selected."),
+    h("Typing words", "Tap the Lyrics strip: the keyboard opens with the entry box at the left edge of the strip. Type a word and press ↵ — it becomes a chip at the first free spot, and the keyboard stays open for the next word. Close it with ✕ and the first word you typed is already selected."),
     h("Keyboard keys", "𝄽 drops a rest chip at the entry spot — a chip like any other, for a beat with nothing sung. ← → move the cursor inside the word. ⇥ jumps the entry box to the next free beat line (and on into the next bar). Split breaks the chip you are editing in two at the cursor, the second half landing right after the first. The entry box only ever sits on free space, so nothing can be typed over a chip, locked or not."),
     h("Placing words", "Words have no bearing on the notes; you line them up by eye. Drag a chip anywhere along the strip — it clicks onto a beat line when close, and never overlaps another chip. To spread a word so its syllables sit under their notes, edit it and put spaces inside it (the space bar, as many as you like); it stays one chip. When a word sits right, press the gold 🔒 on the keyboard to lock it in place; select it and press 🔒 again to unlock. A locked chip cannot move or be edited."),
     h("Tempo", "♩= in the top row shows the tempo. − and + change it by one (hold to keep going); tap the number to type one."),
@@ -9906,9 +9906,7 @@ async function boot() {
   let syncing = false;
   scrollers.forEach(sc => sc.addEventListener("scroll", () => { if (syncing) return; syncing = true; scrollers.forEach(o => { if (o !== sc) o.scrollLeft = sc.scrollLeft; }); const inner = $("beatRow").querySelector(".inner"); if (inner) inner.style.transform = `translateX(${-sc.scrollLeft}px)`; syncing = false; }, { passive: true }));
   $("barLabel").addEventListener("click", openSectionOps);
-  $("rhyTag").addEventListener("click", openRhythmMenu);
   wireTempo();
-  $("lyrTag").addEventListener("click", () => { const bi = S.active ? S.active.bi : S.bi, t = S.active ? S.active.beat : 0; S.selChip = null; if (WE.on && WE.bi === bi && Math.abs(WE.t - t) < 1e-6) { closeWordEdit(); renderStrips(); return; } openWordEdit(bi, t); });   // type at the active beat, right on the strip
   $("chordsBtn").addEventListener("click", openChordsSheet);
   $("saveBtn").addEventListener("click", openLibrary);
   let holdT = null, held = false; const pb = $("playBtn");
