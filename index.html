@@ -6579,7 +6579,7 @@ const S = {
   theme: "auto",
 };
 const barBeats = bi => { const b = bi != null ? S.song.bars[bi] : null; return (b && b.beats) || TS_BEATS[S.song.sig] || 4; };
-const beatSec = () => 60 / S.song.bpm;
+const beatSec = () => 60 / (Number(S.song.bpm) > 0 ? Number(S.song.bpm) : 120);   // never NaN or Infinity, whatever the song holds
 function sectionRange(si) {
   let start = 0;
   for (let i = 0; i < si; i++) start += S.song.sections[i].bars;
@@ -6720,10 +6720,11 @@ function upgradeSong(s) {
   for (const p in base.parts) s.parts[p] = Object.assign({}, base.parts[p], s.parts[p]);
   s.bars.forEach(b => { b.chips = b.chips || []; b.ev = Object.assign({ melody: [], bass: [], accomp: [], ensemble: [] }, b.ev || {}); b.custom = Object.assign({ bass: false, accomp: false, ensemble: false }, b.custom || {}); if (!b.chords) b.chords = b.chord ? [{ t: 0, sym: b.chord }] : []; });
   if (s.snap == null) s.snap = true;
+  if (!(Number(s.bpm) > 0)) s.bpm = 120; else s.bpm = Number(s.bpm);
   if (!s.view) {                                   // older songs: open the window on what they contain
     let mlo = 60, alo = 36;
     s.bars.forEach(b => { b.ev.melody.forEach(e => { if (!e.rest && e.m < mlo + 2) mlo = e.m - 2; }); ["bass", "accomp", "ensemble"].forEach(p => (b.ev[p] || []).forEach(e => { if (!e.rest && e.m < alo + 2) alo = e.m - 2; })); });
-    s.view = { melLo: clamp(mlo, 21, 108 - MEL_ROWS + 1), accLo: clamp(alo, 21, 96 - ACC_ROWS + 1) };
+    s.view = { melLo: clamp(mlo, 21, 108 - 13 + 1), accLo: clamp(alo, 21, 96 - 13 + 1) };
   }
   return s;
 }
@@ -7118,6 +7119,7 @@ const TIMBRE = inst => {
 };
 /* one note: sounds for `sus` seconds then damps; returns a handle with stop(t) */
 function playTone(ctx, midi, when, sus, level, vel, timbre, bank) {
+  if (!isFinite(when) || !isFinite(midi) || !isFinite(sus)) return null;
   if (level <= 0) return null;
   if (bank && SAMPLES.loaded.has(bank) && SAMPLES.loaded.get(bank).anchors.length) return playSample(ctx, bank, midi, when, sus, level, vel);
   const f = midiFreq(midi), master = ctx.createGain(), nodes = [], v = vel == null ? 0.7 : vel;
@@ -7262,6 +7264,7 @@ async function deleteBank(bank) {
   for (const p of PARTS) if (S.song.parts[p].bank === bank) S.song.parts[p].bank = null;
 }
 function playSample(ctx, bank, midi, when, sus, level, vel) {
+  if (!isFinite(when) || !isFinite(midi) || !isFinite(sus)) return null;              // a bad time or pitch skips the note rather than throwing
   const b = SAMPLES.loaded.get(bank); if (!b || !b.anchors.length) return null;
   const anchor = nearestAnchor(b.anchors, midi), buf = b.map.get(anchor), v = vel == null ? 0.7 : vel;
   const src = ctx.createBufferSource(); src.buffer = buf; src.playbackRate.value = Math.pow(2, (midi - anchor) / 12);
@@ -7291,7 +7294,7 @@ function startPlayback(barList, opts = {}) {
   if (!barList.length) return;
   const ctx = ensureCtx();
   play.on = true; play.bars = barList; play.next = 0; play.t0 = ctx.currentTime + 0.08; play.loop = !!opts.loop;
-  play.offs = []; let acc = 0; for (const b of barList) { play.offs.push(acc); acc += beatSec() * barBeats(b); } play.total = acc;
+  play.offs = []; let acc = 0; for (const b of barList) { play.offs.push(acc); acc += beatSec() * (Number(barBeats(b)) > 0 ? Number(barBeats(b)) : 4); } play.total = acc;
   if (S.metro === "countin") { const bl = beatSec() * (TS_BEATS[S.song.sig] || 4); play.t0 += bl; for (let b = 0; b < (TS_BEATS[S.song.sig] || 4); b++) metroClick(ctx, play.t0 - bl + b * beatSec(), b === 0); }
   S.playing = true; S.playPos = null;
   $("playBtn").classList.add("on"); $("playBtn").textContent = "■";
@@ -7329,7 +7332,7 @@ function scheduleBar(ctx, bi, t0) {
     const P = song.parts[p]; if (!P.on) continue;
     if (S.solo && p !== S.solo) continue;
     const timbre = TIMBRE(P.inst), strum = p === "accomp" && timbre !== "piano" ? 0.012 : 0, bank = partBank(P);
-    for (const e of partEvents(p, bi)) e.ms.forEach((m, k) => playTone(ctx, m, t0 + e.t * bs + k * strum, Math.max(0.04, e.sus * bs), P.vol * e.vel * 0.5, e.vel, timbre, bank));
+    for (const e of partEvents(p, bi)) e.ms.forEach((m, k) => { const when = t0 + e.t * bs + k * strum; if (!isFinite(when) || !isFinite(m)) return; playTone(ctx, m, when, Math.max(0.04, (isFinite(e.sus) ? e.sus : e.d || 0.25) * bs), P.vol * e.vel * 0.5, e.vel, timbre, bank); });
   }
 }
 function stopPlayback() {
@@ -7729,6 +7732,7 @@ function reloadGenreChords() {
   renderAll();
 }
 function metroClick(ctx, when, accent) {
+  if (!isFinite(when)) return;
   const o = ctx.createOscillator(), g = ctx.createGain(); o.type = "square"; o.frequency.value = accent ? 1600 : 1100;
   g.gain.setValueAtTime(0, when); g.gain.linearRampToValueAtTime(accent ? 0.3 : 0.18, when + 0.002); g.gain.setTargetAtTime(0, when + 0.012, 0.02);
   o.connect(g).connect(masterGain); o.start(when); o.stop(when + 0.12);
