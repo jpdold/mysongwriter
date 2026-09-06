@@ -224,6 +224,26 @@ svg text { pointer-events: none; }
 #palette .prow button.txt { padding: 0; }
 #palette .prow .who { margin-left: 4px; }
 #palette .prow button.chord { width: auto; min-width: 44px; flex: 0 0 auto; padding: 0 7px; }
+/* ── time signature calculator ── */
+.tsc .strip { background: var(--ground2); border: 1.5px solid #141414; border-radius: 4px; overflow-x: auto; overflow-y: hidden; box-shadow: inset 0 2px 5px rgba(0,0,0,.3); }
+.tsc .strip svg { display: block; }
+.tsc .pal { display: flex; flex-direction: column; gap: 4px; margin: 8px 0; }
+.tsc .prow { display: flex; gap: 4px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; }
+.tsc .k { flex: 0 0 40px; width: 40px; height: 44px; padding: 0; border: 1px solid #222; border-radius: 6px; background: linear-gradient(#fff, #d9d9d9); color: #111; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; }
+.tsc .k .g { font-size: 18px; line-height: 20px; font-family: var(--serif); }
+.tsc .k .cap { font-size: 8px; line-height: 10px; color: #444; font-family: var(--sans); font-weight: 600; }
+.tsc .prow.rests .k { background: linear-gradient(#f4f4f4, #cfcfcf); }
+.tsc .prow.mods .k { background: linear-gradient(#ffe38a, #e6b400); border-color: #a07d00; }
+.tsc .ctl { display: flex; align-items: center; gap: 6px; margin: 6px 0; }
+.tsc .ctl .flex { flex: 1; }
+.tsc .ctl .bpm { font-weight: 800; font-variant-numeric: tabular-nums; min-width: 56px; text-align: center; }
+.tsc .res { margin-top: 8px; }
+.tsc .best { font-size: 16px; margin: 4px 0 6px; }
+.tsc .rank { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 8px; }
+.tsc .rank .sc { font-size: 10px; opacity: .7; }
+.tsc .bars .bar { display: flex; gap: 8px; align-items: baseline; padding: 4px 6px; border-bottom: 1px solid #ddd; }
+.tsc .bars .no { font-size: 11px; font-weight: 700; color: #555; min-width: 44px; }
+.tsc .bars .gl { font-family: var(--serif); font-size: 20px; letter-spacing: .04em; white-space: pre-wrap; }
 #palette .prow button.wide { width: auto; min-width: 48px; flex: 0 0 auto; padding: 0 8px; }
 #palette .prow button.lyr.warn { color: var(--danger); }
 #palette .prow .gap { flex: 0 0 8px; }
@@ -9128,6 +9148,7 @@ function openMenu() {
   openModal("My Song Writer", [el("div", { class: "menuList" },
     item("✚", "New song…", startNewSong),
     item("♫", "Song setup — name, genre, key, time, tempo", openSongSetup),
+    item("𝄆", "Time signature calculator…", openTsCalc),
     item("⇪", "Share — link, parts, performance mode", openShare),
     item("⬇", "Export .json", () => downloadJSON(S.song, ((S.song.title || "song").replace(/[^\w\- ]+/g, "").trim() || "song") + ".mysong.json")),
     item("⬆", "Import .json", () => file.click()),
@@ -9501,6 +9522,156 @@ function drawMoveSel(svg, g, bi, part) {
     }
   }
 }
+/* ═══════════════════════════════════════════════════════════════════════
+   TIME SIGNATURE CALCULATOR — tap out a rhythm one value at a time on a free strip,
+   hear it at the song's tempo, then let the app rank the time signatures that fit it.
+   ═══════════════════════════════════════════════════════════════════════ */
+const TSC = { entries: [], sel: null, result: null, pick: 0, playing: false };
+const TSC_VALUES = [["whole", 4, "𝅝", "1"], ["half", 2, "𝅗𝅥", "½"], ["quarter", 1, "♩", "¼"], ["eighth", 0.5, "♪", "⅛"], ["16th", 0.25, "𝅘𝅥𝅯", "16"], ["32nd", 0.125, "𝅘𝅥𝅰", "32"], ["64th", 0.0625, "𝅘𝅥𝅱", "64"], ["128th", 0.03125, "𝅘𝅥𝅲", "128"]];
+const TSC_RESTS = ["𝄻", "𝄼", "𝄽", "𝄾", "𝄿", "𝅀", "𝅁", "𝅂"];
+const tscDur = e => TSC_VALUES[e.v][1] * (e.dots === 2 ? 1.75 : e.dots === 1 ? 1.5 : 1);
+const tscGlyph = e => (e.rest ? TSC_RESTS[e.v] : TSC_VALUES[e.v][2]) + (e.dots ? "·".repeat(e.dots) : "");
+function openTsCalc() {
+  const wrap = el("div", { class: "tsc" });
+  wrap.append(el("div", { class: "tiny", style: "margin-bottom:6px" }, "Tap values to lay a rhythm on the strip, one at a time. Nothing divides it yet — Calculate finds the time signature that fits best and shows how it falls into bars."));
+  wrap.append(el("div", { class: "strip" }, (() => { const s = document.createElementNS("http://www.w3.org/2000/svg", "svg"); s.id = "tscSvg"; return s; })()));
+  const pal = el("div", { class: "pal" }); wrap.append(pal);
+  const row = cls => { const r = el("div", { class: "prow " + (cls || "") }); pal.append(r); return r; };
+  const key = (r, label, cap, fn, opts = {}) => r.append(el("button", { class: "k" + (opts.cls ? " " + opts.cls : ""), title: opts.title || cap, onclick: fn }, el("span", { class: "g" }, label), el("span", { class: "cap" }, cap)));
+  const r1 = row("notes"); TSC_VALUES.forEach(([name, , g], i) => key(r1, g, name, () => tscAdd(i, false)));
+  const r2 = row("rests"); TSC_VALUES.forEach(([name, , , ], i) => key(r2, TSC_RESTS[i], name + " rest", () => tscAdd(i, true)));
+  const r3 = row("mods");
+  key(r3, "·", "dot", () => tscMod("dot", 1), { title: "Dotted (×1½) — on the selected or last entry" });
+  key(r3, "··", "double", () => tscMod("dot", 2), { title: "Double-dotted (×1¾)" });
+  key(r3, "⌒", "tie", () => tscMod("tie"), { title: "Tie into the next note (it is not struck again)" });
+  key(r3, "⌫", "delete", () => tscMod("del"), { title: "Remove the selected entry, or the last one" });
+  key(r3, "✕", "clear", () => { if (!TSC.entries.length) return; confirmModal("Clear the strip?", () => { TSC.entries = []; TSC.sel = null; TSC.result = null; openTsCalc(); }, "Clear"); }, { title: "Start again" });
+  const ctl = el("div", { class: "ctl" });
+  ctl.append(el("button", { class: "btn sm", onclick: () => { setTempo((S.song.bpm || 120) - 1); tscRender(); } }, "−"), el("span", { class: "bpm", id: "tscBpm" }, `♩=${S.song.bpm || 120}`), el("button", { class: "btn sm", onclick: () => { setTempo((S.song.bpm || 120) + 1); tscRender(); } }, "+"));
+  ctl.append(el("span", { class: "flex" }));
+  ctl.append(el("button", { class: "btn sm", id: "tscHear", onclick: tscHear }, "▶ Hear rhythm"), el("button", { class: "btn acc", onclick: tscCalc }, "Calculate"));
+  wrap.append(ctl, el("div", { class: "res", id: "tscRes" }));
+  openModal("Time signature calculator", wrap);
+  tscRender();
+}
+function tscAdd(v, rest) { TSC.entries.push({ v, rest, dots: 0, tie: false }); TSC.sel = null; TSC.result = null; tscRender(); }
+function tscTarget() { return TSC.sel != null ? TSC.entries[TSC.sel] : TSC.entries[TSC.entries.length - 1]; }
+function tscMod(kind, n) {
+  const e = tscTarget(); if (!e) { toast("Add an entry first"); return; }
+  if (kind === "dot") e.dots = e.dots === n ? 0 : n;
+  else if (kind === "tie") { if (e.rest) { toast("Rests do not tie"); return; } e.tie = !e.tie; }
+  else if (kind === "del") { TSC.entries.splice(TSC.entries.indexOf(e), 1); TSC.sel = null; }
+  TSC.result = null; tscRender();
+}
+/* the strip: every entry drawn on its own, no beams, a small arc for a tie; bar lines and split marks once there is a result */
+function tscRender() {
+  const svg = $("tscSvg"); if (!svg) return;
+  const CW = 40, H = 66, y = 40, n = TSC.entries.length, W = Math.max(280, 16 + n * CW);
+  svg.replaceChildren(); svg.setAttribute("width", W); svg.setAttribute("height", H); svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.append(svgEl("line", { x1: 0, x2: W, y1: y, y2: y, stroke: "rgba(255,255,255,.35)", "stroke-width": 1 }));
+  const res = TSC.result && TSC.result.ranked[TSC.pick];
+  const cutsAfter = res ? res.cutsAfter : new Map();                                   // entry index → bar number ending after it (or inside it)
+  TSC.entries.forEach((e, i) => {
+    const x = 8 + i * CW, sel = TSC.sel === i;
+    svg.append(svgEl("rect", { x, y: 4, width: CW - 4, height: H - 8, rx: 5, fill: sel ? "#fff" : "transparent", "fill-opacity": sel ? 0.28 : 1, stroke: sel ? "#fff" : "none", "data-i": i }));
+    const g = svgEl("g", { "pointer-events": "none" });
+    if (!e.rest) {
+      const hx = x + 12, hollow = e.v <= 1;
+      g.append(svgEl("ellipse", { cx: hx, cy: y, rx: 5.5, ry: 4, fill: hollow ? "none" : "#fff", stroke: "#fff", "stroke-width": hollow ? 1.8 : 0, transform: `rotate(-20 ${hx} ${y})` }));
+      if (e.v >= 1) { const sx = hx + 5, top = y - 24; g.append(svgEl("line", { x1: sx, x2: sx, y1: y - 1, y2: top, stroke: "#fff", "stroke-width": 1.4 })); const flags = Math.max(0, e.v - 2); for (let f = 0; f < flags; f++) g.append(svgEl("path", { d: `M ${sx} ${top + f * 4.5} q 9 4 6 13`, fill: "none", stroke: "#fff", "stroke-width": 1.6, "stroke-linecap": "round" })); }
+      for (let d = 0; d < e.dots; d++) g.append(svgEl("circle", { cx: hx + 10 + d * 5, cy: y - 3, r: 1.8, fill: "#fff" }));
+      if (e.tie) g.append(svgEl("path", { d: `M ${hx + 4} ${y + 6} q ${CW / 2 - 6} 9 ${CW - 8} 0`, fill: "none", stroke: "#f5a623", "stroke-width": 1.6, "stroke-dasharray": i === n - 1 ? "3 3" : "" }));
+    } else {
+      const cx = x + 12;
+      if (e.v === 0) g.append(svgEl("rect", { x: cx - 6, y: y - 8, width: 12, height: 4, fill: "#fff" }), svgEl("line", { x1: cx - 9, x2: cx + 9, y1: y - 8, y2: y - 8, stroke: "#fff", "stroke-width": 1 }));
+      else if (e.v === 1) g.append(svgEl("rect", { x: cx - 6, y: y - 4, width: 12, height: 4, fill: "#fff" }), svgEl("line", { x1: cx - 9, x2: cx + 9, y1: y, y2: y, stroke: "#fff", "stroke-width": 1 }));
+      else if (e.v === 2) g.append(svgEl("path", { d: `M ${cx - 3} ${y - 14} l 6 7 l -5 6 l 6 8 q -7 -3 -6 4`, fill: "none", stroke: "#fff", "stroke-width": 2, "stroke-linejoin": "round" }));
+      else { const hooks = e.v - 2; g.append(svgEl("line", { x1: cx + 5, x2: cx - 4, y1: y - 12, y2: y + 10, stroke: "#fff", "stroke-width": 1.6 })); for (let h = 0; h < hooks; h++) { const hy = y - 12 + h * 5.5, hx = cx + 5 - h * 2.2; g.append(svgEl("line", { x1: hx, x2: hx - 7, y1: hy, y2: hy + 3, stroke: "#fff", "stroke-width": 1.4 }), svgEl("circle", { cx: hx - 7.5, cy: hy + 3.5, r: 1.9, fill: "#fff" })); } }
+      for (let d = 0; d < e.dots; d++) g.append(svgEl("circle", { cx: cx + 10 + d * 5, cy: y - 3, r: 1.8, fill: "#fff" }));
+    }
+    svg.append(g);
+    const cut = cutsAfter.get(i);
+    if (cut) {
+      const bx = cut.inside ? x + 8 + (CW - 12) * cut.frac : x + CW - 2;
+      svg.append(svgEl("line", { x1: bx, x2: bx, y1: 6, y2: H - 6, stroke: cut.inside ? "#f5a623" : "#8fd14f", "stroke-width": 2, "stroke-dasharray": cut.inside ? "3 3" : "" }));
+      svg.append(svgEl("text", { x: bx + 3, y: 12, "font-size": 9, "font-weight": 700, fill: cut.inside ? "#f5a623" : "#8fd14f", "font-family": "system-ui, sans-serif" }, cut.inside ? `${cut.bar + 1} (tied)` : String(cut.bar + 1)));
+    }
+  });
+  if (!n) svg.append(svgEl("text", { x: 12, y: y + 5, "font-size": 12, fill: "rgba(255,255,255,.7)", "font-family": "system-ui, sans-serif" }, "tap a note or rest below to begin"));
+  svg.onclick = ev => { const i = ev.target.getAttribute && ev.target.getAttribute("data-i"); if (i == null) return; TSC.sel = TSC.sel === +i ? null : +i; tscRender(); };
+  const bpm = $("tscBpm"); if (bpm) bpm.textContent = `♩=${S.song.bpm || 120}`;
+  tscRenderResult();
+}
+/* hear it: one tap per struck note at the song's tempo (rests are silent, tied notes are not re-struck) */
+function tscHear() {
+  if (!TSC.entries.length) { toast("Add some entries first"); return; }
+  if (TSC.playing) return;
+  const ctx = ensureCtx(), bs = 60 / (S.song.bpm || 120), t0 = ctx.currentTime + 0.08; let t = 0, prevTie = false, total = 0;
+  TSC.entries.forEach(e => { if (!e.rest && !prevTie) metroClick(ctx, t0 + t * bs, t === 0); prevTie = !e.rest && e.tie; t += tscDur(e); });
+  total = t * bs;
+  TSC.playing = true; const b = $("tscHear"); if (b) { b.disabled = true; b.textContent = "♪ playing"; }
+  setTimeout(() => { TSC.playing = false; const bb = $("tscHear"); if (bb) { bb.disabled = false; bb.textContent = "▶ Hear rhythm"; } }, total * 1000 + 200);
+}
+/* the ranking: every plausible signature is tried as a bar length and scored on how the rhythm falls into it */
+function tscCalc() {
+  const E = TSC.entries; if (!E.length) { toast("Add some entries first"); return; }
+  const durs = E.map(tscDur), total = r3(durs.reduce((a, b) => a + b, 0));
+  const starts = []; let acc = 0; E.forEach((e, i) => { starts.push(acc); acc = r3(acc + durs[i]); });
+  const bounds = new Set(starts.map(s => r3(s)).concat([total]));
+  const onsets = []; E.forEach((e, i) => { if (!e.rest && !(i > 0 && !E[i - 1].rest && E[i - 1].tie)) onsets.push(starts[i]); });
+  const onGrid = (t, step) => Math.abs(t / step - Math.round(t / step)) < 1e-6;
+  const cands = [];
+  for (const den of [2, 4, 8, 16]) for (let num = 2; num <= (den === 16 ? 15 : 12); num++) {
+    if (den === 16 && num % 2 === 0) continue;                                       // even sixteenth counts are just eighths
+    if (den === 2 && num > 4) continue;
+    const L = r3(num * 4 / den); if (L > total + 1e-6) continue;
+    const bars = total / L, nBars = Math.floor(bars + 1e-6), leftover = r3(total - nBars * L), complete = leftover < 1e-6;
+    const cuts = []; for (let k = 1; k <= nBars; k++) { const c = r3(k * L); if (c < total - 1e-6) cuts.push(c); }
+    const straddles = cuts.filter(c => !bounds.has(c)).length, cutOnsets = cuts.filter(c => onsets.some(o => Math.abs(o - c) < 1e-6)).length;
+    const beat = den === 8 && num % 3 === 0 && num > 3 ? 1.5 : 4 / den;
+    const beatsN = Math.floor(total / beat + 1e-6);
+    const onsetsOnBeat = onsets.filter(o => onGrid(o, beat)).length / Math.max(1, onsets.length);
+    let hit = 0; for (let k = 0; k < beatsN; k++) { const t = r3(k * beat); if (onsets.some(o => Math.abs(o - t) < 1e-6) || bounds.has(t)) hit++; }
+    const beatsHit = beatsN ? hit / beatsN : 0;
+    const sig = `${num}/${den}`, regular = { "4/4": 10, "3/4": 8, "2/4": 6, "6/8": 7, "2/2": 5, "3/8": 3, "9/8": 3, "12/8": 3, "3/2": 2 }[sig] || 0;
+    const irregular = [5, 7, 11, 13].includes(num) || (den === 16 ? 6 : 0) ? 6 : 0;
+    let score = 100 - straddles * 22 - (complete ? 0 : 28 * (1 - leftover / L)) + (cuts.length ? 18 * cutOnsets / cuts.length : (onsets.length && Math.abs(onsets[0]) < 1e-6 ? 12 : 0))
+      + 16 * onsetsOnBeat + 12 * beatsHit + regular - irregular + Math.min(4, L) * 0.6 - (nBars > 12 ? 4 : 0);
+    if (!complete && nBars === 0) score -= 40;
+    cands.push({ sig, num, den, L, nBars: nBars + (complete ? 0 : 1), complete, straddles, score: Math.round(score * 10) / 10 });
+  }
+  cands.sort((a, b) => b.score - a.score);
+  const ranked = cands.slice(0, 6).map(c => Object.assign(c, tscSection(c.L)));
+  TSC.result = { total, ranked }; TSC.pick = 0; tscRender();
+}
+/* how the entries fall into bars of length L: rows of glyphs, and where the cuts land (between entries, or inside one) */
+function tscSection(L) {
+  const E = TSC.entries, rows = [], cutsAfter = new Map(); let bar = [], pos = 0, barNo = 0, carry = 0;
+  E.forEach((e, i) => {
+    let d = tscDur(e), g = tscGlyph(e), first = true;
+    while (d > 1e-6) {
+      const room = r3((barNo + 1) * L - pos);
+      if (d <= room + 1e-6) { bar.push((first ? "" : "⌒") + g); pos = r3(pos + d); d = 0; if (Math.abs(pos - (barNo + 1) * L) < 1e-6) { rows.push(bar); bar = []; if (i < E.length - 1) cutsAfter.set(i, { bar: barNo, inside: false }); barNo++; } }
+      else { bar.push((first ? "" : "⌒") + g + "⌒"); rows.push(bar); bar = []; cutsAfter.set(i, { bar: barNo, inside: true, frac: room / tscDur(e) + (first ? 0 : 0) }); pos = r3(pos + room); d = r3(d - room); barNo++; first = false; carry++; }
+    }
+  });
+  if (bar.length) rows.push(bar);
+  return { rows, cutsAfter, carry };
+}
+function tscRenderResult() {
+  const box = $("tscRes"); if (!box) return; box.replaceChildren();
+  if (!TSC.result) { if (TSC.entries.length) box.append(el("div", { class: "tiny" }, `${TSC.entries.length} entr${TSC.entries.length === 1 ? "y" : "ies"} · ${r3(TSC.entries.reduce((a, e) => a + tscDur(e), 0))} quarter-note beats in all`)); return; }
+  const R = TSC.result, best = R.ranked[TSC.pick];
+  box.append(el("div", { class: "best" }, el("b", {}, `${best.sig}`), ` — ${best.nBars} bar${best.nBars === 1 ? "" : "s"}${best.complete ? "" : ", the last one short"}${best.straddles ? `, ${best.straddles} note${best.straddles === 1 ? "" : "s"} tied over a bar line` : ""}`));
+  const list = el("div", { class: "rank" });
+  R.ranked.forEach((c, i) => list.append(el("button", { class: "btn sm" + (i === TSC.pick ? " acc" : ""), onclick: () => { TSC.pick = i; tscRender(); }, title: `${c.nBars} bars · score ${c.score}` }, `${c.sig}`, el("span", { class: "sc" }, ` ${c.score}`))));
+  box.append(el("div", { class: "tiny" }, "Best fit first — tap another to see the rhythm cut its way:"), list);
+  const bars = el("div", { class: "bars" });
+  best.rows.forEach((row, i) => bars.append(el("div", { class: "bar" }, el("span", { class: "no" }, `Bar ${i + 1}`), el("span", { class: "gl" }, row.join("  ")))));
+  box.append(bars);
+  if (TS_BEATS[best.sig]) box.append(el("div", { class: "mrow" }, el("button", { class: "btn sm", onclick: () => { S.song.sig = best.sig; closeModal(); renderAll(); toast(`Song set to ${best.sig}`); } }, `Use ${best.sig} for this song`)));
+  else box.append(el("div", { class: "tiny" }, `The song itself can be set to 4/4, 3/4, 2/4 or 6/8 — ${best.sig} is for your own notation.`));
+}
 /* full screen: hides the address bar on Android / desktop; iPhone Safari has no such API,
    so there the answer is Share → Add to Home Screen, which opens the app without any browser bars */
 function toggleFullscreen() {
@@ -9521,6 +9692,7 @@ function openHelp() {
     h("Chords (stacked notes)", "Turn on Chord in the tools, then tap other pitches in the same time column as a note to stack them; each gets the same length and ties. Works in the melody and in Custom band bars. Tap Chord again to go back to single notes."),
     h("Floating palette", "⧉ at the end of the tools pops them out into a small palette you can drag anywhere (the stave keeps its size). ◀ ▶ step by the chosen note length (eighths step half a beat) and also stop at every note start — tap the label to step through bars instead. The yellow box shows the pitch; ▲ ▼ change it. Tap PITCH to flip the arrows to SELECT, which moves between the notes stacked at that spot; tap again to go back. Tap a note length once to choose it (the box takes that size); tap the chosen length again to enter the note at the box, or, when a note is selected, to give that note the length. M / A / B pick the window, 🗑 deletes, ▶ plays the bar, Rhythm and Lyrics open those tools, ⚙ sets its size and side, ⤶ pops it back in. While it is out, the stave and strips do not take taps."),
     h("Entering notes", "Tap a beat once: it becomes the active beat and the dashed box appears there, sized to the picked length. Tap the pitch you want and the note is placed at the box. Only the active beat takes notes; other beats wait for their own tap."),
+    h("Time signature calculator", "☰ → Time signature calculator. Tap note and rest values onto a free strip one at a time — dots, double dots and ties apply to the selected or last entry. − + set the tempo (the song's own), ▶ Hear rhythm taps it out, and Calculate ranks the time signatures that fit, showing how the rhythm falls into bars for each; green lines are bar lines between entries, orange ones cut through a note that would be tied over."),
     h("Deleting", "Tap Delete in the tools. Then either tap the first and last beat of a run (tap either again to open it into quarters and pick the exact start or end) and press Run, or press Bar or Section to clear the whole current bar or section. The part button chooses the window you picked on only, or all parts plus the words. UNDO brings anything back; REDO puts it away again."),
     h("Moving beats", "Tap Move in the tools, then tap the first beat of the run and the last beat; a tap takes the whole beat. Tap the first beat again and it opens into quarters — tap the quarter the run should start on. Tap the last beat again for its quarters and the run ends there. The run must be one unbroken stretch. ◀ ▶ shift everything in it (in the window you picked it on) a beat earlier or later, staying inside the section and only into empty space; notes that cross a bar line are tied over it. Tap the group once to lock it in. ✕ leaves move mode."),
     h("Clearing a beat", "With a beat active and no note selected, 🗑 in the tools removes every note, rest or slot that starts in that beat for the part you activated it in, including any tied run-on into later bars. ↶ undoes it."),

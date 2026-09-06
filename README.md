@@ -25,6 +25,10 @@ Windows share the screen: the melody gets the most room and Accompaniment and Ba
 
 The dots under the bar bracket show each bar of the section: green when every voice is full, white when empty, yellow in between.
 
+## Time signature calculator
+
+☰ → Time signature calculator. Tap note and rest values (whole down to 128th, with dots, double dots and ties) onto a free strip one at a time, hear it tapped out at the song's tempo, then press Calculate: every plausible signature is scored on how the rhythm falls into bars — bar lines landing between entries on struck notes, complete last bars, onsets on the beat, and a preference for regular metres — and the best fits are listed with the rhythm sectioned bar by bar for each.
+
 ## Floating tool palette
 
 ⧉ at the end of the tools pops them out into a small draggable palette. The stave keeps its size and stops taking taps; you step through beats (or bars) with ◀ ▶, set the pitch with ▲ ▼, and tap a note length to enter the note at the dashed box, or to change a selected note's length. M / A / B pick the window, ⚙ sets the palette's size and which side the pitch arrows sit, ⤶ pops it back in.
