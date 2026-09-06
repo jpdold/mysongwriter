@@ -188,9 +188,9 @@ svg text { pointer-events: none; }
 .win.closed .side { flex-direction: row; gap: 6px; grid-column: 3; }
 .win.closed .winHead { position: static; transform: none; justify-self: start; grid-column: 2; }
 #melWin.closed::before { content: ""; grid-column: 1; }
-.win .rArr { width: 34px; height: 15px; flex: 0 0 15px; border: 1px solid rgba(255,255,255,.45); border-radius: 4px; background: rgba(0,0,0,.32); color: #fff; font-size: 13px; font-weight: 700; padding: 0; line-height: 13px; position: static; margin: 0 4px 0 2px; letter-spacing: 0; box-shadow: 0 1px 2px rgba(0,0,0,.35); z-index: 1; }
-.win .rArr:active { background: linear-gradient(#ffd27a, #f5a623); color: #111; }
-.win .rArr.up { margin-bottom: 2px; } .win .rArr.dn { margin-top: 2px; }
+.win .rArr { width: 16px; height: 16px; flex: 0 0 16px; align-self: center; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #cfcfcf); color: #111; font-size: 12px; font-weight: 800; padding: 0; line-height: 13px; position: static; margin: 0 auto; letter-spacing: 0; box-shadow: 0 2px 4px rgba(0,0,0,.4); z-index: 1; display: grid; place-items: center; }
+.win .rArr:active { background: linear-gradient(#ffd27a, #f5a623); }
+.win .rArr.up { margin-bottom: 1px; } .win .rArr.dn { margin-top: 1px; }
 .win .gutter svg text { paint-order: stroke; stroke: var(--ground); stroke-width: 2px; stroke-linejoin: round; }
 .winHead { position: absolute; left: 50%; transform: translateX(-50%); top: -9px; z-index: 2; background: #111; color: #fff; font-size: 10.5px; font-weight: 700; height: 18px; line-height: 16px;
   letter-spacing: .06em; padding: 0 12px; border-radius: 3px; white-space: nowrap; text-transform: uppercase; border: 1px solid #000; max-width: calc(100% - 100px); overflow: hidden; text-overflow: ellipsis; }
