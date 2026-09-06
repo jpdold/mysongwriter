@@ -8422,14 +8422,14 @@ function renderPalette() {
     b("Bar", () => delRun("bar"), { cls: "lyr", warn: true, title: `Delete everything in bar ${barNo(S.bi)}` });
     b("Section", () => delRun("section"), { cls: "lyr", warn: true, title: "Delete everything in this section" });
     b(S.mv.allParts ? "All" : PART_META[S.mv.part].short, () => { S.mv.allParts = !S.mv.allParts; renderPalette(); }, { cls: "lyr", on: S.mv.allParts, title: S.mv.allParts ? "Deleting from all parts and the words — tap for this part only" : `Deleting from the ${PART_META[S.mv.part].label.toLowerCase()} only — tap for all parts and the words` });
-    p.append(el("span", { class: "hint" }, S.mv.start == null ? "tap first and last beat, then Run" : mvLabel()));
+    p.append(el("span", { class: "hint" }, S.mv.sub ? `tap a quarter for the ${S.mv.sub.which}` : S.mv.start == null ? "tap first and last beat, then Run" : mvLabel()));
     b("✕", mvCancel, { cls: "txt", title: "Leave delete mode" });
     return;
   }
   if (S.mv) {
     b("◀", () => mvShift(-1), { cls: "txt", title: "Move the run one beat earlier" });
     b("▶", () => mvShift(1), { cls: "txt", title: "Move the run one beat later" });
-    p.append(el("span", { class: "hint" }, S.mv.start == null ? "tap the first beat, then the last" : S.mv.moved ? "◀ ▶ keep moving · tap the group to lock in" : `${mvLabel()} · ◀ ▶ move`));
+    p.append(el("span", { class: "hint" }, S.mv.sub ? `tap a quarter for the ${S.mv.sub.which}` : S.mv.start == null ? "tap the first beat, then the last" : S.mv.moved ? "◀ ▶ keep moving · tap the group to lock in" : `${mvLabel()} · ◀ ▶ move`));
     b("✕", mvCancel, { cls: "txt", title: "Leave move mode" });
     return;
   }
@@ -9377,7 +9377,7 @@ const barAbs = bi => { let a = 0; for (let k = 0; k < bi; k++) a += barBeats(k);
 function absToBar(abs) { let a = 0; for (let bi = 0; bi < S.song.bars.length; bi++) { const B = barBeats(bi); if (abs < a + B - 1e-6) return { bi, t: r3(abs - a) }; a += B; } return null; }
 function mvStart(mode = "move") {
   if (S.mv && S.mv.mode === mode) { mvCancel(); return; }
-  S.mv = { mode, part: S.activePart || "melody", start: null, end: null, moved: false, allParts: false };
+  S.mv = { mode, part: S.activePart || "melody", start: null, end: null, moved: false, allParts: false, sub: null };
   S.sel = null; S.ghost = null; S.active = null; S.justEntered = null; renderAll();
   toast(mode === "delete" ? "Delete: tap the first beat of the run, then the last — or use Bar / Section" : "Move: tap the first beat of the run (part-way in, if you like), then the last beat");
 }
@@ -9408,18 +9408,34 @@ function delRun(scope) {
 }
 function mvCancel() { S.mv = null; renderAll(); }
 function mvLock() { S.mv = null; renderAll(); toast("Locked in"); }
-function mvLabel() { const a = absToBar(S.mv.start), b = absToBar(S.mv.end - 0.001); return a && b ? `${beatLabel(a.t)} of bar ${barNo(a.bi)} → beat ${Math.floor(b.t) + 1} of bar ${barNo(b.bi)}` : ""; }
+function mvLabel() {
+  const a = absToBar(S.mv.start), eb = absToBar(S.mv.end - 1e-6); if (!a || !eb) return "";
+  const endT = r3(S.mv.end - barAbs(eb.bi)), whole = Math.abs(endT - Math.round(endT)) < 1e-6;
+  return `${beatLabel(a.t)} of bar ${barNo(a.bi)} → ${whole ? "through beat " + Math.round(endT) : "up to " + beatLabel(endT)} of bar ${barNo(eb.bi)}`;
+}
 function mvTap(win, bi, t) {
+  /* first tap: the whole beat. Tapping the run's first or last beat again shows its quarters; a tap on a quarter sets the start or end there. */
   const part = WIN_PART[win], mv = S.mv;
-  if (mv.part !== part) { mv.part = part; mv.start = mv.end = null; mv.moved = false; }
-  const abs = barAbs(bi) + t, b0 = barAbs(bi) + Math.floor(t + 1e-6), b1 = b0 + 1;
-  if (mv.mode !== "delete" && mv.start != null && abs >= mv.start - 1e-6 && abs < mv.end - 1e-6) { mvLock(); return; }   // a tap on the group: lock it in
-  if (mv.mode !== "delete" && mv.moved) { mvLock(); return; }
-  if (mv.start == null) { const q = Math.round(t * 4) / 4, frac = q - Math.floor(q); mv.start = barAbs(bi) + (frac < 0.125 ? Math.floor(t) : q); mv.end = b1; }
-  else if (b1 <= mv.start + 1e-6) mv.start = b0;                                                // reaching back: whole beats
-  else mv.end = Math.max(mv.end, b1);                                                            // reaching forward: through that beat
+  if (mv.part !== part) { mv.part = part; mv.start = mv.end = null; mv.moved = false; mv.sub = null; }
+  const abs = barAbs(bi) + t, beat = barAbs(bi) + Math.floor(t + 1e-6), q = Math.floor((t - Math.floor(t + 1e-6)) * 4 + 1e-6) / 4;
+  const done = () => { S.active = null; S.sel = null; S.ghost = null; renderAll(); };
+  if (mv.sub) {                                                                   // picking a quarter of the first or last beat
+    if (beat === mv.sub.beat) {
+      if (mv.sub.which === "start") mv.start = r3(Math.min(beat + q, mv.end - 0.25)); else mv.end = r3(Math.max(beat + q + 0.25, mv.start + 0.25));
+      mv.sub = null; done(); return;
+    }
+    mv.sub = null;                                                                // a tap elsewhere just leaves the quarters
+  }
+  if (mv.mode !== "delete" && mv.moved) { mvLock(); return; }                    // after a move, any tap locks the group in
+  if (mv.start == null) { mv.start = beat; mv.end = beat + 1; done(); return; }
+  const first = Math.floor(mv.start + 1e-6), last = Math.ceil(mv.end - 1e-6) - 1;
+  if (beat === first && (Math.abs(mv.start - first) < 1e-6 || beat !== last)) { mv.sub = { which: "start", beat }; done(); toast("Tap the quarter the run starts on"); return; }
+  if (beat === last) { mv.sub = { which: "end", beat }; done(); toast("Tap the quarter the run ends on"); return; }
+  if (mv.mode !== "delete" && abs >= mv.start - 1e-6 && abs < mv.end - 1e-6) { mvLock(); return; }   // a tap inside the run: lock it in
+  if (beat + 1 <= mv.start + 1e-6) mv.start = beat;                             // reaching back: whole beats
+  else mv.end = Math.max(mv.end, beat + 1);                                      // reaching forward: through that beat
   const r = sectionRange(sectionOfBar(bi)); mv.start = Math.max(mv.start, barAbs(r.start)); mv.end = Math.min(mv.end, barAbs(r.end));
-  S.active = null; S.sel = null; S.ghost = null; renderAll();
+  done();
 }
 /* everything of the part that starts inside the run, plus tied continuations that hang off its end */
 function mvGroup(part, start, end) {
@@ -9449,7 +9465,7 @@ function mvShift(dir) {
       abs = r3(abs + room); left = r3(left - room); first = false;
     }
   });
-  mv.start = r3(mv.start + delta); mv.end = r3(mv.end + delta); mv.moved = true;
+  mv.start = r3(mv.start + delta); mv.end = r3(mv.end + delta); mv.moved = true; mv.sub = null;
   mergeTiedPieces(mv.part, r.start, r.end);
   S.bi = absToBar(mv.start).bi; S.sel = null; S.ghost = null; S.active = null; renderAll();
 }
@@ -9468,11 +9484,22 @@ function mergeTiedPieces(part, from, to) {
 }
 function drawMoveSel(svg, g, bi, part) {
   if (!S.mv || S.mv.part !== part || S.mv.start == null) return;
-  const a = barAbs(bi), s = Math.max(S.mv.start, a), e = Math.min(S.mv.end, a + barBeats(bi)); if (e <= s + 1e-6) return;
-  const x0 = g.x(bi, s - a), x1 = g.x(bi, e - a);
-  const col = S.mv.mode === "delete" ? "#d9362b" : "#2f7fd6";
-  svg.append(svgEl("rect", { x: x0, y: 1, width: x1 - x0, height: g.H - 2, fill: col, opacity: 0.22, "pointer-events": "none" }),
-             svgEl("rect", { x: x0 + 1, y: 2, width: x1 - x0 - 2, height: g.H - 4, fill: "none", stroke: col, "stroke-width": 2.5, "stroke-dasharray": S.mv.moved ? "" : "8 4", "pointer-events": "none" }));
+  const a = barAbs(bi), col = S.mv.mode === "delete" ? "#d9362b" : "#2f7fd6";
+  const s = Math.max(S.mv.start, a), e = Math.min(S.mv.end, a + barBeats(bi));
+  if (e > s + 1e-6) {
+    const x0 = g.x(bi, s - a), x1 = g.x(bi, e - a);
+    svg.append(svgEl("rect", { x: x0, y: 1, width: x1 - x0, height: g.H - 2, fill: col, opacity: 0.22, "pointer-events": "none" }),
+               svgEl("rect", { x: x0 + 1, y: 2, width: x1 - x0 - 2, height: g.H - 4, fill: "none", stroke: col, "stroke-width": 2.5, "stroke-dasharray": S.mv.moved ? "" : "8 4", "pointer-events": "none" }));
+  }
+  const sub = S.mv.sub;                                                           // the beat opened into quarters
+  if (sub && sub.beat >= a && sub.beat < a + barBeats(bi)) {
+    const bt = sub.beat - a;
+    for (let k = 0; k < 4; k++) {
+      const qx0 = g.x(bi, bt + k / 4), qx1 = g.x(bi, bt + (k + 1) / 4);
+      svg.append(svgEl("rect", { x: qx0 + 1, y: 3, width: qx1 - qx0 - 2, height: g.H - 6, rx: 3, fill: "#fff", "fill-opacity": 0.35, stroke: col, "stroke-width": 1.5, "pointer-events": "none" }));
+      svg.append(svgEl("text", { x: (qx0 + qx1) / 2, y: 14, "text-anchor": "middle", "font-size": 9, "font-weight": 700, fill: col, "pointer-events": "none" }, ["1", "¼", "½", "¾"][k]));
+    }
+  }
 }
 /* full screen: hides the address bar on Android / desktop; iPhone Safari has no such API,
    so there the answer is Share → Add to Home Screen, which opens the app without any browser bars */
@@ -9494,8 +9521,8 @@ function openHelp() {
     h("Chords (stacked notes)", "Turn on Chord in the tools, then tap other pitches in the same time column as a note to stack them; each gets the same length and ties. Works in the melody and in Custom band bars. Tap Chord again to go back to single notes."),
     h("Floating palette", "⧉ at the end of the tools pops them out into a small palette you can drag anywhere (the stave keeps its size). ◀ ▶ step by the chosen note length (eighths step half a beat) and also stop at every note start — tap the label to step through bars instead. The yellow box shows the pitch; ▲ ▼ change it. Tap PITCH to flip the arrows to SELECT, which moves between the notes stacked at that spot; tap again to go back. Tap a note length once to choose it (the box takes that size); tap the chosen length again to enter the note at the box, or, when a note is selected, to give that note the length. M / A / B pick the window, 🗑 deletes, ▶ plays the bar, Rhythm and Lyrics open those tools, ⚙ sets its size and side, ⤶ pops it back in. While it is out, the stave and strips do not take taps."),
     h("Entering notes", "Tap a beat once: it becomes the active beat and the dashed box appears there, sized to the picked length. Tap the pitch you want and the note is placed at the box. Only the active beat takes notes; other beats wait for their own tap."),
-    h("Deleting", "Tap Delete in the tools. Then either tap the first and last beat of a run (the first part-way in, if you like) and press Run, or press Bar or Section to clear the whole current bar or section. The part button chooses the window you picked on only, or all parts plus the words. UNDO brings anything back; REDO puts it away again."),
-    h("Moving beats", "Tap Move in the tools, then tap the first beat of the run — part-way into it if the run should start on an off-beat — and the last beat. The run must be one unbroken stretch. ◀ ▶ shift everything in it (in the window you picked it on) a beat earlier or later, staying inside the section and only into empty space; notes that cross a bar line are tied over it. Tap the group once to lock it in. ✕ leaves move mode."),
+    h("Deleting", "Tap Delete in the tools. Then either tap the first and last beat of a run (tap either again to open it into quarters and pick the exact start or end) and press Run, or press Bar or Section to clear the whole current bar or section. The part button chooses the window you picked on only, or all parts plus the words. UNDO brings anything back; REDO puts it away again."),
+    h("Moving beats", "Tap Move in the tools, then tap the first beat of the run and the last beat; a tap takes the whole beat. Tap the first beat again and it opens into quarters — tap the quarter the run should start on. Tap the last beat again for its quarters and the run ends there. The run must be one unbroken stretch. ◀ ▶ shift everything in it (in the window you picked it on) a beat earlier or later, staying inside the section and only into empty space; notes that cross a bar line are tied over it. Tap the group once to lock it in. ✕ leaves move mode."),
     h("Clearing a beat", "With a beat active and no note selected, 🗑 in the tools removes every note, rest or slot that starts in that beat for the part you activated it in, including any tied run-on into later bars. ↶ undoes it."),
     h("After an entry", "A note you have just placed stays selected, so the tools change its pitch or length at once, and a tap on another row in its column re-pitches it. A tap anywhere else on the stave lets it go: in the same beat that tap places the next note straight away at the next free spot, with the picked length; in another beat it activates that beat."),
     h("Long notes", "A note longer than the room left in its beat runs on through the following beats, and into the next bars, tied — as long as those beats are empty. If something is already in the way, or the song ends first, the note is refused with a message saying there is not enough space."),
