@@ -9658,9 +9658,34 @@ function tscSection(L) {
   if (bar.length) rows.push(bar);
   return { rows, cutsAfter, carry };
 }
+/* opt-in: the rhythm flows into the song as melody slots (no pitches yet), from the current bar on, cut by the song's own bars */
+function tscSend() {
+  const E = TSC.entries; if (!E.length) { toast("Add some entries first"); return; }
+  const bars = S.song.bars, from = S.bi, pieces = []; let bi = from, t = 0, overflow = false;
+  for (const e of E) {
+    let d = tscDur(e); const tieOut = e.tie && !e.rest;
+    while (d > 1e-6) {
+      if (bi >= bars.length) { overflow = true; break; }
+      const B = barBeats(bi), room = r3(Math.min(d, B - t)), more = d - room > 1e-6;
+      pieces.push({ bi, t, d: room, rest: e.rest, tie: !e.rest && (more || tieOut) });
+      t = r3(t + room); d = r3(d - room); if (t >= B - 1e-6) { bi++; t = 0; }
+    }
+    if (overflow) break;
+  }
+  if (!pieces.length) { toast("No room from this bar"); return; }
+  const lastBi = pieces[pieces.length - 1].bi, span = from === lastBi ? `bar ${barNo(from)}` : `bars ${barNo(from)}–${barNo(lastBi)}`;
+  const go = () => {
+    for (let k = from; k <= lastBi; k++) bars[k].ev.melody = [];
+    pieces.forEach(p => { const ev = { id: uid(), t: p.t, d: p.d }; if (p.rest) ev.rest = true; else { ev.m = null; if (p.tie) ev.tie = true; } bars[p.bi].ev.melody.push(ev); });
+    closeModal(); S.sel = null; S.active = null; S.ghost = null; S.mv = null; renderAll();
+    toast(`Rhythm placed in ${span}${overflow ? " — it ran past the last bar" : ""}. Tap the boxes to give them pitches.`);
+  };
+  if (bars.slice(from, lastBi + 1).some(b => b.ev.melody.length)) confirmModal(`The melody in ${span} will be replaced by this rhythm. Go ahead?`, go, "Replace"); else go();
+}
 function tscRenderResult() {
   const box = $("tscRes"); if (!box) return; box.replaceChildren();
-  if (!TSC.result) { if (TSC.entries.length) box.append(el("div", { class: "tiny" }, `${TSC.entries.length} entr${TSC.entries.length === 1 ? "y" : "ies"} · ${r3(TSC.entries.reduce((a, e) => a + tscDur(e), 0))} quarter-note beats in all`)); return; }
+  const sendRow = () => TSC.entries.length ? el("div", { class: "mrow send" }, el("button", { class: "btn sm", onclick: tscSend }, "Send to song as melody slots…"), el("span", { class: "tiny" }, `From bar ${barNo(S.bi)}, cut by the song's own ${S.song.sig} bars; you add the pitches after.`)) : null;
+  if (!TSC.result) { if (TSC.entries.length) box.append(el("div", { class: "tiny" }, `${TSC.entries.length} entr${TSC.entries.length === 1 ? "y" : "ies"} · ${r3(TSC.entries.reduce((a, e) => a + tscDur(e), 0))} quarter-note beats in all`), sendRow()); return; }
   const R = TSC.result, best = R.ranked[TSC.pick];
   box.append(el("div", { class: "best" }, el("b", {}, `${best.sig}`), ` — ${best.nBars} bar${best.nBars === 1 ? "" : "s"}${best.complete ? "" : ", the last one short"}${best.straddles ? `, ${best.straddles} note${best.straddles === 1 ? "" : "s"} tied over a bar line` : ""}`));
   const list = el("div", { class: "rank" });
@@ -9671,6 +9696,7 @@ function tscRenderResult() {
   box.append(bars);
   if (TS_BEATS[best.sig]) box.append(el("div", { class: "mrow" }, el("button", { class: "btn sm", onclick: () => { S.song.sig = best.sig; closeModal(); renderAll(); toast(`Song set to ${best.sig}`); } }, `Use ${best.sig} for this song`)));
   else box.append(el("div", { class: "tiny" }, `The song itself can be set to 4/4, 3/4, 2/4 or 6/8 — ${best.sig} is for your own notation.`));
+  box.append(sendRow());
 }
 /* full screen: hides the address bar on Android / desktop; iPhone Safari has no such API,
    so there the answer is Share → Add to Home Screen, which opens the app without any browser bars */
@@ -9692,7 +9718,7 @@ function openHelp() {
     h("Chords (stacked notes)", "Turn on Chord in the tools, then tap other pitches in the same time column as a note to stack them; each gets the same length and ties. Works in the melody and in Custom band bars. Tap Chord again to go back to single notes."),
     h("Floating palette", "⧉ at the end of the tools pops them out into a small palette you can drag anywhere (the stave keeps its size). ◀ ▶ step by the chosen note length (eighths step half a beat) and also stop at every note start — tap the label to step through bars instead. The yellow box shows the pitch; ▲ ▼ change it. Tap PITCH to flip the arrows to SELECT, which moves between the notes stacked at that spot; tap again to go back. Tap a note length once to choose it (the box takes that size); tap the chosen length again to enter the note at the box, or, when a note is selected, to give that note the length. M / A / B pick the window, 🗑 deletes, ▶ plays the bar, Rhythm and Lyrics open those tools, ⚙ sets its size and side, ⤶ pops it back in. While it is out, the stave and strips do not take taps."),
     h("Entering notes", "Tap a beat once: it becomes the active beat and the dashed box appears there, sized to the picked length. Tap the pitch you want and the note is placed at the box. Only the active beat takes notes; other beats wait for their own tap."),
-    h("Time signature calculator", "☰ → Time signature calculator. Tap note and rest values onto a free strip one at a time — dots, double dots and ties apply to the selected or last entry. − + set the tempo (the song's own), ▶ Hear rhythm taps it out, and Calculate ranks the time signatures that fit, showing how the rhythm falls into bars for each; green lines are bar lines between entries, orange ones cut through a note that would be tied over."),
+    h("Time signature calculator", "☰ → Time signature calculator. Tap note and rest values onto a free strip one at a time — dots, double dots and ties apply to the selected or last entry. − + set the tempo (the song's own), ▶ Hear rhythm taps it out, and Calculate ranks the time signatures that fit, showing how the rhythm falls into bars for each; green lines are bar lines between entries, orange ones cut through a note that would be tied over. Separately, Send to song as melody slots writes the rhythm into the melody from the current bar on as pitch-less boxes, cut by the song's own bars, asking first if it would replace anything."),
     h("Deleting", "Tap Delete in the tools. Then either tap the first and last beat of a run (tap either again to open it into quarters and pick the exact start or end) and press Run, or press Bar or Section to clear the whole current bar or section. The part button chooses the window you picked on only, or all parts plus the words. UNDO brings anything back; REDO puts it away again."),
     h("Moving beats", "Tap Move in the tools, then tap the first beat of the run and the last beat; a tap takes the whole beat. Tap the first beat again and it opens into quarters — tap the quarter the run should start on. Tap the last beat again for its quarters and the run ends there. The run must be one unbroken stretch. ◀ ▶ shift everything in it (in the window you picked it on) a beat earlier or later, staying inside the section and only into empty space; notes that cross a bar line are tied over it. Tap the group once to lock it in. ✕ leaves move mode."),
     h("Clearing a beat", "With a beat active and no note selected, 🗑 in the tools removes every note, rest or slot that starts in that beat for the part you activated it in, including any tied run-on into later bars. ↶ undoes it."),
