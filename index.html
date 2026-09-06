@@ -8715,11 +8715,12 @@ function initPointer() {
     svg.addEventListener("pointermove", e => {
       if (!dragCtx || dragCtx.svg !== svg || e.pointerId !== dragCtx.id) return;
       const dx = e.clientX - dragCtx.x0, dy = e.clientY - dragCtx.y0;
-      if (!dragCtx.moved && Math.hypot(dx, dy) < 8) return;
-      dragCtx.moved = true;
-      if (dragCtx.locked) return;                          // locked beats ignore swipes
-      if (!dragCtx.ev) {                                   // empty space: swipe scrolls the register (up/down) or turns the bar (sideways)
-        if (!dragCtx.swipe) dragCtx.swipe = Math.abs(dy) >= Math.abs(dx) ? "v" : "h";
+      if (!dragCtx.moved && Math.hypot(dx, dy) < 10) return;
+      dragCtx.moved = true;                                // from here on this pointer can never place, pitch or select anything
+      if (dragCtx.locked && dragCtx.ev) return;            // a marked note in a locked beat: nothing to drag
+      if (!dragCtx.ev) {                                   // empty space anywhere (locked beats too): swipe scrolls the register (up/down) or turns the bar (sideways)
+        if (!dragCtx.swipe) dragCtx.swipe = Math.abs(dy) >= Math.abs(dx) * 1.25 ? "v" : Math.abs(dx) >= Math.abs(dy) * 1.25 ? "h" : null;
+        if (!dragCtx.swipe) return;                        // too diagonal to call yet — wait for a clearer direction
         if (dragCtx.swipe === "v") {
           const g = GEO[win], r = svg.getBoundingClientRect(), rows = Math.round(dy * (g.W / r.width) / g.step), { rows: n } = rowsOf(win);
           const next = clamp(dragCtx.lo0 + rows, 21, 108 - n);
@@ -8737,7 +8738,7 @@ function initPointer() {
     const up = e => {
       if (!dragCtx || dragCtx.svg !== svg || e.pointerId !== dragCtx.id) return;
       const d = dragCtx; dragCtx = null;
-      if (d.moved) { if (d.locked) return; if (!d.ev && d.swipe === "h") { const dx = e.clientX - d.x0; if (Math.abs(dx) > 50) { S.bi = clamp(S.bi + (dx < 0 ? 1 : -1), 0, S.song.bars.length - 1); S.sel = null; } } renderAll(); return; }
+      if (d.moved) { if (d.locked && d.ev) return; if (!d.ev && d.swipe === "h") { const dx = e.clientX - d.x0; if (Math.abs(dx) > 50) { S.bi = clamp(S.bi + (dx < 0 ? 1 : -1), 0, S.song.bars.length - 1); S.sel = null; S.ghost = null; } } renderAll(); return; }   // a swipe ends as a swipe: no tap, no entry
       const p = svgPoint(svg, e), g = GEO[win], at = g.at(p.x);
       S.selChip = null;
       if (S.mv) { mvTap(win, at.bi, at.t); return; }                                                                    // move mode: taps pick the run, or lock it in
@@ -9765,6 +9766,7 @@ function openHelp() {
     h("Chords (stacked notes)", "Turn on Chord in the tools, then tap other pitches in the same time column as a note to stack them; each gets the same length and ties. Works in the melody and in Custom band bars. Tap Chord again to go back to single notes."),
     h("Floating palette", "⧉ at the end of the tools pops them out into a small palette you can drag anywhere (the stave keeps its size). ◀ ▶ step by the chosen note length (eighths step half a beat) and also stop at every note start — tap the label to step through bars instead. The yellow box shows the pitch; ▲ ▼ change it. Tap PITCH to flip the arrows to SELECT, which moves between the notes stacked at that spot; tap again to go back. Tap a note length once to choose it (the box takes that size); tap the chosen length again to enter the note at the box, or, when a note is selected, to give that note the length. M / A / B pick the window, 🗑 deletes, ▶ plays the bar, Rhythm and Lyrics open those tools, ⚙ sets its size and side, ⤶ pops it back in. While it is out, the stave and strips do not take taps."),
     h("Rests", "𝄽 in the tools: while you are entering (a box is showing, or the beat has just taken a note) it puts a rest at the next free spot, in the melody or in a Custom band bar. On a note you selected yourself it turns that note into a rest, and back again. With no beat active it arms a rest for your next tap on a stave or the Rhythm strip."),
+    h("Swiping the staves", "Swipe up or down anywhere on a stave — melody, accompaniment or bass, in any beat — to slide its range; swipe sideways on empty space to turn the bar. A swipe is only ever a swipe: it never places, pitches or selects a note, and a tap that wanders a little still counts as a tap."),
     h("Notes that run on", "A note that runs on past its beat marks the beats it covers with a white band along the top and bottom of the stave. Tap anywhere along it and it is selected, with its own beat woken."),
     h("Entering notes", "Tap a beat once: it becomes the active beat and the dashed box appears there, sized to the picked length. Tap the pitch you want and the note is placed at the box. Only the active beat takes notes; other beats wait for their own tap."),
     h("Time signature calculator", "☰ → Time signature calculator. Tap note and rest values onto a free strip one at a time — dots, double dots and ties apply to the selected or last entry. − + set the tempo (the song's own), ▶ Hear rhythm taps it out, and Calculate ranks the time signatures that fit, showing how the rhythm falls into bars for each; green lines are bar lines between entries, orange ones cut through a note that would be tied over. Separately, Send to song as melody slots writes the rhythm into the melody from the current bar on as pitch-less boxes, cut by the song's own bars, asking first if it would replace anything."),
