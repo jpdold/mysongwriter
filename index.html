@@ -7726,7 +7726,7 @@ const WIN_LO = { mel: "melLo", acc: "accLo", bass: "bassLo" };
 const NOTE_SCALE = { s: 0.62, m: 0.85, l: 1.25 }; const NS = () => NOTE_SCALE[S.noteSize] || 1;   // note size: heads only, the stave never changes
 const HK = () => S.halfLines ? 1.55 : 1;         // lines-and-spaces: heads grow to fill a space (two rows)
 const STEP_K = { s: 0.94, m: 1, l: 1.06 };       // row height nudges a little with the note size
-Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", noteSize: "m", chordMode: false, justEntered: null, activePart: "melody", lastEntered: null, ftp: null, halfLines: true, winSize: "m", chordsDisp: "names", metro: "off", winState: { mel: "open", acc: "closed", bass: "closed" }, zoomWin: { mel: 1, acc: 1, bass: 1 }, lyricFont: "sans", viewSpan: 1, layout: "rolled", selChip: null, ghost: null, restNext: false, artic: null, slurFrom: null, active: null, softKb: ("ontouchstart" in window), popPos: null, mode: "melody" });
+Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", noteSize: "m", chordMode: false, justEntered: null, activePart: "melody", lastEntered: null, ftp: null, mv: null, halfLines: true, winSize: "m", chordsDisp: "names", metro: "off", winState: { mel: "open", acc: "closed", bass: "closed" }, zoomWin: { mel: 1, acc: 1, bass: 1 }, lyricFont: "sans", viewSpan: 1, layout: "rolled", selChip: null, ghost: null, restNext: false, artic: null, slurFrom: null, active: null, softKb: ("ontouchstart" in window), popPos: null, mode: "melody" });
 const UNDO = { stack: [], last: null, max: 60 };
 const setMode = () => {};                          // engine shims (the old mode sheets are gone)
 const renderPanel = () => renderAll();
@@ -8220,6 +8220,7 @@ function renderWindows() {
     const cur = S.cursor && S.cursor.bi === bi ? bar.chips.find(c => c.id === S.cursor.chipId) : null;
     if (cur && S.followWords) svg.append(svgEl("rect", { x: g.x(bi, cur.t), y: 0, width: Math.max(6, cur.d * g.beatPx), height: g.H, fill: box, opacity: 0.12, "pointer-events": "none" }));
     if (S.active && S.active.bi === bi) { const ax = g.x(bi, S.active.beat), aw = g.x(bi, Math.min(barBeats(bi), S.active.beat + 1)) - ax; svg.append(svgEl("rect", { x: ax, y: 0, width: aw, height: g.H, fill: css("--box"), opacity: 0.28, "pointer-events": "none" }), svgEl("rect", { x: ax + 1, y: 1, width: aw - 2, height: g.H - 2, fill: "none", stroke: css("--box"), "stroke-width": 2, opacity: 0.9, "pointer-events": "none" })); }
+    drawMoveSel(svg, g, bi, "melody");
     if (S.ghost && S.ghost.part === "melody" && S.ghost.bi === bi) drawGhost(svg, g, bi, S.ghost, box);
     for (const c of chains(bar)) {
       const x0 = g.x(bi, c.t) + 1, x1 = g.x(bi, c.t + c.d) - 2, selected = c.members.some(e => e.id === sel);
@@ -8266,6 +8267,7 @@ function renderWindows() {
     for (const bi of viewBars()) {
     const bar = song.bars[bi], sel = S.sel && S.sel.bi === bi && S.sel.part === part ? S.sel.id : null;
     if (S.active && S.active.bi === bi) { const ax = g.x(bi, S.active.beat), aw = g.x(bi, Math.min(barBeats(bi), S.active.beat + 1)) - ax; svg.append(svgEl("rect", { x: ax, y: 0, width: aw, height: g.H, fill: css("--box"), opacity: 0.28, "pointer-events": "none" }), svgEl("rect", { x: ax + 1, y: 1, width: aw - 2, height: g.H - 2, fill: "none", stroke: css("--box"), "stroke-width": 2, opacity: 0.9, "pointer-events": "none" })); }
+    drawMoveSel(svg, g, bi, part);
     if (S.ghost && S.ghost.part === part && S.ghost.bi === bi) drawGhost(svg, g, bi, S.ghost, color);
     if (bar.custom[part]) {
       const groups = S.noteStyle === "trad" ? beamGroups(bar.ev[part].filter(e => e.m >= g.lo && e.m <= g.hi)) : [], beamed = new Set(groups.flatMap(gp => gp.evs.map(e => e.id)));
@@ -8411,6 +8413,14 @@ function renderPalette() {
   b("𝄽", tapRest, { on: S.restNext, title: ev ? "Turn into a rest" : S.ghost ? "Put a rest in the box" : "Rest: tap where it goes" });
   b("＋", appendFromStrip, { cls: "txt", title: "Add a box of this length at the end of the rhythm", disabled: !!ev });
   p = r2;
+  if (S.mv) {
+    b("◀", () => mvShift(-1), { cls: "txt", title: "Move the run one beat earlier" });
+    b("▶", () => mvShift(1), { cls: "txt", title: "Move the run one beat later" });
+    p.append(el("span", { class: "hint" }, S.mv.start == null ? "tap the first beat, then the last" : S.mv.moved ? "◀ ▶ keep moving · tap the group to lock in" : `${mvLabel()} · ◀ ▶ move`));
+    b("✕", mvCancel, { cls: "txt", title: "Leave move mode" });
+    return;
+  }
+  b("Move", mvStart, { cls: "lyr", on: !!S.mv, title: "Move beats: pick a run of beats, then ◀ ▶ shift what is in them into empty space" });
   b("Chord", () => { S.chordMode = !S.chordMode; renderPalette(); }, { cls: "lyr chord", on: S.chordMode, title: S.chordMode ? "Chord mode on — tapping another pitch at a note's time stacks it; tap to turn off" : "Chord mode: stack more pitches on a note" });
   b("⌒", tapTie, { on: !!(ev && ev.tie), title: "Tie to the next note", disabled: !ev && !bar.ev.melody.length });
   for (const k of ["staccato", "tenuto", "slur"]) b(ARTIC[k].glyph, () => tapArtic(k), { cls: "art" + (S.artic === k ? " armed" : ""), on: !!(ev && (k === "slur" ? ev.slur : ev.artic === k)), title: S.artic === k ? `${ARTIC[k].label} armed — tap notes to mark them; tap again to return to note entry` : `${ARTIC[k].label}: tap before entering a note, or arm it and tap existing notes` });
@@ -8674,6 +8684,7 @@ function initPointer() {
       if (d.moved) { if (d.locked) return; if (!d.ev && d.swipe === "h") { const dx = e.clientX - d.x0; if (Math.abs(dx) > 50) { S.bi = clamp(S.bi + (dx < 0 ? 1 : -1), 0, S.song.bars.length - 1); S.sel = null; } } renderAll(); return; }
       const p = svgPoint(svg, e), g = GEO[win], at = g.at(p.x);
       S.selChip = null;
+      if (S.mv) { mvTap(win, at.bi, at.t); return; }                                                                    // move mode: taps pick the run, or lock it in
       if (d.ev && S.artic && !d.ev.rest && d.ev.m != null) { S.bi = d.bi; applyArtic(d.bi, d.part, d.ev); return; }   // slurs and marks may reach into locked beats
       if (d.locked) { activate(at.bi, at.t, WIN_PART[win]); showBox(at.bi, WIN_PART[win]); return; }
       if (d.ev && d.part === "melody" && !d.ev.rest) { tapMelody(d.bi, at.t, g.m(p.y)); return; }
@@ -9345,6 +9356,86 @@ function wireTempo() {
   });
   const l = $("tempoLbl"); if (l) l.addEventListener("click", () => promptModal("Tempo (beats per minute)", String(S.song.bpm || 120), v => { const n = parseInt(v, 10); if (n) setTempo(n); }));
 }
+/* ═══════════════════════════════════════════════════════════════════════
+   MOVE BEATS — select a contiguous run of beats (the first may start part-way in),
+   shift everything in them earlier or later within the section wherever the space is empty,
+   then tap the group to lock it in.
+   ═══════════════════════════════════════════════════════════════════════ */
+const barAbs = bi => { let a = 0; for (let k = 0; k < bi; k++) a += barBeats(k); return a; };
+function absToBar(abs) { let a = 0; for (let bi = 0; bi < S.song.bars.length; bi++) { const B = barBeats(bi); if (abs < a + B - 1e-6) return { bi, t: r3(abs - a) }; a += B; } return null; }
+function mvStart() {
+  if (S.mv) { mvCancel(); return; }
+  S.mv = { part: S.activePart || "melody", start: null, end: null, moved: false };
+  S.sel = null; S.ghost = null; S.active = null; S.justEntered = null; renderAll();
+  toast("Move: tap the first beat of the run (part-way in, if you like), then the last beat");
+}
+function mvCancel() { S.mv = null; renderAll(); }
+function mvLock() { S.mv = null; renderAll(); toast("Locked in"); }
+function mvLabel() { const a = absToBar(S.mv.start), b = absToBar(S.mv.end - 0.001); return a && b ? `${beatLabel(a.t)} of bar ${barNo(a.bi)} → beat ${Math.floor(b.t) + 1} of bar ${barNo(b.bi)}` : ""; }
+function mvTap(win, bi, t) {
+  const part = WIN_PART[win], mv = S.mv;
+  if (mv.part !== part) { mv.part = part; mv.start = mv.end = null; mv.moved = false; }
+  const abs = barAbs(bi) + t, b0 = barAbs(bi) + Math.floor(t + 1e-6), b1 = b0 + 1;
+  if (mv.start != null && abs >= mv.start - 1e-6 && abs < mv.end - 1e-6) { mvLock(); return; }   // a tap on the group: lock it in
+  if (mv.moved) { mvLock(); return; }
+  if (mv.start == null) { const q = Math.round(t * 4) / 4, frac = q - Math.floor(q); mv.start = barAbs(bi) + (frac < 0.125 ? Math.floor(t) : q); mv.end = b1; }
+  else if (b1 <= mv.start + 1e-6) mv.start = b0;                                                // reaching back: whole beats
+  else mv.end = Math.max(mv.end, b1);                                                            // reaching forward: through that beat
+  const r = sectionRange(sectionOfBar(bi)); mv.start = Math.max(mv.start, barAbs(r.start)); mv.end = Math.min(mv.end, barAbs(r.end));
+  S.active = null; S.sel = null; S.ghost = null; renderAll();
+}
+/* everything of the part that starts inside the run, plus tied continuations that hang off its end */
+function mvGroup() {
+  const mv = S.mv, part = mv.part, out = [];
+  S.song.bars.forEach((bar, bi) => { const a = barAbs(bi); (bar.ev[part] || []).forEach(e => { const s = a + e.t; if (s >= mv.start - 1e-6 && s < mv.end - 1e-6) out.push({ e, bi, abs: s }); }); });
+  let grew = true;
+  while (grew) { grew = false; for (const it of [...out]) { if (!it.e.tie || it.e.rest || Math.abs(it.e.t + it.e.d - barBeats(it.bi)) > 1e-6) continue; const nb = S.song.bars[it.bi + 1]; if (!nb) continue; const nx = (nb.ev[part] || []).find(e => e.t < 1e-6 && !e.rest && e.m === it.e.m); if (nx && !out.some(o => o.e === nx)) { out.push({ e: nx, bi: it.bi + 1, abs: barAbs(it.bi + 1) }); grew = true; } } }
+  return out;
+}
+function mvShift(dir) {
+  const mv = S.mv; if (!mv || mv.start == null) { toast("Select the beats first"); return; }
+  const group = mvGroup(); if (!group.length) { toast("Nothing in those beats to move"); return; }
+  const delta = dir, a0 = absToBar(mv.start), r = sectionRange(sectionOfBar(a0.bi)), lo = barAbs(r.start), hi = barAbs(r.end);
+  const gStart = Math.min(mv.start, ...group.map(o => o.abs)), gEnd = Math.max(mv.end, ...group.map(o => o.abs + o.e.d));
+  if (gStart + delta < lo - 1e-6 || gEnd + delta > hi + 1e-6) { toast("That is the edge of the section"); return; }
+  const set = new Set(group.map(o => o.e)), ns = gStart + delta, ne = gEnd + delta;
+  for (let bi = r.start; bi < r.end; bi++) { const a = barAbs(bi); for (const e of (S.song.bars[bi].ev[mv.part] || [])) { if (set.has(e)) continue; const s = a + e.t; if (s < ne - 1e-6 && s + e.d > ns + 1e-6) { toast("No empty space there — something is in the way"); return; } } }
+  group.forEach(o => { const bar = S.song.bars[o.bi]; bar.ev[mv.part] = bar.ev[mv.part].filter(e => e !== o.e); });
+  group.forEach(o => {                                                          // lay each one down again, split over bar lines where it must be
+    const tieOrig = !!o.e.tie; let abs = o.abs + delta, left = o.e.d, first = true;
+    while (left > 1e-6) {
+      const at = absToBar(abs); if (!at) break;
+      const room = r3(Math.min(left, barBeats(at.bi) - at.t)), more = left - room > 1e-6;
+      const piece = first ? o.e : Object.assign({}, o.e, { id: uid() }); if (!first) delete piece.artic;
+      piece.t = at.t; piece.d = room; if (more || tieOrig) piece.tie = true; else delete piece.tie;
+      S.song.bars[at.bi].ev[mv.part].push(piece);
+      abs = r3(abs + room); left = r3(left - room); first = false;
+    }
+  });
+  mv.start = r3(mv.start + delta); mv.end = r3(mv.end + delta); mv.moved = true;
+  mergeTiedPieces(mv.part, r.start, r.end);
+  S.bi = absToBar(mv.start).bi; S.sel = null; S.ghost = null; S.active = null; renderAll();
+}
+/* two tied pieces of one pitch that now sit side by side inside a bar become one note again */
+function mergeTiedPieces(part, from, to) {
+  for (let bi = from; bi < to; bi++) {
+    const bar = S.song.bars[bi], evs = (bar.ev[part] || []).slice().sort((a, b) => a.t - b.t);
+    for (let i = 0; i < evs.length - 1; i++) {
+      const a = evs[i], b = evs[i + 1];
+      if (a.tie && !a.rest && !b.rest && a.m === b.m && Math.abs(a.t + a.d - b.t) < 1e-6 && !b.artic && !b.slur) {
+        a.d = r3(a.d + b.d); if (b.tie) a.tie = true; else delete a.tie;
+        bar.ev[part] = bar.ev[part].filter(e => e !== b); evs.splice(i + 1, 1); i--;
+      }
+    }
+  }
+}
+function drawMoveSel(svg, g, bi, part) {
+  if (!S.mv || S.mv.part !== part || S.mv.start == null) return;
+  const a = barAbs(bi), s = Math.max(S.mv.start, a), e = Math.min(S.mv.end, a + barBeats(bi)); if (e <= s + 1e-6) return;
+  const x0 = g.x(bi, s - a), x1 = g.x(bi, e - a);
+  svg.append(svgEl("rect", { x: x0, y: 1, width: x1 - x0, height: g.H - 2, fill: "#2f7fd6", opacity: 0.22, "pointer-events": "none" }),
+             svgEl("rect", { x: x0 + 1, y: 2, width: x1 - x0 - 2, height: g.H - 4, fill: "none", stroke: "#2f7fd6", "stroke-width": 2.5, "stroke-dasharray": S.mv.moved ? "" : "8 4", "pointer-events": "none" }));
+}
 /* full screen: hides the address bar on Android / desktop; iPhone Safari has no such API,
    so there the answer is Share → Add to Home Screen, which opens the app without any browser bars */
 function toggleFullscreen() {
@@ -9365,6 +9456,7 @@ function openHelp() {
     h("Chords (stacked notes)", "Turn on Chord in the tools, then tap other pitches in the same time column as a note to stack them; each gets the same length and ties. Works in the melody and in Custom band bars. Tap Chord again to go back to single notes."),
     h("Floating palette", "⧉ at the end of the tools pops them out into a small palette you can drag anywhere (the stave keeps its size). ◀ ▶ step by the chosen note length (eighths step half a beat) and also stop at every note start — tap the label to step through bars instead. The yellow box shows the pitch; ▲ ▼ change it. Tap PITCH to flip the arrows to SELECT, which moves between the notes stacked at that spot; tap again to go back. Tap a note length once to choose it (the box takes that size); tap the chosen length again to enter the note at the box, or, when a note is selected, to give that note the length. M / A / B pick the window, 🗑 deletes, ▶ plays the bar, Rhythm and Lyrics open those tools, ⚙ sets its size and side, ⤶ pops it back in. While it is out, the stave and strips do not take taps."),
     h("Entering notes", "Tap a beat once: it becomes the active beat and the dashed box appears there, sized to the picked length. Tap the pitch you want and the note is placed at the box. Only the active beat takes notes; other beats wait for their own tap."),
+    h("Moving beats", "Tap Move in the tools, then tap the first beat of the run — part-way into it if the run should start on an off-beat — and the last beat. The run must be one unbroken stretch. ◀ ▶ shift everything in it (in the window you picked it on) a beat earlier or later, staying inside the section and only into empty space; notes that cross a bar line are tied over it. Tap the group once to lock it in. ✕ leaves move mode."),
     h("Clearing a beat", "With a beat active and no note selected, 🗑 in the tools removes every note, rest or slot that starts in that beat for the part you activated it in, including any tied run-on into later bars. ↶ undoes it."),
     h("After an entry", "A note you have just placed stays selected, so the tools change its pitch or length at once, and a tap on another row in its column re-pitches it. A tap anywhere else on the stave lets it go: in the same beat that tap places the next note straight away at the next free spot, with the picked length; in another beat it activates that beat."),
     h("Long notes", "A note longer than the room left in its beat runs on through the following beats, and into the next bars, tied — as long as those beats are empty. If something is already in the way, or the song ends first, the note is refused with a message saying there is not enough space."),
