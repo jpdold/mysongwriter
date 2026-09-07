@@ -69,10 +69,10 @@ svg text { pointer-events: none; }
    3. LAYOUT — one column on a phone; melody stack left / band right when wide
    ═══════════════════════════════════════════════════════════════════════ */
 #app { max-width: 560px; margin: 0 auto; padding: 8px 10px calc(14px + env(safe-area-inset-bottom)); display: grid; gap: 7px;
-  grid-template-columns: 1fr; grid-template-areas: "head" "nav" "mel" "rhy" "lyr" "pal" "acc" "bass" "foot"; }
+  grid-template-columns: 1fr; grid-template-areas: "head" "nav" "mel" "rhy" "lyr" "arrows" "undo" "pal" "acc" "bass"; }
 #rollBar { grid-area: rollbar; display: none; gap: 6px; }
 /* rolled-up view: three labelled bars across the top; open staves drop down beneath; strips and tools follow */
-#app.rolled { max-width: 560px !important; grid-template-columns: 1fr !important; grid-template-areas: "head" "nav" "rollbar" "mel" "acc" "bass" "rhy" "lyr" "pal" "foot" !important; }
+#app.rolled { max-width: 560px !important; grid-template-columns: 1fr !important; grid-template-areas: "head" "nav" "rollbar" "mel" "acc" "bass" "rhy" "lyr" "arrows" "undo" "pal" !important; }
 @media (min-width: 860px) and (min-aspect-ratio: 5/4), (max-height: 520px) and (min-aspect-ratio: 5/4) { #app.rolled { max-width: 1180px !important; padding-left: 16px; padding-right: 16px; } #app.rolled .win .focus { display: none !important; } }
 #app.rolled #rollBar { display: flex; }
 #app.rolled .win.closed { display: none !important; }
@@ -89,16 +89,16 @@ svg text { pointer-events: none; }
 .rollItem.open { background: var(--ground2); }
 .rollItem.open button { background: var(--box); color: #111; border-color: #a86d10; }
 #head { grid-area: head; } #nav { grid-area: nav; } #melWin { grid-area: mel; } #rhyStrip { grid-area: rhy; }
-#lyrStrip { grid-area: lyr; } #palette { grid-area: pal; } #accWin { grid-area: acc; } #bassWin { grid-area: bass; } #foot { grid-area: foot; }
+#lyrStrip { grid-area: lyr; } #palette { grid-area: pal; } #accWin { grid-area: acc; } #bassWin { grid-area: bass; } #arrows { grid-area: arrows; } #undoRow { grid-area: undo; }
 @media (min-width: 860px) and (min-aspect-ratio: 5/4) {
   #app { max-width: 1180px; grid-template-columns: 1fr 1fr; column-gap: 14px; align-content: start;
-    grid-template-areas: "head head" "nav nav" "mel acc" "rhy bass" "lyr bass" "pal foot"; }
+    grid-template-areas: "head head" "nav nav" "mel acc" "rhy bass" "lyr bass" "arrows bass" "undo bass" "pal bass"; }
   #accWin, #bassWin { align-self: start; }
 }
 /* phone turned sideways: no thin strip — two columns, small chrome */
 @media (max-height: 520px) and (min-aspect-ratio: 5/4) {
   #app { max-width: none; padding: 4px 8px; gap: 4px; grid-template-columns: 1fr 1fr; column-gap: 10px;
-    grid-template-areas: "head nav" "mel acc" "rhy bass" "lyr bass" "pal foot"; }
+    grid-template-areas: "head nav" "mel acc" "rhy bass" "lyr bass" "arrows bass" "undo bass" "pal bass"; }
 }
 
 /* ── header ── */
@@ -110,8 +110,8 @@ svg text { pointer-events: none; }
 #topTransport #playAllBtn { padding-right: 6px; }
 #topTransport button .dots { font-size: 11px; font-weight: 800; margin-left: 1px; letter-spacing: -1px; }
 #topTransport #stopBtn { font-size: 15px; }
-#topTransport #playBtn { padding-right: 6px; }
-#topTransport #playBtn .sub { position: absolute; right: 3px; bottom: 2px; font-size: 6.5px; font-weight: 800; letter-spacing: .04em; line-height: 1; font-family: var(--sans); }
+#topTransport #saveBtn { background: linear-gradient(#ff5a4e, #e5322d); color: #fff; border-color: #6e1712; display: grid; place-items: center; }   /* the floppy: save, beside the tempo */
+#topTransport #saveBtn .ico { width: 21px; height: 21px; display: block; }
 #topTransport #rangeBtn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; }
 #topTransport #rangeBtn .top { display: block; line-height: 15px; }
 #topTransport #rangeBtn .sub { display: block; font-size: 6.5px; font-weight: 800; letter-spacing: .04em; line-height: 8px; font-family: var(--sans); margin-top: 1px; }
@@ -171,7 +171,7 @@ svg text { pointer-events: none; }
 .win .frame::-webkit-scrollbar { display: none; }
 .win .frame svg { display: block; touch-action: none; shape-rendering: geometricPrecision; }
 .win .frame svg line.stl { shape-rendering: crispEdges; }
-.win .side { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 7px; padding: 2px 0; }
+.win .side { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 7px; padding: 2px 0; align-self: stretch; }   /* as tall as the stave, so the trash can sink to its foot */
 .win .solo { width: 24px; height: 24px; padding: 0; border: 1px solid rgba(255,255,255,.35); border-radius: 4px; background: rgba(0,0,0,.25); color: var(--on-ground); font-size: 12px; }
 .win .solo.on { background: linear-gradient(#ffd27a, #f5a623); color: #111; }
 .win .psel { width: 24px; height: 24px; padding: 0; border: 2px solid #2f7fd6; border-radius: 4px; background: rgba(0,0,0,.25); color: var(--on-ground); font-size: 12px; }
@@ -187,10 +187,16 @@ svg text { pointer-events: none; }
 .win.closed .pselClose { display: none; }
 .win .focus { display: none; width: 24px; height: 24px; padding: 0; border: 1px solid rgba(255,255,255,.35); border-radius: 4px; background: rgba(0,0,0,.25); color: var(--on-ground); font-size: 13px; }
 .win .focus.on { background: linear-gradient(#ffd27a, #f5a623); color: #111; }
+.win .trash { margin-top: auto; width: 24px; height: 24px; padding: 0; border: 1px solid rgba(255,255,255,.35); border-radius: 4px; background: rgba(0,0,0,.25); color: var(--on-ground); font-size: 13px; line-height: 1; }   /* sinks to the bottom of the column */
+.win .trash:active { background: var(--danger); }
+.win.closed .trash { display: none; }
+.win .trash { margin-top: auto; width: 24px; height: 24px; padding: 0; border: 1px solid rgba(255,255,255,.35); border-radius: 4px; background: rgba(0,0,0,.25); color: var(--on-ground); font-size: 13px; line-height: 1; }   /* sinks to the bottom of the column */
+.win .trash:active { background: var(--danger); }
+.win.closed .trash { display: none; }
 @media (min-width: 860px) and (min-aspect-ratio: 5/4), (max-height: 520px) and (min-aspect-ratio: 5/4) { .win .focus { display: block; } }
 /* one window given the whole screen (wide layouts) */
 #app.focused { max-width: none !important; grid-template-columns: 1fr !important; }
-#app.focus-mel { grid-template-areas: "head" "nav" "mel" "rhy" "lyr" "pal" !important; }
+#app.focus-mel { grid-template-areas: "head" "nav" "mel" "rhy" "lyr" "arrows" "undo" "pal" !important; }
 #app.focus-acc { grid-template-areas: "head" "nav" "acc" !important; }
 #app.focus-bass { grid-template-areas: "head" "nav" "bass" !important; }
 #app.focus-mel :is(#accWin, #bassWin, #foot), #app.focus-acc :is(#melWin, #rhyStrip, #lyrStrip, #palette, #bassWin, #foot), #app.focus-bass :is(#melWin, #rhyStrip, #lyrStrip, #palette, #accWin, #foot) { display: none !important; }
@@ -339,10 +345,13 @@ svg text { pointer-events: none; }
 #palette .who { font-size: 11px; color: var(--on-ground2); min-width: 44px; text-align: center; font-variant-numeric: tabular-nums; }
 
 /* ── footer ── */
-#foot { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: center; margin-top: 2px; }
-.bigBtn { height: 40px; border: 1.5px solid #141414; border-radius: 4px; font-size: 19px; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); }
-#chordsBtn { background: linear-gradient(#fff, #ddd); color: #111; }
-#saveBtn { background: linear-gradient(#ff5a4e, #e5322d); color: #fff; }
+/* the arrow row and UNDO / REDO: wide, not tall, between the Lyrics strip and the tools */
+#arrows { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+#undoRow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+#arrows button, #undoRow button { height: 30px; padding: 0; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); color: #111; font-size: 18px; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); }
+#undoRow button { font-family: var(--sans); font-size: 13px; letter-spacing: .05em; }
+#arrows button:active, #undoRow button:active { background: linear-gradient(#ffd27a, #f5a623); }
+#undoRow button:disabled { opacity: .45; }
 #transport { display: flex; gap: 6px; }
 #transport button { width: 42px; height: 40px; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #cfcfcf); color: #111; font-size: 17px; padding: 0; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
 #transport button.on { background: linear-gradient(#ffd27a, #f5a623); }
@@ -497,7 +506,7 @@ body.kbOpen #app { padding-bottom: 330px; }              /* room to scroll the s
   <header id="head">
     <input id="songTitle" type="text" placeholder="“My Song Title”" autocomplete="off" spellcheck="false" aria-label="Song title">
     <button class="iconBtn" id="menuBtn" title="Menu" aria-label="Menu">☰</button>
-    <div id="topTransport"><button id="playAllBtn" title="Play All — the whole song from the start">▶<span class="bar"></span></button><button id="playBtn" title="Play Bar All — this bar, every part">▶<span class="sub">BAR</span></button><button id="rangeBtn" title="Play Range — bars and beats you type in"><span class="top">▶<span class="dots">…</span></span><span class="sub">RANGE</span></button><button id="stopBtn" title="Stop">■</button><div id="tempo" title="Tempo"><button id="tempoDn" aria-label="Slower">−</button><button id="tempoLbl" title="Tap to type a tempo">♩=120</button><button id="tempoUp" aria-label="Faster">+</button></div></div>
+    <div id="topTransport"><button id="playAllBtn" title="Play All — the whole song from the start">▶<span class="bar"></span></button><button id="rangeBtn" title="Play Range — bars and beats you type in"><span class="top">▶<span class="dots">…</span></span><span class="sub">RANGE</span></button><button id="stopBtn" title="Stop">■</button><div id="tempo" title="Tempo"><button id="tempoDn" aria-label="Slower">−</button><button id="tempoLbl" title="Tap to type a tempo">♩=120</button><button id="tempoUp" aria-label="Faster">+</button></div><button id="saveBtn" title="Save — the song library"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 3 h11 l3 3 v11 h-14 z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><rect x="6" y="3.6" width="7" height="4.4" fill="currentColor"/><rect x="5.5" y="11" width="9" height="5.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></button></div>
     <button class="iconBtn" id="gearBtn" title="Settings" aria-label="Settings"><svg class="ico"><use href="#icoGear"/></svg></button>
   </header>
 
@@ -513,7 +522,7 @@ body.kbOpen #app { padding-bottom: 330px; }              /* room to scroll the s
   <section class="win" id="melWin">
     <div class="gutter"><button class="rArr up" data-win="mel" data-dir="1" title="Higher">︿</button><svg id="melGut"></svg><button class="rArr dn" data-win="mel" data-dir="-1" title="Lower">﹀</button></div>
     <div class="frame"><svg id="melSvg"></svg></div>
-    <div class="side"><button class="gear" data-win="mel" title="Melody settings"><svg class="ico"><use href="#icoGear"/></svg></button><button class="sizer" data-win="mel" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="mel" title="Play Bar — the melody alone, this bar">▶</button><button class="psel" data-win="mel" title="Play Select — choose the melody notes to hear">▶</button><button class="chordBtn" data-win="mel" title="Chord mode: every tap stacks a note on the chord being built"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="2.5" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.2"/><line x1="2.5" y1="10" x2="17.5" y2="10" stroke="currentColor" stroke-width="1.2"/><ellipse cx="9.4" cy="6.4" rx="2.3" ry="1.55" fill="currentColor" transform="rotate(-20 9.4 6.4)"/><line x1="11.5" y1="6.1" x2="11.5" y2="3.6" stroke="currentColor" stroke-width="1.1"/><ellipse cx="10.6" cy="13.6" rx="2.3" ry="1.55" fill="currentColor" transform="rotate(-20 10.6 13.6)"/><line x1="8.5" y1="13.9" x2="8.5" y2="16.4" stroke="currentColor" stroke-width="1.1"/></svg></button><button class="pselClose" data-win="mel" title="Leave Play Select" hidden>✕</button><button class="focus" data-win="mel" title="Give this window the whole screen">⛶</button></div>
+    <div class="side"><button class="gear" data-win="mel" title="Melody settings"><svg class="ico"><use href="#icoGear"/></svg></button><button class="sizer" data-win="mel" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="mel" title="Play Bar — the melody alone, this bar">▶</button><button class="psel" data-win="mel" title="Play Select — choose the melody notes to hear">▶</button><button class="chordBtn" data-win="mel" title="Chord mode: every tap stacks a note on the chord being built"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="2.5" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.2"/><line x1="2.5" y1="10" x2="17.5" y2="10" stroke="currentColor" stroke-width="1.2"/><ellipse cx="9.4" cy="6.4" rx="2.3" ry="1.55" fill="currentColor" transform="rotate(-20 9.4 6.4)"/><line x1="11.5" y1="6.1" x2="11.5" y2="3.6" stroke="currentColor" stroke-width="1.1"/><ellipse cx="10.6" cy="13.6" rx="2.3" ry="1.55" fill="currentColor" transform="rotate(-20 10.6 13.6)"/><line x1="8.5" y1="13.9" x2="8.5" y2="16.4" stroke="currentColor" stroke-width="1.1"/></svg></button><button class="pselClose" data-win="mel" title="Leave Play Select" hidden>✕</button><button class="focus" data-win="mel" title="Give this window the whole screen">⛶</button><button class="trash" data-win="mel" title="Delete the selected note or word, or clear the active beat">🗑</button></div>
   </section>
 
   <div class="strip" id="rhyStrip">
@@ -533,26 +542,24 @@ body.kbOpen #app { padding-bottom: 330px; }              /* room to scroll the s
     </div>
   </div>
 
+  <div id="arrows"><button id="arrUp" title="Up: the selected note a half step up, or the stave's register up">↑</button><button id="arrDn" title="Down: the selected note a half step down, or the stave's register down">↓</button><button id="arrL" title="Left: the selected note or word earlier, a picked run earlier, or the beat before">←</button><button id="arrR" title="Right: the selected note or word later, a picked run later, or the beat after">→</button></div>
+  <div id="undoRow"><button id="undoBtn" title="Undo">UNDO</button><button id="redoBtn" title="Redo">REDO</button></div>
   <div id="palette"><div class="prow" id="palRow1"></div><div class="prow" id="palRow2"></div><div class="prow" id="palRow3"></div><div class="prow" id="palRow4"></div></div>
 
   <section class="win" id="accWin">
     <button class="winHead" data-win="acc">Accompaniment</button>
     <div class="gutter"><button class="rArr up" data-win="acc" data-dir="1" title="Higher">︿</button><svg id="accGut"></svg><button class="rArr dn" data-win="acc" data-dir="-1" title="Lower">﹀</button></div>
     <div class="frame"><svg id="accSvg"></svg></div>
-    <div class="side"><button class="gear" data-win="acc" title="Accompaniment settings"><svg class="ico"><use href="#icoGear"/></svg></button><button class="sizer" data-win="acc" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="acc" title="Play Bar — the accompaniment alone, this bar">▶</button><button class="psel" data-win="acc" title="Play Select — choose the accompaniment notes to hear">▶</button><button class="chordBtn" data-win="acc" title="Chord mode: every tap stacks a note on the chord being built"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="2.5" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.2"/><line x1="2.5" y1="10" x2="17.5" y2="10" stroke="currentColor" stroke-width="1.2"/><ellipse cx="9.4" cy="6.4" rx="2.3" ry="1.55" fill="currentColor" transform="rotate(-20 9.4 6.4)"/><line x1="11.5" y1="6.1" x2="11.5" y2="3.6" stroke="currentColor" stroke-width="1.1"/><ellipse cx="10.6" cy="13.6" rx="2.3" ry="1.55" fill="currentColor" transform="rotate(-20 10.6 13.6)"/><line x1="8.5" y1="13.9" x2="8.5" y2="16.4" stroke="currentColor" stroke-width="1.1"/></svg></button><button class="pselClose" data-win="acc" title="Leave Play Select" hidden>✕</button><button class="focus" data-win="acc" title="Give this window the whole screen">⛶</button></div>
+    <div class="side"><button class="gear" data-win="acc" title="Accompaniment settings"><svg class="ico"><use href="#icoGear"/></svg></button><button class="sizer" data-win="acc" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="acc" title="Play Bar — the accompaniment alone, this bar">▶</button><button class="psel" data-win="acc" title="Play Select — choose the accompaniment notes to hear">▶</button><button class="chordBtn" data-win="acc" title="Chord mode: every tap stacks a note on the chord being built"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="2.5" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.2"/><line x1="2.5" y1="10" x2="17.5" y2="10" stroke="currentColor" stroke-width="1.2"/><ellipse cx="9.4" cy="6.4" rx="2.3" ry="1.55" fill="currentColor" transform="rotate(-20 9.4 6.4)"/><line x1="11.5" y1="6.1" x2="11.5" y2="3.6" stroke="currentColor" stroke-width="1.1"/><ellipse cx="10.6" cy="13.6" rx="2.3" ry="1.55" fill="currentColor" transform="rotate(-20 10.6 13.6)"/><line x1="8.5" y1="13.9" x2="8.5" y2="16.4" stroke="currentColor" stroke-width="1.1"/></svg></button><button class="pselClose" data-win="acc" title="Leave Play Select" hidden>✕</button><button class="focus" data-win="acc" title="Give this window the whole screen">⛶</button><button class="trash" data-win="acc" title="Delete the selected note, or clear the active beat">🗑</button></div>
   </section>
 
   <section class="win" id="bassWin">
     <button class="winHead" data-win="bass">Bass</button>
     <div class="gutter"><button class="rArr up" data-win="bass" data-dir="1" title="Higher">︿</button><svg id="bassGut"></svg><button class="rArr dn" data-win="bass" data-dir="-1" title="Lower">﹀</button></div>
     <div class="frame"><svg id="bassSvg"></svg></div>
-    <div class="side"><button class="gear" data-win="bass" title="Bass settings"><svg class="ico"><use href="#icoGear"/></svg></button><button class="sizer" data-win="bass" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="bass" title="Play Bar — the bass alone, this bar">▶</button><button class="psel" data-win="bass" title="Play Select — choose the bass notes to hear">▶</button><button class="chordBtn" data-win="bass" title="Chord mode: every tap stacks a note on the chord being built"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="2.5" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.2"/><line x1="2.5" y1="10" x2="17.5" y2="10" stroke="currentColor" stroke-width="1.2"/><ellipse cx="9.4" cy="6.4" rx="2.3" ry="1.55" fill="currentColor" transform="rotate(-20 9.4 6.4)"/><line x1="11.5" y1="6.1" x2="11.5" y2="3.6" stroke="currentColor" stroke-width="1.1"/><ellipse cx="10.6" cy="13.6" rx="2.3" ry="1.55" fill="currentColor" transform="rotate(-20 10.6 13.6)"/><line x1="8.5" y1="13.9" x2="8.5" y2="16.4" stroke="currentColor" stroke-width="1.1"/></svg></button><button class="pselClose" data-win="bass" title="Leave Play Select" hidden>✕</button><button class="focus" data-win="bass" title="Give this window the whole screen">⛶</button></div>
+    <div class="side"><button class="gear" data-win="bass" title="Bass settings"><svg class="ico"><use href="#icoGear"/></svg></button><button class="sizer" data-win="bass" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="bass" title="Play Bar — the bass alone, this bar">▶</button><button class="psel" data-win="bass" title="Play Select — choose the bass notes to hear">▶</button><button class="chordBtn" data-win="bass" title="Chord mode: every tap stacks a note on the chord being built"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="2.5" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.2"/><line x1="2.5" y1="10" x2="17.5" y2="10" stroke="currentColor" stroke-width="1.2"/><ellipse cx="9.4" cy="6.4" rx="2.3" ry="1.55" fill="currentColor" transform="rotate(-20 9.4 6.4)"/><line x1="11.5" y1="6.1" x2="11.5" y2="3.6" stroke="currentColor" stroke-width="1.1"/><ellipse cx="10.6" cy="13.6" rx="2.3" ry="1.55" fill="currentColor" transform="rotate(-20 10.6 13.6)"/><line x1="8.5" y1="13.9" x2="8.5" y2="16.4" stroke="currentColor" stroke-width="1.1"/></svg></button><button class="pselClose" data-win="bass" title="Leave Play Select" hidden>✕</button><button class="focus" data-win="bass" title="Give this window the whole screen">⛶</button><button class="trash" data-win="bass" title="Delete the selected note, or clear the active beat">🗑</button></div>
   </section>
 
-  <footer id="foot">
-    <button class="bigBtn" id="chordsBtn">Chords…</button>
-    <button class="bigBtn" id="saveBtn">Save…</button>
-  </footer>
 
 </div>
 
@@ -7333,7 +7340,7 @@ function startPlayback(barList, opts = {}) {
   if (play.range) { const rg = play.range, bs = beatSec(); play.offs = play.offs.map(o => o - rg.fromT * bs); play.total = acc - rg.fromT * bs - (barBeats(rg.lastBi) - rg.toT) * bs; }
   if (S.metro === "countin") { const bl = beatSec() * (TS_BEATS[S.song.sig] || 4); play.t0 += bl; for (let b = 0; b < (TS_BEATS[S.song.sig] || 4); b++) metroClick(ctx, play.t0 - bl + b * beatSec(), b === 0); }
   S.playing = true; S.playPos = null;
-  $("playBtn").classList.add("on"); $("playBtn").firstChild.nodeValue = "■";
+  if ($("playBtn")) { $("playBtn").classList.add("on"); $("playBtn").firstChild.nodeValue = "■"; }
   const schedule = () => {
     if (!play.on) return;
     const now = ctx.currentTime;
@@ -7378,7 +7385,7 @@ function stopPlayback() {
   const t = audioCtx ? audioCtx.currentTime : 0;
   [...liveNodes].forEach(h => h.stop(t));
   S.playing = false; S.playPos = null;
-  $("playBtn").classList.remove("on"); $("playBtn").firstChild.nodeValue = "▶";
+  if ($("playBtn")) { $("playBtn").classList.remove("on"); $("playBtn").firstChild.nodeValue = "▶"; }
   play.range = null; play.only = null;
   if (was) { updatePlayhead(); renderLights(); }
   if (typeof onPlaybackStopped === "function") onPlaybackStopped(was);
@@ -7431,6 +7438,8 @@ function openSongSetup() {
   const pk = el("div", { class: "seg sm" }); [[0, "None"], [0.5, "½ beat"], [1, "1 beat"], [2, "2 beats"]].forEach(([n, l]) => pk.append(el("button", { class: (song.pickup || 0) === n ? "on" : "", onclick: () => { applyPickup(n); openSongSetup(); } }, l))); body.push(el("div", { class: "mrow" }, pk, el("span", { class: "tiny" }, "In 4/4, 1 beat = one quarter, two eighths, four sixteenths…")));
   body.push(el("div", { class: "pLbl" }, "Tempo"));
   body.push(el("div", { class: "mrow" }, bpm, bpmR, el("button", { class: "btn sm ghost", title: "Tap along to set the tempo", onclick: () => { const t = performance.now(); const taps = (openSongSetup.taps = (openSongSetup.taps || []).filter(x => t - x < 3000)); taps.push(t); if (taps.length >= 3) { const iv = (taps[taps.length - 1] - taps[0]) / (taps.length - 1); setBpm(Math.round(60000 / iv)); bpm.value = song.bpm; bpmR.value = song.bpm; } } }, "Tap tempo")));
+  body.push(el("div", { class: "pLbl" }, "Chords"));
+  body.push(el("div", { class: "mrow" }, el("button", { class: "btn", onclick: () => { closeModal(); openChordsSheet(); } }, "Chords…"), el("span", { class: "tiny" }, "the chord at any beat of this section")));
   body.push(el("div", { class: "pLbl" }, "Genre template"));
   body.push(el("div", { class: "tiny", style: "margin-bottom:6px" }, "Loads the song structure, chords, tempo and band patterns for a style. Your own words and notes can be kept, and a tempo you've set yourself is kept when you reload the same genre."));
   const grid = el("div", { class: "genreGrid" });
@@ -7830,18 +7839,18 @@ function rowsOf(win) { const [rows] = WIN[S.winSize][win]; return { rows, step: 
 function allocate() {
   const vh = window.innerHeight, wide = S.layout !== "rolled" && window.matchMedia("(min-width: 860px) and (min-aspect-ratio: 5/4), (max-height: 520px) and (min-aspect-ratio: 5/4)").matches;
   const h = id => ($(id) ? $(id).offsetHeight : 0);
-  const chromeMel = h("head") + h("nav") + h("rollBar") + h("beatRow") + h("rhyStrip") + h("lyrStrip") + h("palette") + 7 * 7 + 16, chromeBand = h("foot") + 7 * 3 + 30 + (wide ? 0 : 0);
+  const chromeMel = h("head") + h("nav") + h("rollBar") + h("beatRow") + h("rhyStrip") + h("lyrStrip") + h("arrows") + h("undoRow") + h("palette") + 7 * 9 + 16, chromeBand = 7 * 3 + 30;
   const avail = Math.max(260, vh - (wide ? chromeMel : chromeMel + chromeBand));
   const f = w => S.winState[w] === "closed" ? 0 : S.winState[w] === "half" ? 0.5 : 1;
   const wins = ["mel", "acc", "bass"], sum = wins.reduce((a, w) => a + WIN_WEIGHT[w] * f(w), 0) || 1;
   if (S.focus && wide) {                                            // one window, the whole screen
-    for (const w of wins) { const [rows, lo, hi] = WIN[S.winSize][w]; if (w !== S.focus) { STEPS[w] = lo; continue; } const chrome = h("head") + h("nav") + h("beatRow") + (w === "mel" ? h("rhyStrip") + h("lyrStrip") + h("palette") + 28 : 0) + 40; STEPS[w] = clamp(Math.floor((vh - chrome - 12) / rows * S.zoomWin[w] * 10) / 10, lo, 44); }
+    for (const w of wins) { const [rows, lo, hi] = WIN[S.winSize][w]; if (w !== S.focus) { STEPS[w] = lo; continue; } const chrome = h("head") + h("nav") + h("beatRow") + (w === "mel" ? h("rhyStrip") + h("lyrStrip") + h("arrows") + h("undoRow") + h("palette") + 28 : 0) + 40; STEPS[w] = clamp(Math.floor((vh - chrome - 12) / rows * S.zoomWin[w] * 10) / 10, lo, 44); }
     return;
   }
   for (const w of wins) {
     const [rows, lo, hi0] = WIN[S.winSize][w], hi = (wide || S.layout === "rolled") && w !== "mel" ? Math.max(hi0, WIN[S.winSize].mel[2]) : hi0;
     if (!f(w)) { STEPS[w] = lo; continue; }
-    const bandAvail = vh - h("head") - h("nav") - h("foot") - 7 * 5 - 44;
+    const bandAvail = vh - h("head") - h("nav") - 7 * 5 - 44;
     const share = wide && w !== "mel" ? Math.max(120, bandAvail * WIN_WEIGHT[w] * f(w) / (wins.filter(x => x !== "mel").reduce((a, x) => a + WIN_WEIGHT[x] * f(x), 0) || 1))
       : wide ? Math.max(160, vh - chromeMel) : avail * WIN_WEIGHT[w] * f(w) / sum;
     STEPS[w] = clamp(Math.floor((share - 12) / rows * S.zoomWin[w] * WIN_K[S.winSize] * 10) / 10, lo, hi);
@@ -8012,6 +8021,36 @@ function freshSongState() {
   if (typeof WE !== "undefined") { WE.on = false; WE.dirty = false; WE.wid = null; WE.chipId = null; const box = $("wordEdit"); if (box) box.classList.remove("on"); const inp = $("lyrInline"); if (inp) inp.classList.remove("on"); }
 }
 function activate(bi, t, part = "melody") { S.active = { bi, beat: beatOf(bi, t) }; S.activePart = part; S.bi = bi; S.sel = null; S.selAuto = false; S.ghost = null; S.selChip = null; S.justEntered = null; renderAll(); }
+/* 🗑 at the bottom of a stave's button column: the selected word (melody), the selected note in that part, or the active beat in that part */
+function staveTrash(win) {
+  const part = WIN_PART[win];
+  if (win === "mel") { const sc = selChipObj(); if (sc) { if (sc.chip.locked) { toast("That word is locked — unlock it first"); return; } deleteChip(sc.bar, sc.chip); return; } }
+  if (S.sel && S.sel.part === part && selEv()) { deleteSel(); return; }
+  if (S.active && (S.activePart || "melody") === part) { clearActiveBeat(); return; }
+  toast(`Tap a ${PART_META[part].label.toLowerCase()} note to delete it, or a beat to clear it`);
+}
+/* ↑ ↓: the selected note a half step; otherwise the register of the stave in use */
+function arrowUD(d) {
+  const ev = selEv();
+  if (ev && !ev.rest && ev.m != null) { transposeSel(d); return; }
+  if (ev) { toast("A rest has no pitch"); return; }
+  const w = S.active ? PART_WIN[S.activePart || "melody"] : leadWin();
+  shiftView(S.winState[w] === "closed" ? leadWin() : w, d);
+}
+/* ← →: a picked run, the selected word, the selected note, or the active beat (across bars); with no beat, the bar */
+function arrowLR(d) {
+  if (S.mv && S.mv.mode === "move") { mvShift(d); return; }
+  const sc = selChipObj(); if (sc) { if (sc.chip.locked) { toast("That word is locked — unlock it first"); return; } setChipTime(sc.bar, sc.chip, sc.chip.t + d * 0.0625); renderAll(); return; }
+  const ev = selEv(); if (ev) { moveSel(d * Math.min(gridStep(), baseLen(ev.d))); return; }
+  stepBeat(d);
+}
+function stepBeat(d) {
+  if (!S.active) { $(d > 0 ? "nextBar" : "prevBar").click(); return; }
+  let bi = S.active.bi, beat = S.active.beat + d;
+  if (beat < 0) { if (bi === 0) return; bi--; beat = Math.ceil(barBeats(bi)) - 1; }
+  else if (beat >= Math.ceil(barBeats(bi))) { if (bi + 1 >= S.song.bars.length) return; bi++; beat = 0; }
+  activate(bi, beat, S.activePart || "melody");
+}
 /* clear the active beat: every note, rest or slot that starts in it goes, along with any tied continuation in later bars */
 function clearActiveBeat() {
   if (!S.active) return;
@@ -8544,12 +8583,9 @@ function renderPalette() {
     p = r3;
     const { bar, chip } = sc, fine = 0.0625;
     p.append(el("span", { class: "who" }, `“${chip.text.trim()}”`));
-    b("←", () => { setChipTime(bar, chip, chip.t - fine); renderAll(); }, { cls: "lyr", title: "Nudge left", disabled: chip.locked });
-    b("→", () => { setChipTime(bar, chip, chip.t + fine); renderAll(); }, { cls: "lyr", title: "Nudge right", disabled: chip.locked });
     const sbi = S.song.bars.indexOf(bar);
     b("Edit", () => { S.selChip = { bi: sbi, id: chip.id }; openWordEdit(sbi, chip.t, chip); }, { cls: "lyr", title: "Change the text", disabled: chip.locked });
     b(chip.locked ? "🔓" : "🔒", () => { chip.locked = !chip.locked; renderAll(); }, { cls: "txt lock" + (chip.locked ? " on" : ""), title: chip.locked ? "Unlock" : "Lock in place" });
-    b("🗑", () => deleteChip(bar, chip), { warn: true, title: "Delete", disabled: chip.locked });
     b("✕", () => { S.selChip = null; renderAll(); }, { cls: "txt", title: "Done" });
     return;
   }
@@ -8571,20 +8607,12 @@ function renderPalette() {
     return;
   }
   if (S.mv) {
-    b("←", () => mvShift(-1), { cls: "txt", title: "Move the run one beat earlier" });
-    b("→", () => mvShift(1), { cls: "txt", title: "Move the run one beat later" });
     b("✕", mvCancel, { cls: "txt", title: "Leave move mode" });
     return;
   }
   b("⌒", tapTie, { on: !!(ev && ev.tie), title: "Tie to the next note", disabled: !ev && !bar.ev.melody.length });
   for (const k of ["staccato", "tenuto", "slur"]) b(ARTIC[k].glyph, () => tapArtic(k), { cls: "art" + (S.artic === k ? " armed" : ""), on: !!(ev && (k === "slur" ? ev.slur : ev.artic === k)), title: S.artic === k ? `${ARTIC[k].label} armed — tap notes to mark them; tap again to return to note entry` : `${ARTIC[k].label}: tap before entering a note, or arm it and tap existing notes` });
-  if (!ev && S.active && !S.artic) b("🗑", clearActiveBeat, { warn: true, title: `Clear beat ${S.active.beat + 1} — removes the ${PART_META[S.activePart || "melody"].label.toLowerCase()} notes that start in it` });
   if (ev) {                                        // editing tools appear for the selected note
-    b("↑", () => transposeSel(1), { cls: "txt", title: "Up a half step", disabled: ev.rest || ev.m == null });
-    b("↓", () => transposeSel(-1), { cls: "txt", title: "Down a half step", disabled: ev.rest || ev.m == null });
-    b("←", () => moveSel(-Math.min(gridStep(), baseLen(ev.d))), { cls: "txt", title: "Earlier" });
-    b("→", () => moveSel(Math.min(gridStep(), baseLen(ev.d))), { cls: "txt", title: "Later" });
-    b("🗑", deleteSel, { warn: true, title: "Delete" });
     b("✕", () => { S.sel = null; renderAll(); }, { cls: "txt", title: "Done" });
     p.append(el("span", { class: "who" }, (ev.rest ? "rest" : ev.m == null ? "slot" : noteName(ev.m, keyObj(S.song.key))) + " " + durGlyph(ev.d)));
   }
@@ -9667,9 +9695,7 @@ function renderRow3(r3) {
   b("·", tapDot, { on: own ? isDotted(ev.d) : S.dot, title: "Dotted" });
   b("＋", appendFromStrip, { cls: "txt", title: "Add a box of this length at the end of the rhythm", disabled: !!ev });
   r3.append(el("span", { class: "gap" }));
-  b("UNDO", undo, { cls: "lyr wide", title: "Undo", disabled: !UNDO.stack.length });
-  b("REDO", redo, { cls: "lyr wide", title: "Redo", disabled: !UNDO.redo.length });
-  r3.append(el("span", { class: "gap" }));
+  $("undoBtn").disabled = !UNDO.stack.length; $("redoBtn").disabled = !UNDO.redo.length;       // the UNDO / REDO row above the tools
   b("Move", () => mvStart("move"), { cls: "lyr wide", on: !!(S.mv && S.mv.mode === "move"), title: "Move beats: pick a run of beats, then ← → shift what is in them into empty space" });
   b("Delete", () => mvStart("delete"), { cls: "lyr wide", on: !!(S.mv && S.mv.mode === "delete"), warn: !(S.mv && S.mv.mode === "delete"), title: "Delete part or all of a beat, a bar or a section" });
 }
@@ -10063,7 +10089,7 @@ function openHelp() {
     h("One active beat", "Tap a beat on any stave to make it the active beat (tinted across all three). Only the active beat takes taps: tap it once to show the box for the next note, tap a pitch to enter the note; tap a note or rest there to select it, then change, move or delete it with the palette. Everything outside the active beat is locked — tapping it just moves the active beat. Ties and slurs may still reach into locked beats."),
     h("Words", "Tap the Lyrics strip at a beat and type straight into it (↵ moves to the next note; tapping elsewhere keeps what you typed). Tap the Lyrics tag to paste a whole section. Words sit on the rhythm's notes; drag one to line it up; tap one to nudge, split into letters, edit or delete it."),
     h("Articulation", "• staccato, ‒ tenuto, ◠ slur. With a note selected, tap a mark to apply it. Otherwise tap a mark to arm it: notes you enter carry it, and tapping existing notes marks them; tap the mark again to finish. For a slur, tap the first note then the last."),
-    h("Chords", "Chord names sit in the beat row; tap a beat there or use Chords… to set the chord at any beat. A chord holds until the next change."),
+    h("Chords", "Chord names sit in the beat row; tap a beat there or use Chords… in ☰ → Song setup to set the chord at any beat. A chord holds until the next change."),
     h("Accompaniment & Bass", "Play genre patterns automatically; ⚙ on each window sets instrument, sound, pattern, volume, or Custom to place notes yourself."),
     h("Settings ⚙", "View (stacked staves, or rolled up into three bars with + / −), theme, window sizing, chords display, note appearance (traditional, pills, circles), half steps on lines, metronome."),
     h("Menu ☰", "Share a link or per-musician parts, export/import files, save."),
@@ -10182,10 +10208,12 @@ async function boot() {
   scrollers.forEach(sc => sc.addEventListener("scroll", () => { if (syncing) return; syncing = true; scrollers.forEach(o => { if (o !== sc) o.scrollLeft = sc.scrollLeft; }); const inner = $("beatRow").querySelector(".inner"); if (inner) inner.style.transform = `translateX(${-sc.scrollLeft}px)`; syncing = false; }, { passive: true }));
   $("barLabel").addEventListener("click", openSectionOps);
   wireTempo();
-  $("chordsBtn").addEventListener("click", openChordsSheet);
   $("saveBtn").addEventListener("click", openLibrary);
+  document.querySelectorAll(".win .trash").forEach(b => b.addEventListener("click", () => staveTrash(b.dataset.win)));
+  $("arrUp").addEventListener("click", () => arrowUD(1)); $("arrDn").addEventListener("click", () => arrowUD(-1));
+  $("arrL").addEventListener("click", () => arrowLR(-1)); $("arrR").addEventListener("click", () => arrowLR(1));
+  $("undoBtn").addEventListener("click", undo); $("redoBtn").addEventListener("click", redo);
   $("playAllBtn").addEventListener("click", playAll);
-  $("playBtn").addEventListener("click", playBarAll);
   $("rangeBtn").addEventListener("click", openPlayRange);
   $("stopBtn").addEventListener("click", stopAll);
   document.querySelectorAll(".win .psel").forEach(b => b.addEventListener("click", () => togglePlaySelect(b.dataset.win, b)));
@@ -10198,7 +10226,7 @@ async function boot() {
   window.addEventListener("keydown", e => {
     const tag = (document.activeElement && document.activeElement.tagName) || "";
     if (["INPUT", "TEXTAREA", "SELECT"].includes(tag) || $("overlay").classList.contains("on")) return;
-    if (e.key === " ") { e.preventDefault(); $("playBtn").click(); }
+    if (e.key === " ") { e.preventDefault(); if (S.playing) stopAll(); else playBarAll(); }
     else if (e.key === "Escape") { S.sel = null; S.ghost = null; S.artic = null; S.slurFrom = null; S.active = null; closeWordEdit(); if (S.focus) setFocus(S.focus); else renderAll(); }
     else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); undo(); }
     else if (e.key === "ArrowLeft" && !S.sel) { e.preventDefault(); if (S.bi > 0) { S.bi--; renderAll(); } }
