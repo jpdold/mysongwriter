@@ -7998,7 +7998,7 @@ function clearActiveBeat() {
     }
   });
   if (part === "melody") syncNotesToChips(bar);
-  S.sel = null; S.ghost = null; S.justEntered = null; renderAll(); toast(`Beat ${beat + 1} cleared — ↶ brings it back`);
+  S.sel = null; S.ghost = null; S.justEntered = null; renderAll(); refreshBox(); toast(`Beat ${beat + 1} cleared — UNDO brings it back`);
 }
 /* chord mode: another pitch at the same time as an existing note, with the same length (and ties) */
 function addChordNote(bi, chain, m, part) {
@@ -8193,8 +8193,14 @@ function drawNote(svg, g, x, m, d, color, attrs, opts = {}) {
   return grp;
 }
 /* where the next note will land: shown on the first tap, filled on the second */
+/* two small green arrows, top and bottom at the far right of the bar: this runs on into the next bar */
+function drawSpillArrows(svg, g, bi) {
+  const xe = g.x(bi, barBeats(bi)) - 3;
+  [4, g.H - 12].forEach(y => svg.append(svgEl("path", { d: `M ${xe - 9} ${y} l 9 4 l -9 4 z`, fill: "#8fd14f", stroke: "#fff", "stroke-width": 1, "stroke-linejoin": "round", "pointer-events": "none" })));
+}
 function drawGhost(svg, g, bi, ghost, color) {
   const x0 = g.x(bi, ghost.t) + 1, x1 = g.x(bi, ghost.t + ghost.d) - 2;
+  if (ghost.t + ghost.d > barBeats(bi) + 1e-6) drawSpillArrows(svg, g, bi);
   svg.append(svgEl("rect", { x: x0, y: 2, width: Math.max(4, x1 - x0), height: g.H - 4, rx: 2, fill: color, "fill-opacity": 0.18, stroke: color, "stroke-width": 2.2, "stroke-dasharray": "6 3", "pointer-events": "none" }));
   if (ghost.rest) svg.append(svgEl("text", { x: (x0 + x1) / 2, y: g.H / 2 + 6, "text-anchor": "middle", "font-size": Math.min(18, g.step * 1.4), fill: color, opacity: 0.7, "font-family": "Georgia, serif", "pointer-events": "none" }, "𝄽"));
   else if (S.ftp && S.ftp.on && ghost.part === ftpPart()) { const m = S.ftp.m; if (m >= g.lo && m <= g.hi) svg.append(svgEl("rect", { x: x0, y: g.y(m) - g.step / 2 + 1, width: Math.max(4, x1 - x0), height: g.step - 2, rx: 3, fill: color, opacity: 0.5, "pointer-events": "none" })); }
@@ -8647,7 +8653,9 @@ function moveSel(dt) {
   if (S.sel.part === "melody") { const chip = bar.chips.find(c => c.id === ev.chip); if (chip) setChipTime(bar, chip, nt); else syncNotesToChips(bar); }
   renderAll();
 }
-function deleteSel() { const ev = selEv(); if (!ev) return; const bar = S.song.bars[S.sel.bi]; bar.ev[S.sel.part] = bar.ev[S.sel.part].filter(e => e.id !== ev.id); bar.ev[S.sel.part].forEach(e => { if (e.slur === ev.id) delete e.slur; }); { const prev = bar.ev[S.sel.part].filter(e => e.t < ev.t).sort((a, b) => b.t - a.t)[0]; if (prev && prev.tie && Math.abs(prev.t + prev.d - ev.t) < 1e-6) delete prev.tie; } if (S.sel.part === "melody") { const prev = bar.ev.melody.filter(e => e.t < ev.t).sort((a, b) => b.t - a.t)[0]; if (prev && prev.tie) delete prev.tie; syncNotesToChips(bar); if (S.followWords) S.cursor = nextUnpitchedChip(S.sel.bi, null); } S.sel = null; renderAll(); }
+function deleteSel() { const ev = selEv(); if (!ev) return; const bar = S.song.bars[S.sel.bi]; bar.ev[S.sel.part] = bar.ev[S.sel.part].filter(e => e.id !== ev.id); bar.ev[S.sel.part].forEach(e => { if (e.slur === ev.id) delete e.slur; }); { const prev = bar.ev[S.sel.part].filter(e => e.t < ev.t).sort((a, b) => b.t - a.t)[0]; if (prev && prev.tie && Math.abs(prev.t + prev.d - ev.t) < 1e-6) delete prev.tie; } if (S.sel.part === "melody") { const prev = bar.ev.melody.filter(e => e.t < ev.t).sort((a, b) => b.t - a.t)[0]; if (prev && prev.tie) delete prev.tie; syncNotesToChips(bar); if (S.followWords) S.cursor = nextUnpitchedChip(S.sel.bi, null); } S.sel = null; S.justEntered = null; renderAll(); refreshBox(); }
+/* the entry box, at the picked length, whenever the active beat has no note selected */
+function refreshBox() { if (S.active && !S.sel && !S.mv && !PSEL.on && !(S.ftp && S.ftp.on) && !S.ghost) showBox(S.active.bi, S.activePart || "melody", true); }
 function ensureVisible(part, m) {
   const win = part === "melody" ? "mel" : part === "accomp" ? "acc" : "bass", { rows } = rowsOf(win), key = WIN_LO[win], lo = viewOf(win);
   if (m < lo + 1) S.song.view[key] = clamp(m - 2, 21, 108 - rows); else if (m > lo + rows - 2) S.song.view[key] = clamp(m - rows + 3, 21, 108 - rows);
@@ -9581,6 +9589,7 @@ function drawSpanBands(svg, g, bi, part) {
   const bar = S.song.bars[bi], B = barBeats(bi);
   for (const c of chains(bar, part)) {
     if (c.rest) continue;
+    if (c.tieOut) drawSpillArrows(svg, g, bi);
     const from = Math.floor(c.t + 1e-6) + 1, to = Math.min(B, c.t + c.d); if (to <= from + 1e-6) continue;
     const x0 = g.x(bi, from), x1 = g.x(bi, to);
     [0, g.H - 8].forEach(y => svg.append(svgEl("rect", { x: x0 + 0.5, y: y + 0.5, width: x1 - x0 - 1, height: 7, fill: "#fff", "fill-opacity": 0.75, stroke: "rgba(0,0,0,.28)", "stroke-width": 1, "pointer-events": "none" })));
@@ -9892,13 +9901,13 @@ function undo() {
   if (!UNDO.stack.length) { toast("Nothing to undo"); return; }
   const snap = UNDO.stack.pop(); if (UNDO.last) UNDO.redo.push(UNDO.last);
   S.song = upgradeSong(JSON.parse(snap)); UNDO.last = snap; UNDO.replaying = true; S.sel = null; S.mv = null; S.ghost = null;
-  renderAll(); toast("Undone");
+  renderAll(); refreshBox(); toast("Undone");
 }
 function redo() {
   if (!UNDO.redo.length) { toast("Nothing to redo"); return; }
   const snap = UNDO.redo.pop(); if (UNDO.last) UNDO.stack.push(UNDO.last);
   S.song = upgradeSong(JSON.parse(snap)); UNDO.last = snap; UNDO.replaying = true; S.sel = null; S.mv = null; S.ghost = null;
-  renderAll(); toast("Redone");
+  renderAll(); refreshBox(); toast("Redone");
 }
 
 /* ── MIDI controller (Web MIDI): a keyboard pitches the melody or places band notes ── */
