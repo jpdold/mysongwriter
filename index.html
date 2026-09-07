@@ -8035,8 +8035,17 @@ function planSpan(bi, t, d, part = "melody") {
     const room = r3(Math.min(left, barBeats(b) - at));
     if (room <= 1e-6) return { deny: "Not enough space remaining." };
     const evs = bar.ev[part] || [];
-    if (evs.some(e => (part === "melody" || !e.rest) && e.t < at + room - 1e-6 && e.t + e.d > at + 1e-6)) return { deny: `Not enough space remaining — ${b === bi ? "a later beat in this bar" : "bar " + barNo(b)} already has something there. Pick a shorter note, or clear the way first.` };
+    if (evs.some(e => (part === "melody" || !e.rest) && e.t < at + room - 1e-6 && e.t + e.d > at + 1e-6)) {
+      const nxt = evs.filter(e => (part === "melody" || !e.rest) && e.t > t + 1e-6 && e.bi === undefined).map(e => e.t).sort((a, c) => a - c)[0];
+      const fits = b === bi ? r3(Math.min(Math.floor(t + 1e-6) + 1, nxt != null ? nxt : barBeats(bi)) - t) : 0;
+      return { deny: `Not enough space remaining — ${b === bi ? "a later beat in this bar" : "bar " + barNo(b)} already has something there.${fits > 0 ? ` A length of ${fits} beat${fits === 1 ? "" : "s"} or less fits here.` : " Pick a shorter note, or clear the way first."}` };
+    }
     pieces.push({ bi: b, t: at, d: room }); left = r3(left - room); b++; at = 0;
+  }
+  const p0 = pieces[0], edge = Math.floor(p0.t + 1e-6) + 1;
+  if (p0.t - Math.floor(p0.t + 1e-6) > 1e-6 && p0.t + p0.d > edge + 1e-6) {      // started mid-beat and runs over: what fits the beat stands alone, tied to the rest
+    const rest = r3(p0.t + p0.d - edge); p0.d = r3(edge - p0.t); p0.noBeam = true;
+    pieces.splice(1, 0, { bi: p0.bi, t: edge, d: rest });
   }
   return { pieces };
 }
@@ -8045,7 +8054,7 @@ function placeSpan(pieces, part, m, artic) {
   pieces.forEach((p, k) => {
     const bar = S.song.bars[p.bi];
     if (part !== "melody") bar.ev[part] = bar.ev[part].filter(e => !(e.rest && e.t < p.t + p.d - 1e-6 && e.t + e.d > p.t + 1e-6));
-    const ev = { id: uid(), t: p.t, d: p.d, m }; if (k < pieces.length - 1) ev.tie = true; if (k === 0 && artic) ev.artic = artic;
+    const ev = { id: uid(), t: p.t, d: p.d, m }; if (k < pieces.length - 1) ev.tie = true; if (k === 0 && artic) ev.artic = artic; if (p.noBeam) ev.noBeam = true;
     bar.ev[part].push(ev); if (part === "melody") syncNotesToChips(bar); if (k === 0) head = ev;
   });
   S.lastEntered = { part, bi: pieces[0].bi, id: head.id };
@@ -8243,7 +8252,7 @@ const beamGroupLen = () => S.song.sig === "6/8" ? 1.5 : 1;
 function beamGroups(evs) {
   const gl = beamGroupLen(), out = []; let cur = null;
   for (const e of [...evs].sort((a, b) => a.t - b.t)) {
-    const ok = !e.rest && e.m != null && baseLen(e.d) <= 0.5, grp = Math.floor((e.t + 1e-6) / gl);
+    const ok = !e.rest && e.m != null && !e.noBeam && baseLen(e.d) <= 0.5, grp = Math.floor((e.t + 1e-6) / gl);
     if (ok && cur && cur.grp === grp && Math.abs(cur.end - e.t) < 1e-6) { cur.evs.push(e); cur.end = r3(e.t + e.d); continue; }
     cur = ok ? { grp, evs: [e], end: r3(e.t + e.d) } : null; if (cur) out.push(cur);
   }
@@ -8377,8 +8386,8 @@ function renderStrips() {
     dividers(svg, "#ddd", 0.6, HR);
     for (const bi of bars) for (const c of chains(song.bars[bi])) {                 // a slot that runs on past its beat: the beats it covers stay lit
       if (c.rest) continue;
-      const from = Math.floor(c.t + 1e-6) + 1, to = Math.min(barBeats(bi), c.t + c.d); if (to <= from + 1e-6) continue;
-      const x0 = g.x(bi, from), x1 = g.x(bi, to);
+      const edge = Math.floor(c.t + 1e-6) + 1, to = Math.min(barBeats(bi), c.t + c.d); if (to <= edge + 1e-6) continue;
+      const x0 = g.x(bi, c.t), x1 = g.x(bi, to);
       svg.append(svgEl("rect", { x: x0, y: 0, width: x1 - x0, height: HR, fill: "#fff", opacity: 0.16, "pointer-events": "none" }));
       [0, HR - 5].forEach(y => svg.append(svgEl("rect", { x: x0 + 0.5, y: y + 0.5, width: x1 - x0 - 1, height: 4, fill: "#fff", "fill-opacity": 0.7, stroke: "rgba(0,0,0,.35)", "stroke-width": 1, "pointer-events": "none" })));
     }
@@ -8386,7 +8395,7 @@ function renderStrips() {
     const mini = { step: 6, y: () => 17, x: g.x, beatPx: g.beatPx, lo: 0, hi: 1, W: g.W, H: HR };
     for (const bi of bars) {
       const bar = song.bars[bi], sel = S.sel && S.sel.bi === bi && S.sel.part === "melody" ? S.sel.id : null;
-      const rhyEvs = bar.ev.melody.filter(e => !e.rest).map(e => ({ id: e.id, t: e.t, d: e.d, m: 0.5 })), groups = beamGroups(rhyEvs), beamed = new Set(groups.flatMap(gp => gp.evs.map(e => e.id)));
+      const rhyEvs = bar.ev.melody.filter(e => !e.rest).map(e => ({ id: e.id, t: e.t, d: e.d, m: 0.5, noBeam: e.noBeam })), groups = beamGroups(rhyEvs), beamed = new Set(groups.flatMap(gp => gp.evs.map(e => e.id)));
       groups.forEach(gp => drawBeamed(svg, mini, gp, "#fff", e => g.x(bi, e.t) + 2, { stem: 2.2, up: true }));
       for (const c of chains(bar)) {
         const x0 = g.x(bi, c.t), x1 = g.x(bi, c.t + c.d);
@@ -8566,7 +8575,8 @@ function appendSlot(d, rest) {
 function insertSlotAt(bi, t, d, rest, exact) {
   const bar = S.song.bars[bi], B = barBeats(bi); t = clamp(exact ? r3(t) : snapT(t), 0, B - 0.25);
   if (overlaps(bar, t, 0.25)) { toast("There's already a note there"); return null; }
-  const ev = { id: uid(), t, d: Math.min(d, freeSpan(bar, t)) }; if (rest) ev.rest = true; else ev.m = null;
+  if (!rest) { const plan = planSpan(bi, t, d, "melody"); if (plan.deny) { noticeModal(plan.deny); return null; } const head = placeSpan(plan.pieces, "melody", null, null); select(bi, "melody", head.id); return head; }
+  const ev = { id: uid(), t, d: Math.min(d, freeSpan(bar, t)), rest: true };
   bar.ev.melody.push(ev); syncNotesToChips(bar); select(bi, "melody", ev.id); return ev;
 }
 function tapLength(v) {
@@ -9614,7 +9624,8 @@ function drawSpanBands(svg, g, bi, part) {
   for (const c of chains(bar, part)) {
     if (c.rest) continue;
     if (c.tieOut) drawSpillArrows(svg, g, bi);
-    const from = Math.floor(c.t + 1e-6) + 1, to = Math.min(B, c.t + c.d); if (to <= from + 1e-6) continue;
+    const edge = Math.floor(c.t + 1e-6) + 1, to = Math.min(B, c.t + c.d); if (to <= edge + 1e-6) continue;
+    const from = c.t;
     const x0 = g.x(bi, from), x1 = g.x(bi, to);
     [0, g.H - 8].forEach(y => svg.append(svgEl("rect", { x: x0 + 0.5, y: y + 0.5, width: x1 - x0 - 1, height: 7, fill: "#fff", "fill-opacity": 0.75, stroke: "rgba(0,0,0,.28)", "stroke-width": 1, "pointer-events": "none" })));
   }
@@ -9898,7 +9909,7 @@ function openHelp() {
     h("Moving beats", "Tap Move in the tools, then tap the first beat of the run and the last beat; a tap takes the whole beat. Tap the first beat again and it opens into quarters — tap the quarter the run should start on. Tap the last beat again for its quarters and the run ends there. The run must be one unbroken stretch. ← → shift everything in it (in the window you picked it on) a beat earlier or later, staying inside the section and only into empty space; notes that cross a bar line are tied over it. Tap the group once to lock it in. ✕ leaves move mode."),
     h("Clearing a beat", "With a beat active and no note selected, 🗑 in the tools removes every note, rest or slot that starts in that beat for the part you activated it in, including any tied run-on into later bars. ↶ undoes it."),
     h("After an entry", "A note you have just placed stays selected, so the tools change its pitch or length at once, and a tap on another row in its column re-pitches it. A tap anywhere else on the stave lets it go: in the same beat that tap places the next note straight away at the next free spot, with the picked length; in another beat it activates that beat."),
-    h("Long notes", "A note longer than the room left in its beat runs on through the following beats, and into the next bars, tied — as long as those beats are empty. If something is already in the way, or the song ends first, the note is refused with a message saying there is not enough space."),
+    h("Long notes", "A note longer than the room left in its beat runs on through the following beats, and into the next bars, tied — as long as those beats are empty. A note that starts part-way through a beat is written as the value that fills the rest of that beat, standing alone (never beamed to its neighbours), tied to the remainder in the next beat. The white band along the top and bottom of the stave runs from the note to where it ends. If something is already in the way, or the song ends first, the note is refused with a message saying there is not enough space."),
     h("Full screen", "☰ → Full screen hides the browser bars (Android, desktop). On iPhone, use Share → Add to Home Screen; the icon then opens the app with no address bar at all."),
     h("Blank slate", "☰ → New song… opens Setup for name, genre, key, time signature and tempo (☰ → Song setup changes them later). You work one bar at a time — ← → or the dots move between bars; tap the bar name for sections. ▶ at the top plays from this bar; the small ▶ beside each window plays that part alone."),
     h("Rhythm", "Tap a note length in the palette to add it to the rhythm; each note becomes an orange box in the melody window. ⌒ ties a note to the next one (or into the next bar). Tap a box to select it, then change its length, dot it, move it or delete it. Tap the Rhythm strip to insert at a beat."),
