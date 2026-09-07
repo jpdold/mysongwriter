@@ -253,6 +253,9 @@ svg text { pointer-events: none; }
 #palette .prow button.txt { padding: 0; }
 #palette .prow .who { margin-left: 4px; }
 #palette .prow button.chord { width: auto; min-width: 44px; flex: 0 0 auto; padding: 0 7px; }
+#palette .prow button.len { flex: 1 1 0; width: auto; min-width: 22px; padding: 0; }          /* the lengths fill the top row edge to edge */
+#palette .prow button.gn { display: inline-flex; align-items: center; justify-content: center; }
+#palette .prow button.gn svg { display: block; }
 /* ── time signature calculator ── */
 .tsc .strip { background: var(--ground2); border: 1.5px solid #141414; border-radius: 4px; overflow-x: auto; overflow-y: hidden; box-shadow: inset 0 2px 5px rgba(0,0,0,.3); }
 .tsc .strip svg { display: block; }
@@ -6347,7 +6350,8 @@ const SONG_DATA = {
    ═══════════════════════════════════════════════════════════════════════ */
 const $ = id => document.getElementById(id);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-const r3 = x => Math.round(x * 1000) / 1000;
+const r3 = x => Math.round(x * 4096) / 4096;            // beats on a 1/4096 grid: every value down to a 256th, dotted, stays exact
+const MIN_D = 1 / 64;                                     // the shortest note: a 256th, in beats
 const SVGNS = "http://www.w3.org/2000/svg";
 let _uid = Date.now() % 1e7;
 const uid = () => (++_uid).toString(36);
@@ -6845,13 +6849,13 @@ const tiedOver = e => e.t + e.d > barBeats() + 1e-6;
 function capAtNextBar(bi, part, ev) {
   if (!tiedOver(ev)) return;
   const nb = S.song.bars[bi + 1], B = barBeats(); if (!nb) return;
-  (nb.ev[part] || []).forEach(o => { if (!o.rest && o.t < ev.t + ev.d - B - 1e-6) ev.d = r3(Math.max(0.25, B + o.t - ev.t)); });
+  (nb.ev[part] || []).forEach(o => { if (!o.rest && o.t < ev.t + ev.d - B - 1e-6) ev.d = r3(Math.max(MIN_D, B + o.t - ev.t)); });
 }
 /* a new note at `t` in bar `bi` ends any tie from the previous bar that would still be sounding there */
 function trimTies(bi, part, t) {
   if (bi <= 0) return;
   const prev = S.song.bars[bi - 1], B = barBeats();
-  (prev.ev[part] || []).forEach(e => { if (!e.rest && e.t + e.d > B + t + 1e-6) e.d = r3(Math.max(0.25, B + t - e.t)); });
+  (prev.ev[part] || []).forEach(e => { if (!e.rest && e.t + e.d > B + t + 1e-6) e.d = r3(Math.max(MIN_D, B + t - e.t)); });
 }
 function setBarLyric(bi, text) {
   const bar = S.song.bars[bi], old = bar.chips, chips = tokenizeLyric(text);
@@ -7788,7 +7792,7 @@ const WIN_LO = { mel: "melLo", acc: "accLo", bass: "bassLo" };
 const NOTE_SCALE = { s: 0.62, m: 0.85, l: 1.25 }; const NS = () => NOTE_SCALE[S.noteSize] || 1;   // note size: heads only, the stave never changes
 const HK = () => S.halfLines ? 1.55 : 1;         // lines-and-spaces: heads grow to fill a space (two rows)
 const STEP_K = { s: 0.94, m: 1, l: 1.06 };       // row height nudges a little with the note size
-Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", noteSize: "m", chordMode: false, chordWin: { mel: false, acc: false, bass: false }, chordColor: "#ffffff", justEntered: null, activePart: "melody", lastEntered: null, ftp: null, mv: null, selAuto: false, halfLines: true, winSize: "m", chordsDisp: "names", metro: "off", winState: { mel: "open", acc: "closed", bass: "closed" }, zoomWin: { mel: 1, acc: 1, bass: 1 }, lyricFont: "sans", viewSpan: 1, layout: "rolled", selChip: null, ghost: null, restNext: false, artic: null, slurFrom: null, active: null, softKb: ("ontouchstart" in window), popPos: null, mode: "melody" });
+Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", noteSize: "m", chordMode: false, chordWin: { mel: false, acc: false, bass: false }, chordColor: "#ffffff", justEntered: null, activePart: "melody", lastEntered: null, ftp: null, mv: null, selAuto: false, halfLines: true, winSize: "m", chordsDisp: "names", metro: "off", winState: { mel: "open", acc: "closed", bass: "closed" }, zoomWin: { mel: 1, acc: 1, bass: 1 }, lyricFont: "sans", viewSpan: 1, layout: "rolled", selChip: null, ghost: null, restNext: false, ghostNext: false, artic: null, slurFrom: null, active: null, softKb: ("ontouchstart" in window), popPos: null, mode: "melody" });
 const UNDO = { stack: [], redo: [], last: null, max: 60 };
 const setMode = () => {};                          // engine shims (the old mode sheets are gone)
 const renderPanel = () => renderAll();
@@ -7807,7 +7811,10 @@ function applyTheme() {
   r.style.setProperty("--ground", c ? c.ground : ""); r.style.setProperty("--ground2", c ? c.ground2 : ""); r.style.setProperty("--accent", c ? c.accent : ""); r.style.setProperty("--lyric", c ? c.lyric : ""); r.style.setProperty("--box", c ? c.box : "");
 }
 const noteLenBeats = () => S.len * (S.dot ? 1.5 : 1);
-const durGlyph = d => ({ 4: "𝅝", 3: "𝅗𝅥.", 2: "𝅗𝅥", 1.5: "♩.", 1: "♩", 0.75: "♪.", 0.5: "♪", 0.375: "𝅘𝅥𝅯.", 0.25: "𝅘𝅥𝅯" })[d] || `${r3(d)}b`;
+const fmtB = x => parseFloat((+x).toFixed(4));                                          // beats for reading: no long tails
+const LENS = [[8, "𝅜"], [4, "𝅝"], [2, "𝅗𝅥"], [1, "♩"], [0.5, "♪"], [0.25, "𝅘𝅥𝅯"], [0.125, "𝅘𝅥𝅰"], [0.0625, "𝅘𝅥𝅱"], [0.03125, "𝅘𝅥𝅲"], [0.015625, "𝅘𝅥𝅳"]];   // the palette's lengths, in beats
+const LEN_NAME = { 8: "double whole", 4: "whole", 2: "half", 1: "quarter", 0.5: "eighth", 0.25: "16th", 0.125: "32nd", 0.0625: "64th", 0.03125: "128th", 0.015625: "256th" };
+const durGlyph = d => { for (const [v, gl] of LENS) { if (Math.abs(d - v) < 1e-9) return gl; if (Math.abs(d - v * 1.5) < 1e-9) return gl + "."; } return `${fmtB(d)}b`; };
 const toggle = (label, on, fn, title) => el("label", { class: "toggle" + (on ? " on" : ""), title, onclick: e => { e.preventDefault(); fn(!on); } }, el("span", { class: "sw" }), label);
 const gridStep = () => S.song.snap ? 0.5 : 0.25;
 const snapT = t => Math.round(t / gridStep()) * gridStep();
@@ -7974,7 +7981,7 @@ function melodyPlayEvents(bi) {
     if (c.rest || c.head.m == null || tiedFromPrev(bi, c)) continue;
     let d = c.d, k = bi;
     if (c.tieOut) { let cc = c; while (cc.tieOut && S.song.bars[k + 1]) { const nc = chains(S.song.bars[k + 1])[0]; if (!nc || nc.t > 1e-6 || nc.rest) break; d = r3(d + nc.d); cc = nc; k++; } }
-    out.push({ t: c.t, d, ms: [c.head.m], vel: c.head.artic === "staccato" ? 0.95 : 0.9, sus: d * articFactor(c.head, 0.95, underSlur(bar, c.head)), src: c.head });
+    out.push({ t: c.t, d, ms: [c.head.m], vel: c.head.ghost ? 0.28 : c.head.artic === "staccato" ? 0.95 : 0.9, sus: d * articFactor(c.head, 0.95, underSlur(bar, c.head)) * (c.head.ghost ? 0.5 : 1), src: c.head });
   }
   return out;
 }
@@ -7986,7 +7993,7 @@ function bandPlayEvents(part, bi) {
     if (c.rest || c.head.m == null || tiedFromPrev(bi, c, part)) continue;
     let d = c.d, k = bi, cc = c;
     while (cc.tieOut && S.song.bars[k + 1]) { const nc = chains(S.song.bars[k + 1], part)[0]; if (!nc || nc.t > 1e-6 || nc.rest) break; d = r3(d + nc.d); cc = nc; k++; }
-    out.push({ t: c.t, d, ms: [c.head.m], vel: 0.8, sus: d * articFactor(c.head, autoRatio(d)), src: c.head });
+    out.push({ t: c.t, d, ms: [c.head.m], vel: c.head.ghost ? 0.28 : 0.8, sus: d * articFactor(c.head, autoRatio(d)) * (c.head.ghost ? 0.5 : 1), src: c.head });
   }
   return out;
 }
@@ -8046,7 +8053,7 @@ function planSpan(bi, t, d, part = "melody") {
     if (evs.some(e => (part === "melody" || !e.rest) && e.t < at + room - 1e-6 && e.t + e.d > at + 1e-6)) {
       const nxt = evs.filter(e => (part === "melody" || !e.rest) && e.t > t + 1e-6 && e.bi === undefined).map(e => e.t).sort((a, c) => a - c)[0];
       const fits = b === bi ? r3(Math.min(Math.floor(t + 1e-6) + 1, nxt != null ? nxt : barBeats(bi)) - t) : 0;
-      return { deny: `Not enough space remaining — ${b === bi ? "a later beat in this bar" : "bar " + barNo(b)} already has something there.${fits > 0 ? ` A length of ${fits} beat${fits === 1 ? "" : "s"} or less fits here.` : " Pick a shorter note, or clear the way first."}` };
+      return { deny: `Not enough space remaining — ${b === bi ? "a later beat in this bar" : "bar " + barNo(b)} already has something there.${fits > 0 ? ` A length of ${fmtB(fits)} beat${fits === 1 ? "" : "s"} or less fits here.` : " Pick a shorter note, or clear the way first."}` };
     }
     pieces.push({ bi: b, t: at, d: room }); left = r3(left - room); b++; at = 0;
   }
@@ -8062,10 +8069,10 @@ function placeSpan(pieces, part, m, artic) {
   pieces.forEach((p, k) => {
     const bar = S.song.bars[p.bi];
     if (part !== "melody") bar.ev[part] = bar.ev[part].filter(e => !(e.rest && e.t < p.t + p.d - 1e-6 && e.t + e.d > p.t + 1e-6));
-    const ev = { id: uid(), t: p.t, d: p.d, m }; if (k < pieces.length - 1) ev.tie = true; if (k === 0 && artic) ev.artic = artic; if (p.noBeam) ev.noBeam = true; if (m != null && chordOn(part)) ev.chord = true;
+    const ev = { id: uid(), t: p.t, d: p.d, m }; if (S.ghostNext && m != null) ev.ghost = true; if (k < pieces.length - 1) ev.tie = true; if (k === 0 && artic) ev.artic = artic; if (p.noBeam) ev.noBeam = true; if (m != null && chordOn(part)) ev.chord = true;
     bar.ev[part].push(ev); if (part === "melody") syncNotesToChips(bar); if (k === 0) head = ev;
   });
-  S.lastEntered = { part, bi: pieces[0].bi, id: head.id };
+  S.lastEntered = { part, bi: pieces[0].bi, id: head.id }; if (m != null) S.ghostNext = false;
   return head;
 }
 /* the box follows the picked length; a length that no longer fits is refused */
@@ -8084,7 +8091,7 @@ function melodySpot(bar, bi) {
   const cur = S.followWords && S.cursor && S.cursor.bi === bi ? bar.chips.find(c => c.id === S.cursor.chipId) : null;
   const ts = cur && !chipPitched(bar, cur) && inActive(bi, cur.t) && !overlaps(bar, cur.t, 0.25) ? cur.t : freeSpotInBeat(bar, bi, S.active.beat);
   if (ts == null) return null;
-  const d = cur && !chipPitched(bar, cur) && Math.abs(cur.t - ts) < 1e-6 ? Math.max(0.25, Math.min(noteLenBeats(), cur.d)) : noteLenBeats();
+  const d = cur && !chipPitched(bar, cur) && Math.abs(cur.t - ts) < 1e-6 ? Math.max(MIN_D, Math.min(noteLenBeats(), cur.d)) : noteLenBeats();
   return { ts, d };
 }
 /* the entry box for the picked length at the next free spot in the active beat; false when nothing fits */
@@ -8102,7 +8109,7 @@ function showBox(bi, part = "melody", quiet = false, at = null) {
 /* the first free spot inside the active beat for a new note of the picked length */
 function freeSpotInBeat(bar, bi, beat, part = "melody") {
   const B = barBeats(bi), b0 = beat, b1 = Math.min(B, beat + 1), evs = [...(bar.ev[part] || [])].sort((a, b) => a.t - b.t);
-  const busy = t => evs.some(e => e.t < t + 0.25 - 1e-6 && e.t + e.d > t + 1e-6);
+  const w = Math.min(0.25, noteLenBeats()), busy = t => evs.some(e => e.t < t + w - 1e-6 && e.t + e.d > t + 1e-6);
   const end = evs.length ? r3(Math.max(...evs.map(e => e.t + e.d))) : 0;
   if (end >= b0 - 1e-6 && end < b1 - 1e-6 && !busy(end)) return end;             // flush against what's there so far
   let t = b0;
@@ -8203,24 +8210,35 @@ function drawNote(svg, g, x, m, d, color, attrs, opts = {}) {
   const y = g.y(m), st = g.step, id = attrs["data-ev"];
   const grp = svgEl("g", Object.assign({ class: "noteEl" }, attrs));
   const edge = opts.uni ? "#d9362b" : opts.outline || null, edgeW = opts.uni ? 2.2 : 1.1;         // chord notes: a thin dark edge; unison: red
+  const paren = (cx, cy, rx, ry) => {                                                             // a ghost note: the head in brackets
+    const px = rx + 2.5 * NS(), ph = ry + 2.5, w = 1.3 * NS();
+    grp.append(svgEl("path", { d: `M ${cx - px} ${cy - ph} q ${-ph * 0.7} ${ph} 0 ${2 * ph}`, fill: "none", stroke: color, "stroke-width": w, "stroke-linecap": "round" }),
+               svgEl("path", { d: `M ${cx + px} ${cy - ph} q ${ph * 0.7} ${ph} 0 ${2 * ph}`, fill: "none", stroke: color, "stroke-width": w, "stroke-linecap": "round" }));
+  };
   if (S.noteStyle === "pill") {
-    const ph = Math.min(st * (S.halfLines ? 2 : 1) + 2, (st - 2) * NS() * HK()); grp.append(svgEl("rect", { x: x + 1, y: y - ph / 2, width: Math.max(4, d * g.beatPx - 4), height: ph, rx: ph / 2, fill: color, opacity: opts.auto ? 0.5 : 1 }));
+    const ph = Math.min(st * (S.halfLines ? 2 : 1) + 2, (st - 2) * NS() * HK()); grp.append(svgEl("rect", { x: x + 1, y: y - ph / 2, width: Math.max(4, d * g.beatPx - 4), height: ph, rx: ph / 2, fill: color, opacity: opts.auto ? 0.5 : opts.ghostNote ? 0.45 : 1 }));
   } else if (S.noteStyle === "circle") {
     grp.append(svgEl("circle", { cx: x + st * 0.5, cy: y, r: st * 0.42 * NS() * HK(), fill: color, opacity: opts.auto ? 0.5 : 1 }));
     if (d < 0.5) grp.append(svgEl("circle", { cx: x + st * 0.5, cy: y, r: st * 0.2 * NS() * HK(), fill: css("--paper") }));
+    if (opts.ghostNote) paren(x + st * 0.5, y, st * 0.42 * NS() * HK(), st * 0.42 * NS() * HK());
   } else {
-    /* traditional: hollow for half/whole, stem + flags by value, dot for dotted */
-    const VALS = [4, 2, 1, 0.5, 0.25, 0.125];                                 // the written value: exact, or dotted, else the largest that fits
-    const base = VALS.find(v => Math.abs(d - v) < 1e-6 || Math.abs(d - v * 1.5) < 1e-6) || VALS.find(v => v <= d + 1e-6) || 0.125;
-    const dotted = Math.abs(d - base * 1.5) < 1e-6;
+    /* traditional: hollow for half and longer, two bars for a double whole, stem + flags by value, dot for dotted */
+    const VALS = LENS.map(l => l[0]);                                                              // the written value: exact, or dotted, else the largest that fits
+    const base = VALS.find(v => Math.abs(d - v) < 1e-9 || Math.abs(d - v * 1.5) < 1e-9) || VALS.find(v => v <= d + 1e-9) || VALS[VALS.length - 1];
+    const dotted = Math.abs(d - base * 1.5) < 1e-9;
     const rx = st * 0.55 * NS() * HK(), ry = st * 0.40 * NS() * HK(), hx = x + rx + 1, hollow = base >= 2, up = m < (g.lo + g.hi) / 2 + 0.5;
     grp.append(svgEl("ellipse", { cx: hx, cy: y, rx, ry, fill: hollow ? css("--paper") : color, stroke: edge || color, "stroke-width": edge ? edgeW : hollow ? 1.6 * NS() : 0, transform: `rotate(-22 ${hx} ${y})`, opacity: opts.auto ? 0.55 : 1 }));
+    if (base >= 8) [-1, 1].forEach(s => grp.append(svgEl("line", { x1: hx + s * (rx + 1.6), x2: hx + s * (rx + 1.6), y1: y - ry * 1.5, y2: y + ry * 1.5, stroke: color, "stroke-width": 1.5 * NS(), opacity: opts.auto ? 0.55 : 1 })));
+    if (opts.ghostNote) paren(hx, y, rx + (base >= 8 ? 2.5 : 0), ry);
     if (base < 4 && !opts.noStem) {
-      const stemLen = st * (opts.stem || 3.1) * NS(), sx = up ? hx + rx - 0.6 : hx - rx + 0.6, sy2 = up ? y - stemLen : y + stemLen;
+      const k = NS(), flags = base <= 0.5 ? Math.round(Math.log2(0.5 / base)) + 1 : 0;              // one flag for an eighth, one more for each halving
+      const fixed = st * (opts.stem || 3.1) * k;
+      const fsp = opts.stem ? Math.min(st * 0.8 * k, fixed * 0.75 / Math.max(1, flags)) : st * 0.8 * k;    // on a short fixed stem the flags close up
+      const stemLen = fixed + (opts.stem ? 0 : Math.max(0, flags - 2) * fsp);                                // on the stave extra flags lengthen the stem
+      const sx = up ? hx + rx - 0.6 : hx - rx + 0.6, sy2 = up ? y - stemLen : y + stemLen;
       if (edge) grp.append(svgEl("line", { x1: sx, x2: sx, y1: y, y2: sy2, stroke: opts.outline || edge, "stroke-width": 1.4 * NS() + 2, opacity: opts.auto ? 0.55 : 1 }));
       grp.append(svgEl("line", { x1: sx, x2: sx, y1: y, y2: sy2, stroke: color, "stroke-width": 1.4 * NS(), opacity: opts.auto ? 0.55 : 1 }));
-      const flags = base <= 0.25 ? 2 : base <= 0.5 ? 1 : 0;
-      for (let f = 0; f < flags; f++) { const k = NS(), fy = sy2 + (up ? f * st * 0.8 * k : -f * st * 0.8 * k), dir = up ? 1 : -1; grp.append(svgEl("path", { d: `M ${sx} ${fy} q ${st * 0.9 * k} ${dir * st * 0.5 * k} ${st * 0.55 * k} ${dir * st * 1.6 * k}`, fill: "none", stroke: color, "stroke-width": 1.6 * k, "stroke-linecap": "round", opacity: opts.auto ? 0.55 : 1 })); }
+      for (let f = 0; f < flags; f++) { const fy = sy2 + (up ? f * fsp : -f * fsp), dir = up ? 1 : -1; grp.append(svgEl("path", { d: `M ${sx} ${fy} q ${st * 0.9 * k} ${dir * st * 0.5 * k} ${st * 0.55 * k} ${dir * st * 1.6 * k}`, fill: "none", stroke: color, "stroke-width": 1.6 * k, "stroke-linecap": "round", opacity: opts.auto ? 0.55 : 1 })); }
     }
     if (dotted) grp.append(svgEl("circle", { cx: hx + rx + 4, cy: y - 2, r: 1.8 * NS(), fill: color }));
   }
@@ -8280,22 +8298,24 @@ function beamGroups(evs) {
 }
 /* stems joined by a beam (secondary beam / stubs for sixteenths) */
 function drawBeamed(svg, g, group, color, xOf, opts = {}) {
-  const st = g.step, rx = st * 0.55 * NS() * HK(), stemF = opts.stem || 3.1, op = opts.auto ? 0.55 : 1;
+  const lvl = e => Math.max(0, Math.round(Math.log2(0.5 / baseLen(e.d))));                  // beams under the first: none for an eighth, one for a 16th, two for a 32nd …
+  const maxL = Math.max(...group.evs.map(lvl));
+  const st = g.step, rx = st * 0.55 * NS() * HK(), op = opts.auto ? 0.55 : 1;
+  const stemF = (opts.stem || 3.1) + (opts.stem ? 0 : Math.max(0, maxL - 1) * 0.6);         // more beams: longer stems on the stave
   const avg = group.evs.reduce((a, e) => a + e.m, 0) / group.evs.length, up = opts.up != null ? opts.up : avg < (g.lo + g.hi) / 2 + 0.5;
   const stems = group.evs.map(e => { const hx = xOf(e) + rx + 1; return { e, sx: up ? hx + rx - 0.6 : hx - rx + 0.6, y: g.y(e.m) }; });
   const k = NS(), beamY = up ? Math.min(...stems.map(s => s.y - st * stemF * k)) : Math.max(...stems.map(s => s.y + st * stemF * k));
   stems.forEach(s => svg.append(svgEl("line", { x1: s.sx, x2: s.sx, y1: s.y, y2: beamY, stroke: color, "stroke-width": 1.4 * k, opacity: op, "pointer-events": "none" })));
-  const th = Math.max(1.5, st * 0.32 * k), dir = up ? 1 : -1, x0 = stems[0].sx, x1 = stems[stems.length - 1].sx;
-  const beam = (xa, xb, level) => svg.append(svgEl("rect", { x: Math.min(xa, xb) - 0.7, y: up ? beamY + level * (th + st * 0.25 * k) : beamY - th - level * (th + st * 0.25 * k), width: Math.abs(xb - xa) + 1.4, height: th, fill: color, opacity: op, "pointer-events": "none" }));
+  const th = Math.max(1.5, st * 0.32 * k), gap = opts.stem ? Math.min(th + st * 0.25 * k, st * opts.stem * k * 0.7 / Math.max(1, maxL)) : th + st * 0.25 * k;
+  const x0 = stems[0].sx, x1 = stems[stems.length - 1].sx;
+  const beam = (xa, xb, level) => svg.append(svgEl("rect", { x: Math.min(xa, xb) - 0.7, y: up ? beamY + level * gap : beamY - th - level * gap, width: Math.abs(xb - xa) + 1.4, height: th, fill: color, opacity: op, "pointer-events": "none" }));
   beam(x0, x1, 0);
-  const is16 = e => baseLen(e.d) <= 0.25;
-  for (let i = 0; i < stems.length; i++) {
-    if (!is16(stems[i].e)) continue;
-    const prev = i > 0 && is16(stems[i - 1].e), next = i < stems.length - 1 && is16(stems[i + 1].e);
-    if (next) beam(stems[i].sx, stems[i + 1].sx, 1);
-    else if (!prev) { const stub = st * 0.9 * k; beam(stems[i].sx, i > 0 ? stems[i].sx - stub : stems[i].sx + stub, 1); }   // lone sixteenth: stub toward its neighbour
+  for (let L = 1; L <= maxL; L++) for (let i = 0; i < stems.length; i++) {
+    if (lvl(stems[i].e) < L) continue;
+    const prev = i > 0 && lvl(stems[i - 1].e) >= L, next = i < stems.length - 1 && lvl(stems[i + 1].e) >= L;
+    if (next) beam(stems[i].sx, stems[i + 1].sx, L);
+    else if (!prev) { const stub = st * 0.9 * k; beam(stems[i].sx, i > 0 ? stems[i].sx - stub : stems[i].sx + stub, L); }   // a lone short note: a stub toward its neighbour
   }
-  void dir;
 }
 function tieArcAt(svg, x1, x2, y, color) { svg.append(svgEl("path", { d: `M ${x1} ${y} Q ${(x1 + x2) / 2} ${y + 10} ${x2} ${y}`, fill: "none", stroke: color, "stroke-width": 1.6, "pointer-events": "none" })); }
 
@@ -8326,7 +8346,7 @@ function renderWindows() {
       const m = c.head.m;
       if (m < g.lo || m > g.hi) { svg.append(svgEl("text", { x: x0 + 3, y: m > g.hi ? 12 : g.H - 4, "font-size": 9, "font-weight": 700, fill: ink, "font-family": "system-ui, sans-serif" }, (m > g.hi ? "▲" : "▼") + noteName(m, key))); continue; }
       c.members.forEach((e, k) => {
-        drawNote(svg, g, g.x(bi, e.t) + 2, m, e.d, e.chord ? S.chordColor : ink, { "data-ev": e.id, "data-part": "melody", "data-bi": bi }, { label: k === 0 && S.noteStyle !== "trad" ? pcName(m, key) : null, noStem: beamed.has(e.id), outline: e.chord ? "#111" : null, uni: unison.has(e.id) });
+        drawNote(svg, g, g.x(bi, e.t) + 2, m, e.d, e.chord ? S.chordColor : ink, { "data-ev": e.id, "data-part": "melody", "data-bi": bi }, { label: k === 0 && S.noteStyle !== "trad" ? pcName(m, key) : null, noStem: beamed.has(e.id), outline: e.chord ? "#111" : null, uni: unison.has(e.id), ghostNote: !!e.ghost });
         if (e.tie) { const nx = k < c.members.length - 1 ? g.x(bi, c.members[k + 1].t) + 2 + g.step * 0.55 * NS() * HK() : g.x(bi, barBeats(bi)) + (g.bars.includes(bi + 1) ? 2 + g.step * 0.55 * NS() * HK() : 0); tieArcAt(svg, g.x(bi, e.t) + 2 + g.step * 0.55 * NS() * HK(), nx, g.y(m) + g.step * 0.5, ink); }
       });
       if (tiedFromPrev(bi, c) && bi === g.first) tieArcAt(svg, 0, x0 + g.step * 0.55 * NS() * HK(), g.y(m) + g.step * 0.5, ink);
@@ -8385,7 +8405,7 @@ function renderWindows() {
         const x0 = g.x(bi, e.t) + 1, x1 = g.x(bi, e.t + Math.min(e.d, g.B - e.t)) - 2;
         if (e.rest) { svg.append(svgEl("rect", { class: "noteEl", x: x0, y: 2, width: Math.max(4, x1 - x0), height: g.H - 4, rx: 2, fill: "none", stroke: css("--ink2"), "stroke-dasharray": "3 3", "data-ev": e.id, "data-part": part, "data-bi": bi })); continue; }
         if (e.m < g.lo || e.m > g.hi) { svg.append(svgEl("text", { class: "noteEl", x: x0 + 2, y: e.m > g.hi ? 9 : g.H - 3, "font-size": 8, "font-weight": 700, fill: color, "data-ev": e.id, "data-part": part, "data-bi": bi, style: "pointer-events:all" }, (e.m > g.hi ? "▲" : "▼") + noteName(e.m, key))); continue; }
-        drawNote(svg, g, x0 + 1, e.m, e.d, e.chord ? S.chordColor : color, { "data-ev": e.id, "data-part": part, "data-bi": bi }, { noStem: beamed.has(e.id), outline: e.chord ? "#111" : null, uni: unison.has(e.id) });
+        drawNote(svg, g, x0 + 1, e.m, e.d, e.chord ? S.chordColor : color, { "data-ev": e.id, "data-part": part, "data-bi": bi }, { noStem: beamed.has(e.id), outline: e.chord ? "#111" : null, uni: unison.has(e.id), ghostNote: !!e.ghost });
         if (e.id === sel) drawSelFrame(svg, x0 - 1, g.y(e.m) - g.step, Math.max(6, x1 - x0 + 2), g.step * 2, 3);
       }
     } else {
@@ -8427,7 +8447,7 @@ function renderStrips() {
         if (c.rest) { svg.append(svgEl("text", { x: x0 + 5, y: 19, "font-size": 13, fill: "#fff", "font-family": "Georgia, serif" }, "𝄽")); continue; }
         c.members.forEach((e, k) => {
           const saved = S.noteStyle; S.noteStyle = "trad";
-          drawNote(svg, mini, g.x(bi, e.t) + 2, 0.5, e.d, "#fff", { "data-ev": e.id, "data-part": "melody", "pointer-events": "none" }, { stem: 2.2, noStem: beamed.has(e.id) });
+          drawNote(svg, mini, g.x(bi, e.t) + 2, 0.5, e.d, "#fff", { "data-ev": e.id, "data-part": "melody", "pointer-events": "none" }, { stem: 2.2, noStem: beamed.has(e.id), ghostNote: !!e.ghost });
           S.noteStyle = saved;
           if (e.tie) { const nx = k < c.members.length - 1 ? g.x(bi, c.members[k + 1].t) + 2 + 3.3 : g.x(bi, barBeats(bi)) + (g.bars.includes(bi + 1) ? 5.3 : 0); tieArcAt(svg, g.x(bi, e.t) + 5.3, nx, 20, "#fff"); }
         });
@@ -8505,8 +8525,8 @@ function renderPalette() {
   const b = (t, fn, opts = {}) => p.append(el("button", Object.assign({ onclick: fn }, opts.attrs || {}, { class: (opts.cls || "") + (opts.on ? " on" : "") + (opts.warn ? " warn" : ""), title: opts.title, disabled: opts.disabled }), t));
   const sc = selChipObj();
   if (sc) {                                        // a word, letter, space or symbol on the Lyrics strip is selected
-    [[4, "𝅝"], [2, "𝅗𝅥"], [1, "♩"], [0.5, "♪"], [0.25, "𝅘𝅥𝅯"]].forEach(([v, gl]) => b(gl, () => tapLength(v), { on: S.len === v, title: `Next note: ${v} beat${v === 1 ? "" : "s"}` }));
-    b("·", tapDot, { on: S.dot, title: "Dotted" }); b("𝄽", tapRest, { on: S.restNext, title: "Rest" }); b("＋", appendFromStrip, { cls: "txt", title: "Add a box at the end of the rhythm" });
+    LENS.forEach(([v]) => b(lenIcon(v), () => tapLength(v), { cls: "len gn", on: S.len === v, title: `Next note: ${LEN_NAME[v]}` }));
+    b(ghostIcon(), tapGhostNote, { cls: "len gn", on: S.ghostNext, title: "Ghost note: the next note is played softly, barely heard" });
     p = r2;
     const { bar, chip } = sc, fine = 0.0625;
     p.append(el("span", { class: "who" }, `“${chip.text.trim()}”`));
@@ -8520,10 +8540,8 @@ function renderPalette() {
     return;
   }
   const own = ev && !S.selAuto;
-  [[4, "𝅝"], [2, "𝅗𝅥"], [1, "♩"], [0.5, "♪"], [0.25, "𝅘𝅥𝅯"]].forEach(([v, gl]) => b(gl, () => tapLength(v), { on: own ? Math.abs(baseLen(ev.d) - v) < 1e-6 : S.len === v, title: own ? `Make it ${v} beat${v === 1 ? "" : "s"}` : `Next note: ${v} beat${v === 1 ? "" : "s"}` }));
-  b("·", tapDot, { on: own ? isDotted(ev.d) : S.dot, title: "Dotted" });
-  b("𝄽", tapRest, { on: S.restNext, title: ev ? "Turn into a rest" : S.ghost ? "Put a rest in the box" : "Rest: tap where it goes" });
-  b("＋", appendFromStrip, { cls: "txt", title: "Add a box of this length at the end of the rhythm", disabled: !!ev });
+  LENS.forEach(([v]) => b(lenIcon(v), () => tapLength(v), { cls: "len gn", on: own ? Math.abs(baseLen(ev.d) - v) < 1e-9 : S.len === v, title: own ? `Make it a ${LEN_NAME[v]} note` : `Next note: ${LEN_NAME[v]}` }));
+  b(ghostIcon(), tapGhostNote, { cls: "len gn", on: own ? !!ev.ghost : S.ghostNext, title: own ? (ev.ghost ? "Not a ghost note" : "Make it a ghost note — played softly, barely heard") : "Ghost note: the next note is played softly, barely heard" });
   p = r2;
   if (PSEL.on) {
     b("Clear", () => { PSEL.ids.clear(); renderWindows(); renderPalette(); }, { cls: "lyr", disabled: !PSEL.ids.size, title: "Choose none" });
@@ -8550,8 +8568,8 @@ function renderPalette() {
   if (ev) {                                        // editing tools appear for the selected note
     b("↑", () => transposeSel(1), { cls: "txt", title: "Up a half step", disabled: ev.rest || ev.m == null });
     b("↓", () => transposeSel(-1), { cls: "txt", title: "Down a half step", disabled: ev.rest || ev.m == null });
-    b("←", () => moveSel(-gridStep()), { cls: "txt", title: "Earlier" });
-    b("→", () => moveSel(gridStep()), { cls: "txt", title: "Later" });
+    b("←", () => moveSel(-Math.min(gridStep(), baseLen(ev.d))), { cls: "txt", title: "Earlier" });
+    b("→", () => moveSel(Math.min(gridStep(), baseLen(ev.d))), { cls: "txt", title: "Later" });
     b("🗑", deleteSel, { warn: true, title: "Delete" });
     b("✕", () => { S.sel = null; renderAll(); }, { cls: "txt", title: "Done" });
     p.append(el("span", { class: "who" }, (ev.rest ? "rest" : ev.m == null ? "slot" : noteName(ev.m, keyObj(S.song.key))) + " " + durGlyph(ev.d)));
@@ -8576,8 +8594,8 @@ function updatePlayhead() {
    SECTION 11 · EDITING — rhythm, melody, band notes, words
    ═══════════════════════════════════════════════════════════════════════ */
 function selEv() { if (!S.sel) return null; const bar = S.song.bars[S.sel.bi]; return bar ? (bar.ev[S.sel.part] || []).find(e => e.id === S.sel.id) : null; }
-const baseLen = d => [4, 2, 1, 0.5, 0.25].find(v => Math.abs(d - v) < 1e-6 || Math.abs(d - v * 1.5) < 1e-6) || d;
-const isDotted = d => [6, 3, 1.5, 0.75, 0.375].some(v => Math.abs(d - v) < 1e-6);
+const baseLen = d => LENS.map(l => l[0]).find(v => Math.abs(d - v) < 1e-9 || Math.abs(d - v * 1.5) < 1e-9) || d;
+const isDotted = d => LENS.some(l => Math.abs(d - l[0] * 1.5) < 1e-9);
 function select(bi, part, id) { S.sel = id ? { bi, part, id } : null; S.selAuto = false; if (id) S.ghost = null; renderAll(); }
 /* append a slot (rest or unpitched) at the rhythm cursor; moves on to the next bar when the bar is full */
 function appendSlot(d, rest) {
@@ -8593,8 +8611,8 @@ function appendSlot(d, rest) {
   return ev;
 }
 function insertSlotAt(bi, t, d, rest, exact) {
-  const bar = S.song.bars[bi], B = barBeats(bi); t = clamp(exact ? r3(t) : snapT(t), 0, B - 0.25);
-  if (overlaps(bar, t, 0.25)) { toast("There's already a note there"); return null; }
+  const bar = S.song.bars[bi], B = barBeats(bi), w = Math.min(0.25, d); t = clamp(exact ? r3(t) : snapT(t), 0, B - w);
+  if (overlaps(bar, t, w)) { toast("There's already a note there"); return null; }
   if (!rest) { const plan = planSpan(bi, t, d, "melody"); if (plan.deny) { noticeModal(plan.deny); return null; } const head = placeSpan(plan.pieces, "melody", null, null); select(bi, "melody", head.id); S.selAuto = true; return head; }
   const ev = { id: uid(), t, d: Math.min(d, freeSpan(bar, t)), rest: true };
   bar.ev.melody.push(ev); syncNotesToChips(bar); select(bi, "melody", ev.id); return ev;
@@ -8606,6 +8624,40 @@ function tapLength(v) {
   if (own) { setDur(ev, v); return; }
   if (S.ghost) { const bar = S.song.bars[S.ghost.bi]; if (!refitGhost()) return; renderWindows(); }
   renderPalette();
+}
+/* the length buttons are drawn, not typed: six flags on a 256th stay readable at button size */
+function lenIcon(v) {
+  const s = svgEl("svg", { viewBox: "0 0 24 26", width: 22, height: 24, "aria-hidden": "true" }), c = "currentColor";
+  const hollow = v >= 2, cx = 9, cy = v >= 4 ? 13 : 20, rx = 4.2, ry = 2.9;
+  s.append(svgEl("ellipse", { cx, cy, rx, ry, fill: hollow ? "none" : c, stroke: c, "stroke-width": hollow ? 1.7 : 0, transform: `rotate(-22 ${cx} ${cy})` }));
+  if (v >= 8) [-1, 1].forEach(k => s.append(svgEl("line", { x1: cx + k * 6.2, x2: cx + k * 6.2, y1: cy - 4.6, y2: cy + 4.6, stroke: c, "stroke-width": 1.7 })));
+  if (v < 4) {
+    const sx = cx + rx - 0.4, top = 2.5;
+    s.append(svgEl("line", { x1: sx, x2: sx, y1: cy, y2: top, stroke: c, "stroke-width": 1.5 }));
+    const flags = v <= 0.5 ? Math.round(Math.log2(0.5 / v)) + 1 : 0, gap = flags > 3 ? 2.4 : 3.4;
+    for (let f = 0; f < flags; f++) s.append(svgEl("path", { d: `M ${sx} ${top + f * gap} q 6.5 2.5 4.5 8`, fill: "none", stroke: c, "stroke-width": 1.5, "stroke-linecap": "round" }));
+  }
+  return s;
+}
+/* the ghost-note button: a notehead in brackets */
+function ghostIcon() {
+  const s = svgEl("svg", { viewBox: "0 0 24 24", width: 22, height: 22, "aria-hidden": "true" });
+  s.append(svgEl("path", { d: "M 6.5 4.5 q -4.5 7.5 0 15", fill: "none", stroke: "currentColor", "stroke-width": 1.7, "stroke-linecap": "round" }),
+           svgEl("path", { d: "M 18.5 4.5 q 4.5 7.5 0 15", fill: "none", stroke: "currentColor", "stroke-width": 1.7, "stroke-linecap": "round" }),
+           svgEl("ellipse", { cx: 11.2, cy: 15.8, rx: 3.5, ry: 2.4, fill: "currentColor", transform: "rotate(-22 11.2 15.8)" }),
+           svgEl("line", { x1: 14.4, y1: 15.2, x2: 14.4, y2: 6, stroke: "currentColor", "stroke-width": 1.4 }));
+  return s;
+}
+/* a ghost note: played softly, barely heard. On a note you tapped yourself it toggles; otherwise it arms the next note. */
+function tapGhostNote() {
+  const ev = selEv();
+  if (ev && !S.selAuto) {
+    if (ev.rest || ev.m == null) { toast("Ghost notes are for pitched notes"); return; }
+    const bar = S.song.bars[S.sel.bi], ch = S.sel.part === "melody" ? chainOf(bar, ev, "melody") : null, on = !ev.ghost;
+    (ch ? ch.members : [ev]).forEach(e => { if (on) e.ghost = true; else delete e.ghost; });
+    renderAll(); return;
+  }
+  S.ghostNext = !S.ghostNext; renderPalette(); if (S.ghostNext) toast("The next note goes in as a ghost note — played softly, barely heard");
 }
 function tapDot() { const ev = selEv(); if (ev && !S.selAuto) { setDur(ev, isDotted(ev.d) ? ev.d / 1.5 : ev.d * 1.5); return; } S.dot = !S.dot; if (S.ghost) { const bar = S.song.bars[S.ghost.bi]; if (!refitGhost()) return; renderWindows(); } renderPalette(); }
 function tapRest() {
@@ -8627,7 +8679,7 @@ function placeRestNow(part) {
   const sp = part === "melody" ? melodySpot(bar, bi) : (t => t == null ? null : { ts: t, d: noteLenBeats() })(freeSpotInBeat(bar, bi, S.active.beat, part));
   if (!sp) { toast("This beat is full"); return; }
   const room = part === "melody" ? freeSpan(bar, sp.ts) : (() => { const nx = (bar.ev[part] || []).filter(e => e.t > sp.ts + 1e-6).sort((a, b) => a.t - b.t)[0]; return r3((nx ? nx.t : barBeats(bi)) - sp.ts); })();
-  const ev = { id: uid(), t: sp.ts, d: Math.max(0.25, Math.min(sp.d, room)), rest: true };
+  const ev = { id: uid(), t: sp.ts, d: Math.max(MIN_D, Math.min(sp.d, room)), rest: true };
   bar.ev[part].push(ev); if (part === "melody") syncNotesToChips(bar);
   S.ghost = null; S.restNext = false; S.sel = { bi, part, id: ev.id }; S.selAuto = true; S.justEntered = { bi, beat: S.active.beat, part }; renderAll();
 }
@@ -8640,7 +8692,7 @@ function setDur(ev, nd) {
   const ch = chainOf(bar, ev, part);
   if (ch && ch.members.length > 1) { bar.ev[part] = arr.filter(e => e === ev || !ch.members.includes(e)); }   // fold the tied pieces back into one
   const list = bar.ev[part];
-  nd = clamp(r3(nd), 0.25, B - ev.t);
+  nd = clamp(r3(nd), MIN_D, B - ev.t);
   const others = list.filter(e => e !== ev && e.t > ev.t + 1e-6).sort((a, b) => a.t - b.t);
   if (others.length && others[0].t < ev.t + nd - 1e-6) {           // push the rest of the bar along
     let shift = r3(ev.t + nd - others[0].t);
@@ -8762,7 +8814,7 @@ function tapBand(win, bi, t, m) {
   if (spot == null) { toast("This beat is full for the " + PART_META[part].short.toLowerCase() + " — select a note to change it"); return; }
   if (!direct && !(gh && gh.part === part && gh.bi === bi && beatOf(bi, gh.t) === S.active.beat)) { showBox(bi, part); return; }   // first tap: the box at the next free spot in this beat
   const ts = direct ? spot : gh.t, d = direct ? noteLenBeats() : gh.d; S.ghost = null;    // then: pitch from the tap, time from the box — or straight in, after the first note
-  if (S.restNext) { S.restNext = false; const nx = (bar.ev[part] || []).filter(e => e.t > ts + 1e-6).sort((a, b) => a.t - b.t)[0]; const rd = Math.max(0.25, Math.min(d, r3((nx ? nx.t : B) - ts))); const rev = { id: uid(), t: ts, d: rd, rest: true }; bar.ev[part].push(rev); S.sel = { bi, part, id: rev.id }; S.justEntered = { bi, beat: S.active.beat, part }; renderAll(); return; }
+  if (S.restNext) { S.restNext = false; const nx = (bar.ev[part] || []).filter(e => e.t > ts + 1e-6).sort((a, b) => a.t - b.t)[0]; const rd = Math.max(MIN_D, Math.min(d, r3((nx ? nx.t : B) - ts))); const rev = { id: uid(), t: ts, d: rd, rest: true }; bar.ev[part].push(rev); S.sel = { bi, part, id: rev.id }; S.justEntered = { bi, beat: S.active.beat, part }; renderAll(); return; }
   const plan = planSpan(bi, ts, d, part); if (plan.deny) { renderAll(); noticeModal(plan.deny); return; }
   const head = placeSpan(plan.pieces, part, m, S.artic && S.artic !== "slur" ? S.artic : null); previewNote(m, part); S.sel = { bi, part, id: head.id }; S.selAuto = true; S.justEntered = { bi, beat: S.active.beat, part }; renderAll();
 }
@@ -9551,6 +9603,11 @@ function mvStart(mode = "move") {
 /* the third tools row: undo, redo, and the two run tools */
 function renderRow3(r3) {
   const b = (t, fn, opts = {}) => r3.append(el("button", { onclick: fn, class: (opts.cls || "") + (opts.on ? " on" : "") + (opts.warn ? " warn" : ""), title: opts.title, disabled: opts.disabled }, t));
+  const ev = selChipObj() ? null : selEv(), own = ev && !S.selAuto;                       // dot, rest and ＋ live here, under the lengths
+  b("·", tapDot, { on: own ? isDotted(ev.d) : S.dot, title: "Dotted" });
+  b("𝄽", tapRest, { on: S.restNext, title: ev ? "Turn into a rest" : S.ghost ? "Put a rest in the box" : "Rest: tap where it goes" });
+  b("＋", appendFromStrip, { cls: "txt", title: "Add a box of this length at the end of the rhythm", disabled: !!ev });
+  r3.append(el("span", { class: "gap" }));
   b("UNDO", undo, { cls: "lyr wide", title: "Undo", disabled: !UNDO.stack.length });
   b("REDO", redo, { cls: "lyr wide", title: "Redo", disabled: !UNDO.redo.length });
   r3.append(el("span", { class: "gap" }));
@@ -9843,7 +9900,7 @@ function tscSend() {
 function tscRenderResult() {
   const box = $("tscRes"); if (!box) return; box.replaceChildren();
   const sendRow = () => TSC.entries.length ? el("div", { class: "mrow send" }, el("button", { class: "btn sm", onclick: tscSend }, "Send to song as melody slots…"), el("span", { class: "tiny" }, `From bar ${barNo(S.bi)}, cut by the song's own ${S.song.sig} bars; you add the pitches after.`)) : null;
-  if (!TSC.result) { if (TSC.entries.length) box.append(el("div", { class: "tiny" }, `${TSC.entries.length} entr${TSC.entries.length === 1 ? "y" : "ies"} · ${r3(TSC.entries.reduce((a, e) => a + tscDur(e), 0))} quarter-note beats in all`), sendRow()); return; }
+  if (!TSC.result) { if (TSC.entries.length) box.append(el("div", { class: "tiny" }, `${TSC.entries.length} entr${TSC.entries.length === 1 ? "y" : "ies"} · ${fmtB(TSC.entries.reduce((a, e) => a + tscDur(e), 0))} quarter-note beats in all`), sendRow()); return; }
   const R = TSC.result, best = R.ranked[TSC.pick];
   box.append(el("div", { class: "best" }, el("b", {}, `${best.sig}`), ` — ${best.nBars} bar${best.nBars === 1 ? "" : "s"}${best.complete ? "" : ", the last one short"}${best.straddles ? `, ${best.straddles} note${best.straddles === 1 ? "" : "s"} tied over a bar line` : ""}`));
   const list = el("div", { class: "rank" });
