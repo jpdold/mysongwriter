@@ -178,6 +178,10 @@ svg text { pointer-events: none; }
 .win .psel.on { background: #2f7fd6; color: #fff; }
 .win .psel.playing { background: linear-gradient(#ffd27a, #f5a623); color: #111; }
 .win.closed .psel { display: none; }
+.win .chordBtn { width: 24px; height: 24px; padding: 0; border: 1px solid rgba(255,255,255,.35); border-radius: 4px; background: rgba(0,0,0,.25); color: var(--on-ground); display: grid; place-items: center; }
+.win .chordBtn .ico { width: 20px; height: 20px; display: block; }
+.win .chordBtn.on { background: linear-gradient(#ffd27a, #f5a623); color: #111; border-color: #a86d10; }
+.win.closed .chordBtn { display: none; }
 .win .focus { display: none; width: 24px; height: 24px; padding: 0; border: 1px solid rgba(255,255,255,.35); border-radius: 4px; background: rgba(0,0,0,.25); color: var(--on-ground); font-size: 13px; }
 .win .focus.on { background: linear-gradient(#ffd27a, #f5a623); color: #111; }
 @media (min-width: 860px) and (min-aspect-ratio: 5/4), (max-height: 520px) and (min-aspect-ratio: 5/4) { .win .focus { display: block; } }
@@ -504,7 +508,7 @@ body.kbOpen #app { padding-bottom: 330px; }              /* room to scroll the s
   <section class="win" id="melWin">
     <div class="gutter"><button class="rArr up" data-win="mel" data-dir="1" title="Higher">︿</button><svg id="melGut"></svg><button class="rArr dn" data-win="mel" data-dir="-1" title="Lower">﹀</button></div>
     <div class="frame"><svg id="melSvg"></svg></div>
-    <div class="side"><button class="gear" data-win="mel" title="Melody settings"><svg class="ico"><use href="#icoGear"/></svg></button><button class="sizer" data-win="mel" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="mel" title="Play Bar — the melody alone, this bar">▶</button><button class="psel" data-win="mel" title="Play Select — choose the melody notes to hear">▶</button><button class="focus" data-win="mel" title="Give this window the whole screen">⛶</button></div>
+    <div class="side"><button class="gear" data-win="mel" title="Melody settings"><svg class="ico"><use href="#icoGear"/></svg></button><button class="sizer" data-win="mel" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="mel" title="Play Bar — the melody alone, this bar">▶</button><button class="psel" data-win="mel" title="Play Select — choose the melody notes to hear">▶</button><button class="chordBtn" data-win="mel" title="Chord mode: every tap stacks a note on the chord being built"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><line x1="3" y1="6.5" x2="17" y2="6.5" stroke="currentColor" stroke-width="1.2"/><line x1="3" y1="13.5" x2="17" y2="13.5" stroke="currentColor" stroke-width="1.2"/><ellipse cx="10" cy="6.5" rx="2.6" ry="1.8" fill="currentColor" transform="rotate(-20 10 6.5)"/><line x1="7.6" y1="6.9" x2="7.6" y2="12" stroke="currentColor" stroke-width="1.2"/><ellipse cx="10" cy="13.5" rx="2.6" ry="1.8" fill="currentColor" transform="rotate(-20 10 13.5)"/><line x1="12.4" y1="13.1" x2="12.4" y2="8" stroke="currentColor" stroke-width="1.2"/></svg></button><button class="focus" data-win="mel" title="Give this window the whole screen">⛶</button></div>
   </section>
 
   <div class="strip" id="rhyStrip">
@@ -530,14 +534,14 @@ body.kbOpen #app { padding-bottom: 330px; }              /* room to scroll the s
     <button class="winHead" data-win="acc">Accompaniment</button>
     <div class="gutter"><button class="rArr up" data-win="acc" data-dir="1" title="Higher">︿</button><svg id="accGut"></svg><button class="rArr dn" data-win="acc" data-dir="-1" title="Lower">﹀</button></div>
     <div class="frame"><svg id="accSvg"></svg></div>
-    <div class="side"><button class="gear" data-win="acc" title="Accompaniment settings"><svg class="ico"><use href="#icoGear"/></svg></button><button class="sizer" data-win="acc" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="acc" title="Play Bar — the accompaniment alone, this bar">▶</button><button class="psel" data-win="acc" title="Play Select — choose the accompaniment notes to hear">▶</button><button class="focus" data-win="acc" title="Give this window the whole screen">⛶</button></div>
+    <div class="side"><button class="gear" data-win="acc" title="Accompaniment settings"><svg class="ico"><use href="#icoGear"/></svg></button><button class="sizer" data-win="acc" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="acc" title="Play Bar — the accompaniment alone, this bar">▶</button><button class="psel" data-win="acc" title="Play Select — choose the accompaniment notes to hear">▶</button><button class="chordBtn" data-win="acc" title="Chord mode: every tap stacks a note on the chord being built"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><line x1="3" y1="6.5" x2="17" y2="6.5" stroke="currentColor" stroke-width="1.2"/><line x1="3" y1="13.5" x2="17" y2="13.5" stroke="currentColor" stroke-width="1.2"/><ellipse cx="10" cy="6.5" rx="2.6" ry="1.8" fill="currentColor" transform="rotate(-20 10 6.5)"/><line x1="7.6" y1="6.9" x2="7.6" y2="12" stroke="currentColor" stroke-width="1.2"/><ellipse cx="10" cy="13.5" rx="2.6" ry="1.8" fill="currentColor" transform="rotate(-20 10 13.5)"/><line x1="12.4" y1="13.1" x2="12.4" y2="8" stroke="currentColor" stroke-width="1.2"/></svg></button><button class="focus" data-win="acc" title="Give this window the whole screen">⛶</button></div>
   </section>
 
   <section class="win" id="bassWin">
     <button class="winHead" data-win="bass">Bass</button>
     <div class="gutter"><button class="rArr up" data-win="bass" data-dir="1" title="Higher">︿</button><svg id="bassGut"></svg><button class="rArr dn" data-win="bass" data-dir="-1" title="Lower">﹀</button></div>
     <div class="frame"><svg id="bassSvg"></svg></div>
-    <div class="side"><button class="gear" data-win="bass" title="Bass settings"><svg class="ico"><use href="#icoGear"/></svg></button><button class="sizer" data-win="bass" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="bass" title="Play Bar — the bass alone, this bar">▶</button><button class="psel" data-win="bass" title="Play Select — choose the bass notes to hear">▶</button><button class="focus" data-win="bass" title="Give this window the whole screen">⛶</button></div>
+    <div class="side"><button class="gear" data-win="bass" title="Bass settings"><svg class="ico"><use href="#icoGear"/></svg></button><button class="sizer" data-win="bass" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="bass" title="Play Bar — the bass alone, this bar">▶</button><button class="psel" data-win="bass" title="Play Select — choose the bass notes to hear">▶</button><button class="chordBtn" data-win="bass" title="Chord mode: every tap stacks a note on the chord being built"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><line x1="3" y1="6.5" x2="17" y2="6.5" stroke="currentColor" stroke-width="1.2"/><line x1="3" y1="13.5" x2="17" y2="13.5" stroke="currentColor" stroke-width="1.2"/><ellipse cx="10" cy="6.5" rx="2.6" ry="1.8" fill="currentColor" transform="rotate(-20 10 6.5)"/><line x1="7.6" y1="6.9" x2="7.6" y2="12" stroke="currentColor" stroke-width="1.2"/><ellipse cx="10" cy="13.5" rx="2.6" ry="1.8" fill="currentColor" transform="rotate(-20 10 13.5)"/><line x1="12.4" y1="13.1" x2="12.4" y2="8" stroke="currentColor" stroke-width="1.2"/></svg></button><button class="focus" data-win="bass" title="Give this window the whole screen">⛶</button></div>
   </section>
 
   <footer id="foot">
@@ -7782,18 +7786,18 @@ const WIN_LO = { mel: "melLo", acc: "accLo", bass: "bassLo" };
 const NOTE_SCALE = { s: 0.62, m: 0.85, l: 1.25 }; const NS = () => NOTE_SCALE[S.noteSize] || 1;   // note size: heads only, the stave never changes
 const HK = () => S.halfLines ? 1.55 : 1;         // lines-and-spaces: heads grow to fill a space (two rows)
 const STEP_K = { s: 0.94, m: 1, l: 1.06 };       // row height nudges a little with the note size
-Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", noteSize: "m", chordMode: false, justEntered: null, activePart: "melody", lastEntered: null, ftp: null, mv: null, selAuto: false, halfLines: true, winSize: "m", chordsDisp: "names", metro: "off", winState: { mel: "open", acc: "closed", bass: "closed" }, zoomWin: { mel: 1, acc: 1, bass: 1 }, lyricFont: "sans", viewSpan: 1, layout: "rolled", selChip: null, ghost: null, restNext: false, artic: null, slurFrom: null, active: null, softKb: ("ontouchstart" in window), popPos: null, mode: "melody" });
+Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", noteSize: "m", chordMode: false, chordWin: { mel: false, acc: false, bass: false }, chordColor: "#ffffff", justEntered: null, activePart: "melody", lastEntered: null, ftp: null, mv: null, selAuto: false, halfLines: true, winSize: "m", chordsDisp: "names", metro: "off", winState: { mel: "open", acc: "closed", bass: "closed" }, zoomWin: { mel: 1, acc: 1, bass: 1 }, lyricFont: "sans", viewSpan: 1, layout: "rolled", selChip: null, ghost: null, restNext: false, artic: null, slurFrom: null, active: null, softKb: ("ontouchstart" in window), popPos: null, mode: "melody" });
 const UNDO = { stack: [], redo: [], last: null, max: 60 };
 const setMode = () => {};                          // engine shims (the old mode sheets are gone)
 const renderPanel = () => renderAll();
 function loadPrefs() {
   const p = readJSON(STORE.prefs, {});
-  S.theme = p.theme || "auto"; S.followWords = false; S.noteStyle = p.noteStyle || "trad"; S.noteSize = NOTE_SCALE[p.noteSize] ? p.noteSize : "m"; S.halfLines = p.halfLines == null ? true : !!p.halfLines; S.ftp = Object.assign({}, FTP_DEFAULT, p.ftp || {});
+  S.theme = p.theme || "auto"; S.followWords = false; S.noteStyle = p.noteStyle || "trad"; S.noteSize = NOTE_SCALE[p.noteSize] ? p.noteSize : "m"; S.chordColor = p.chordColor || "#ffffff"; S.halfLines = p.halfLines == null ? true : !!p.halfLines; S.ftp = Object.assign({}, FTP_DEFAULT, p.ftp || {});
   S.winSize = WIN[p.winSize] ? p.winSize : "m"; S.chordsDisp = p.chordsDisp || "names"; S.metro = p.metro || "off"; S.custom = p.custom || null; S.len = p.len || 1;
   S.lyricFont = p.lyricFont || "sans"; S.winState = Object.assign({ mel: "open", acc: "closed", bass: "closed" }, p.winState || {}); S.zoomWin = Object.assign({ mel: 1, acc: 1, bass: 1 }, p.zoomWin || {}); S.midi = p.midi || {}; S.viewSpan = [1, 2, 3, 4].includes(p.viewSpan) ? p.viewSpan : 1; if (p.softKb != null) S.softKb = p.softKb2 == null ? true : !!p.softKb2; S.kbPos = p.kbPos || null;   // the app keyboard, on unless switched off S.layout = p.layout === "stack" ? "stack" : "rolled";
   applyTheme();
 }
-function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, ftp: S.ftp, halfLines: S.halfLines, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout }); }
+function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout }); }
 function applyTheme() {
   const r = document.documentElement;
   if (S.theme === "dark") r.setAttribute("data-theme", "dark"); else r.removeAttribute("data-theme");
@@ -8015,13 +8019,15 @@ function clearActiveBeat() {
 }
 /* chord mode: another pitch at the same time as an existing note, with the same length (and ties) */
 function addChordNote(bi, chain, m, part) {
-  let first = null; const bar = S.song.bars[bi], copy = (e, into) => { const n = { id: uid(), t: e.t, d: e.d, m }; if (e.tie) n.tie = true; if (e.artic) n.artic = e.artic; into.push(n); if (!first) first = n; };
+  let first = null; const bar = S.song.bars[bi], copy = (e, into) => { const n = { id: uid(), t: e.t, d: e.d, m, chord: true }; if (e.tie) n.tie = true; if (e.artic) n.artic = e.artic; if (e.noBeam) n.noBeam = true; into.push(n); if (!first) first = n; };
   chain.members.forEach(e => copy(e, bar.ev[part]));
   if (chain.tieOut) { const nb = S.song.bars[bi + 1]; if (nb && (part === "melody" || nb.custom[part])) { const nc = chains(nb, part).find(c => c.t < 1e-6 && !c.rest); if (nc) nc.members.forEach(e => copy(e, nb.ev[part])); } }
   if (part === "melody") syncNotesToChips(bar);
   previewNote(m, part); S.sel = first ? { bi, part, id: first.id } : null; S.selAuto = true; S.ghost = null; S.justEntered = { bi, beat: beatOf(bi, chain.t), part }; renderAll();
 }
 const hasPitchAt = (bar, part, t, m) => chains(bar, part).some(c => !c.rest && Math.abs(c.t - t) < 1e-6 && c.head.m === m);
+const chordOn = part => !!S.chordWin[PART_WIN[part]];
+function toggleChordMode(win) { S.chordWin[win] = !S.chordWin[win]; S.sel = null; S.ghost = null; S.justEntered = null; renderAll(); toast(S.chordWin[win] ? "Chord mode: taps stack notes on the chord — unison too. Tap the button again for single notes." : "Single notes again"); refreshBox(); }
 /* a plain notice with one OK button */
 function noticeModal(text) { openModal(null, el("p", { style: "font-size:16px;margin:6px 0 4px" }, text), [el("button", { class: "btn acc", onclick: closeModal }, "OK")]); }
 /* where a note of length d starting at (bi, t) would go: pieces per bar, tied on — or why it cannot.
@@ -8054,7 +8060,7 @@ function placeSpan(pieces, part, m, artic) {
   pieces.forEach((p, k) => {
     const bar = S.song.bars[p.bi];
     if (part !== "melody") bar.ev[part] = bar.ev[part].filter(e => !(e.rest && e.t < p.t + p.d - 1e-6 && e.t + e.d > p.t + 1e-6));
-    const ev = { id: uid(), t: p.t, d: p.d, m }; if (k < pieces.length - 1) ev.tie = true; if (k === 0 && artic) ev.artic = artic; if (p.noBeam) ev.noBeam = true;
+    const ev = { id: uid(), t: p.t, d: p.d, m }; if (k < pieces.length - 1) ev.tie = true; if (k === 0 && artic) ev.artic = artic; if (p.noBeam) ev.noBeam = true; if (m != null && chordOn(part)) ev.chord = true;
     bar.ev[part].push(ev); if (part === "melody") syncNotesToChips(bar); if (k === 0) head = ev;
   });
   S.lastEntered = { part, bi: pieces[0].bi, id: head.id };
@@ -8188,10 +8194,13 @@ function drawGutter(win, g, key) {
   }
   gut.append(svgEl("line", { x1: 41, x2: 41, y1: 0, y2: g.H, stroke: css("--on-ground2"), "stroke-width": 0.5, opacity: 0.5 }));
 }
+/* the second and later notes at one time and pitch: a unison, marked in red */
+function unisonIds(evs) { const seen = new Set(), out = new Set(); for (const e of [...evs].sort((a, b) => a.t - b.t || (a.m || 0) - (b.m || 0))) { if (e.rest || e.m == null) continue; const k = r3(e.t) + ":" + e.m; if (seen.has(k)) out.add(e.id); else seen.add(k); } return out; }
 /* a note in the chosen appearance, left-aligned on its start */
 function drawNote(svg, g, x, m, d, color, attrs, opts = {}) {
   const y = g.y(m), st = g.step, id = attrs["data-ev"];
   const grp = svgEl("g", Object.assign({ class: "noteEl" }, attrs));
+  const edge = opts.uni ? "#d9362b" : opts.outline || null, edgeW = opts.uni ? 2.2 : 1.1;         // chord notes: a thin dark edge; unison: red
   if (S.noteStyle === "pill") {
     const ph = Math.min(st * (S.halfLines ? 2 : 1) + 2, (st - 2) * NS() * HK()); grp.append(svgEl("rect", { x: x + 1, y: y - ph / 2, width: Math.max(4, d * g.beatPx - 4), height: ph, rx: ph / 2, fill: color, opacity: opts.auto ? 0.5 : 1 }));
   } else if (S.noteStyle === "circle") {
@@ -8203,9 +8212,10 @@ function drawNote(svg, g, x, m, d, color, attrs, opts = {}) {
     const base = VALS.find(v => Math.abs(d - v) < 1e-6 || Math.abs(d - v * 1.5) < 1e-6) || VALS.find(v => v <= d + 1e-6) || 0.125;
     const dotted = Math.abs(d - base * 1.5) < 1e-6;
     const rx = st * 0.55 * NS() * HK(), ry = st * 0.40 * NS() * HK(), hx = x + rx + 1, hollow = base >= 2, up = m < (g.lo + g.hi) / 2 + 0.5;
-    grp.append(svgEl("ellipse", { cx: hx, cy: y, rx, ry, fill: hollow ? css("--paper") : color, stroke: color, "stroke-width": hollow ? 1.6 * NS() : 0, transform: `rotate(-22 ${hx} ${y})`, opacity: opts.auto ? 0.55 : 1 }));
+    grp.append(svgEl("ellipse", { cx: hx, cy: y, rx, ry, fill: hollow ? css("--paper") : color, stroke: edge || color, "stroke-width": edge ? edgeW : hollow ? 1.6 * NS() : 0, transform: `rotate(-22 ${hx} ${y})`, opacity: opts.auto ? 0.55 : 1 }));
     if (base < 4 && !opts.noStem) {
       const stemLen = st * (opts.stem || 3.1) * NS(), sx = up ? hx + rx - 0.6 : hx - rx + 0.6, sy2 = up ? y - stemLen : y + stemLen;
+      if (edge) grp.append(svgEl("line", { x1: sx, x2: sx, y1: y, y2: sy2, stroke: opts.outline || edge, "stroke-width": 1.4 * NS() + 2, opacity: opts.auto ? 0.55 : 1 }));
       grp.append(svgEl("line", { x1: sx, x2: sx, y1: y, y2: sy2, stroke: color, "stroke-width": 1.4 * NS(), opacity: opts.auto ? 0.55 : 1 }));
       const flags = base <= 0.25 ? 2 : base <= 0.5 ? 1 : 0;
       for (let f = 0; f < flags; f++) { const k = NS(), fy = sy2 + (up ? f * st * 0.8 * k : -f * st * 0.8 * k), dir = up ? 1 : -1; grp.append(svgEl("path", { d: `M ${sx} ${fy} q ${st * 0.9 * k} ${dir * st * 0.5 * k} ${st * 0.55 * k} ${dir * st * 1.6 * k}`, fill: "none", stroke: color, "stroke-width": 1.6 * k, "stroke-linecap": "round", opacity: opts.auto ? 0.55 : 1 })); }
@@ -8291,6 +8301,7 @@ function renderWindows() {
     svg.append(svgEl("rect", { class: "hit", x: 0, y: 0, width: g.W, height: g.H, fill: "transparent", "data-lane": "mel" }));
     for (const bi of viewBars()) {
     const bar = song.bars[bi], sel = S.sel && S.sel.bi === bi && S.sel.part === "melody" ? S.sel.id : null;
+    const unison = unisonIds(bar.ev.melody);
     const groups = S.noteStyle === "trad" ? beamGroups(bar.ev.melody.filter(e => e.m != null && e.m >= g.lo && e.m <= g.hi)) : [], beamed = new Set(groups.flatMap(gp => gp.evs.map(e => e.id)));
     const cur = S.cursor && S.cursor.bi === bi ? bar.chips.find(c => c.id === S.cursor.chipId) : null;
     if (cur && S.followWords) svg.append(svgEl("rect", { x: g.x(bi, cur.t), y: 0, width: Math.max(6, cur.d * g.beatPx), height: g.H, fill: box, opacity: 0.12, "pointer-events": "none" }));
@@ -8306,7 +8317,7 @@ function renderWindows() {
       const m = c.head.m;
       if (m < g.lo || m > g.hi) { svg.append(svgEl("text", { x: x0 + 3, y: m > g.hi ? 12 : g.H - 4, "font-size": 9, "font-weight": 700, fill: ink, "font-family": "system-ui, sans-serif" }, (m > g.hi ? "▲" : "▼") + noteName(m, key))); continue; }
       c.members.forEach((e, k) => {
-        drawNote(svg, g, g.x(bi, e.t) + 2, m, e.d, ink, { "data-ev": e.id, "data-part": "melody", "data-bi": bi }, { label: k === 0 && S.noteStyle !== "trad" ? pcName(m, key) : null, noStem: beamed.has(e.id) });
+        drawNote(svg, g, g.x(bi, e.t) + 2, m, e.d, e.chord ? S.chordColor : ink, { "data-ev": e.id, "data-part": "melody", "data-bi": bi }, { label: k === 0 && S.noteStyle !== "trad" ? pcName(m, key) : null, noStem: beamed.has(e.id), outline: e.chord ? "#111" : null, uni: unison.has(e.id) });
         if (e.tie) { const nx = k < c.members.length - 1 ? g.x(bi, c.members[k + 1].t) + 2 + g.step * 0.55 * NS() * HK() : g.x(bi, barBeats(bi)) + (g.bars.includes(bi + 1) ? 2 + g.step * 0.55 * NS() * HK() : 0); tieArcAt(svg, g.x(bi, e.t) + 2 + g.step * 0.55 * NS() * HK(), nx, g.y(m) + g.step * 0.5, ink); }
       });
       if (tiedFromPrev(bi, c) && bi === g.first) tieArcAt(svg, 0, x0 + g.step * 0.55 * NS() * HK(), g.y(m) + g.step * 0.5, ink);
@@ -8345,6 +8356,7 @@ function renderWindows() {
     drawMoveSel(svg, g, bi, part); drawSpanBands(svg, g, bi, part);
     if (S.ghost && S.ghost.part === part && S.ghost.bi === bi) drawGhost(svg, g, bi, S.ghost, color);
     if (bar.custom[part]) {
+      const unison = unisonIds(bar.ev[part] || []);
       const groups = S.noteStyle === "trad" ? beamGroups(bar.ev[part].filter(e => e.m >= g.lo && e.m <= g.hi)) : [], beamed = new Set(groups.flatMap(gp => gp.evs.map(e => e.id)));
       groups.forEach(gp => drawBeamed(svg, g, gp, color, e => g.x(bi, e.t) + 2));
       for (const c of chains(bar, part)) {
@@ -8364,7 +8376,7 @@ function renderWindows() {
         const x0 = g.x(bi, e.t) + 1, x1 = g.x(bi, e.t + Math.min(e.d, g.B - e.t)) - 2;
         if (e.rest) { svg.append(svgEl("rect", { class: "noteEl", x: x0, y: 2, width: Math.max(4, x1 - x0), height: g.H - 4, rx: 2, fill: "none", stroke: css("--ink2"), "stroke-dasharray": "3 3", "data-ev": e.id, "data-part": part, "data-bi": bi })); continue; }
         if (e.m < g.lo || e.m > g.hi) { svg.append(svgEl("text", { class: "noteEl", x: x0 + 2, y: e.m > g.hi ? 9 : g.H - 3, "font-size": 8, "font-weight": 700, fill: color, "data-ev": e.id, "data-part": part, "data-bi": bi, style: "pointer-events:all" }, (e.m > g.hi ? "▲" : "▼") + noteName(e.m, key))); continue; }
-        drawNote(svg, g, x0 + 1, e.m, e.d, color, { "data-ev": e.id, "data-part": part, "data-bi": bi }, { noStem: beamed.has(e.id) });
+        drawNote(svg, g, x0 + 1, e.m, e.d, e.chord ? S.chordColor : color, { "data-ev": e.id, "data-part": part, "data-bi": bi }, { noStem: beamed.has(e.id), outline: e.chord ? "#111" : null, uni: unison.has(e.id) });
         if (e.id === sel) svg.append(svgEl("rect", { x: x0 - 1, y: g.y(e.m) - g.step, width: Math.max(6, x1 - x0 + 2), height: g.step * 2, rx: 3, fill: "none", stroke: css("--accent"), "stroke-width": 1.5, "pointer-events": "none" }));
       }
     } else {
@@ -8376,6 +8388,7 @@ function renderWindows() {
   }
   if (PSEL.on) ["mel", "acc", "bass"].forEach(w => { if (S.winState[w] === "closed" || !GEO[w]) return; const svg = $(w + "Svg"); for (const bi of viewBars()) drawPsel(svg, GEO[w], bi, WIN_PART[w]); });
   document.querySelectorAll(".win .psel").forEach(b => b.classList.toggle("on", PSEL.on));
+  document.querySelectorAll(".win .chordBtn").forEach(b => b.classList.toggle("on", !!S.chordWin[b.dataset.win]));
 }
 function renderStrips() {
   const song = S.song, key = keyObj(song.key), g = stripGeo(), B = g.B, H = 36, bars = viewBars();
@@ -8524,7 +8537,6 @@ function renderPalette() {
     b("✕", mvCancel, { cls: "txt", title: "Leave move mode" });
     return;
   }
-  b("Chord", () => { S.chordMode = !S.chordMode; renderPalette(); }, { cls: "lyr chord", on: S.chordMode, title: S.chordMode ? "Chord mode on — tapping another pitch at a note's time stacks it; tap to turn off" : "Chord mode: stack more pitches on a note" });
   b("⌒", tapTie, { on: !!(ev && ev.tie), title: "Tie to the next note", disabled: !ev && !bar.ev.melody.length });
   for (const k of ["staccato", "tenuto", "slur"]) b(ARTIC[k].glyph, () => tapArtic(k), { cls: "art" + (S.artic === k ? " armed" : ""), on: !!(ev && (k === "slur" ? ev.slur : ev.artic === k)), title: S.artic === k ? `${ARTIC[k].label} armed — tap notes to mark them; tap again to return to note entry` : `${ARTIC[k].label}: tap before entering a note, or arm it and tap existing notes` });
   if (S.artic && !ev) p.append(el("span", { class: "hint" }, S.artic === "slur" ? (S.slurFrom ? "slur: tap the last note" : "slur: tap the first note") : `${ARTIC[S.artic].label}: tap notes`));
@@ -8708,7 +8720,7 @@ function tapMelody(bi, t, m) {
   if (chain) {
     S.ghost = null;
     if (!inActive(bi, chain.t)) { activate(bi, chain.t); S.activePart = "melody"; S.sel = { bi, part: "melody", id: chain.head.id }; S.selAuto = false; renderAll(); return; }   // a tap along a long note: its own beat wakes and it is selected
-    if (S.chordMode && chain.head.m != null && !hasPitchAt(bar, "melody", chain.t, m)) { addChordNote(bi, chain, m, "melody"); return; }
+    if (chordOn("melody") && chain.head.m != null) { addChordNote(bi, chain, m, "melody"); return; }          // chord mode: stack it, unison included
     if (!(S.sel && S.sel.part === "melody" && chain.members.some(e => e.id === S.sel.id))) { S.sel = { bi, part: "melody", id: chain.head.id }; S.selAuto = false; renderAll(); return; }   // first tap: select the box
     if (chain.head.m === m) { S.sel = null; renderAll(); return; }                                                                                       // same pitch again: done
     setChainPitch(bar, chain, m); previewNote(m, "melody");
@@ -8739,7 +8751,7 @@ function tapBand(win, bi, t, m) {
   S.bi = bi;
   if (!P.on) { openWinSettings(win); return; }
   if (!bar.custom[part]) { toast(`${PART_META[part].label} follows its pattern — switch it to Custom in ⚙ to place notes`); return; }
-  if (S.chordMode) { const ch = chains(bar, part).find(c => !c.rest && t >= c.t - 1e-6 && t < c.t + c.d - 1e-6); if (ch) { if (!hasPitchAt(bar, part, ch.t, m)) addChordNote(bi, ch, m, part); return; } }
+  if (chordOn(part)) { const ch = chains(bar, part).find(c => !c.rest && t >= c.t - 1e-6 && t < c.t + c.d - 1e-6); if (ch) { addChordNote(bi, ch, m, part); return; } }
   const gh = S.ghost, direct = !!(S.justEntered && S.justEntered.bi === bi && S.justEntered.beat === S.active.beat && S.justEntered.part === part);
   const spot = freeSpotInBeat(bar, bi, S.active.beat, part);
   if (spot == null) { toast("This beat is full for the " + PART_META[part].short.toLowerCase() + " — select a note to change it"); return; }
@@ -9145,6 +9157,7 @@ function openSettings() {
     el("div", { class: "pLbl" }, "Chords displayed"), seg([["names", "Names (C, G7)"], ["roman", "Roman (I, V7)"], ["off", "Hidden"]], S.chordsDisp, v => { S.chordsDisp = v; S.song.showRoman = v === "roman"; savePrefs(); renderAll(); }),
     el("div", { class: "pLbl" }, "Notes appearance"), seg([["trad", "Traditional"], ["pill", "Pills"], ["circle", "Circles"]], S.noteStyle, v => { S.noteStyle = v; savePrefs(); renderAll(); }),
     el("div", { class: "pLbl" }, "Note size"), seg([["s", "Small"], ["m", "Medium"], ["l", "Large"]], S.noteSize, v => { S.noteSize = v; savePrefs(); renderAll(); }),
+    el("div", { class: "pLbl" }, "Chord-mode notes"), seg([["#ffffff", "White"], ["#ffd23f", "Gold"], ["#6fb3ff", "Sky"], ["#8fd14f", "Green"], ["#f4a0c8", "Pink"]], S.chordColor, v => { S.chordColor = v; savePrefs(); renderAll(); }),
     el("div", { class: "mrow" }, toggle("Lines and spaces (half steps alternate line, space, line, space; off = one half step per space)", S.halfLines, v => { S.halfLines = v; savePrefs(); renderAll(); openSettings(); })),
     el("div", { class: "pLbl" }, "Lyrics keyboard"), seg([[true, "App keyboard (QWERTY + symbols)"], [false, "Phone's keyboard"]], S.softKb, v => { S.softKb = v; savePrefs(); }),
     el("div", { class: "pLbl" }, "Lyrics font"), seg([["sans", "Current"], ["serif", "Serif"], ["smallcaps", "Small caps"]], S.lyricFont, v => { S.lyricFont = v; savePrefs(); renderAll(); }),
@@ -9910,7 +9923,7 @@ function openHelp() {
     h("Keyboard keys", "𝄽 drops a rest chip at the entry spot — a chip like any other, for a beat with nothing sung. ← → move the cursor inside the word. ⇥ jumps the entry box to the next free beat line (and on into the next bar). Split breaks the chip you are editing in two at the cursor, the second half landing right after the first. The entry box only ever sits on free space, so nothing can be typed over a chip, locked or not."),
     h("Placing words", "Words have no bearing on the notes; you line them up by eye. Drag a chip anywhere along the strip — it clicks onto a beat line when close, and never overlaps another chip. To spread a word so its syllables sit under their notes, edit it and put spaces inside it (the space bar, as many as you like); it stays one chip. When a word sits right, press the gold 🔒 on the keyboard to lock it in place; select it and press 🔒 again to unlock. A locked chip cannot move or be edited."),
     h("Tempo", "♩= in the top row shows the tempo. − and + change it by one (hold to keep going); tap the number to type one."),
-    h("Chords (stacked notes)", "Turn on Chord in the tools, then tap other pitches in the same time column as a note to stack them; each gets the same length and ties. Works in the melody and in Custom band bars. Tap Chord again to go back to single notes."),
+    h("Chord mode", "The two-row button beside each stave turns chord mode on for that stave. While it is on, a tap at a note's time stacks another note on it — the same pitch again gives a unison, marked with a red edge — and a tap on empty space starts the next chord at the next free spot. Notes entered in chord mode are drawn in the chord colour (white by default, changeable in Settings) with a thin black edge on head and stem. Rests enter as usual. Tap the button again to go back to single notes."),
     h("Floating palette", "⧉ at the end of the tools pops them out into a small palette you can drag anywhere (the stave keeps its size). ← → step by the chosen note length (eighths step half a beat) and also stop at every note start — tap the label to step through bars instead. The yellow box shows the pitch; ↑ ↓ change it. Tap PITCH to flip the arrows to SELECT, which moves between the notes stacked at that spot; tap again to go back. Tap a note length once to choose it (the box takes that size); tap the chosen length again to enter the note at the box, or, when a note is selected, to give that note the length. M / A / B pick the window, 🗑 deletes, ▶ plays the bar, Rhythm and Lyrics open those tools, ⚙ sets its size and side, ⤶ pops it back in. While it is out, the stave and strips do not take taps."),
     h("Rests", "𝄽 in the tools: while you are entering (a box is showing, or the beat has just taken a note) it puts a rest at the next free spot, in the melody or in a Custom band bar. On a note you selected yourself it turns that note into a rest, and back again. With no beat active it arms a rest for your next tap on a stave or the Rhythm strip."),
     h("Swiping the staves", "Swipe up or down anywhere on a stave — melody, accompaniment or bass, in any beat, with the floating palette out or not — to slide its range; swipe sideways on empty space to turn the bar. A swipe is only ever a swipe: it never places, pitches or selects a note, and a tap that wanders a little still counts as a tap."),
@@ -10056,6 +10069,7 @@ async function boot() {
   $("stopBtn").addEventListener("click", stopAll);
   document.querySelectorAll(".win .psel").forEach(b => b.addEventListener("click", () => togglePlaySelect(b.dataset.win, b)));
   $("lyrLock").addEventListener("click", lockFromStrip);
+  document.querySelectorAll(".win .chordBtn").forEach(b => b.addEventListener("click", () => toggleChordMode(b.dataset.win)));
   midiInit();
   $("overlay").addEventListener("click", e => { if (e.target === $("overlay")) closeModal(); });
   initPointer(); initWindowChrome(); initWordEdit();

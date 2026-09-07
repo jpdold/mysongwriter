@@ -25,6 +25,10 @@ Windows share the screen: the melody gets the most room and Accompaniment and Ba
 
 The dots under the bar bracket show each bar of the section: green when every voice is full, white when empty, yellow in between.
 
+## Chord mode
+
+The two-row button beside each stave turns chord mode on for that stave: every tap at a note's time stacks another note on it, the same pitch again gives a unison (marked with a red edge), and a tap on empty space starts the next chord. Chord-mode notes are drawn in the chord colour (white by default, changeable in Settings) with a thin black edge on head and stem. Rests enter as usual. Tap the button again for single notes.
+
 ## Playing
 
 Top row: **|▶ Play All** plays the whole song from the start, **▶ Play Bar All** plays the current bar with every part, **▶… Play Range** asks for a start and end bar and beat and plays that stretch in every part, **■** stops. Beside each stave, **▶** plays that part alone for the current bar, and the **▶ in the blue box** is Play Select: tap it, tap the note heads you want to hear, tap it again — only the chosen notes sound, the rest are greyed, and it stops when they are done or when you press it or ■ again.
