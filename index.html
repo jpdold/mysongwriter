@@ -441,6 +441,9 @@ body.kbOpen #app { padding-bottom: 330px; }              /* room to scroll the s
 #wordEdit .weKeys button.lock { background: linear-gradient(#ffe38a, #e6b400); border-color: #a07d00; color: #3a2d00; font-size: 16px; }
 #wordEdit .weKeys button.lock.on { background: linear-gradient(#fff2b8, #f2c200); }
 #palette button.lock { background: linear-gradient(#ffe38a, #e6b400); border-color: #a07d00; }
+.strip .lock { width: 28px; height: 26px; padding: 0; border: 1.5px solid #a07d00; border-radius: 5px; background: linear-gradient(#ffe38a, #e6b400); color: #3a2d00; font-size: 13px; line-height: 1; justify-self: center; }
+.strip .lock.on { background: linear-gradient(#fff2b8, #f2c200); box-shadow: 0 0 0 2px rgba(242,194,0,.45); }
+.strip .lock:active { filter: brightness(1.08); }
 #lyrInline:disabled { opacity: .7; }
 #wordEdit.native .weKeys { display: none; }
 #wordEdit button.kb.on { background: #cfe3fb; }
@@ -513,7 +516,7 @@ body.kbOpen #app { padding-bottom: 330px; }              /* room to scroll the s
   <div class="strip" id="lyrStrip">
     <span class="tag" id="lyrTag">Lyrics</span>
     <div class="body"><svg id="lyrSvg"></svg><input id="lyrInline" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"><div id="weCaret"></div></div>
-    <span></span>
+    <button class="lock" id="lyrLock" title="Lock or unlock the selected chip (or the last one)">🔒</button>
     <div id="wordEdit">
       <div class="weGrip" title="Drag to move the keyboard; drop it near the bottom to dock it"><span></span></div>
       <div class="weRow"><span class="lbl2"></span><span class="flex"></span><button class="kb" title="Switch between the app keyboard and the phone's keyboard">⌨</button><button class="close" title="Done (Esc)">✕</button></div>
@@ -8429,6 +8432,7 @@ function renderStrips() {
   const ph = $("lyrSvg"); ph.append(svgEl("line", { id: "lyrHead", x1: -5, x2: -5, y1: 0, y2: H, stroke: "#fff", "stroke-width": 2, "pointer-events": "none" }));
   if (WE.on) { const inp = weInput(); if (viewBars().includes(WE.bi)) { inp.classList.add("on"); const x = g.x(WE.bi, WE.t); inp.style.left = clamp(x + 1, 0, Math.max(0, g.W - inp.offsetWidth - 2)) + "px"; } else inp.classList.remove("on"); }
   weCaret();
+  const lk = $("lyrLock"); if (lk) { const sc = selChipObj(); lk.classList.toggle("on", !!(sc && sc.chip.locked)); lk.textContent = sc && sc.chip.locked ? "🔓" : "🔒"; lk.title = sc ? (sc.chip.locked ? "Unlock this chip" : "Lock this chip in place") : "Lock the last chip in this bar"; }
 }
 function renderBeatRow() {
   const rowEl = $("beatRow"), song = S.song, bar = curBar(), bi = S.bi; rowEl.replaceChildren();
@@ -8559,8 +8563,8 @@ function appendSlot(d, rest) {
   select(bi, "melody", ev.id);
   return ev;
 }
-function insertSlotAt(bi, t, d, rest) {
-  const bar = S.song.bars[bi], B = barBeats(bi); t = clamp(snapT(t), 0, B - 0.25);
+function insertSlotAt(bi, t, d, rest, exact) {
+  const bar = S.song.bars[bi], B = barBeats(bi); t = clamp(exact ? r3(t) : snapT(t), 0, B - 0.25);
   if (overlaps(bar, t, 0.25)) { toast("There's already a note there"); return null; }
   const ev = { id: uid(), t, d: Math.min(d, freeSpan(bar, t)) }; if (rest) ev.rest = true; else ev.m = null;
   bar.ev.melody.push(ev); syncNotesToChips(bar); select(bi, "melody", ev.id); return ev;
@@ -8819,7 +8823,7 @@ function initPointer() {
     const p = svgPoint(rhy, e), at = stripGeo().at(p.x);
     if (evId) { const bi = parseInt(t.getAttribute("data-bi") || S.bi, 10); const ev = S.song.bars[bi].ev.melody.find(x => x.id === evId); if (S.artic && ev && !ev.rest && ev.m != null) { applyArtic(bi, "melody", ev); return; } if (!ev || !inActive(bi, ev.t)) { activate(at.bi, at.t); return; } S.bi = bi; select(bi, "melody", S.sel && S.sel.id === evId ? null : evId); return; }
     if (!inActive(at.bi, at.t)) { activate(at.bi, at.t); showBox(at.bi, "melody"); return; }
-    S.bi = at.bi; S.ghost = null; const rest = S.restNext; S.restNext = false; const spot = freeSpotInBeat(S.song.bars[at.bi], at.bi, S.active.beat); if (spot == null) { toast("This beat is full"); return; } insertSlotAt(at.bi, spot, noteLenBeats(), rest);
+    S.bi = at.bi; S.ghost = null; const rest = S.restNext; S.restNext = false; const spot = freeSpotInBeat(S.song.bars[at.bi], at.bi, S.active.beat); if (spot == null) { toast("This beat is full"); return; } insertSlotAt(at.bi, spot, noteLenBeats(), rest, true);
   });
   /* lyric strip: drag a word, tap to edit or add */
   const lyr = $("lyrSvg"); let ld = null;
@@ -9028,6 +9032,15 @@ function addLyricChip(bar, bi, text, from = 0) {
   c.t = t; bar.chips.push(c); bar.chips.sort((a, b) => a.t - b.t); return c;
 }
 /* a new chip lands at the first gap wide enough for it, scanning left to right; null when the bar is full */
+/* the lock beside the Lyrics strip: the selected chip, else the last chip in this bar (the keyboard's own rules when it is open) */
+function lockFromStrip() {
+  if (WE.on) { toggleLyricLock(); return; }
+  const bi = S.selChip ? S.selChip.bi : S.bi, bar = S.song.bars[bi]; if (!bar) return;
+  let c = S.selChip ? bar.chips.find(x => x.id === S.selChip.id) : null;
+  if (!c) c = [...bar.chips].sort((a, b) => a.t - b.t).pop();
+  if (!c) { toast("No chip in this bar to lock"); return; }
+  c.locked = !c.locked; S.selChip = { bi, id: c.id }; renderAll(); toast(c.locked ? "Locked in place" : "Unlocked — it can move and be edited again");
+}
 /* lock / unlock from the keyboard: the chip being edited, else the selected one */
 function toggleLyricLock() {
   /* 🔒 on the keyboard: locks the chip being edited, the selected chip, the word just typed (it becomes a chip first), or the last chip made */
@@ -10018,6 +10031,7 @@ async function boot() {
   $("rangeBtn").addEventListener("click", openPlayRange);
   $("stopBtn").addEventListener("click", stopAll);
   document.querySelectorAll(".win .psel").forEach(b => b.addEventListener("click", () => togglePlaySelect(b.dataset.win, b)));
+  $("lyrLock").addEventListener("click", lockFromStrip);
   midiInit();
   $("overlay").addEventListener("click", e => { if (e.target === $("overlay")) closeModal(); });
   initPointer(); initWindowChrome(); initWordEdit();
