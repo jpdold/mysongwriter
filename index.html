@@ -110,6 +110,8 @@ svg text { pointer-events: none; }
 #topTransport #playAllBtn { padding-right: 6px; }
 #topTransport button .dots { font-size: 11px; font-weight: 800; margin-left: 1px; letter-spacing: -1px; }
 #topTransport #stopBtn { font-size: 15px; }
+#topTransport #playBtn { padding-right: 6px; }
+#topTransport #playBtn .sub { position: absolute; right: 3px; bottom: 2px; font-size: 6.5px; font-weight: 800; letter-spacing: .04em; line-height: 1; font-family: var(--sans); }
 #tempo { display: flex; align-items: center; margin-left: 2px; border: 1.5px solid #141414; border-radius: 4px; overflow: hidden; height: 34px; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
 #topTransport #tempo button { width: 24px; height: 34px; border: none; border-radius: 0; box-shadow: none; font-size: 18px; font-weight: 700; }
 #topTransport #tempo button#tempoLbl { width: auto; min-width: 46px; padding: 0 2px; font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums; background: #111; color: #fff; }
@@ -475,7 +477,7 @@ body.kbOpen #app { padding-bottom: 330px; }              /* room to scroll the s
   <header id="head">
     <input id="songTitle" type="text" placeholder="“My Song Title”" autocomplete="off" spellcheck="false" aria-label="Song title">
     <button class="iconBtn" id="menuBtn" title="Menu" aria-label="Menu">☰</button>
-    <div id="topTransport"><button id="playAllBtn" title="Play All — the whole song from the start">▶<span class="bar"></span></button><button id="playBtn" title="Play Bar All — this bar, every part">▶</button><button id="rangeBtn" title="Play Range — bars and beats you type in">▶<span class="dots">…</span></button><button id="stopBtn" title="Stop">■</button><div id="tempo" title="Tempo"><button id="tempoDn" aria-label="Slower">−</button><button id="tempoLbl" title="Tap to type a tempo">♩=120</button><button id="tempoUp" aria-label="Faster">+</button></div></div>
+    <div id="topTransport"><button id="playAllBtn" title="Play All — the whole song from the start">▶<span class="bar"></span></button><button id="playBtn" title="Play Bar All — this bar, every part">▶<span class="sub">BAR</span></button><button id="rangeBtn" title="Play Range — bars and beats you type in">▶<span class="dots">…</span></button><button id="stopBtn" title="Stop">■</button><div id="tempo" title="Tempo"><button id="tempoDn" aria-label="Slower">−</button><button id="tempoLbl" title="Tap to type a tempo">♩=120</button><button id="tempoUp" aria-label="Faster">+</button></div></div>
     <button class="iconBtn" id="gearBtn" title="Settings" aria-label="Settings"><svg class="ico"><use href="#icoGear"/></svg></button>
   </header>
 
@@ -7310,7 +7312,7 @@ function startPlayback(barList, opts = {}) {
   if (play.range) { const rg = play.range, bs = beatSec(); play.offs = play.offs.map(o => o - rg.fromT * bs); play.total = acc - rg.fromT * bs - (barBeats(rg.lastBi) - rg.toT) * bs; }
   if (S.metro === "countin") { const bl = beatSec() * (TS_BEATS[S.song.sig] || 4); play.t0 += bl; for (let b = 0; b < (TS_BEATS[S.song.sig] || 4); b++) metroClick(ctx, play.t0 - bl + b * beatSec(), b === 0); }
   S.playing = true; S.playPos = null;
-  $("playBtn").classList.add("on"); $("playBtn").textContent = "■";
+  $("playBtn").classList.add("on"); $("playBtn").firstChild.nodeValue = "■";
   const schedule = () => {
     if (!play.on) return;
     const now = ctx.currentTime;
@@ -7355,7 +7357,7 @@ function stopPlayback() {
   const t = audioCtx ? audioCtx.currentTime : 0;
   [...liveNodes].forEach(h => h.stop(t));
   S.playing = false; S.playPos = null;
-  $("playBtn").classList.remove("on"); $("playBtn").textContent = "▶";
+  $("playBtn").classList.remove("on"); $("playBtn").firstChild.nodeValue = "▶";
   play.range = null; play.only = null;
   if (was) { updatePlayhead(); renderLights(); }
   if (typeof onPlaybackStopped === "function") onPlaybackStopped(was);
