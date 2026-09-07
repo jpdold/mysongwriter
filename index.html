@@ -7888,7 +7888,7 @@ function chains(bar, part = "melody") {
   out.forEach(c => { c.tieOut = !!(c.last.tie && !c.last.rest && Math.abs(c.t + c.d - B) < 1e-6); c.rest = !!c.head.rest; });
   return out;
 }
-const chainOf = (bar, e) => chains(bar).find(c => c.members.includes(e));
+const chainOf = (bar, e, part = "melody") => chains(bar, part).find(c => c.members.includes(e));
 const isContinuation = (bar, e) => { const c = chainOf(bar, e); return !!c && c.head !== e; };
 /* a chain that starts at beat 1 and continues the previous bar's tie is not a new attack */
 function tiedFromPrev(bi, chain, part = "melody") { if (chain.t > 1e-6 || bi <= 0) return false; const pc = chains(S.song.bars[bi - 1], part); return pc.length > 0 && pc[pc.length - 1].tieOut && !chain.rest; }
@@ -8616,17 +8616,27 @@ function placeRestNow(part) {
 /* rhythm strip: add a box (or a rest) at the ▶ cursor of the current bar */
 function appendFromStrip() { const rest = S.restNext; S.restNext = false; appendSlot(noteLenBeats(), rest); }
 function setDur(ev, nd) {
-  const bar = S.song.bars[S.sel.bi], B = barBeats(S.sel.bi);
+  /* a new length for a note: a tied pair counts as one note; the rest of the bar is pushed along; a mid-beat start
+     that now runs past its beat is written as the piece that fills the beat, standing alone, tied to the remainder */
+  const part = S.sel.part, bar = S.song.bars[S.sel.bi], B = barBeats(S.sel.bi), arr = bar.ev[part] || [];
+  const ch = chainOf(bar, ev, part);
+  if (ch && ch.members.length > 1) { bar.ev[part] = arr.filter(e => e === ev || !ch.members.includes(e)); }   // fold the tied pieces back into one
+  const list = bar.ev[part];
   nd = clamp(r3(nd), 0.25, B - ev.t);
-  const others = bar.ev.melody.filter(e => e !== ev && e.t > ev.t + 1e-6).sort((a, b) => a.t - b.t);
+  const others = list.filter(e => e !== ev && e.t > ev.t + 1e-6).sort((a, b) => a.t - b.t);
   if (others.length && others[0].t < ev.t + nd - 1e-6) {           // push the rest of the bar along
     let shift = r3(ev.t + nd - others[0].t);
     for (const o of others) { o.t = r3(o.t + shift); }
-    bar.ev.melody = bar.ev.melody.filter(e => e.t < B - 1e-6);
-    for (const o of bar.ev.melody) if (o.t + o.d > B + 1e-6) o.d = r3(B - o.t);
+    bar.ev[part] = list.filter(e => e.t < B - 1e-6);
+    for (const o of bar.ev[part]) if (o.t + o.d > B + 1e-6) o.d = r3(B - o.t);
   }
-  ev.d = nd;
-  void B;
+  const edge = Math.floor(ev.t + 1e-6) + 1, midBeat = ev.t - Math.floor(ev.t + 1e-6) > 1e-6;
+  delete ev.noBeam; if (!(ch && ch.tieOut)) delete ev.tie;
+  if (midBeat && ev.t + nd > edge + 1e-6) {
+    ev.d = r3(edge - ev.t); ev.noBeam = true; ev.tie = true;
+    bar.ev[part].push({ id: uid(), t: edge, d: r3(ev.t + nd - edge), m: ev.m });
+  } else ev.d = nd;
+  if (part === "melody") syncNotesToChips(bar);
   renderAll();
 }
 function tapArtic(kind) {
