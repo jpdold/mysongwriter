@@ -326,8 +326,6 @@ svg text { pointer-events: none; }
 
 
 #palette button.on { background: linear-gradient(#6fb3ff, #2f7fd6); color: #fff; border-color: #1b4f8a; }
-/* default theme: the chosen note length (and any other tool that is on) is a bright white square with a dark ring; the dark theme keeps the blue */
-:root:not([data-theme="dark"]) #palette button.on, :root:not([data-theme="dark"]) #ftp button.on { background: #fff; color: #111; border-color: #111; box-shadow: inset 0 0 0 1px #111, 0 0 0 2px #fff, 0 1px 3px rgba(0,0,0,.5); }
 #palette button.warn { color: var(--danger); }
 #palette button.undo { font-family: var(--sans); font-size: 17px; }
 #palette button.art { font-family: var(--serif); font-size: 16px; }
@@ -8236,6 +8234,13 @@ function drawSpillArrows(svg, g, bi) {
   const xe = g.x(bi, barBeats(bi)) - 3;
   [4, g.H - 12].forEach(y => svg.append(svgEl("path", { d: `M ${xe - 9} ${y} l 9 4 l -9 4 z`, fill: "#8fd14f", stroke: "#fff", "stroke-width": 1, "stroke-linejoin": "round", "pointer-events": "none" })));
 }
+/* the frame round a selected note: a bright white square with a thin dark edge so it shows on the paper; the dark theme keeps the accent blue */
+function drawSelFrame(svg, x, y, w, h, rx) {
+  const dark = document.documentElement.getAttribute("data-theme") === "dark";
+  if (dark) { svg.append(svgEl("rect", { x, y, width: w, height: h, rx, fill: "none", stroke: css("--accent"), "stroke-width": 1.5, "pointer-events": "none" })); return; }
+  svg.append(svgEl("rect", { x, y, width: w, height: h, rx, fill: "none", stroke: "#222", "stroke-width": 4, opacity: 0.8, "pointer-events": "none" }),
+             svgEl("rect", { x, y, width: w, height: h, rx, fill: "none", stroke: "#fff", "stroke-width": 2.2, "pointer-events": "none" }));
+}
 function drawGhost(svg, g, bi, ghost, color) {
   const x0 = g.x(bi, ghost.t) + 1, x1 = g.x(bi, ghost.t + ghost.d) - 2;
   if (ghost.t + ghost.d > barBeats(bi) + 1e-6) drawSpillArrows(svg, g, bi);
@@ -8325,7 +8330,7 @@ function renderWindows() {
         if (e.tie) { const nx = k < c.members.length - 1 ? g.x(bi, c.members[k + 1].t) + 2 + g.step * 0.55 * NS() * HK() : g.x(bi, barBeats(bi)) + (g.bars.includes(bi + 1) ? 2 + g.step * 0.55 * NS() * HK() : 0); tieArcAt(svg, g.x(bi, e.t) + 2 + g.step * 0.55 * NS() * HK(), nx, g.y(m) + g.step * 0.5, ink); }
       });
       if (tiedFromPrev(bi, c) && bi === g.first) tieArcAt(svg, 0, x0 + g.step * 0.55 * NS() * HK(), g.y(m) + g.step * 0.5, ink);
-      if (c.members.some(e => e.id === sel)) svg.append(svgEl("rect", { x: x0 - 1, y: g.y(m) - g.step, width: x1 - x0 + 2, height: g.step * 2, rx: 4, fill: "none", stroke: css("--accent"), "stroke-width": 1.5, "pointer-events": "none" }));
+      if (c.members.some(e => e.id === sel)) drawSelFrame(svg, x0 - 1, g.y(m) - g.step, x1 - x0 + 2, g.step * 2, 4);
     }
     groups.forEach(gp => drawBeamed(svg, g, gp, ink, e => g.x(bi, e.t) + 2));
     for (const e of bar.ev.melody) {
@@ -8381,7 +8386,7 @@ function renderWindows() {
         if (e.rest) { svg.append(svgEl("rect", { class: "noteEl", x: x0, y: 2, width: Math.max(4, x1 - x0), height: g.H - 4, rx: 2, fill: "none", stroke: css("--ink2"), "stroke-dasharray": "3 3", "data-ev": e.id, "data-part": part, "data-bi": bi })); continue; }
         if (e.m < g.lo || e.m > g.hi) { svg.append(svgEl("text", { class: "noteEl", x: x0 + 2, y: e.m > g.hi ? 9 : g.H - 3, "font-size": 8, "font-weight": 700, fill: color, "data-ev": e.id, "data-part": part, "data-bi": bi, style: "pointer-events:all" }, (e.m > g.hi ? "▲" : "▼") + noteName(e.m, key))); continue; }
         drawNote(svg, g, x0 + 1, e.m, e.d, e.chord ? S.chordColor : color, { "data-ev": e.id, "data-part": part, "data-bi": bi }, { noStem: beamed.has(e.id), outline: e.chord ? "#111" : null, uni: unison.has(e.id) });
-        if (e.id === sel) svg.append(svgEl("rect", { x: x0 - 1, y: g.y(e.m) - g.step, width: Math.max(6, x1 - x0 + 2), height: g.step * 2, rx: 3, fill: "none", stroke: css("--accent"), "stroke-width": 1.5, "pointer-events": "none" }));
+        if (e.id === sel) drawSelFrame(svg, x0 - 1, g.y(e.m) - g.step, Math.max(6, x1 - x0 + 2), g.step * 2, 3);
       }
     } else {
       for (const e of partEvents(part, bi)) for (const m of e.ms) if (m >= g.lo && m <= g.hi)
