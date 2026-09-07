@@ -7771,7 +7771,7 @@ function chipW(c) {
   if (c.rest) return 22;
   let w = _chipW.get(c.text);
   if (w == null) { if (!_measureCtx) { _measureCtx = document.createElement("canvas").getContext("2d"); _measureCtx.font = "700 16px -apple-system, 'Segoe UI', Roboto, Arial, sans-serif"; } w = Math.ceil(_measureCtx.measureText(c.text).width) + 6; _chipW.set(c.text, w); }
-  return w;
+  return Math.round(w * (c.wf || 1));                                       // wf: the chip's own width factor, set with Narrow / Widen
 }
 function reloadGenreChords() {
   const g = SONG_DATA.genres.find(x => x.name === S.song.genre); if (!g) return;
@@ -8528,7 +8528,8 @@ function renderStrips() {
         const pw = Math.max(chipMinW(c), Math.min(natW, roomPx)), squeezed = pw < natW - 0.5;      // squeezed between neighbours: the text condenses to fit
         svg.append(svgEl("rect", { class: "chip", x: px, y: 3, width: pw, height: H - 6, rx: 6, fill: "#fff", "fill-opacity": isSel ? 0.42 : 0.2, stroke: c.locked ? "#f5c518" : "#fff", "stroke-width": c.locked ? 2 : isSel ? 1.5 : 0.8, "stroke-opacity": c.locked ? 1 : isSel ? 1 : 0.5, "data-chip": c.id, "data-bi": bi }));
         const editing = WE.on && WE.bi === bi && WE.chipId === c.id;
-        if (!editing) svg.append(svgEl("text", Object.assign({ x, y: 24, "font-size": 16, fill: "#fff", "font-weight": 700, "font-family": "system-ui, sans-serif", "xml:space": "preserve", style: "white-space:pre", "pointer-events": "none" }, squeezed ? { textLength: Math.max(8, pw - 6), lengthAdjust: "spacingAndGlyphs" } : {}), c.text));
+        const baseW = Math.round(natW / (c.wf || 1)), fit = pw < baseW - 0.5 ? { textLength: Math.max(8, pw - 6), lengthAdjust: "spacingAndGlyphs" } : pw > baseW + 1.5 && c.text.trim().length > 1 ? { textLength: Math.max(8, pw - 6), lengthAdjust: "spacing" } : {};   // condensed when squeezed or narrowed, letter-spaced when widened
+        if (!editing) svg.append(svgEl("text", Object.assign({ x, y: 24, "font-size": 16, fill: "#fff", "font-weight": 700, "font-family": "system-ui, sans-serif", "xml:space": "preserve", style: "white-space:pre", "pointer-events": "none" }, fit), c.text));
         if (c.locked) svg.append(svgEl("text", { x: px + pw - 3, y: 11, "text-anchor": "end", "font-size": 8, fill: "#f5c518", "pointer-events": "none" }, "🔒"));
       });
     }
@@ -8587,6 +8588,8 @@ function renderPalette() {
     const sbi = S.song.bars.indexOf(bar);
     b("Edit", () => { S.selChip = { bi: sbi, id: chip.id }; openWordEdit(sbi, chip.t, chip); }, { cls: "lyr", title: "Change the text", disabled: chip.locked });
     b(chip.locked ? "🔓" : "🔒", () => { chip.locked = !chip.locked; renderAll(); }, { cls: "txt lock" + (chip.locked ? " on" : ""), title: chip.locked ? "Unlock" : "Lock in place" });
+    b("Narrow", () => sizeChip(bar, chip, -0.1), { cls: "lyr wide", title: "Make this chip narrower — wherever it is, whatever is beside it", disabled: (chip.wf || 1) <= 0.5 + 1e-6 });
+    b("Widen", () => sizeChip(bar, chip, 0.1), { cls: "lyr wide", title: "Make this chip wider — its neighbours make way", disabled: (chip.wf || 1) >= 2.5 - 1e-6 });
     b("✕", () => { S.selChip = null; renderAll(); }, { cls: "txt", title: "Done" });
     return;
   }
@@ -8926,6 +8929,11 @@ function joinLetters(bar, chip) {
   const fresh = tokenizeLyric(text); fresh.forEach((c, k) => { c.t = r3(t + k * 0.25); });
   bar.chips.push(...fresh); bar.chips.sort((a, b) => a.t - b.t); refitChips(bar);
   S.selChip = fresh.length ? { bi: S.song.bars.indexOf(bar), id: fresh[0].id } : null; renderAll();
+}
+/* Narrow / Widen: a chip's own width, in steps of a tenth; it works wherever the chip is — neighbours make way when it grows */
+function sizeChip(bar, chip, d) {
+  chip.wf = Math.round(clamp((chip.wf || 1) + d, 0.5, 2.5) * 10) / 10; if (Math.abs(chip.wf - 1) < 1e-6) delete chip.wf;
+  resolveChipOverlaps(bar); renderAll();
 }
 function deleteChip(bar, chip) { bar.chips = bar.chips.filter(c => c !== chip); refitChips(bar); S.selChip = null; renderAll(); }
 
