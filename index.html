@@ -533,7 +533,7 @@ body.kbOpen #app { padding-bottom: 330px; }              /* room to scroll the s
     </div>
   </div>
 
-  <div id="palette"><div class="prow" id="palRow1"></div><div class="prow" id="palRow2"></div><div class="prow" id="palRow3"></div></div>
+  <div id="palette"><div class="prow" id="palRow1"></div><div class="prow" id="palRow2"></div><div class="prow" id="palRow3"></div><div class="prow" id="palRow4"></div></div>
 
   <section class="win" id="accWin">
     <button class="winHead" data-win="acc">Accompaniment</button>
@@ -7792,7 +7792,7 @@ const WIN_LO = { mel: "melLo", acc: "accLo", bass: "bassLo" };
 const NOTE_SCALE = { s: 0.62, m: 0.85, l: 1.25 }; const NS = () => NOTE_SCALE[S.noteSize] || 1;   // note size: heads only, the stave never changes
 const HK = () => S.halfLines ? 1.55 : 1;         // lines-and-spaces: heads grow to fill a space (two rows)
 const STEP_K = { s: 0.94, m: 1, l: 1.06 };       // row height nudges a little with the note size
-Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", noteSize: "m", chordMode: false, chordWin: { mel: false, acc: false, bass: false }, chordColor: "#ffffff", justEntered: null, activePart: "melody", lastEntered: null, ftp: null, mv: null, selAuto: false, halfLines: true, winSize: "m", chordsDisp: "names", metro: "off", winState: { mel: "open", acc: "closed", bass: "closed" }, zoomWin: { mel: 1, acc: 1, bass: 1 }, lyricFont: "sans", viewSpan: 1, layout: "rolled", selChip: null, ghost: null, restNext: false, ghostNext: false, artic: null, slurFrom: null, active: null, softKb: ("ontouchstart" in window), popPos: null, mode: "melody" });
+Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", noteSize: "m", chordMode: false, chordWin: { mel: false, acc: false, bass: false }, chordColor: "#ffffff", justEntered: null, activePart: "melody", lastEntered: null, ftp: null, mv: null, selAuto: false, halfLines: true, winSize: "m", chordsDisp: "names", metro: "off", winState: { mel: "open", acc: "closed", bass: "closed" }, zoomWin: { mel: 1, acc: 1, bass: 1 }, lyricFont: "sans", viewSpan: 1, layout: "rolled", selChip: null, ghost: null, restNext: false, restLen: null, ghostNext: false, artic: null, slurFrom: null, active: null, softKb: ("ontouchstart" in window), popPos: null, mode: "melody" });
 const UNDO = { stack: [], redo: [], last: null, max: 60 };
 const setMode = () => {};                          // engine shims (the old mode sheets are gone)
 const renderPanel = () => renderAll();
@@ -7810,10 +7810,12 @@ function applyTheme() {
   const c = S.theme === "custom" && S.custom ? S.custom : null;
   r.style.setProperty("--ground", c ? c.ground : ""); r.style.setProperty("--ground2", c ? c.ground2 : ""); r.style.setProperty("--accent", c ? c.accent : ""); r.style.setProperty("--lyric", c ? c.lyric : ""); r.style.setProperty("--box", c ? c.box : "");
 }
-const noteLenBeats = () => S.len * (S.dot ? 1.5 : 1);
+const noteLenBeats = () => (S.restNext && S.restLen ? S.restLen : S.len) * (S.dot ? 1.5 : 1);
+const RESTS = [16, 8, 4, 2, 1, 0.5, 0.25, 0.125, 0.0625, 0.03125, 0.015625];                  // the rests row, quadruple whole to 256th
 const fmtB = x => parseFloat((+x).toFixed(4));                                          // beats for reading: no long tails
 const LENS = [[8, "𝅜"], [4, "𝅝"], [2, "𝅗𝅥"], [1, "♩"], [0.5, "♪"], [0.25, "𝅘𝅥𝅯"], [0.125, "𝅘𝅥𝅰"], [0.0625, "𝅘𝅥𝅱"], [0.03125, "𝅘𝅥𝅲"], [0.015625, "𝅘𝅥𝅳"]];   // the palette's lengths, in beats
 const LEN_NAME = { 8: "double whole", 4: "whole", 2: "half", 1: "quarter", 0.5: "eighth", 0.25: "16th", 0.125: "32nd", 0.0625: "64th", 0.03125: "128th", 0.015625: "256th" };
+const REST_NAME = Object.assign({ 16: "quadruple whole" }, LEN_NAME);
 const durGlyph = d => { for (const [v, gl] of LENS) { if (Math.abs(d - v) < 1e-9) return gl; if (Math.abs(d - v * 1.5) < 1e-9) return gl + "."; } return `${fmtB(d)}b`; };
 const toggle = (label, on, fn, title) => el("label", { class: "toggle" + (on ? " on" : ""), title, onclick: e => { e.preventDefault(); fn(!on); } }, el("span", { class: "sw" }), label);
 const gridStep = () => S.song.snap ? 0.5 : 0.25;
@@ -8518,8 +8520,10 @@ function renderBeatRow() {
 }
 function renderPalette() {
   renderFtp(); renderTempo();
-  const r1 = $("palRow1"), r2 = $("palRow2"), r3 = $("palRow3"); r1.replaceChildren(); r2.replaceChildren(); r3.replaceChildren();
-  renderRow3(r3);
+  const r1 = $("palRow1"), r2 = $("palRow2"), r3 = $("palRow3"), r4 = $("palRow4"); r1.replaceChildren(); r2.replaceChildren(); r3.replaceChildren(); r4.replaceChildren();
+  renderRow3(r4);
+  { const evR = selChipObj() ? null : selEv(), ownR = evR && !S.selAuto;                  // the rests row: every rest, quadruple whole to 256th
+    RESTS.forEach(v => r2.append(el("button", { onclick: () => tapRestLen(v), class: "len gn" + ((ownR ? evR.rest && Math.abs(baseLen(evR.d) - v) < 1e-9 : S.restNext && (S.restLen || S.len) === v) ? " on" : ""), title: ownR ? `Make it a ${REST_NAME[v]} rest` : `${REST_NAME[v]} rest: goes in at the next free spot, or arms one for your next tap` }, restIcon(v)))); }
   let p = r1;
   const ev = selEv(), bar = curBar();
   const b = (t, fn, opts = {}) => p.append(el("button", Object.assign({ onclick: fn }, opts.attrs || {}, { class: (opts.cls || "") + (opts.on ? " on" : "") + (opts.warn ? " warn" : ""), title: opts.title, disabled: opts.disabled }), t));
@@ -8527,7 +8531,7 @@ function renderPalette() {
   if (sc) {                                        // a word, letter, space or symbol on the Lyrics strip is selected
     LENS.forEach(([v]) => b(lenIcon(v), () => tapLength(v), { cls: "len gn", on: S.len === v, title: `Next note: ${LEN_NAME[v]}` }));
     b(ghostIcon(), tapGhostNote, { cls: "len gn", on: S.ghostNext, title: "Ghost note: the next note is played softly, barely heard" });
-    p = r2;
+    p = r3;
     const { bar, chip } = sc, fine = 0.0625;
     p.append(el("span", { class: "who" }, `“${chip.text.trim()}”`));
     b("←", () => { setChipTime(bar, chip, chip.t - fine); renderAll(); }, { cls: "lyr", title: "Nudge left", disabled: chip.locked });
@@ -8540,9 +8544,9 @@ function renderPalette() {
     return;
   }
   const own = ev && !S.selAuto;
-  LENS.forEach(([v]) => b(lenIcon(v), () => tapLength(v), { cls: "len gn", on: own ? Math.abs(baseLen(ev.d) - v) < 1e-9 : S.len === v, title: own ? `Make it a ${LEN_NAME[v]} note` : `Next note: ${LEN_NAME[v]}` }));
+  LENS.forEach(([v]) => b(lenIcon(v), () => tapLength(v), { cls: "len gn", on: own ? !ev.rest && Math.abs(baseLen(ev.d) - v) < 1e-9 : S.len === v, title: own ? `Make it a ${LEN_NAME[v]} note` : `Next note: ${LEN_NAME[v]}` }));
   b(ghostIcon(), tapGhostNote, { cls: "len gn", on: own ? !!ev.ghost : S.ghostNext, title: own ? (ev.ghost ? "Not a ghost note" : "Make it a ghost note — played softly, barely heard") : "Ghost note: the next note is played softly, barely heard" });
-  p = r2;
+  p = r3;
   if (PSEL.on) {
     b("Clear", () => { PSEL.ids.clear(); renderWindows(); renderPalette(); }, { cls: "lyr", disabled: !PSEL.ids.size, title: "Choose none" });
     b("✕", leavePlaySelect, { cls: "txt", title: "Leave Play Select" });
@@ -8669,7 +8673,7 @@ function tapRest() {
     if (S.sel.part === "melody") syncNotesToChips(S.song.bars[S.sel.bi]); renderAll(); return;
   }
   if (S.active) { placeRestNow(S.sel && entering ? S.sel.part : part); return; }
-  S.restNext = !S.restNext; renderPalette(); if (S.restNext) toast("Tap where the rest goes — on a stave or the Rhythm strip");
+  S.restNext = !S.restNext; S.restLen = null; renderPalette(); if (S.restNext) toast("Tap where the rest goes — on a stave or the Rhythm strip");
 }
 /* a rest at the next free spot of the active beat, in the given part */
 function placeRestNow(part) {
@@ -8680,7 +8684,52 @@ function placeRestNow(part) {
   const room = part === "melody" ? freeSpan(bar, sp.ts) : (() => { const nx = (bar.ev[part] || []).filter(e => e.t > sp.ts + 1e-6).sort((a, b) => a.t - b.t)[0]; return r3((nx ? nx.t : barBeats(bi)) - sp.ts); })();
   const ev = { id: uid(), t: sp.ts, d: Math.max(MIN_D, Math.min(sp.d, room)), rest: true };
   bar.ev[part].push(ev); if (part === "melody") syncNotesToChips(bar);
+  if (sp.d > 4 + 1e-9) restOverflow(bi, part, r3(sp.d - ev.d));                            // a whole rest is the bar; longer rests run on into the next bars
   S.ghost = null; S.restNext = false; S.sel = { bi, part, id: ev.id }; S.selAuto = true; S.justEntered = { bi, beat: S.active.beat, part }; renderAll();
+}
+/* the rest of a long rest: it carries on into the following bars as far as they are clear */
+function restOverflow(bi, part, left) {
+  let b = bi + 1;
+  while (left > 1e-6 && S.song.bars[b]) {
+    const bar = S.song.bars[b], evs = bar.ev[part] || [];
+    if (part !== "melody" && !bar.custom[part]) break;
+    const nx = evs.filter(e => part === "melody" || !e.rest).map(e => e.t).sort((a, c) => a - c)[0];
+    const room = r3(Math.min(left, nx != null ? nx : barBeats(b)));
+    if (room <= 1e-6) break;
+    if (part !== "melody") bar.ev[part] = evs.filter(e => !(e.rest && e.t < room - 1e-6));
+    bar.ev[part].push({ id: uid(), t: 0, d: room, rest: true }); if (part === "melody") syncNotesToChips(bar);
+    left = r3(left - room); b++;
+    if (nx != null) break;                                                                 // it met something: the rest ends here
+  }
+  if (left > 1e-6) toast(S.song.bars[b] ? `The rest stops short — bar ${barNo(b)} already has something in it` : "The rest stops short at the end of the song");
+}
+/* a rest button: on a note or rest you tapped yourself it becomes a rest of this length; while a beat is active a rest of
+   this length goes in at the next free spot; otherwise it arms a rest of this length for your next tap (tap again to disarm) */
+function tapRestLen(v) {
+  const ev = selEv(), own = ev && !S.selAuto && !selChipObj(), part = S.activePart || "melody";
+  if (own) {
+    if (!ev.rest) { ev.rest = true; delete ev.m; delete ev.tie; delete ev.artic; delete ev.ghost; delete ev.chord; delete ev.slur; }
+    setDur(ev, v * (isDotted(ev.d) ? 1.5 : 1)); return;
+  }
+  if (S.active) { S.restNext = true; S.restLen = v; const entering = !!(S.ghost || (S.justEntered && S.justEntered.bi === S.active.bi && S.justEntered.beat === S.active.beat)); placeRestNow(S.sel && entering ? S.sel.part : part); return; }
+  if (S.restNext && S.restLen === v) { S.restNext = false; S.restLen = null; renderPalette(); return; }
+  S.restNext = true; S.restLen = v; S.ghost = null; renderPalette(); toast(`Tap where the ${REST_NAME[v]} rest goes — on a stave or the Rhythm strip`);
+}
+/* the rest buttons are drawn on a few stave lines, since a whole rest hangs from a line and a half rest sits on one */
+function restIcon(v) {
+  const s = svgEl("svg", { viewBox: "0 0 24 26", width: 22, height: 24, "aria-hidden": "true" }), c = "currentColor";
+  [5, 9.5, 14, 18.5, 23].forEach(y => s.append(svgEl("line", { x1: 1, x2: 23, y1: y, y2: y, stroke: c, "stroke-width": 0.8, opacity: 0.35 })));
+  if (v >= 16) s.append(svgEl("rect", { x: 9, y: 9.5, width: 6, height: 9, fill: c }));
+  else if (v >= 8) s.append(svgEl("rect", { x: 9, y: 9.5, width: 6, height: 4.5, fill: c }));
+  else if (v >= 4) s.append(svgEl("rect", { x: 7.5, y: 9.5, width: 9, height: 2.9, fill: c }));
+  else if (v >= 2) s.append(svgEl("rect", { x: 7.5, y: 11.1, width: 9, height: 2.9, fill: c }));
+  else if (v >= 1) s.append(svgEl("path", { d: "M 9.5 4.5 L 14 9.8 L 11 13 L 15 18 Q 11 16.2 10.6 20.4 Q 7.8 16.6 12 15.6 L 8.3 11 L 11.6 7.8 Z", fill: c }));
+  else {
+    const n = Math.round(Math.log2(0.5 / v)) + 1, top = Math.max(2, 12 - (n - 1) * 2), gap = n > 4 ? 2.6 : 3, xb = 8.5, xt = xb + (23 - top) * 0.3;
+    s.append(svgEl("line", { x1: xb, y1: 23, x2: xt, y2: top, stroke: c, "stroke-width": 1.5, "stroke-linecap": "round" }));
+    for (let k = 0; k < n; k++) { const ys = top + k * gap, xs = xt - (ys - top) * 0.3; s.append(svgEl("path", { d: `M ${xs} ${ys} q -1.5 3 -4.5 2.2`, fill: "none", stroke: c, "stroke-width": 1.3, "stroke-linecap": "round" }), svgEl("circle", { cx: xs - 4.5, cy: ys + 2.2, r: 1.5, fill: c })); }
+  }
+  return s;
 }
 /* rhythm strip: add a box (or a rest) at the ▶ cursor of the current bar */
 function appendFromStrip() { const rest = S.restNext; S.restNext = false; appendSlot(noteLenBeats(), rest); }
@@ -8702,8 +8751,9 @@ function setDur(ev, nd) {
   const edge = Math.floor(ev.t + 1e-6) + 1, midBeat = ev.t - Math.floor(ev.t + 1e-6) > 1e-6;
   delete ev.noBeam; if (!(ch && ch.tieOut)) delete ev.tie;
   if (midBeat && ev.t + nd > edge + 1e-6) {
-    ev.d = r3(edge - ev.t); ev.noBeam = true; ev.tie = true;
-    bar.ev[part].push({ id: uid(), t: edge, d: r3(ev.t + nd - edge), m: ev.m });
+    const piece = { id: uid(), t: edge, d: r3(ev.t + nd - edge) };
+    if (ev.rest) { piece.rest = true; ev.d = r3(edge - ev.t); } else { ev.d = r3(edge - ev.t); ev.noBeam = true; ev.tie = true; piece.m = ev.m; }
+    bar.ev[part].push(piece);
   } else ev.d = nd;
   if (part === "melody") syncNotesToChips(bar);
   renderAll();
@@ -9604,7 +9654,6 @@ function renderRow3(r3) {
   const b = (t, fn, opts = {}) => r3.append(el("button", { onclick: fn, class: (opts.cls || "") + (opts.on ? " on" : "") + (opts.warn ? " warn" : ""), title: opts.title, disabled: opts.disabled }, t));
   const ev = selChipObj() ? null : selEv(), own = ev && !S.selAuto;                       // dot, rest and ＋ live here, under the lengths
   b("·", tapDot, { on: own ? isDotted(ev.d) : S.dot, title: "Dotted" });
-  b("𝄽", tapRest, { on: S.restNext, title: ev ? "Turn into a rest" : S.ghost ? "Put a rest in the box" : "Rest: tap where it goes" });
   b("＋", appendFromStrip, { cls: "txt", title: "Add a box of this length at the end of the rhythm", disabled: !!ev });
   r3.append(el("span", { class: "gap" }));
   b("UNDO", undo, { cls: "lyr wide", title: "Undo", disabled: !UNDO.stack.length });
