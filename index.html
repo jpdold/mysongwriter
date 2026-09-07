@@ -346,8 +346,9 @@ svg text { pointer-events: none; }
 
 /* ── footer ── */
 /* the arrow row and UNDO / REDO: wide, not tall, between the Lyrics strip and the tools */
-#arrows { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-#undoRow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+#arrows { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+#undoRow { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+#arrows, #undoRow { width: 50%; justify-self: end; }                                             /* the right half of the row only */
 #arrows button, #undoRow button { height: 30px; padding: 0; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); color: #111; font-size: 18px; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); }
 #undoRow button { font-family: var(--sans); font-size: 13px; letter-spacing: .05em; }
 #arrows button:active, #undoRow button:active { background: linear-gradient(#ffd27a, #f5a623); }
