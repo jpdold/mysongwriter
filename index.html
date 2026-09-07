@@ -103,12 +103,16 @@ svg text { pointer-events: none; }
 
 /* ── header ── */
 #head { display: grid; grid-template-columns: 44px 1fr 44px; grid-template-rows: auto auto; gap: 2px 6px; align-items: center; }
-#topTransport { justify-self: center; display: flex; gap: 6px; }
-#topTransport button { width: 52px; height: 34px; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #cfcfcf); color: #111; font-size: 17px; padding: 0; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
+#topTransport { justify-self: center; display: flex; gap: 4px; min-width: 0; }
+#topTransport button { width: 36px; height: 34px; position: relative; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #cfcfcf); color: #111; font-size: 17px; padding: 0; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
 #topTransport button.on { background: linear-gradient(#ffd27a, #f5a623); }
-#tempo { display: flex; align-items: center; margin-left: 4px; border: 1.5px solid #141414; border-radius: 4px; overflow: hidden; height: 34px; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
-#topTransport #tempo button { width: 30px; height: 34px; border: none; border-radius: 0; box-shadow: none; font-size: 18px; font-weight: 700; }
-#topTransport #tempo button#tempoLbl { width: auto; min-width: 58px; padding: 0 4px; font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; background: #111; color: #fff; }
+#topTransport button .bar { position: absolute; left: 5px; top: 8px; width: 2.5px; height: 18px; background: #111; border-radius: 1px; }
+#topTransport #playAllBtn { padding-left: 8px; }
+#topTransport button .dots { font-size: 11px; font-weight: 800; margin-left: 1px; letter-spacing: -1px; }
+#topTransport #stopBtn { font-size: 15px; }
+#tempo { display: flex; align-items: center; margin-left: 2px; border: 1.5px solid #141414; border-radius: 4px; overflow: hidden; height: 34px; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
+#topTransport #tempo button { width: 24px; height: 34px; border: none; border-radius: 0; box-shadow: none; font-size: 18px; font-weight: 700; }
+#topTransport #tempo button#tempoLbl { width: auto; min-width: 46px; padding: 0 2px; font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums; background: #111; color: #fff; }
 #topTransport #tempo button:active { background: linear-gradient(#ffd27a, #f5a623); }
 #app { overflow-x: hidden; }
 .btn.warn { background: #c8402f; color: #fff; border-color: #a93226; }
@@ -165,6 +169,10 @@ svg text { pointer-events: none; }
 .win .side { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 7px; padding: 2px 0; }
 .win .solo { width: 24px; height: 24px; padding: 0; border: 1px solid rgba(255,255,255,.35); border-radius: 4px; background: rgba(0,0,0,.25); color: var(--on-ground); font-size: 12px; }
 .win .solo.on { background: linear-gradient(#ffd27a, #f5a623); color: #111; }
+.win .psel { width: 24px; height: 24px; padding: 0; border: 2px solid #2f7fd6; border-radius: 4px; background: rgba(0,0,0,.25); color: var(--on-ground); font-size: 12px; }
+.win .psel.on { background: #2f7fd6; color: #fff; }
+.win .psel.playing { background: linear-gradient(#ffd27a, #f5a623); color: #111; }
+.win.closed .psel { display: none; }
 .win .focus { display: none; width: 24px; height: 24px; padding: 0; border: 1px solid rgba(255,255,255,.35); border-radius: 4px; background: rgba(0,0,0,.25); color: var(--on-ground); font-size: 13px; }
 .win .focus.on { background: linear-gradient(#ffd27a, #f5a623); color: #111; }
 @media (min-width: 860px) and (min-aspect-ratio: 5/4), (max-height: 520px) and (min-aspect-ratio: 5/4) { .win .focus { display: block; } }
@@ -467,7 +475,7 @@ body.kbOpen #app { padding-bottom: 330px; }              /* room to scroll the s
   <header id="head">
     <input id="songTitle" type="text" placeholder="“My Song Title”" autocomplete="off" spellcheck="false" aria-label="Song title">
     <button class="iconBtn" id="menuBtn" title="Menu" aria-label="Menu">☰</button>
-    <div id="topTransport"><button id="playBtn" title="Play from this bar (hold for the whole song)">▶</button><button id="pauseBtn" title="Pause / resume">⏸</button><div id="tempo" title="Tempo"><button id="tempoDn" aria-label="Slower">−</button><button id="tempoLbl" title="Tap to type a tempo">♩=120</button><button id="tempoUp" aria-label="Faster">+</button></div></div>
+    <div id="topTransport"><button id="playAllBtn" title="Play All — the whole song from the start"><span class="bar"></span>▶</button><button id="playBtn" title="Play Bar All — this bar, every part">▶</button><button id="rangeBtn" title="Play Range — bars and beats you type in">▶<span class="dots">…</span></button><button id="stopBtn" title="Stop">■</button><div id="tempo" title="Tempo"><button id="tempoDn" aria-label="Slower">−</button><button id="tempoLbl" title="Tap to type a tempo">♩=120</button><button id="tempoUp" aria-label="Faster">+</button></div></div>
     <button class="iconBtn" id="gearBtn" title="Settings" aria-label="Settings"><svg class="ico"><use href="#icoGear"/></svg></button>
   </header>
 
@@ -483,7 +491,7 @@ body.kbOpen #app { padding-bottom: 330px; }              /* room to scroll the s
   <section class="win" id="melWin">
     <div class="gutter"><button class="rArr up" data-win="mel" data-dir="1" title="Higher">︿</button><svg id="melGut"></svg><button class="rArr dn" data-win="mel" data-dir="-1" title="Lower">﹀</button></div>
     <div class="frame"><svg id="melSvg"></svg></div>
-    <div class="side"><button class="gear" data-win="mel" title="Melody settings"><svg class="ico"><use href="#icoGear"/></svg></button><button class="sizer" data-win="mel" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="mel" title="Hear the melody alone">▶</button><button class="focus" data-win="mel" title="Give this window the whole screen">⛶</button></div>
+    <div class="side"><button class="gear" data-win="mel" title="Melody settings"><svg class="ico"><use href="#icoGear"/></svg></button><button class="sizer" data-win="mel" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="mel" title="Play Bar — the melody alone, this bar">▶</button><button class="psel" data-win="mel" title="Play Select — choose the melody notes to hear">▶</button><button class="focus" data-win="mel" title="Give this window the whole screen">⛶</button></div>
   </section>
 
   <div class="strip" id="rhyStrip">
@@ -509,14 +517,14 @@ body.kbOpen #app { padding-bottom: 330px; }              /* room to scroll the s
     <button class="winHead" data-win="acc">Accompaniment</button>
     <div class="gutter"><button class="rArr up" data-win="acc" data-dir="1" title="Higher">︿</button><svg id="accGut"></svg><button class="rArr dn" data-win="acc" data-dir="-1" title="Lower">﹀</button></div>
     <div class="frame"><svg id="accSvg"></svg></div>
-    <div class="side"><button class="gear" data-win="acc" title="Accompaniment settings"><svg class="ico"><use href="#icoGear"/></svg></button><button class="sizer" data-win="acc" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="acc" title="Hear the accompaniment alone">▶</button><button class="focus" data-win="acc" title="Give this window the whole screen">⛶</button></div>
+    <div class="side"><button class="gear" data-win="acc" title="Accompaniment settings"><svg class="ico"><use href="#icoGear"/></svg></button><button class="sizer" data-win="acc" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="acc" title="Play Bar — the accompaniment alone, this bar">▶</button><button class="psel" data-win="acc" title="Play Select — choose the accompaniment notes to hear">▶</button><button class="focus" data-win="acc" title="Give this window the whole screen">⛶</button></div>
   </section>
 
   <section class="win" id="bassWin">
     <button class="winHead" data-win="bass">Bass</button>
     <div class="gutter"><button class="rArr up" data-win="bass" data-dir="1" title="Higher">︿</button><svg id="bassGut"></svg><button class="rArr dn" data-win="bass" data-dir="-1" title="Lower">﹀</button></div>
     <div class="frame"><svg id="bassSvg"></svg></div>
-    <div class="side"><button class="gear" data-win="bass" title="Bass settings"><svg class="ico"><use href="#icoGear"/></svg></button><button class="sizer" data-win="bass" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="bass" title="Hear the bass alone">▶</button><button class="focus" data-win="bass" title="Give this window the whole screen">⛶</button></div>
+    <div class="side"><button class="gear" data-win="bass" title="Bass settings"><svg class="ico"><use href="#icoGear"/></svg></button><button class="sizer" data-win="bass" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="bass" title="Play Bar — the bass alone, this bar">▶</button><button class="psel" data-win="bass" title="Play Select — choose the bass notes to hear">▶</button><button class="focus" data-win="bass" title="Give this window the whole screen">⛶</button></div>
   </section>
 
   <footer id="foot">
@@ -7297,7 +7305,7 @@ function startPlayback(barList, opts = {}) {
   stopPlayback();
   if (!barList.length) return;
   const ctx = ensureCtx();
-  play.on = true; play.bars = barList; play.next = 0; play.t0 = ctx.currentTime + 0.08; play.loop = !!opts.loop;
+  play.on = true; play.bars = barList; play.next = 0; play.t0 = ctx.currentTime + 0.08; play.loop = !!opts.loop; play.range = null; play.only = null;
   play.offs = []; let acc = 0; for (const b of barList) { play.offs.push(acc); acc += beatSec() * (Number(barBeats(b)) > 0 ? Number(barBeats(b)) : 4); } play.total = acc;
   if (S.metro === "countin") { const bl = beatSec() * (TS_BEATS[S.song.sig] || 4); play.t0 += bl; for (let b = 0; b < (TS_BEATS[S.song.sig] || 4); b++) metroClick(ctx, play.t0 - bl + b * beatSec(), b === 0); }
   S.playing = true; S.playPos = null;
@@ -7331,12 +7339,13 @@ function startPlayback(barList, opts = {}) {
 }
 function scheduleBar(ctx, bi, t0) {
   const song = S.song, bs = beatSec();
-  if (S.metro !== "off") for (let b = 0; b < barBeats(bi); b++) metroClick(ctx, t0 + b * bs, b === 0);
+  const rg = play.range, inRange = t => !rg || !((bi === rg.firstBi && t < rg.fromT - 1e-6) || (bi === rg.lastBi && t >= rg.toT - 1e-6));
+  if (S.metro !== "off") for (let b = 0; b < barBeats(bi); b++) if (inRange(b)) metroClick(ctx, t0 + b * bs, b === 0);
   for (const p of PARTS) {
     const P = song.parts[p]; if (!P.on) continue;
     if (S.solo && p !== S.solo) continue;
     const timbre = TIMBRE(P.inst), strum = p === "accomp" && timbre !== "piano" ? 0.012 : 0, bank = partBank(P);
-    for (const e of partEvents(p, bi)) e.ms.forEach((m, k) => { const when = t0 + e.t * bs + k * strum; if (!isFinite(when) || !isFinite(m)) return; playTone(ctx, m, when, Math.max(0.04, (isFinite(e.sus) ? e.sus : e.d || 0.25) * bs), P.vol * e.vel * 0.5, e.vel, timbre, bank); });
+    for (const e of partEvents(p, bi)) { if (!inRange(e.t)) continue; if (play.only && !(e.src && play.only.has(p + ":" + e.src.id))) continue; e.ms.forEach((m, k) => { const when = t0 + e.t * bs + k * strum; if (!isFinite(when) || !isFinite(m)) return; playTone(ctx, m, when, Math.max(0.04, (isFinite(e.sus) ? e.sus : e.d || 0.25) * bs), P.vol * e.vel * 0.5, e.vel, timbre, bank); }); }
   }
 }
 function stopPlayback() {
@@ -7346,7 +7355,9 @@ function stopPlayback() {
   [...liveNodes].forEach(h => h.stop(t));
   S.playing = false; S.playPos = null;
   $("playBtn").classList.remove("on"); $("playBtn").textContent = "▶";
+  play.range = null; play.only = null;
   if (was) { updatePlayhead(); renderLights(); }
+  if (typeof onPlaybackStopped === "function") onPlaybackStopped(was);
 }
 function playSection(si = S.si) { const { start, end } = sectionRange(si), list = []; for (let i = start; i < end; i++) list.push(i); startPlayback(list); }
 function playSong(fromSi = 0) {
@@ -8332,6 +8343,8 @@ function renderWindows() {
     }
     svg.append(svgEl("line", { id: win + "Head", x1: -5, x2: -5, y1: 0, y2: g.H, stroke: css("--accent"), "stroke-width": 2, "pointer-events": "none" }));
   }
+  if (PSEL.on) ["mel", "acc", "bass"].forEach(w => { if (S.winState[w] === "closed" || !GEO[w]) return; const svg = $(w + "Svg"); for (const bi of viewBars()) drawPsel(svg, GEO[w], bi, WIN_PART[w]); });
+  document.querySelectorAll(".win .psel").forEach(b => b.classList.toggle("on", PSEL.on));
 }
 function renderStrips() {
   const song = S.song, key = keyObj(song.key), g = stripGeo(), B = g.B, H = 36, bars = viewBars();
@@ -8456,6 +8469,12 @@ function renderPalette() {
   b("𝄽", tapRest, { on: S.restNext, title: ev ? "Turn into a rest" : S.ghost ? "Put a rest in the box" : "Rest: tap where it goes" });
   b("＋", appendFromStrip, { cls: "txt", title: "Add a box of this length at the end of the rhythm", disabled: !!ev });
   p = r2;
+  if (PSEL.on) {
+    p.append(el("span", { class: "hint" }, PSEL.playing ? "playing the chosen notes — ▶ in the blue box or ■ stops" : `${PSEL.ids.size} chosen · tap notes to choose · ▶ in the blue box plays them`));
+    b("Clear", () => { PSEL.ids.clear(); renderWindows(); renderPalette(); }, { cls: "lyr", disabled: !PSEL.ids.size, title: "Choose none" });
+    b("✕", leavePlaySelect, { cls: "txt", title: "Leave Play Select" });
+    return;
+  }
   if (S.mv && S.mv.mode === "delete") {
     b("Run", () => delRun("run"), { cls: "lyr", warn: true, disabled: S.mv.start == null, title: "Delete what is in the picked run" });
     b("Bar", () => delRun("bar"), { cls: "lyr", warn: true, title: `Delete everything in bar ${barNo(S.bi)}` });
@@ -8719,7 +8738,7 @@ function initPointer() {
       const part = evId ? holder.getAttribute("data-part") : null, ebi = evId ? parseInt(holder.getAttribute("data-bi") || S.bi, 10) : S.bi;
       let ev = evId ? S.song.bars[ebi].ev[part].find(x => x.id === evId) : null;
       const p0 = svgPoint(svg, e), at0 = GEO[win].at(p0.x), locked = !(ev ? inActive(ebi, ev.t) : inActive(at0.bi, at0.t));
-      if (locked && !(ev && S.artic)) ev = null;                                  // a note in a locked beat is just part of the background
+      if (locked && !(ev && (S.artic || PSEL.on))) ev = null;                     // a note in a locked beat is just part of the background (unless choosing notes to play)
       const ftpOn = !!(S.ftp && S.ftp.on); if (ftpOn) ev = null;                  // floating palette out: the stave only swipes
       dragCtx = { win, svg, x0: e.clientX, y0: e.clientY, moved: false, ev, part, bi: ebi, t0: ev ? ev.t : 0, m0: ev ? ev.m : null, id: e.pointerId, lo0: viewOf(win), swipe: null, locked, ftpOn };
       try { svg.setPointerCapture(e.pointerId); } catch (err) {}
@@ -8730,6 +8749,7 @@ function initPointer() {
       if (!dragCtx.moved && Math.hypot(dx, dy) < 10) return;
       dragCtx.moved = true;                                // from here on this pointer can never place, pitch or select anything
       if (dragCtx.locked && dragCtx.ev) return;            // a marked note in a locked beat: nothing to drag
+      if (PSEL.on && dragCtx.ev) return;                   // choosing notes to play: no dragging
       if (!dragCtx.ev) {                                   // empty space anywhere (locked beats too): swipe scrolls the register (up/down) or turns the bar (sideways)
         if (!dragCtx.swipe) dragCtx.swipe = Math.abs(dy) >= Math.abs(dx) * 1.25 ? "v" : Math.abs(dx) >= Math.abs(dy) * 1.25 ? "h" : null;
         if (!dragCtx.swipe) return;                        // too diagonal to call yet — wait for a clearer direction
@@ -8754,6 +8774,7 @@ function initPointer() {
       if (d.moved) { if (d.locked && d.ev) return; if (!d.ev && d.swipe === "h") { const dx = e.clientX - d.x0; if (Math.abs(dx) > 50) { S.bi = clamp(S.bi + (dx < 0 ? 1 : -1), 0, S.song.bars.length - 1); S.sel = null; S.ghost = null; } } renderAll(); return; }   // a swipe ends as a swipe: no tap, no entry
       const p = svgPoint(svg, e), g = GEO[win], at = g.at(p.x);
       S.selChip = null;
+      if (PSEL.on) { if (d.ev && !d.ev.rest && d.ev.m != null) { const key = d.part + ":" + d.ev.id; if (PSEL.ids.has(key)) PSEL.ids.delete(key); else PSEL.ids.add(key); renderWindows(); } return; }   // Play Select: taps only choose notes
       if (S.mv) { mvTap(win, at.bi, at.t); return; }                                                                    // move mode: taps pick the run, or lock it in
       if (d.ev && S.artic && !d.ev.rest && d.ev.m != null) { S.bi = d.bi; applyArtic(d.bi, d.part, d.ev); return; }   // slurs and marks may reach into locked beats
       if (d.locked) { if (d.ev) { activate(d.bi, d.ev.t, d.part); S.sel = { bi: d.bi, part: d.part, id: d.ev.id }; renderAll(); return; } activate(at.bi, at.t, WIN_PART[win]); showBox(at.bi, WIN_PART[win]); return; }
@@ -9759,6 +9780,65 @@ function tscRenderResult() {
   else box.append(el("div", { class: "tiny" }, `The song itself can be set to 4/4, 3/4, 2/4 or 6/8 — ${best.sig} is for your own notation.`));
   box.append(sendRow());
 }
+/* ═══════════════════════════════════════════════════════════════════════
+   PLAYBACK CONTROLS — Play All, Play Bar All, Play Range, Play Bar (per stave), Play Select, Stop
+   ═══════════════════════════════════════════════════════════════════════ */
+function playAll() { if (S.playing) stopPlayback(); S.solo = null; playSong(); }
+function playBarAll() { if (S.playing && !S.solo && !PSEL.playing && !play.range) { stopPlayback(); return; } stopPlayback(); S.solo = null; startPlayback([S.bi]); }
+function stopAll() { stopPlayback(); }
+function onPlaybackStopped(was) { if (!was) return; if (PSEL.playing) { PSEL.playing = false; renderWindows(); } document.querySelectorAll(".win .psel").forEach(b => b.classList.remove("playing")); }
+/* a stretch that starts and ends part-way through bars; every part plays the same stretch */
+function startPlaybackRange(b0, t0, b1, t1) {
+  const list = []; for (let i = b0; i <= b1; i++) list.push(i);
+  startPlayback(list); if (!play.on) return;
+  const bs = beatSec();
+  play.range = { firstBi: b0, fromT: t0, lastBi: b1, toT: t1 };
+  play.offs = play.offs.map(o => o - t0 * bs);
+  play.total = play.total - t0 * bs - (barBeats(b1) - t1) * bs;
+}
+function openPlayRange() {
+  const N = S.song.bars.length, last = S.playRange || { b0: S.bi + 1, t0: 1, b1: S.bi + 1, t1: Math.ceil(barBeats(S.bi)) };
+  const num = (v, lo, hi) => el("input", { class: "txt", type: "number", min: lo, max: hi, value: v, style: "width:64px" });
+  const b0 = num(last.b0, 1, N), t0 = num(last.t0, 1, 16), b1 = num(last.b1, 1, N), t1 = num(last.t1, 1, 16);
+  const row = (lbl, b, t) => el("div", { class: "mrow" }, el("b", { style: "min-width:44px" }, lbl), el("span", {}, "bar"), b, el("span", {}, "beat"), t);
+  openModal("Play Range", [el("div", { class: "tiny" }, `Bars run 1–${N} across the song. The stretch must run forwards, and every part plays the same stretch.`), row("From", b0, t0), row("To", b1, t1)],
+    [el("button", { class: "btn", onclick: closeModal }, "Cancel"), el("button", { class: "btn acc", onclick: () => {
+      const B0 = parseInt(b0.value, 10) - 1, B1 = parseInt(b1.value, 10) - 1, T0 = parseInt(t0.value, 10) - 1, T1 = parseInt(t1.value, 10);
+      if (!(B0 >= 0 && B1 < N && B0 <= B1)) { toast("Bars must run forwards, within the song"); return; }
+      if (!(T0 >= 0 && T0 < barBeats(B0)) || !(T1 >= 1 && T1 <= Math.ceil(barBeats(B1)))) { toast("Beats must lie inside their bars"); return; }
+      if (B0 === B1 && T0 >= T1) { toast("The end must come after the start"); return; }
+      S.playRange = { b0: B0 + 1, t0: T0 + 1, b1: B1 + 1, t1: T1 }; closeModal(); S.solo = null; S.bi = B0; renderAll(); startPlaybackRange(B0, T0, B1, T1);
+    } }, "Play")]);
+}
+/* Play Select: choose notes one by one, hear just those; the rest are greyed while it plays */
+const PSEL = { on: false, ids: new Set(), playing: false };
+function togglePlaySelect(win, btn) {
+  if (!PSEL.on) { PSEL.on = true; PSEL.ids.clear(); PSEL.playing = false; S.sel = null; S.ghost = null; S.mv = null; renderAll(); toast("Tap the notes you want to hear, then ▶ in the blue box again"); return; }
+  if (S.playing && PSEL.playing) { stopPlayback(); return; }
+  if (!PSEL.ids.size) { toast("Tap some notes first — ✕ in the tools leaves Play Select"); return; }
+  playSelected();
+}
+function leavePlaySelect() { if (S.playing && PSEL.playing) stopPlayback(); PSEL.on = false; PSEL.ids.clear(); PSEL.playing = false; renderAll(); }
+function playSelected() {
+  let b0 = Infinity, b1 = -1, t0 = 0, t1 = 0;
+  S.song.bars.forEach((bar, bi) => { for (const part of ["melody", "accomp", "bass", "ensemble"]) (bar.ev[part] || []).forEach(e => { if (!PSEL.ids.has(part + ":" + e.id)) return; if (bi < b0 || (bi === b0 && e.t < t0)) { b0 = bi; t0 = e.t; } if (bi > b1 || (bi === b1 && e.t + e.d > t1)) { b1 = bi; t1 = r3(e.t + e.d); } }); });
+  if (b1 < 0) return;
+  S.solo = null; S.bi = b0;
+  startPlaybackRange(b0, t0, b1, Math.min(t1, barBeats(b1)));                 // (this stops anything already playing first)
+  play.only = new Set(PSEL.ids); PSEL.playing = true; renderAll();
+  document.querySelectorAll(".win .psel").forEach(b => b.classList.add("playing"));
+  renderWindows();
+}
+/* the boxes round every note head while choosing; greyed notes while the chosen ones play */
+function drawPsel(svg, g, bi, part) {
+  const bar = S.song.bars[bi]; if (!bar) return;
+  for (const c of chains(bar, part)) {
+    if (c.rest || c.head.m == null || c.head.m < g.lo || c.head.m > g.hi) continue;
+    const key = part + ":" + c.head.id, on = PSEL.ids.has(key), st = g.step, x = g.x(bi, c.t) + 2, y = g.y(c.head.m);
+    svg.append(svgEl("rect", { class: "pselBox", x: x - 2, y: y - st * 0.62, width: st * 1.35 + 4, height: st * 1.24, rx: 5, fill: on ? "#2f7fd6" : "#fff", "fill-opacity": on ? 0.32 : 0.001, stroke: "#2f7fd6", "stroke-width": on ? 2.2 : 1.6, "data-ev": c.head.id, "data-part": part, "data-bi": bi, style: "pointer-events:all;cursor:pointer" }));
+  }
+  if (PSEL.playing) svg.querySelectorAll(".noteEl[data-ev]").forEach(n => { if (!PSEL.ids.has((n.getAttribute("data-part") || part) + ":" + n.getAttribute("data-ev"))) n.setAttribute("opacity", 0.22); });
+}
 /* full screen: hides the address bar on Android / desktop; iPhone Safari has no such API,
    so there the answer is Share → Add to Home Screen, which opens the app without any browser bars */
 function toggleFullscreen() {
@@ -9781,6 +9861,7 @@ function openHelp() {
     h("Rests", "𝄽 in the tools: while you are entering (a box is showing, or the beat has just taken a note) it puts a rest at the next free spot, in the melody or in a Custom band bar. On a note you selected yourself it turns that note into a rest, and back again. With no beat active it arms a rest for your next tap on a stave or the Rhythm strip."),
     h("Swiping the staves", "Swipe up or down anywhere on a stave — melody, accompaniment or bass, in any beat, with the floating palette out or not — to slide its range; swipe sideways on empty space to turn the bar. A swipe is only ever a swipe: it never places, pitches or selects a note, and a tap that wanders a little still counts as a tap."),
     h("Notes that run on", "A note that runs on past its beat marks the beats it covers with a white band along the top and bottom of the stave. Tap anywhere along it and it is selected, with its own beat woken."),
+    h("Playing", "Top row: |▶ Play All plays the whole song from the start; ▶ Play Bar All plays this bar with every part; ▶… Play Range asks for a start and end bar and beat and plays that stretch in every part; ■ stops. Beside each stave, ▶ plays that part alone for this bar, and the ▶ in the blue box is Play Select: tap it, tap the note heads you want to hear (a blue box appears round every head), then tap it again — only the chosen notes sound, the rest are greyed, and it stops when they are done, or with the same button or ■. ✕ in the tools leaves Play Select."),
     h("Entering notes", "Tap a beat once: it becomes the active beat and the dashed box appears there, sized to the picked length. Tap the pitch you want and the note is placed at the box. Only the active beat takes notes; other beats wait for their own tap."),
     h("Time signature calculator", "☰ → Time signature calculator. Tap note and rest values onto a free strip one at a time — dots, double dots and ties apply to the selected or last entry. − + set the tempo (the song's own), ▶ Hear rhythm taps it out, and Calculate ranks the time signatures that fit, showing how the rhythm falls into bars for each; green lines are bar lines between entries, orange ones cut through a note that would be tied over. Separately, Send to song as melody slots writes the rhythm into the melody from the current bar on as pitch-less boxes, cut by the song's own bars, asking first if it would replace anything."),
     h("Deleting", "Tap Delete in the tools. Then either tap the first and last beat of a run (tap either again to open it into quarters and pick the exact start or end) and press Run, or press Bar or Section to clear the whole current bar or section. The part button chooses the window you picked on only, or all parts plus the words. UNDO brings anything back; REDO puts it away again."),
@@ -9806,8 +9887,7 @@ function playSolo(win, btn) {
   const part = WIN_PART[win];
   if (S.playing && S.solo === part) { stopPlayback(); return; }
   if (!S.song.parts[part].on) { toast(`${PART_META[part].label} is off — turn it on in ⚙`); return; }
-  const { end } = curRange(), list = []; for (let i = S.bi; i < end; i++) list.push(i);
-  startPlayback(list); S.solo = part;
+  startPlayback([S.bi]); S.solo = part;
   document.querySelectorAll(".win .solo").forEach(b => b.classList.toggle("on", b === btn));
 }
 /* ── undo: restore the last idle snapshot ── */
@@ -9916,11 +9996,11 @@ async function boot() {
   wireTempo();
   $("chordsBtn").addEventListener("click", openChordsSheet);
   $("saveBtn").addEventListener("click", openLibrary);
-  let holdT = null, held = false; const pb = $("playBtn");
-  pb.addEventListener("pointerdown", () => { held = false; holdT = setTimeout(() => { held = true; if (S.playing) stopPlayback(); playSong(); toast("Playing the whole song"); }, 550); });
-  const pbUp = () => clearTimeout(holdT); pb.addEventListener("pointerup", pbUp); pb.addEventListener("pointerleave", pbUp); pb.addEventListener("pointercancel", pbUp);
-  pb.addEventListener("click", () => { if (held) return; if (S.playing) { stopPlayback(); $("pauseBtn").classList.remove("on"); if (audioCtx && audioCtx.state === "suspended") audioCtx.resume(); return; } const { end } = curRange(), list = []; for (let i = S.bi; i < end; i++) list.push(i); startPlayback(list); });
-  $("pauseBtn").addEventListener("click", () => { if (!S.playing || !audioCtx) return; if (audioCtx.state === "running") { audioCtx.suspend(); $("pauseBtn").classList.add("on"); } else { audioCtx.resume(); $("pauseBtn").classList.remove("on"); } });
+  $("playAllBtn").addEventListener("click", playAll);
+  $("playBtn").addEventListener("click", playBarAll);
+  $("rangeBtn").addEventListener("click", openPlayRange);
+  $("stopBtn").addEventListener("click", stopAll);
+  document.querySelectorAll(".win .psel").forEach(b => b.addEventListener("click", () => togglePlaySelect(b.dataset.win, b)));
   midiInit();
   $("overlay").addEventListener("click", e => { if (e.target === $("overlay")) closeModal(); });
   initPointer(); initWindowChrome(); initWordEdit();

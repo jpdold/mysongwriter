@@ -25,6 +25,10 @@ Windows share the screen: the melody gets the most room and Accompaniment and Ba
 
 The dots under the bar bracket show each bar of the section: green when every voice is full, white when empty, yellow in between.
 
+## Playing
+
+Top row: **|▶ Play All** plays the whole song from the start, **▶ Play Bar All** plays the current bar with every part, **▶… Play Range** asks for a start and end bar and beat and plays that stretch in every part, **■** stops. Beside each stave, **▶** plays that part alone for the current bar, and the **▶ in the blue box** is Play Select: tap it, tap the note heads you want to hear, tap it again — only the chosen notes sound, the rest are greyed, and it stops when they are done or when you press it or ■ again.
+
 ## Time signature calculator
 
 ☰ → Time signature calculator. Tap note and rest values (whole down to 128th, with dots, double dots and ties) onto a free strip one at a time, hear it tapped out at the song's tempo, then press Calculate: every plausible signature is scored on how the rhythm falls into bars — bar lines landing between entries on struck notes, complete last bars, onsets on the beat, and a preference for regular metres — and the best fits are listed with the rhythm sectioned bar by bar for each.
