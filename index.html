@@ -124,7 +124,7 @@ svg text { pointer-events: none; }
 #app > * { min-width: 0; }                     /* no child may widen the column: text and svgs never push the staves about */
 #palette { min-width: 0; overflow: hidden; }
 #palette .prow { min-width: 0; overflow: hidden; }
-#palette .hint, #palette .who { min-width: 0; flex: 1 1 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#palette .who { min-width: 0; flex: 1 1 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #songTitle { grid-column: 1 / -1; justify-self: center; width: min(100%, 360px); text-align: center; font-size: 22px; line-height: 1.2;
   background: var(--paper); color: var(--ink); border: 1.5px solid #141414; border-radius: 4px; padding: 4px 10px; font-family: var(--sans); box-shadow: inset 0 1px 3px rgba(0,0,0,.15), 0 2px 5px rgba(0,0,0,.25); }
 #songTitle::placeholder { color: #999; font-style: italic; }
@@ -319,7 +319,6 @@ svg text { pointer-events: none; }
 #ftp .ftpHead .ico { width: 16px; height: 16px; }
 #palette .prow button.pop { margin-left: auto; font-size: 16px; }
 
-#palette .prow .hint { font-size: 11px; color: var(--on-ground2); text-align: center; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #palette button { min-width: 28px; height: 28px; border: 1px solid #222; background: linear-gradient(#fff, #d9d9d9); color: #111; border-radius: 4px; font-size: 18px; padding: 0 6px;
   font-family: var(--music), var(--serif); box-shadow: 0 1px 2px rgba(0,0,0,.4); }
 
@@ -8520,7 +8519,6 @@ function renderPalette() {
   b("＋", appendFromStrip, { cls: "txt", title: "Add a box of this length at the end of the rhythm", disabled: !!ev });
   p = r2;
   if (PSEL.on) {
-    p.append(el("span", { class: "hint" }, PSEL.playing ? "playing the chosen notes — ▶ in the blue box or ■ stops" : `${PSEL.ids.size} chosen · tap notes to choose · ▶ in the blue box plays them`));
     b("Clear", () => { PSEL.ids.clear(); renderWindows(); renderPalette(); }, { cls: "lyr", disabled: !PSEL.ids.size, title: "Choose none" });
     b("✕", leavePlaySelect, { cls: "txt", title: "Leave Play Select" });
     return;
@@ -8530,21 +8528,17 @@ function renderPalette() {
     b("Bar", () => delRun("bar"), { cls: "lyr", warn: true, title: `Delete everything in bar ${barNo(S.bi)}` });
     b("Section", () => delRun("section"), { cls: "lyr", warn: true, title: "Delete everything in this section" });
     b(S.mv.allParts ? "All" : PART_META[S.mv.part].short, () => { S.mv.allParts = !S.mv.allParts; renderPalette(); }, { cls: "lyr", on: S.mv.allParts, title: S.mv.allParts ? "Deleting from all parts and the words — tap for this part only" : `Deleting from the ${PART_META[S.mv.part].label.toLowerCase()} only — tap for all parts and the words` });
-    p.append(el("span", { class: "hint" }, S.mv.sub ? `tap a quarter for the ${S.mv.sub.which}` : S.mv.start == null ? "tap first and last beat, then Run" : mvLabel()));
     b("✕", mvCancel, { cls: "txt", title: "Leave delete mode" });
     return;
   }
   if (S.mv) {
     b("←", () => mvShift(-1), { cls: "txt", title: "Move the run one beat earlier" });
     b("→", () => mvShift(1), { cls: "txt", title: "Move the run one beat later" });
-    p.append(el("span", { class: "hint" }, S.mv.sub ? `tap a quarter for the ${S.mv.sub.which}` : S.mv.start == null ? "tap the first beat, then the last" : S.mv.moved ? "← → keep moving · tap the group to lock in" : `${mvLabel()} · ← → move`));
     b("✕", mvCancel, { cls: "txt", title: "Leave move mode" });
     return;
   }
   b("⌒", tapTie, { on: !!(ev && ev.tie), title: "Tie to the next note", disabled: !ev && !bar.ev.melody.length });
   for (const k of ["staccato", "tenuto", "slur"]) b(ARTIC[k].glyph, () => tapArtic(k), { cls: "art" + (S.artic === k ? " armed" : ""), on: !!(ev && (k === "slur" ? ev.slur : ev.artic === k)), title: S.artic === k ? `${ARTIC[k].label} armed — tap notes to mark them; tap again to return to note entry` : `${ARTIC[k].label}: tap before entering a note, or arm it and tap existing notes` });
-  if (S.artic && !ev) p.append(el("span", { class: "hint" }, S.artic === "slur" ? (S.slurFrom ? "slur: tap the last note" : "slur: tap the first note") : `${ARTIC[S.artic].label}: tap notes`));
-  else if (!ev) p.append(el("span", { class: "hint" }, S.ghost ? "tap a pitch for the box" : S.active ? `beat ${S.active.beat + 1} active — tap it for a box` : "tap a beat: the box appears"));
   if (!ev && S.active && !S.artic) b("🗑", clearActiveBeat, { warn: true, title: `Clear beat ${S.active.beat + 1} — removes the ${PART_META[S.activePart || "melody"].label.toLowerCase()} notes that start in it` });
   if (ev) {                                        // editing tools appear for the selected note
     b("↑", () => transposeSel(1), { cls: "txt", title: "Up a half step", disabled: ev.rest || ev.m == null });
