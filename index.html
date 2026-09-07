@@ -8565,18 +8565,19 @@ function select(bi, part, id) { S.sel = id ? { bi, part, id } : null; S.selAuto 
 function appendSlot(d, rest) {
   let bi = S.bi, bar = curBar(), B = barBeats(bi), t = rhythmEnd(bar);
   if (t >= B - 1e-6) { if (bi + 1 >= S.song.bars.length) { toast("This bar is full — add a bar or section first"); return null; } bi++; S.bi = bi; bar = curBar(); B = barBeats(bi); t = rhythmEnd(bar); if (t >= B - 1e-6) { toast("Next bar is full too"); return null; } }
-  const space = freeSpan(bar, t), ev = { id: uid(), t, d: Math.min(d, space) };
-  if (rest) ev.rest = true; else ev.m = null;
-  if (d > space + 1e-6 && !rest && bi + 1 < S.song.bars.length && Math.abs(t + space - B) < 1e-6) { ev.tie = true; const nb = S.song.bars[bi + 1]; if (rhythmEnd(nb) === 0 && !nb.ev.melody.length) nb.ev.melody.push({ id: uid(), t: 0, d: Math.min(d - space, B), m: null }); }
+  if (!rest) {                                                                   // the same planner as every other entry: split at the beat, tie onward, or refuse
+    const plan = planSpan(bi, t, d, "melody"); if (plan.deny) { noticeModal(plan.deny); return null; }
+    const head = placeSpan(plan.pieces, "melody", null, null); select(bi, "melody", head.id); S.selAuto = true; return head;
+  }
+  const space = freeSpan(bar, t), ev = { id: uid(), t, d: Math.min(d, space), rest: true };
   bar.ev.melody.push(ev); syncNotesToChips(bar);
-  if (S.followWords && !S.cursor) S.cursor = nextUnpitchedChip(bi, null);
-  select(bi, "melody", ev.id);
+  select(bi, "melody", ev.id); S.selAuto = true;
   return ev;
 }
 function insertSlotAt(bi, t, d, rest, exact) {
   const bar = S.song.bars[bi], B = barBeats(bi); t = clamp(exact ? r3(t) : snapT(t), 0, B - 0.25);
   if (overlaps(bar, t, 0.25)) { toast("There's already a note there"); return null; }
-  if (!rest) { const plan = planSpan(bi, t, d, "melody"); if (plan.deny) { noticeModal(plan.deny); return null; } const head = placeSpan(plan.pieces, "melody", null, null); select(bi, "melody", head.id); return head; }
+  if (!rest) { const plan = planSpan(bi, t, d, "melody"); if (plan.deny) { noticeModal(plan.deny); return null; } const head = placeSpan(plan.pieces, "melody", null, null); select(bi, "melody", head.id); S.selAuto = true; return head; }
   const ev = { id: uid(), t, d: Math.min(d, freeSpan(bar, t)), rest: true };
   bar.ev.melody.push(ev); syncNotesToChips(bar); select(bi, "melody", ev.id); return ev;
 }
