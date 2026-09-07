@@ -8586,8 +8586,10 @@ function updatePlayhead() {
   for (const id of ["melHead", "accHead", "bassHead", "rhyHead", "lyrHead"]) {
     const l = $(id); if (!l) continue;
     if (!pp) { l.setAttribute("x1", -5); l.setAttribute("x2", -5); continue; }
-    const g = GEO[id.startsWith("acc") ? "acc" : id.startsWith("bass") ? "bass" : "mel"], x = g.x(pp.bi, pp.beat);
-    l.setAttribute("x1", x); l.setAttribute("x2", x);
+    const win = id.startsWith("acc") ? "acc" : id.startsWith("bass") ? "bass" : id.startsWith("mel") ? "mel" : null;
+    const g = win ? GEO[win] : stripGeo();                                                  // a closed window has no geometry: its line just stays off-screen
+    if (!g || !g.bars.includes(pp.bi)) { l.setAttribute("x1", -5); l.setAttribute("x2", -5); continue; }
+    const x = g.x(pp.bi, pp.beat); l.setAttribute("x1", x); l.setAttribute("x2", x);
   }
   document.querySelectorAll(".win").forEach(w => w.classList.toggle("playing", !!pp));
   if (pp && GEO.mel && GEO.mel.n > 1) { const fr = $("melWin").querySelector(".frame"), x = GEO.mel.x(pp.bi, pp.beat); if (x < fr.scrollLeft + 10 || x > fr.scrollLeft + fr.clientWidth - 30) fr.scrollLeft = Math.max(0, x - 40); }
