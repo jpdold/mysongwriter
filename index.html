@@ -8199,7 +8199,8 @@ function drawNote(svg, g, x, m, d, color, attrs, opts = {}) {
     if (d < 0.5) grp.append(svgEl("circle", { cx: x + st * 0.5, cy: y, r: st * 0.2 * NS() * HK(), fill: css("--paper") }));
   } else {
     /* traditional: hollow for half/whole, stem + flags by value, dot for dotted */
-    const base = d >= 3 ? 4 : d >= 1.5 ? 2 : d >= 0.75 ? 1 : d >= 0.375 ? 0.5 : d >= 0.1875 ? 0.25 : 0.125;
+    const VALS = [4, 2, 1, 0.5, 0.25, 0.125];                                 // the written value: exact, or dotted, else the largest that fits
+    const base = VALS.find(v => Math.abs(d - v) < 1e-6 || Math.abs(d - v * 1.5) < 1e-6) || VALS.find(v => v <= d + 1e-6) || 0.125;
     const dotted = Math.abs(d - base * 1.5) < 1e-6;
     const rx = st * 0.55 * NS() * HK(), ry = st * 0.40 * NS() * HK(), hx = x + rx + 1, hollow = base >= 2, up = m < (g.lo + g.hi) / 2 + 0.5;
     grp.append(svgEl("ellipse", { cx: hx, cy: y, rx, ry, fill: hollow ? css("--paper") : color, stroke: color, "stroke-width": hollow ? 1.6 * NS() : 0, transform: `rotate(-22 ${hx} ${y})`, opacity: opts.auto ? 0.55 : 1 }));
