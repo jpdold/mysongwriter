@@ -7811,11 +7811,13 @@ function applyTheme() {
   r.style.setProperty("--ground", c ? c.ground : ""); r.style.setProperty("--ground2", c ? c.ground2 : ""); r.style.setProperty("--accent", c ? c.accent : ""); r.style.setProperty("--lyric", c ? c.lyric : ""); r.style.setProperty("--box", c ? c.box : "");
 }
 const noteLenBeats = () => (S.restNext && S.restLen ? S.restLen : S.len) * (S.dot ? 1.5 : 1);
-const RESTS = [16, 8, 4, 2, 1, 0.5, 0.25, 0.125, 0.0625, 0.03125, 0.015625];                  // the rests row, quadruple whole to 256th
+const RESTS = [8, 4, 2, 1, 0.5, 0.25, 0.125, 0.0625, 0.03125, 0.015625];                      // the rests row, double whole to 256th
+const PAL_MIN = 0.125;                                                                      // the palette shows down to a 32nd; 64th, 128th and 256th are drawn, played and kept exact, but their buttons wait for a later day
+const PAL_LENS = () => LENS.filter(l => l[0] >= PAL_MIN), PAL_RESTS = () => RESTS.filter(v => v >= PAL_MIN);
 const fmtB = x => parseFloat((+x).toFixed(4));                                          // beats for reading: no long tails
 const LENS = [[8, "𝅜"], [4, "𝅝"], [2, "𝅗𝅥"], [1, "♩"], [0.5, "♪"], [0.25, "𝅘𝅥𝅯"], [0.125, "𝅘𝅥𝅰"], [0.0625, "𝅘𝅥𝅱"], [0.03125, "𝅘𝅥𝅲"], [0.015625, "𝅘𝅥𝅳"]];   // the palette's lengths, in beats
 const LEN_NAME = { 8: "double whole", 4: "whole", 2: "half", 1: "quarter", 0.5: "eighth", 0.25: "16th", 0.125: "32nd", 0.0625: "64th", 0.03125: "128th", 0.015625: "256th" };
-const REST_NAME = Object.assign({ 16: "quadruple whole" }, LEN_NAME);
+const REST_NAME = LEN_NAME;
 const durGlyph = d => { for (const [v, gl] of LENS) { if (Math.abs(d - v) < 1e-9) return gl; if (Math.abs(d - v * 1.5) < 1e-9) return gl + "."; } return `${fmtB(d)}b`; };
 const toggle = (label, on, fn, title) => el("label", { class: "toggle" + (on ? " on" : ""), title, onclick: e => { e.preventDefault(); fn(!on); } }, el("span", { class: "sw" }), label);
 const gridStep = () => S.song.snap ? 0.5 : 0.25;
@@ -8522,13 +8524,13 @@ function renderPalette() {
   const r1 = $("palRow1"), r2 = $("palRow2"), r3 = $("palRow3"), r4 = $("palRow4"); r1.replaceChildren(); r2.replaceChildren(); r3.replaceChildren(); r4.replaceChildren();
   renderRow3(r4);
   { const evR = selChipObj() ? null : selEv(), ownR = evR && !S.selAuto;                  // the rests row: every rest, quadruple whole to 256th
-    RESTS.forEach(v => r2.append(el("button", { onclick: () => tapRestLen(v), class: "len gn" + ((ownR ? evR.rest && Math.abs(baseLen(evR.d) - v) < 1e-9 : S.restNext && (S.restLen || S.len) === v) ? " on" : ""), title: ownR ? `Make it a ${REST_NAME[v]} rest` : `${REST_NAME[v]} rest: goes in at the next free spot, or arms one for your next tap` }, restIcon(v)))); }
+    PAL_RESTS().forEach(v => r2.append(el("button", { onclick: () => tapRestLen(v), class: "len gn" + ((ownR ? evR.rest && Math.abs(baseLen(evR.d) - v) < 1e-9 : S.restNext && (S.restLen || S.len) === v) ? " on" : ""), title: ownR ? `Make it a ${REST_NAME[v]} rest` : `${REST_NAME[v]} rest: goes in at the next free spot, or arms one for your next tap` }, restIcon(v)))); }
   let p = r1;
   const ev = selEv(), bar = curBar();
   const b = (t, fn, opts = {}) => p.append(el("button", Object.assign({ onclick: fn }, opts.attrs || {}, { class: (opts.cls || "") + (opts.on ? " on" : "") + (opts.warn ? " warn" : ""), title: opts.title, disabled: opts.disabled }), t));
   const sc = selChipObj();
   if (sc) {                                        // a word, letter, space or symbol on the Lyrics strip is selected
-    LENS.forEach(([v]) => b(lenIcon(v), () => tapLength(v), { cls: "len gn", on: S.len === v, title: `Next note: ${LEN_NAME[v]}` }));
+    PAL_LENS().forEach(([v]) => b(lenIcon(v), () => tapLength(v), { cls: "len gn", on: S.len === v, title: `Next note: ${LEN_NAME[v]}` }));
     b(ghostIcon(), tapGhostNote, { cls: "len gn", on: S.ghostNext, title: "Ghost note: the next note is played softly, barely heard" });
     p = r3;
     const { bar, chip } = sc, fine = 0.0625;
@@ -8543,7 +8545,7 @@ function renderPalette() {
     return;
   }
   const own = ev && !S.selAuto;
-  LENS.forEach(([v]) => b(lenIcon(v), () => tapLength(v), { cls: "len gn", on: own ? !ev.rest && Math.abs(baseLen(ev.d) - v) < 1e-9 : S.len === v, title: own ? `Make it a ${LEN_NAME[v]} note` : `Next note: ${LEN_NAME[v]}` }));
+  PAL_LENS().forEach(([v]) => b(lenIcon(v), () => tapLength(v), { cls: "len gn", on: own ? !ev.rest && Math.abs(baseLen(ev.d) - v) < 1e-9 : S.len === v, title: own ? `Make it a ${LEN_NAME[v]} note` : `Next note: ${LEN_NAME[v]}` }));
   b(ghostIcon(), tapGhostNote, { cls: "len gn", on: own ? !!ev.ghost : S.ghostNext, title: own ? (ev.ghost ? "Not a ghost note" : "Make it a ghost note — played softly, barely heard") : "Ghost note: the next note is played softly, barely heard" });
   p = r3;
   if (PSEL.on) {
@@ -8720,8 +8722,7 @@ function tapRestLen(v) {
 function restIcon(v) {
   const s = svgEl("svg", { viewBox: "0 0 24 26", width: 22, height: 24, "aria-hidden": "true" }), c = "currentColor";
   [5, 9.5, 14, 18.5, 23].forEach(y => s.append(svgEl("line", { x1: 1, x2: 23, y1: y, y2: y, stroke: c, "stroke-width": 0.8, opacity: 0.35 })));
-  if (v >= 16) s.append(svgEl("rect", { x: 9, y: 9.5, width: 6, height: 9, fill: c }));
-  else if (v >= 8) s.append(svgEl("rect", { x: 9, y: 9.5, width: 6, height: 4.5, fill: c }));
+  if (v >= 8) s.append(svgEl("rect", { x: 9, y: 9.5, width: 6, height: 4.5, fill: c }));
   else if (v >= 4) s.append(svgEl("rect", { x: 7.5, y: 9.5, width: 9, height: 2.9, fill: c }));
   else if (v >= 2) s.append(svgEl("rect", { x: 7.5, y: 11.1, width: 9, height: 2.9, fill: c }));
   else if (v >= 1) s.append(svgEl("path", { d: "M 9.5 4.5 L 14 9.8 L 11 13 L 15 18 Q 11 16.2 10.6 20.4 Q 7.8 16.6 12 15.6 L 8.3 11 L 11.6 7.8 Z", fill: c }));
