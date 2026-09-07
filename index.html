@@ -106,8 +106,8 @@ svg text { pointer-events: none; }
 #topTransport { justify-self: center; display: flex; gap: 4px; min-width: 0; }
 #topTransport button { width: 36px; height: 34px; position: relative; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #cfcfcf); color: #111; font-size: 17px; padding: 0; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
 #topTransport button.on { background: linear-gradient(#ffd27a, #f5a623); }
-#topTransport button .bar { position: absolute; left: 5px; top: 8px; width: 2.5px; height: 18px; background: #111; border-radius: 1px; }
-#topTransport #playAllBtn { padding-left: 8px; }
+#topTransport button .bar { position: absolute; right: 5px; top: 8px; width: 2.5px; height: 18px; background: #111; border-radius: 1px; }
+#topTransport #playAllBtn { padding-right: 8px; }
 #topTransport button .dots { font-size: 11px; font-weight: 800; margin-left: 1px; letter-spacing: -1px; }
 #topTransport #stopBtn { font-size: 15px; }
 #tempo { display: flex; align-items: center; margin-left: 2px; border: 1.5px solid #141414; border-radius: 4px; overflow: hidden; height: 34px; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
@@ -475,7 +475,7 @@ body.kbOpen #app { padding-bottom: 330px; }              /* room to scroll the s
   <header id="head">
     <input id="songTitle" type="text" placeholder="“My Song Title”" autocomplete="off" spellcheck="false" aria-label="Song title">
     <button class="iconBtn" id="menuBtn" title="Menu" aria-label="Menu">☰</button>
-    <div id="topTransport"><button id="playAllBtn" title="Play All — the whole song from the start"><span class="bar"></span>▶</button><button id="playBtn" title="Play Bar All — this bar, every part">▶</button><button id="rangeBtn" title="Play Range — bars and beats you type in">▶<span class="dots">…</span></button><button id="stopBtn" title="Stop">■</button><div id="tempo" title="Tempo"><button id="tempoDn" aria-label="Slower">−</button><button id="tempoLbl" title="Tap to type a tempo">♩=120</button><button id="tempoUp" aria-label="Faster">+</button></div></div>
+    <div id="topTransport"><button id="playAllBtn" title="Play All — the whole song from the start">▶<span class="bar"></span></button><button id="playBtn" title="Play Bar All — this bar, every part">▶</button><button id="rangeBtn" title="Play Range — bars and beats you type in">▶<span class="dots">…</span></button><button id="stopBtn" title="Stop">■</button><div id="tempo" title="Tempo"><button id="tempoDn" aria-label="Slower">−</button><button id="tempoLbl" title="Tap to type a tempo">♩=120</button><button id="tempoUp" aria-label="Faster">+</button></div></div>
     <button class="iconBtn" id="gearBtn" title="Settings" aria-label="Settings"><svg class="ico"><use href="#icoGear"/></svg></button>
   </header>
 
@@ -7305,8 +7305,9 @@ function startPlayback(barList, opts = {}) {
   stopPlayback();
   if (!barList.length) return;
   const ctx = ensureCtx();
-  play.on = true; play.bars = barList; play.next = 0; play.t0 = ctx.currentTime + 0.08; play.loop = !!opts.loop; play.range = null; play.only = null;
+  play.on = true; play.bars = barList; play.next = 0; play.t0 = ctx.currentTime + 0.08; play.loop = !!opts.loop; play.range = opts.range || null; play.only = opts.only || null;
   play.offs = []; let acc = 0; for (const b of barList) { play.offs.push(acc); acc += beatSec() * (Number(barBeats(b)) > 0 ? Number(barBeats(b)) : 4); } play.total = acc;
+  if (play.range) { const rg = play.range, bs = beatSec(); play.offs = play.offs.map(o => o - rg.fromT * bs); play.total = acc - rg.fromT * bs - (barBeats(rg.lastBi) - rg.toT) * bs; }
   if (S.metro === "countin") { const bl = beatSec() * (TS_BEATS[S.song.sig] || 4); play.t0 += bl; for (let b = 0; b < (TS_BEATS[S.song.sig] || 4); b++) metroClick(ctx, play.t0 - bl + b * beatSec(), b === 0); }
   S.playing = true; S.playPos = null;
   $("playBtn").classList.add("on"); $("playBtn").textContent = "■";
@@ -9788,13 +9789,9 @@ function playBarAll() { if (S.playing && !S.solo && !PSEL.playing && !play.range
 function stopAll() { stopPlayback(); }
 function onPlaybackStopped(was) { if (!was) return; if (PSEL.playing) { PSEL.playing = false; renderWindows(); } document.querySelectorAll(".win .psel").forEach(b => b.classList.remove("playing")); }
 /* a stretch that starts and ends part-way through bars; every part plays the same stretch */
-function startPlaybackRange(b0, t0, b1, t1) {
+function startPlaybackRange(b0, t0, b1, t1, only) {
   const list = []; for (let i = b0; i <= b1; i++) list.push(i);
-  startPlayback(list); if (!play.on) return;
-  const bs = beatSec();
-  play.range = { firstBi: b0, fromT: t0, lastBi: b1, toT: t1 };
-  play.offs = play.offs.map(o => o - t0 * bs);
-  play.total = play.total - t0 * bs - (barBeats(b1) - t1) * bs;
+  startPlayback(list, { range: { firstBi: b0, fromT: t0, lastBi: b1, toT: t1 }, only: only || null });   // filters are on before the first bar is scheduled
 }
 function openPlayRange() {
   const N = S.song.bars.length, last = S.playRange || { b0: S.bi + 1, t0: 1, b1: S.bi + 1, t1: Math.ceil(barBeats(S.bi)) };
@@ -9824,8 +9821,8 @@ function playSelected() {
   S.song.bars.forEach((bar, bi) => { for (const part of ["melody", "accomp", "bass", "ensemble"]) (bar.ev[part] || []).forEach(e => { if (!PSEL.ids.has(part + ":" + e.id)) return; if (bi < b0 || (bi === b0 && e.t < t0)) { b0 = bi; t0 = e.t; } if (bi > b1 || (bi === b1 && e.t + e.d > t1)) { b1 = bi; t1 = r3(e.t + e.d); } }); });
   if (b1 < 0) return;
   S.solo = null; S.bi = b0;
-  startPlaybackRange(b0, t0, b1, Math.min(t1, barBeats(b1)));                 // (this stops anything already playing first)
-  play.only = new Set(PSEL.ids); PSEL.playing = true; renderAll();
+  startPlaybackRange(b0, t0, b1, Math.min(t1, barBeats(b1)), new Set(PSEL.ids));   // (this stops anything already playing first)
+  PSEL.playing = true; renderAll();
   document.querySelectorAll(".win .psel").forEach(b => b.classList.add("playing"));
   renderWindows();
 }
