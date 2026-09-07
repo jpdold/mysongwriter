@@ -81,11 +81,11 @@ svg text { pointer-events: none; }
 #app.rolled #accWin, #app.rolled #bassWin { margin-top: 12px; }
 #app.rolled #accWin.lead, #app.rolled #bassWin.lead { margin-top: 0; }
 #app.rolled .win.lead .winHead { display: none; }
-.rollItem { flex: 1; display: flex; align-items: center; gap: 6px; height: 30px; background: #111; color: #fff; border: 1px solid #000; border-radius: 4px; padding: 0 4px 0 8px;
+.rollItem { flex: 1; display: flex; align-items: center; gap: 6px; height: 22px; background: #111; color: #fff; border: 1px solid #000; border-radius: 4px; padding: 0 4px 0 8px;
   font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; overflow: hidden; }
 .rollItem .dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; }
 .rollItem .lbl { flex: 1; overflow: hidden; text-overflow: ellipsis; }
-.rollItem button { width: 24px; height: 22px; border: 1px solid rgba(255,255,255,.35); border-radius: 4px; background: rgba(255,255,255,.12); color: #fff; font-size: 16px; line-height: 1; padding: 0; flex: 0 0 auto; }
+.rollItem button { width: 22px; height: 18px; border: 1px solid rgba(255,255,255,.35); border-radius: 4px; background: rgba(255,255,255,.12); color: #fff; font-size: 16px; line-height: 1; padding: 0; flex: 0 0 auto; }
 .rollItem.open { background: var(--ground2); }
 .rollItem.open button { background: var(--box); color: #111; border-color: #a86d10; }
 #head { grid-area: head; } #nav { grid-area: nav; } #melWin { grid-area: mel; } #rhyStrip { grid-area: rhy; }
@@ -134,8 +134,8 @@ svg text { pointer-events: none; }
 #setupBtn:active { background: linear-gradient(#cfe3fb, #f7fbff); }
 
 /* ── bar navigation (bracket) ── */
-#nav { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; gap: 6px; }
-#nav .arrow { width: 44px; height: 34px; padding: 0; border: 1.5px solid #141414; border-radius: 5px; background: linear-gradient(#fff, #cfcfcf); color: #111; font-size: 24px; font-weight: 800; line-height: 1; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
+#nav { display: grid; grid-template-columns: 30px 1fr 30px; align-items: center; gap: 6px; }
+#nav .arrow { width: 30px; height: 30px; padding: 0; border: 1.5px solid #141414; border-radius: 5px; background: linear-gradient(#fff, #cfcfcf); color: #111; font-size: 19px; font-weight: 800; line-height: 1; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
 #nav .arrow:active { background: linear-gradient(#ffd27a, #f5a623); }
 #nav .arrow:disabled { opacity: .35; box-shadow: none; }
 #bracket { position: relative; height: 30px; }
@@ -163,7 +163,7 @@ svg text { pointer-events: none; }
 /* ── windows ── */
 .win { position: relative; display: grid; grid-template-columns: 42px 1fr 30px; gap: 0 4px; align-items: start; }
 .win .frame, .win .gutter { align-self: start; }
-.win .gutter { position: relative; display: flex; flex-direction: column; align-items: stretch; margin-top: -17px; margin-bottom: -17px; }
+.win .gutter { position: relative; display: flex; flex-direction: column; align-items: stretch; margin-top: 0; margin-bottom: 0; }
 .win .gutter svg { display: block; width: 42px; }
 .win .frame { background: var(--paper); border: 1.5px solid #141414; border-radius: 4px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.18), 0 1px 0 rgba(255,255,255,.18);
   overflow: hidden; position: relative; }
@@ -203,8 +203,8 @@ svg text { pointer-events: none; }
 #melWin.closed::before { content: ""; grid-column: 1; }
 .win .rArr { width: 16px; height: 16px; flex: 0 0 16px; align-self: center; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #cfcfcf); color: #111; font-size: 12px; font-weight: 800; padding: 0; line-height: 13px; position: static; margin: 0 auto; letter-spacing: 0; box-shadow: 0 2px 4px rgba(0,0,0,.4); z-index: 1; display: grid; place-items: center; }
 .win .rArr:active { background: linear-gradient(#ffd27a, #f5a623); }
-.win .rArr.up { margin-bottom: 1px; } .win .rArr.dn { margin-top: 1px; }
-.win .rArr { font-size: 0; position: relative; }
+.win .rArr.up { top: 1px; } .win .rArr.dn { bottom: 1px; }
+.win .rArr { font-size: 0; position: absolute; left: 1px; margin: 0; }
 .win .rArr::before { content: ""; position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; border-left: 2px solid #111; border-top: 2px solid #111; }   /* a drawn chevron sits dead centre */
 .win .rArr.up::before { transform: translate(-50%, -30%) rotate(45deg); }
 .win .rArr.dn::before { transform: translate(-50%, -70%) rotate(225deg); }
@@ -212,7 +212,12 @@ svg text { pointer-events: none; }
 .winHead { position: absolute; left: 50%; transform: translateX(-50%); top: -9px; z-index: 2; background: #111; color: #fff; font-size: 10.5px; font-weight: 700; height: 18px; line-height: 16px;
   letter-spacing: .06em; padding: 0 12px; border-radius: 3px; white-space: nowrap; text-transform: uppercase; border: 1px solid #000; max-width: calc(100% - 100px); overflow: hidden; text-overflow: ellipsis; }
 #accWin, #bassWin { margin-top: 10px; }
-#rhyStrip { margin-top: 10px; }                 /* room for the lower arrow of the window above */
+#rhyStrip { margin-top: -3px; }                 /* right under the stave */
+/* rolled layout: the hidden windows' empty grid rows still add gaps — take them back so the strip hugs the open stave */
+#app.rolled.open-mel #rhyStrip { margin-top: -17px; }
+#app.rolled.open-acc #rhyStrip { margin-top: -10px; }
+#app.rolled.open-acc #accWin.lead { margin-top: -7px; }
+#app.rolled.open-bass #bassWin.lead { margin-top: -14px; }
 #app:not(.rolled) .win.lead:not(#melWin) { margin-top: 26px; }
 #app:not(.rolled) .win.lead .winHead { top: -30px; }
 #melWin .winHead { display: none; }
@@ -8096,11 +8101,12 @@ const ARTIC = { staccato: { glyph: "•", label: "staccato" }, tenuto: { glyph: 
 function renderRollBar() {
   const bar = $("rollBar"); bar.replaceChildren();
   $("app").classList.toggle("rolled", S.layout === "rolled");
+  ["mel", "acc", "bass"].forEach(w => $("app").classList.toggle("open-" + w, S.layout === "rolled" && S.winState[w] !== "closed"));
   if (S.layout !== "rolled") return;
   for (const w of ["mel", "acc", "bass"]) {
     const part = WIN_PART[w], open = S.winState[w] !== "closed";
     bar.append(el("div", { class: "rollItem" + (open ? " open" : "") },
-      el("span", { class: "dot", style: `background:var(--${part})` }), el("span", { class: "lbl" }, part === "melody" ? "Melody" : part === "accomp" ? "Accompaniment" : "Bass"),
+      el("span", { class: "lbl" }, part === "melody" ? "Melody" : part === "accomp" ? "Accompaniment" : "Bass"),
       el("button", { title: open ? "Roll up" : "Open", onclick: () => { S.winState[w] = open ? "closed" : "open"; savePrefs(); renderAll(); } }, open ? "−" : "+")));
   }
 }
@@ -8360,40 +8366,40 @@ function renderWindows() {
 }
 function renderStrips() {
   const song = S.song, key = keyObj(song.key), g = stripGeo(), B = g.B, H = 36, bars = viewBars();
-  const dividers = (svg, color, op) => { for (const bi of bars) { for (let b = 1; b < barBeats(bi); b++) { const bx = Math.round(g.x(bi, b)); svg.append(svgEl("line", { x1: bx, x2: bx, y1: 0, y2: H, stroke: color, "stroke-width": 2, "stroke-dasharray": "5 4", opacity: op * (g.n > 1 ? 0.7 : 1), "shape-rendering": "crispEdges" })); } if (bi > g.first) svg.append(svgEl("line", { x1: Math.round(g.x(bi, 0)), x2: Math.round(g.x(bi, 0)), y1: 0, y2: H, stroke: color, "stroke-width": 2, opacity: op, "shape-rendering": "crispEdges" })); } if (g.totalBeats < g.B - 1e-6) { const ex = g.x(bars[bars.length - 1], barBeats(bars[bars.length - 1])); svg.append(svgEl("line", { x1: ex, x2: ex, y1: 0, y2: H, stroke: color, "stroke-width": 2, opacity: op })); } };
+  const dividers = (svg, color, op, HH = H) => { for (const bi of bars) { for (let b = 1; b < barBeats(bi); b++) { const bx = Math.round(g.x(bi, b)); svg.append(svgEl("line", { x1: bx, x2: bx, y1: 0, y2: HH, stroke: color, "stroke-width": 2, "stroke-dasharray": "5 4", opacity: op * (g.n > 1 ? 0.7 : 1), "shape-rendering": "crispEdges" })); } if (bi > g.first) svg.append(svgEl("line", { x1: Math.round(g.x(bi, 0)), x2: Math.round(g.x(bi, 0)), y1: 0, y2: HH, stroke: color, "stroke-width": 2, opacity: op, "shape-rendering": "crispEdges" })); } if (g.totalBeats < g.B - 1e-6) { const ex = g.x(bars[bars.length - 1], barBeats(bars[bars.length - 1])); svg.append(svgEl("line", { x1: ex, x2: ex, y1: 0, y2: H, stroke: color, "stroke-width": 2, opacity: op })); } };
   /* rhythm strip: the slots as small glyphs, the ▶ marks where the next tap lands */
   {
-    const svg = $("rhySvg"); svg.replaceChildren(); svg.setAttribute("height", H); svg.setAttribute("viewBox", `0 0 ${g.W} ${H}`); svg.setAttribute("width", g.W); svg.style.width = g.W + "px"; svg.style.touchAction = g.n > 1 ? "pan-x" : "none";
-    svg.append(svgEl("rect", { class: "hit", x: 0, y: 0, width: g.W, height: H, fill: "transparent", "data-lane": "rhy" }));
-    dividers(svg, "#ddd", 0.6);
+    const svg = $("rhySvg"), HR = 27; svg.replaceChildren(); svg.setAttribute("height", HR); svg.setAttribute("viewBox", `0 0 ${g.W} ${HR}`); svg.setAttribute("width", g.W); svg.style.width = g.W + "px"; svg.style.touchAction = g.n > 1 ? "pan-x" : "none";
+    svg.append(svgEl("rect", { class: "hit", x: 0, y: 0, width: g.W, height: HR, fill: "transparent", "data-lane": "rhy" }));
+    dividers(svg, "#ddd", 0.6, HR);
     for (const bi of bars) for (const c of chains(song.bars[bi])) {                 // a slot that runs on past its beat: the beats it covers stay lit
       if (c.rest) continue;
       const from = Math.floor(c.t + 1e-6) + 1, to = Math.min(barBeats(bi), c.t + c.d); if (to <= from + 1e-6) continue;
       const x0 = g.x(bi, from), x1 = g.x(bi, to);
-      svg.append(svgEl("rect", { x: x0, y: 0, width: x1 - x0, height: H, fill: "#fff", opacity: 0.16, "pointer-events": "none" }));
-      [0, H - 5].forEach(y => svg.append(svgEl("rect", { x: x0 + 0.5, y: y + 0.5, width: x1 - x0 - 1, height: 4, fill: "#fff", "fill-opacity": 0.7, stroke: "rgba(0,0,0,.35)", "stroke-width": 1, "pointer-events": "none" })));
+      svg.append(svgEl("rect", { x: x0, y: 0, width: x1 - x0, height: HR, fill: "#fff", opacity: 0.16, "pointer-events": "none" }));
+      [0, HR - 5].forEach(y => svg.append(svgEl("rect", { x: x0 + 0.5, y: y + 0.5, width: x1 - x0 - 1, height: 4, fill: "#fff", "fill-opacity": 0.7, stroke: "rgba(0,0,0,.35)", "stroke-width": 1, "pointer-events": "none" })));
     }
-    if (S.active && bars.includes(S.active.bi)) svg.append(svgEl("rect", { x: g.x(S.active.bi, S.active.beat), y: 0, width: g.x(S.active.bi, Math.min(barBeats(S.active.bi), S.active.beat + 1)) - g.x(S.active.bi, S.active.beat), height: H, fill: css("--box"), opacity: 0.22, "pointer-events": "none" }));
-    const mini = { step: 6, y: () => 23, x: g.x, beatPx: g.beatPx, lo: 0, hi: 1, W: g.W, H };
+    if (S.active && bars.includes(S.active.bi)) svg.append(svgEl("rect", { x: g.x(S.active.bi, S.active.beat), y: 0, width: g.x(S.active.bi, Math.min(barBeats(S.active.bi), S.active.beat + 1)) - g.x(S.active.bi, S.active.beat), height: HR, fill: css("--box"), opacity: 0.22, "pointer-events": "none" }));
+    const mini = { step: 6, y: () => 17, x: g.x, beatPx: g.beatPx, lo: 0, hi: 1, W: g.W, H: HR };
     for (const bi of bars) {
       const bar = song.bars[bi], sel = S.sel && S.sel.bi === bi && S.sel.part === "melody" ? S.sel.id : null;
       const rhyEvs = bar.ev.melody.filter(e => !e.rest).map(e => ({ id: e.id, t: e.t, d: e.d, m: 0.5 })), groups = beamGroups(rhyEvs), beamed = new Set(groups.flatMap(gp => gp.evs.map(e => e.id)));
       groups.forEach(gp => drawBeamed(svg, mini, gp, "#fff", e => g.x(bi, e.t) + 2, { stem: 2.2, up: true }));
       for (const c of chains(bar)) {
         const x0 = g.x(bi, c.t), x1 = g.x(bi, c.t + c.d);
-        svg.append(svgEl("rect", { class: "noteEl", x: x0 + 1, y: 1, width: Math.max(4, x1 - x0 - 2), height: H - 2, rx: 3, fill: c.members.some(e => e.id === sel) ? "rgba(245,166,35,.35)" : "transparent", "data-ev": c.head.id, "data-part": "melody", "data-bi": bi }));
-        if (c.rest) { svg.append(svgEl("text", { x: x0 + 5, y: 25, "font-size": 13, fill: "#fff", "font-family": "Georgia, serif" }, "𝄽")); continue; }
+        svg.append(svgEl("rect", { class: "noteEl", x: x0 + 1, y: 1, width: Math.max(4, x1 - x0 - 2), height: HR - 2, rx: 3, fill: c.members.some(e => e.id === sel) ? "rgba(245,166,35,.35)" : "transparent", "data-ev": c.head.id, "data-part": "melody", "data-bi": bi }));
+        if (c.rest) { svg.append(svgEl("text", { x: x0 + 5, y: 19, "font-size": 13, fill: "#fff", "font-family": "Georgia, serif" }, "𝄽")); continue; }
         c.members.forEach((e, k) => {
           const saved = S.noteStyle; S.noteStyle = "trad";
           drawNote(svg, mini, g.x(bi, e.t) + 2, 0.5, e.d, "#fff", { "data-ev": e.id, "data-part": "melody", "pointer-events": "none" }, { stem: 2.2, noStem: beamed.has(e.id) });
           S.noteStyle = saved;
-          if (e.tie) { const nx = k < c.members.length - 1 ? g.x(bi, c.members[k + 1].t) + 2 + 3.3 : g.x(bi, barBeats(bi)) + (g.bars.includes(bi + 1) ? 5.3 : 0); tieArcAt(svg, g.x(bi, e.t) + 5.3, nx, 26, "#fff"); }
+          if (e.tie) { const nx = k < c.members.length - 1 ? g.x(bi, c.members[k + 1].t) + 2 + 3.3 : g.x(bi, barBeats(bi)) + (g.bars.includes(bi + 1) ? 5.3 : 0); tieArcAt(svg, g.x(bi, e.t) + 5.3, nx, 20, "#fff"); }
         });
       }
       const end = rhythmEnd(bar);
-      if (end < barBeats(bi) - 1e-6 && bi === S.bi) svg.append(svgEl("polygon", { points: `${g.x(bi, end) + 3},${H / 2 - 6} ${g.x(bi, end) + 12},${H / 2} ${g.x(bi, end) + 3},${H / 2 + 6}`, fill: css("--box"), "pointer-events": "none" }));
+      if (end < barBeats(bi) - 1e-6 && bi === S.bi) svg.append(svgEl("polygon", { points: `${g.x(bi, end) + 3},${HR / 2 - 6} ${g.x(bi, end) + 12},${HR / 2} ${g.x(bi, end) + 3},${HR / 2 + 6}`, fill: css("--box"), "pointer-events": "none" }));
     }
-    svg.append(svgEl("line", { id: "rhyHead", x1: -5, x2: -5, y1: 0, y2: H, stroke: css("--box"), "stroke-width": 2, "pointer-events": "none" }));
+    svg.append(svgEl("line", { id: "rhyHead", x1: -5, x2: -5, y1: 0, y2: HR, stroke: css("--box"), "stroke-width": 2, "pointer-events": "none" }));
   }
   /* lyrics strip: syllables, or free letters / spaces / symbols the user has split apart */
   {
