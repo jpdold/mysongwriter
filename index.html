@@ -7766,11 +7766,18 @@ function perfFollow() {
 
 
 /* ── small helpers the new screen needs from the old one ── */
-const _chipW = new Map(); let _measureCtx = null;
+const _chipW = new Map(); let _measureCtx = null, _measureText = null;
+/* a chip's width: the words measured in the strip's own font (a hidden text in the strip, so serif and small caps count), plus 4px each side */
 function chipW(c) {
   if (c.rest) return 22;
-  let w = _chipW.get(c.text);
-  if (w == null) { if (!_measureCtx) { _measureCtx = document.createElement("canvas").getContext("2d"); _measureCtx.font = "700 16px -apple-system, 'Segoe UI', Roboto, Arial, sans-serif"; } w = Math.ceil(_measureCtx.measureText(c.text).width) + 6; _chipW.set(c.text, w); }
+  const key = (S.lyricFont || "sans") + "|" + c.text;
+  let w = _chipW.get(key);
+  if (w == null) {
+    if (!_measureText) { const host = document.querySelector("#lyrStrip .body"); if (host) { const svg = svgEl("svg", { width: 0, height: 0, style: "position:absolute;left:0;top:0;width:0;height:0;overflow:hidden;visibility:hidden", "aria-hidden": "true" }); _measureText = svgEl("text", { x: 0, y: 24, "font-size": 16, "font-weight": 700, "font-family": "system-ui, sans-serif", "xml:space": "preserve", style: "white-space:pre" }); svg.append(_measureText); host.append(svg); } }
+    if (_measureText) { _measureText.textContent = c.text; w = Math.ceil(_measureText.getComputedTextLength()) + 8; }
+    else { if (!_measureCtx) { _measureCtx = document.createElement("canvas").getContext("2d"); _measureCtx.font = "700 16px -apple-system, 'Segoe UI', Roboto, Arial, sans-serif"; } w = Math.ceil(_measureCtx.measureText(c.text).width) + 8; }
+    _chipW.set(key, w);
+  }
   return Math.round(w * (c.wf || 1));                                       // wf: the chip's own width factor, set with Narrow / Widen
 }
 function reloadGenreChords() {
@@ -8533,10 +8540,10 @@ function renderStrips() {
       bar.chips.forEach(c => {
         any = true;
         /* a chip is free text: a pill hugging the words, with the spaces you typed kept, and a gold edge once it is locked */
-        const L = laid.get(c.id), natW = chipW(c), isSel = c.id === selId, px = L.x, x = px + 3, pw = L.w;
+        const L = laid.get(c.id), natW = chipW(c), isSel = c.id === selId, px = L.x, x = px + 4, pw = L.w;
         svg.append(svgEl("rect", { class: "chip", x: px, y: 3, width: pw, height: H - 6, rx: 6, fill: "#fff", "fill-opacity": isSel ? 0.42 : 0.2, stroke: c.locked ? "#f5c518" : "#fff", "stroke-width": c.locked ? 2 : isSel ? 1.5 : 0.8, "stroke-opacity": c.locked ? 1 : isSel ? 1 : 0.5, "data-chip": c.id, "data-bi": bi }));
         const editing = WE.on && WE.bi === bi && WE.chipId === c.id;
-        const baseW = Math.round(natW / (c.wf || 1)), fit = pw < baseW - 0.5 ? { textLength: Math.max(8, pw - 6), lengthAdjust: "spacingAndGlyphs" } : pw > baseW + 1.5 && c.text.trim().length > 1 ? { textLength: Math.max(8, pw - 6), lengthAdjust: "spacing" } : {};   // condensed when squeezed or narrowed, letter-spaced when widened
+        const baseW = Math.round(natW / (c.wf || 1)), fit = pw < baseW - 0.5 ? { textLength: Math.max(8, pw - 8), lengthAdjust: "spacingAndGlyphs" } : pw > baseW + 1.5 && c.text.trim().length > 1 ? { textLength: Math.max(8, pw - 8), lengthAdjust: "spacing" } : {};   // condensed when squeezed or narrowed, letter-spaced when widened
         if (!editing) svg.append(svgEl("text", Object.assign({ x, y: 24, "font-size": 16, fill: "#fff", "font-weight": 700, "font-family": "system-ui, sans-serif", "xml:space": "preserve", style: "white-space:pre", "pointer-events": "none" }, fit), c.text));
         if (c.locked) svg.append(svgEl("text", { x: px + pw - 3, y: 11, "text-anchor": "end", "font-size": 8, fill: "#f5c518", "pointer-events": "none" }, "🔒"));
       });
