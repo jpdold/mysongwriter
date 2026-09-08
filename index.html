@@ -8974,9 +8974,15 @@ function initPointer() {
         return;
       }
       const g = GEO[win], r = svg.getBoundingClientRect(), sc = g.W / r.width, ev = dragCtx.ev, bar = S.song.bars[dragCtx.bi];
-      if (!ev.rest && dragCtx.m0 != null) { const m = clamp(dragCtx.m0 - Math.round(dy * sc / g.step), g.lo, g.hi); if (m !== ev.m) { if (dragCtx.part === "melody") setChainPitch(bar, chainOf(bar, ev), m); else ev.m = m; previewNote(m, dragCtx.part); } }
-      const nt = r3(clamp(snapT(dragCtx.t0 + dx * sc / g.beatPx), 0, barBeats(dragCtx.bi) - ev.d));
-      if (nt !== ev.t && !(dragCtx.part === "melody" && (overlaps(bar, nt, ev.d, ev) || isContinuation(bar, ev)))) { ev.t = nt; if (dragCtx.part === "melody") { const chip = bar.chips.find(c => c.id === ev.chip); if (chip) setChipTime(bar, chip, nt); else syncNotesToChips(bar); } }
+      if (!dragCtx.axis) dragCtx.axis = Math.abs(dy) >= Math.abs(dx) ? "v" : "h";       // a drag is one thing: up and down re-pitches, sideways moves in time — never both, so a thumb that drifts cannot jump a note
+      if (dragCtx.axis === "v") {
+        if (!ev.rest && dragCtx.m0 != null) { const m = clamp(dragCtx.m0 - Math.round(dy * sc / g.step), g.lo, g.hi); if (m !== ev.m) { if (dragCtx.part === "melody") setChainPitch(bar, chainOf(bar, ev), m); else ev.m = m; previewNote(m, dragCtx.part); } }
+      } else {
+        const nt = r3(clamp(snapT(dragCtx.t0 + dx * sc / g.beatPx), 0, barBeats(dragCtx.bi) - ev.d));
+        const blocked = dragCtx.part === "melody" ? overlaps(bar, nt, ev.d, ev) || isContinuation(bar, ev)
+          : (bar.ev[dragCtx.part] || []).some(o => o !== ev && o.t < nt + ev.d - 1e-6 && o.t + o.d > nt + 1e-6);   // in every part: never onto another note or rest
+        if (nt !== ev.t && !blocked) { ev.t = nt; if (dragCtx.part === "melody") { const chip = bar.chips.find(c => c.id === ev.chip); if (chip) setChipTime(bar, chip, nt); else syncNotesToChips(bar); } }
+      }
       S.sel = { bi: dragCtx.bi, part: dragCtx.part, id: ev.id };
       renderWindows(); renderStrips();
     });
@@ -9018,7 +9024,7 @@ function initPointer() {
   const lyr = $("lyrSvg"); let ld = null;
   lyr.addEventListener("pointerdown", e => { const T = e.target, id = T.getAttribute && T.getAttribute("data-chip"); const bi = id ? parseInt(T.getAttribute("data-bi"), 10) : S.bi; const chip = id ? S.song.bars[bi].chips.find(c => c.id === id) : null; ld = { id: e.pointerId, x0: e.clientX, chip, bi, t0: chip ? chip.t : 0, moved: false }; try { lyr.setPointerCapture(e.pointerId); } catch (err) {} });
   /* a landing spot: a beat line or a note start when one is close, else the nearest eighth */
-  const snapT = (bar, bi, t, reach) => { const B = barBeats(bi), marks = []; for (let b = 0; b <= B; b++) marks.push(b); chains(bar).filter(c => !c.rest).forEach(c => marks.push(c.t)); const near = marks.sort((a, b) => Math.abs(a - t) - Math.abs(b - t)).find(m => Math.abs(m - t) < reach); return near != null ? near : Math.round(t * 8) / 8; };
+  const snapStripT = (bar, bi, t, reach) => { const B = barBeats(bi), marks = []; for (let b = 0; b <= B; b++) marks.push(b); chains(bar).filter(c => !c.rest).forEach(c => marks.push(c.t)); const near = marks.sort((a, b) => Math.abs(a - t) - Math.abs(b - t)).find(m => Math.abs(m - t) < reach); return near != null ? near : Math.round(t * 8) / 8; };
   lyr.addEventListener("pointermove", e => {
     if (!ld || !ld.chip || e.pointerId !== ld.id) return;
     const dx = e.clientX - ld.x0; if (!ld.moved && Math.abs(dx) < 6) return; ld.moved = true;
