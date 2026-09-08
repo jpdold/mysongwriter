@@ -8637,8 +8637,7 @@ function renderPalette() {
   const b = (t, fn, opts = {}) => p.append(el("button", Object.assign({ onclick: fn }, opts.attrs || {}, { class: (opts.cls || "") + (opts.on ? " on" : "") + (opts.warn ? " warn" : ""), title: opts.title, disabled: opts.disabled }), t));
   const sc = selChipObj();
   if (sc) {                                        // a word, letter, space or symbol on the Lyrics strip is selected
-    PAL_LENS().forEach(([v]) => b(lenIcon(v), () => tapLength(v), { cls: "len gn", on: S.len === v, title: `Next note: ${LEN_NAME[v]}` }));
-    b(ghostIcon(), tapGhostNote, { cls: "len gn", on: S.ghostNext, title: "Ghost note: the next note is played softly, barely heard" });
+    b(ghostIcon(), tapGhostNote, { cls: "gn", on: S.ghostNext, title: "Ghost note: the next note is played softly, barely heard" });
     p = r3;
     const { bar, chip } = sc, fine = 0.0625;
     p.append(el("span", { class: "who" }, `“${chip.text.trim()}”`));
@@ -8651,8 +8650,7 @@ function renderPalette() {
     return;
   }
   const own = ev && !S.selAuto;
-  PAL_LENS().forEach(([v]) => b(lenIcon(v), () => tapLength(v), { cls: "len gn", on: own ? !ev.rest && Math.abs(baseLen(ev.d) - v) < 1e-9 : S.len === v, title: own ? `Make it a ${LEN_NAME[v]} note` : `Next note: ${LEN_NAME[v]}` }));
-  b(ghostIcon(), tapGhostNote, { cls: "len gn", on: own ? !!ev.ghost : S.ghostNext, title: own ? (ev.ghost ? "Not a ghost note" : "Make it a ghost note — played softly, barely heard") : "Ghost note: the next note is played softly, barely heard" });
+  b(ghostIcon(), tapGhostNote, { cls: "gn", on: own ? !!ev.ghost : S.ghostNext, title: own ? (ev.ghost ? "Not a ghost note" : "Make it a ghost note — played softly, barely heard") : "Ghost note: the next note is played softly, barely heard" });
   p = r3;
   if (PSEL.on) {
     b("Clear", () => { PSEL.ids.clear(); renderWindows(); renderPalette(); }, { cls: "lyr", disabled: !PSEL.ids.size, title: "Choose none" });
