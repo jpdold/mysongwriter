@@ -255,6 +255,7 @@ svg text { pointer-events: none; }
 /* ── palette: note lengths + editing tools ── */
 #palette { display: flex; flex-direction: column; gap: 4px; padding: 5px 6px; background: var(--ground2); border: 1.5px solid #141414; border-radius: 4px; box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 2px 5px rgba(0,0,0,.25); }
 #palette .prow { display: flex; gap: 4px; align-items: center; justify-content: flex-start; height: 30px; }
+#palette .prow[hidden] { display: none; }
 #palette .prow button { width: 32px; min-width: 32px; height: 28px; padding: 0; flex: 0 0 32px; }
 #palette .prow button.txt { padding: 0; }
 #palette .prow .who { margin-left: 4px; }
@@ -8635,16 +8636,16 @@ function renderBeatRow() {
 function renderPalette() {
   renderFtp(); renderTempo(); renderQuick();
   const r1 = $("palRow1"), r2 = $("palRow2"), r3 = $("palRow3"), r4 = $("palRow4"); r1.replaceChildren(); r2.replaceChildren(); r3.replaceChildren(); r4.replaceChildren();
-  renderRow3(r4);
-  { const evR = selChipObj() ? null : selEv(), ownR = evR && !S.selAuto;                  // the rests row: every rest, quadruple whole to 256th
-    PAL_RESTS().forEach(v => r2.append(el("button", { onclick: () => tapRestLen(v), class: "len gn" + ((ownR ? evR.rest && Math.abs(baseLen(evR.d) - v) < 1e-9 : S.restNext && (S.restLen || S.len) === v) ? " on" : ""), title: ownR ? `Make it a ${REST_NAME[v]} rest` : `${REST_NAME[v]} rest: goes in at the next free spot, or arms one for your next tap` }, restIcon(v)))); }
+  renderRow3(r4); r2.hidden = true;                                                     // the second row is empty now
+  { const evR = selChipObj() ? null : selEv(), ownR = evR && !S.selAuto;                  // the top row's upper left: whole, half, eighth and 32nd rests (the quarter rest lives on the quick palette)
+    [4, 2, 0.5, 0.125].forEach(v => r1.append(el("button", { onclick: () => tapRestLen(v), class: "gn" + ((ownR ? evR.rest && Math.abs(baseLen(evR.d) - v) < 1e-9 : S.restNext && (S.restLen || S.len) === v) ? " on" : ""), title: ownR ? `Make it a ${REST_NAME[v]} rest` : `${REST_NAME[v]} rest: goes in at the next free spot, or arms one for your next tap` }, restIcon(v)))); }
   let p = r1;
   const ev = selEv(), bar = curBar();
   const b = (t, fn, opts = {}) => p.append(el("button", Object.assign({ onclick: fn }, opts.attrs || {}, { class: (opts.cls || "") + (opts.on ? " on" : "") + (opts.warn ? " warn" : ""), title: opts.title, disabled: opts.disabled }), t));
   const sc = selChipObj();
   if (sc) {                                        // a word, letter, space or symbol on the Lyrics strip is selected
-    b(ghostIcon(), tapGhostNote, { cls: "gn", on: S.ghostNext, title: "Ghost note: the next note is played softly, barely heard" });
     p = r3;
+    b(ghostIcon(), tapGhostNote, { cls: "gn", on: S.ghostNext, title: "Ghost note: the next note is played softly, barely heard" });
     const { bar, chip } = sc, fine = 0.0625;
     p.append(el("span", { class: "who" }, `“${chip.text.trim()}”`));
     const sbi = S.song.bars.indexOf(bar);
@@ -8656,7 +8657,6 @@ function renderPalette() {
     return;
   }
   const own = ev && !S.selAuto;
-  b(ghostIcon(), tapGhostNote, { cls: "gn", on: own ? !!ev.ghost : S.ghostNext, title: own ? (ev.ghost ? "Not a ghost note" : "Make it a ghost note — played softly, barely heard") : "Ghost note: the next note is played softly, barely heard" });
   p = r3;
   if (PSEL.on) {
     b("Clear", () => { PSEL.ids.clear(); renderWindows(); renderPalette(); }, { cls: "lyr", disabled: !PSEL.ids.size, title: "Choose none" });
@@ -8677,6 +8677,7 @@ function renderPalette() {
   }
   b("⌒", tapTie, { on: !!(ev && ev.tie), title: "Tie to the next note", disabled: !ev && !bar.ev.melody.length });
   for (const k of ["staccato", "tenuto", "slur"]) b(k === "slur" ? [el("span", { class: "aglyph" }, ARTIC[k].glyph), el("span", { class: "acap" }, "SLUR")] : ARTIC[k].glyph, () => tapArtic(k), { cls: "art" + (k === "slur" ? " slurk" : "") + (S.artic === k ? " armed" : ""), on: !!(ev && (k === "slur" ? ev.slur : ev.artic === k)), title: S.artic === k ? `${ARTIC[k].label} armed — tap notes to mark them; tap again to return to note entry` : `${ARTIC[k].label}: tap before entering a note, or arm it and tap existing notes` });
+  b(ghostIcon(), tapGhostNote, { cls: "gn", on: own ? !!ev.ghost : S.ghostNext, title: own ? (ev.ghost ? "Not a ghost note" : "Make it a ghost note — played softly, barely heard") : "Ghost note: the next note is played softly, barely heard" });   // the ghost note: after the articulation marks, off the top row
   if (ev) {                                        // editing tools appear for the selected note
     b("✕", () => { S.sel = null; renderAll(); }, { cls: "txt", title: "Done" });
     p.append(el("span", { class: "who" }, (ev.rest ? "rest" : ev.m == null ? "slot" : noteName(ev.m, keyObj(S.song.key))) + " " + durGlyph(ev.d)));
