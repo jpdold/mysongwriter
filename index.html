@@ -355,6 +355,24 @@ svg text { pointer-events: none; }
 #arrows button:first-child { border-top-left-radius: 4px; } #arrows button:last-child { border-top-right-radius: 4px; }
 #undoRow button:first-child { border-bottom-left-radius: 4px; } #undoRow button:last-child { border-bottom-right-radius: 4px; }
 #arrows button { display: grid; place-items: center; }
+/* the quick palette: the left half beside the arrows — its own lengths, movable when unlocked, and it can float */
+#quick { grid-column: arrows; grid-row: arrows-start / undo-end; justify-self: start; align-self: start; width: calc(50% - 6px); display: grid; grid-template-columns: 16px repeat(4, 1fr); grid-template-rows: 30px 30px; gap: 0; border: 1.5px solid #141414; border-radius: 4px; background: var(--ground2); overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,.4); user-select: none; -webkit-user-select: none; touch-action: none; }
+#quick .qgrip { display: none; }
+#quick .qctl { grid-row: 1 / 3; display: flex; flex-direction: column; background: #111; }
+#quick .qctl button { flex: 1 1 0; width: 16px; min-width: 0; padding: 0; border: none; border-radius: 0; background: transparent; color: #ddd; font-size: 9px; display: grid; place-items: center; }
+#quick .qctl button.on { color: #f5c518; }
+#quick .cell { display: grid; place-items: center; border-left: 1px solid rgba(0,0,0,.35); min-width: 0; }
+#quick .cell button { width: 100%; height: 100%; padding: 0; border: none; border-radius: 0; background: linear-gradient(#fff, #d9d9d9); color: #111; display: grid; place-items: center; }
+#quick .cell:nth-child(n+7) button { border-top: 1px solid rgba(0,0,0,.35); }
+#quick .cell button.on { background: linear-gradient(#6fb3ff, #2f7fd6); color: #fff; }
+#quick .cell button.lift { position: relative; z-index: 5; opacity: .9; box-shadow: 0 6px 14px rgba(0,0,0,.5); }
+#quick .cell.over { outline: 2px dashed #f5a623; outline-offset: -3px; }
+#quick.unlocked .cell button { cursor: grab; }
+#quick.float { position: fixed; z-index: 60; width: 190px; grid-template-rows: 14px 30px 30px; }
+#quick.float .qgrip { display: block; grid-column: 1 / -1; height: 14px; background: #333; cursor: move; position: relative; }
+#quick.float .qgrip::after { content: ""; position: absolute; left: 50%; top: 5px; width: 36px; height: 4px; margin-left: -18px; border-radius: 2px; background: #888; }
+#quick.float .qctl { grid-row: 2 / 4; }
+#app.focus-acc #quick, #app.focus-bass #quick { display: none; }
 #arrows .aico { width: 20px; height: 20px; display: block; }
 #arrows button, #undoRow button { height: 30px; padding: 0; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); color: #111; font-size: 18px; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); }
 #undoRow button { font-family: var(--sans); font-size: 13px; letter-spacing: .05em; }
@@ -565,6 +583,7 @@ body.kbOpen #app { padding-bottom: 330px; }              /* room to scroll the s
 
   <div id="arrows"><button id="arrUp" title="Up: the selected note a half step up, or the stave's register up"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V4M5 11l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="arrDn" title="Down: the selected note a half step down, or the stave's register down"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M5 13l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="arrL" title="Left: the selected note or word earlier, a picked run earlier, or the beat before"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H4M11 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="arrR" title="Right: the selected note or word later, a picked run later, or the beat after"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16M13 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
   <div id="undoRow"><button id="undoBtn" title="Undo">UNDO</button><button id="redoBtn" title="Redo">REDO</button></div>
+  <div id="quick" title="Quick palette"></div>
   <div id="palette"><div class="prow" id="palRow1"></div><div class="prow" id="palRow2"></div><div class="prow" id="palRow3"></div><div class="prow" id="palRow4"></div></div>
 
   <section class="win" id="accWin">
@@ -7838,10 +7857,10 @@ function loadPrefs() {
   const p = readJSON(STORE.prefs, {});
   S.theme = p.theme || "auto"; S.followWords = false; S.noteStyle = p.noteStyle || "trad"; S.noteSize = NOTE_SCALE[p.noteSize] ? p.noteSize : "m"; S.chordColor = p.chordColor || "#ffffff"; S.halfLines = p.halfLines == null ? true : !!p.halfLines; S.ftp = Object.assign({}, FTP_DEFAULT, p.ftp || {});
   S.winSize = WIN[p.winSize] ? p.winSize : "m"; S.chordsDisp = p.chordsDisp || "names"; S.metro = p.metro || "off"; S.custom = p.custom || null; S.len = p.len || 1;
-  S.lyricFont = p.lyricFont || "sans"; S.chipMode = "multi"; S.keepAwake = p.keepAwake !== false; S.paper = Object.assign({ mel: "default", acc: "default", bass: "default" }, p.paper || {}); S.winState = Object.assign({ mel: "open", acc: "closed", bass: "closed" }, p.winState || {}); S.zoomWin = Object.assign({ mel: 1, acc: 1, bass: 1 }, p.zoomWin || {}); S.midi = p.midi || {}; S.viewSpan = [1, 2, 3, 4].includes(p.viewSpan) ? p.viewSpan : 1; if (p.softKb != null) S.softKb = p.softKb2 == null ? true : !!p.softKb2; S.kbPos = p.kbPos || null;   // the app keyboard, on unless switched off S.layout = p.layout === "stack" ? "stack" : "rolled";
+  S.lyricFont = p.lyricFont || "sans"; S.chipMode = "multi"; S.keepAwake = p.keepAwake !== false; S.paper = Object.assign({ mel: "default", acc: "default", bass: "default" }, p.paper || {}); S.quick = Object.assign({ cells: QUICK_DEFAULT.slice(), locked: true, float: false, x: null, y: null }, p.quick || {}); if (!Array.isArray(S.quick.cells) || S.quick.cells.length !== 8) S.quick.cells = QUICK_DEFAULT.slice(); S.winState = Object.assign({ mel: "open", acc: "closed", bass: "closed" }, p.winState || {}); S.zoomWin = Object.assign({ mel: 1, acc: 1, bass: 1 }, p.zoomWin || {}); S.midi = p.midi || {}; S.viewSpan = [1, 2, 3, 4].includes(p.viewSpan) ? p.viewSpan : 1; if (p.softKb != null) S.softKb = p.softKb2 == null ? true : !!p.softKb2; S.kbPos = p.kbPos || null;   // the app keyboard, on unless switched off S.layout = p.layout === "stack" ? "stack" : "rolled";
   applyTheme();
 }
-function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, keepAwake: S.keepAwake, paper: S.paper, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout }); }
+function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, keepAwake: S.keepAwake, paper: S.paper, quick: S.quick, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout }); }
 function applyTheme() {
   const r = document.documentElement;
   if (S.theme === "dark") r.setAttribute("data-theme", "dark"); else r.removeAttribute("data-theme");
@@ -8608,7 +8627,7 @@ function renderBeatRow() {
   }
 }
 function renderPalette() {
-  renderFtp(); renderTempo();
+  renderFtp(); renderTempo(); renderQuick();
   const r1 = $("palRow1"), r2 = $("palRow2"), r3 = $("palRow3"), r4 = $("palRow4"); r1.replaceChildren(); r2.replaceChildren(); r3.replaceChildren(); r4.replaceChildren();
   renderRow3(r4);
   { const evR = selChipObj() ? null : selEv(), ownR = evR && !S.selAuto;                  // the rests row: every rest, quadruple whole to 256th
@@ -8980,6 +8999,77 @@ function deleteChip(bar, chip) { bar.chips = bar.chips.filter(c => c !== chip); 
    ═══════════════════════════════════════════════════════════════════════ */
 let dragCtx = null, pinch = null; const pinchPts = new Map();
 function svgPoint(svg, e) { const r = svg.getBoundingClientRect(); const vb = svg.viewBox.baseVal; return { x: (e.clientX - r.left) * (vb.width / r.width), y: (e.clientY - r.top) * (vb.height / r.height) }; }
+/* ═══ the quick palette: eight buttons in the left half beside the arrows. Tap one to pick that length (or the quarter rest),
+   exactly as in the tools. Unlock it, hold a button and drop it on another: they trade places, or the one displaced goes to
+   the nearest empty cell. ⧉ floats it anywhere; ⤶ docks it again. Layout, lock and position are remembered. ═══ */
+const QUICK_ITEMS = { dw: { kind: "len", v: 8 }, w: { kind: "len", v: 4 }, h: { kind: "len", v: 2 }, q: { kind: "len", v: 1 }, qr: { kind: "rest", v: 1 }, t: { kind: "len", v: 0.125 }, s: { kind: "len", v: 0.25 }, e: { kind: "len", v: 0.5 } };
+const QUICK_DEFAULT = ["dw", "w", "h", "q", "qr", "t", "s", "e"];                    // top row left to right, then bottom: the quarter top right, the eighth beneath it
+function renderQuick() {
+  const box = $("quick"); if (!box || !S.quick) return; const Q = S.quick; box.replaceChildren();
+  box.classList.toggle("unlocked", !Q.locked); box.classList.toggle("float", !!Q.float);
+  if (Q.float) { box.style.left = (Q.x == null ? 20 : Q.x) + "px"; box.style.top = (Q.y == null ? 80 : Q.y) + "px"; } else { box.style.left = ""; box.style.top = ""; }
+  box.append(el("div", { class: "qgrip", title: "Drag to move this palette" }));
+  const ctl = el("div", { class: "qctl" });
+  ctl.append(el("button", { class: Q.locked ? "" : "on", title: Q.locked ? "Unlock: then hold a button to move it" : "Lock the buttons where they are" }, Q.locked ? "🔒" : "🔓"));
+  ctl.append(el("button", { class: "qfloat", title: Q.float ? "Put the palette back in its place" : "Float the palette: drag it wherever you like" }, Q.float ? "⤶" : "⧉"));
+  box.append(ctl);
+  const ev = selEv(), own = ev && !S.selAuto && !selChipObj();
+  Q.cells.forEach((id, i) => {
+    const cell = el("div", { class: "cell", "data-i": i }); box.append(cell);
+    const it = id && QUICK_ITEMS[id]; if (!it) return;
+    const on = it.kind === "rest" ? (own ? !!ev.rest && Math.abs(baseLen(ev.d) - it.v) < 1e-9 : S.restNext && (S.restLen || S.len) === it.v)
+                                   : (own ? !ev.rest && Math.abs(baseLen(ev.d) - it.v) < 1e-9 : S.len === it.v);
+    cell.append(el("button", { class: on ? "on" : "", title: it.kind === "rest" ? `${REST_NAME[it.v]} rest` : `${LEN_NAME[it.v]} note`, "data-id": id }, it.kind === "rest" ? restIcon(it.v) : lenIcon(it.v)));
+  });
+}
+function quickAct(id) { const it = QUICK_ITEMS[id]; if (!it) return; if (it.kind === "rest") tapRestLen(it.v); else tapLength(it.v); }
+/* a held button dropped on a cell: an empty cell simply takes it; a full cell trades places, unless an empty cell is near enough to take the displaced one */
+function quickMove(from, to) {
+  const c = S.quick.cells, moving = c[from], there = c[to]; if (from === to) return;
+  const dist = (a, b) => Math.abs(Math.floor(a / 4) - Math.floor(b / 4)) + Math.abs(a % 4 - b % 4);
+  c[to] = moving;
+  if (there == null) c[from] = null;
+  else { const empties = c.map((v, i) => v == null && i !== to ? i : -1).filter(i => i >= 0 && i !== from); if (empties.length) { c[empties.sort((a, b) => dist(a, to) - dist(b, to))[0]] = there; c[from] = null; } else c[from] = there; }
+  savePrefs();
+}
+function initQuick() {
+  const box = $("quick"); if (!box) return; let st = null;
+  box.addEventListener("pointerdown", e => {
+    const Q = S.quick;
+    if (e.target.closest(".qgrip")) { const r = box.getBoundingClientRect(); st = { mode: "move", id: e.pointerId, dx: e.clientX - r.left, dy: e.clientY - r.top }; try { box.setPointerCapture(e.pointerId); } catch (x) {} e.preventDefault(); return; }
+    const cb = e.target.closest(".qctl button"); if (cb) { st = { mode: "ctl", id: e.pointerId, cb }; return; }
+    const btn = e.target.closest(".cell button"); if (!btn) return;
+    st = { mode: "tap", id: e.pointerId, btn, x0: e.clientX, y0: e.clientY, from: +btn.parentNode.dataset.i, lifted: false, to: null, timer: null };
+    if (!Q.locked) { const s = st; s.timer = setTimeout(() => { if (st !== s) return; s.lifted = true; btn.classList.add("lift"); try { box.setPointerCapture(e.pointerId); } catch (x) {} }, 320); }
+    e.preventDefault();
+  });
+  box.addEventListener("pointermove", e => {
+    if (!st || e.pointerId !== st.id) return;
+    if (st.mode === "move") { const Q = S.quick; Q.x = clamp(e.clientX - st.dx, 0, Math.max(0, innerWidth - box.offsetWidth)); Q.y = clamp(e.clientY - st.dy, 0, Math.max(0, innerHeight - box.offsetHeight)); box.style.left = Q.x + "px"; box.style.top = Q.y + "px"; return; }
+    if (st.mode !== "tap") return;
+    if (!st.lifted) { if (Math.hypot(e.clientX - st.x0, e.clientY - st.y0) > 8) { clearTimeout(st.timer); st = null; } return; }
+    st.btn.style.transform = `translate(${e.clientX - st.x0}px, ${e.clientY - st.y0}px)`;
+    box.querySelectorAll(".cell.over").forEach(c => c.classList.remove("over"));
+    st.btn.style.pointerEvents = "none"; const under = document.elementFromPoint(e.clientX, e.clientY); st.btn.style.pointerEvents = "";
+    const cell = under && under.closest ? under.closest("#quick .cell") : null;
+    if (cell) { cell.classList.add("over"); st.to = +cell.dataset.i; } else st.to = null;
+  });
+  const up = e => {
+    if (!st || e.pointerId !== st.id) return; const s = st; st = null; clearTimeout(s.timer);
+    const Q = S.quick;
+    if (s.mode === "move") { savePrefs(); return; }
+    if (s.mode === "ctl") {
+      if (s.cb.classList.contains("qfloat")) { Q.float = !Q.float; if (Q.float && Q.x == null) { const r = box.getBoundingClientRect(); Q.x = r.left; Q.y = r.top; } }
+      else { Q.locked = !Q.locked; toast(Q.locked ? "Quick palette locked" : "Hold a button, then drop it on another to move it"); }
+      savePrefs(); renderQuick(); return;
+    }
+    if (!s.lifted) { quickAct(s.btn.dataset.id); return; }
+    s.btn.classList.remove("lift"); s.btn.style.transform = "";
+    if (s.to != null) quickMove(s.from, s.to);
+    renderQuick();
+  };
+  box.addEventListener("pointerup", up); box.addEventListener("pointercancel", up);
+}
 /* keep the screen awake while the app is open (a setting, on by default). The browser grants the lock only after a touch and
    drops it when the app is hidden, so it is asked for on the first touch and again whenever the app comes back into view. */
 const WAKE = { lock: null };
@@ -10384,7 +10474,7 @@ async function boot() {
   document.querySelectorAll(".win .pselClose").forEach(b => b.addEventListener("click", leavePlaySelect));
   midiInit();
   $("overlay").addEventListener("click", e => { if (e.target === $("overlay")) closeModal(); });
-  initPointer(); initWindowChrome(); initWordEdit(); initWake();
+  initPointer(); initWindowChrome(); initWordEdit(); initWake(); initQuick();
   window.addEventListener("keydown", e => {
     const tag = (document.activeElement && document.activeElement.tagName) || "";
     if (["INPUT", "TEXTAREA", "SELECT"].includes(tag) || $("overlay").classList.contains("on")) return;
