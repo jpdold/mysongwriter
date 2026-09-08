@@ -364,6 +364,7 @@ svg text { pointer-events: none; }
 #quick .qctl { grid-row: 1 / 3; display: flex; flex-direction: column; background: #111; }
 #quick .qctl button { flex: 1 1 0; width: 24px; min-width: 0; padding: 0; border: none; border-radius: 0; background: transparent; color: #ddd; font-size: 14px; line-height: 1; display: grid; place-items: center; }
 #quick .qctl button.on { color: #f5c518; }
+#quick .qctl .lico { width: 17px; height: 19px; display: block; }
 #quick .cell { display: grid; place-items: center; border-left: 1px solid rgba(0,0,0,.35); min-width: 0; }
 #quick .cell button { width: 100%; height: 100%; padding: 0; border: none; border-radius: 0; background: linear-gradient(#fff, #d9d9d9); color: #111; display: grid; place-items: center; }
 #quick .cell:nth-child(n+7) button { border-top: 1px solid rgba(0,0,0,.35); }
@@ -9007,13 +9008,21 @@ function svgPoint(svg, e) { const r = svg.getBoundingClientRect(); const vb = sv
    the nearest empty cell. ⧉ floats it anywhere; ⤶ docks it again. Layout, lock and position are remembered. ═══ */
 const QUICK_ITEMS = { dw: { kind: "len", v: 8 }, w: { kind: "len", v: 4 }, h: { kind: "len", v: 2 }, q: { kind: "len", v: 1 }, qr: { kind: "rest", v: 1 }, t: { kind: "len", v: 0.125 }, s: { kind: "len", v: 0.25 }, e: { kind: "len", v: 0.5 } };
 const QUICK_DEFAULT = ["dw", "w", "h", "q", "qr", "t", "s", "e"];                    // top row left to right, then bottom: the quarter top right, the eighth beneath it
+/* the palette's padlock: shut and grey when locked; when unlocked the shackle swings open and the body turns red */
+function lockIcon(locked) {
+  const s = svgEl("svg", { class: "lico", viewBox: "0 0 20 22", "aria-hidden": "true" });
+  s.append(svgEl("path", { d: locked ? "M 6 10 V 7 a 4 4 0 0 1 8 0 v 3" : "M 6 10 V 7 a 4 4 0 0 1 8 0 v 1", fill: "none", stroke: locked ? "#ddd" : "#ffb3ad", "stroke-width": 2, "stroke-linecap": "round", transform: locked ? "" : "translate(-3 0) rotate(-28 6 10)" }),
+           svgEl("rect", { x: 3.5, y: 10, width: 13, height: 10, rx: 2, fill: locked ? "#bbb" : "#e5322d" }),
+           svgEl("circle", { cx: 10, cy: 15, r: 1.4, fill: locked ? "#333" : "#5a0d0a" }));
+  return s;
+}
 function renderQuick() {
   const box = $("quick"); if (!box || !S.quick) return; const Q = S.quick; box.replaceChildren();
   box.classList.toggle("unlocked", !Q.locked); box.classList.toggle("float", !!Q.float);
   if (Q.float) { box.style.left = (Q.x == null ? 20 : Q.x) + "px"; box.style.top = (Q.y == null ? 80 : Q.y) + "px"; } else { box.style.left = ""; box.style.top = ""; }
   box.append(el("div", { class: "qgrip", title: "Drag to move this palette" }));
   const ctl = el("div", { class: "qctl" });
-  ctl.append(el("button", { class: Q.locked ? "" : "on", title: Q.locked ? "Unlock: then hold a button to move it" : "Lock the buttons where they are" }, Q.locked ? "🔒" : "🔓"));
+  ctl.append(el("button", { class: "qlock" + (Q.locked ? "" : " on"), title: Q.locked ? "Unlock: then hold a button to move it" : "Lock the buttons where they are" }, lockIcon(Q.locked)));
   ctl.append(el("button", { class: "qfloat", title: Q.float ? "Put the palette back in its place" : "Float the palette: drag it wherever you like" }, Q.float ? "⤶" : "⧉"));
   box.append(ctl);
   const ev = selEv(), own = ev && !S.selAuto && !selChipObj();
