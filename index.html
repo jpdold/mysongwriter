@@ -9977,8 +9977,7 @@ function renderRow3(r3) {
   const b = (t, fn, opts = {}) => r3.append(el("button", { onclick: fn, class: (opts.cls || "") + (opts.on ? " on" : "") + (opts.warn ? " warn" : ""), title: opts.title, disabled: opts.disabled }, t));
   const ev = selChipObj() ? null : selEv(), own = ev && !S.selAuto;                       // dot, rest and ＋ live here, under the lengths
   b("·", tapDot, { on: own ? isDotted(ev.d) : S.dot, title: "Dotted" });
-  r3.append(el("span", { class: "flexgap" }));                                             // ＋, Move and Delete: the bottom right corner
-  b("＋", appendFromStrip, { cls: "txt", title: "Add a box of this length at the end of the rhythm", disabled: !!ev });
+  r3.append(el("span", { class: "flexgap" }));                                             // Move and Delete: the bottom right corner
   $("undoBtn").disabled = !UNDO.stack.length; $("redoBtn").disabled = !UNDO.redo.length;       // the UNDO / REDO row above the tools
   b("Move", () => mvStart("move"), { cls: "lyr wide", on: !!(S.mv && S.mv.mode === "move"), title: "Move beats: pick a run of beats, then ← → shift what is in them into empty space" });
   b("Delete", () => mvStart("delete"), { cls: "lyr wide", on: !!(S.mv && S.mv.mode === "delete"), warn: !(S.mv && S.mv.mode === "delete"), title: "Delete part or all of a beat, a bar or a section" });
