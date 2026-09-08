@@ -9118,6 +9118,39 @@ function repositionEntry() {
   const t = entrySpot(bar, WE.bi, WE.t, w); if (t == null || Math.abs(t - WE.t) < 1e-6) return;
   WE.t = t; const x = g.x(WE.bi, t); inp.style.left = clamp(x + 1, 0, Math.max(0, g.W - inp.offsetWidth - 2)) + "px"; weCaret();
 }
+/* the entry box moves to a spot of its own choosing (⌫ and space on an empty box) */
+function weEntryTo(bi, t) {
+  WE.bi = bi; WE.t = r3(t); S.bi = bi; S.selChip = null;
+  $("wordEdit").querySelector(".lbl2").textContent = `Bar ${barNo(bi)} · beat ${beatLabel(WE.t)} · ↵ makes the chip · ⇥ next beat`;
+  renderAll(); weCaret();
+}
+/* ⌫ on an empty entry box: back over what is behind it. An unlocked chip is removed; a locked chip is passed through and kept, the box
+   landing just before it — so the unlocked chips behind a locked one can be removed too. Free space steps back a quarter beat; at the
+   start of the bar, the bar before. */
+function weBackChip() {
+  if (!WE.on || WE.chipId) return false;
+  const bar = S.song.bars[WE.bi], g = stripGeo(), sorted = [...bar.chips].sort((a, b) => a.t - b.t);
+  const prev = sorted.filter(c => c.t < WE.t - 1e-6).pop();
+  if (prev && prev.t + chipFull(prev, g) >= WE.t - 0.25 - 1e-6) {
+    if (prev.locked) { const before = sorted.filter(c => c.t < prev.t - 1e-6).pop(); weEntryTo(WE.bi, before ? Math.min(prev.t, before.t + chipFull(before, g)) : 0); toast("Passed back over a locked chip"); }
+    else { bar.chips = bar.chips.filter(c => c !== prev); refitChips(bar); weEntryTo(WE.bi, prev.t); }
+    return true;
+  }
+  if (WE.t > 1e-6) { weEntryTo(WE.bi, Math.max(0, WE.t - 0.25)); return true; }
+  if (WE.bi > 0) { weEntryTo(WE.bi - 1, barBeats(WE.bi - 1)); toast(`Bar ${barNo(WE.bi)}`); return true; }
+  return false;
+}
+/* space on an empty entry box: forward over the chip ahead (locked or not, it stays) to land just after it; free space steps a
+   quarter beat; at the end of the bar, the next bar */
+function weSpaceChip() {
+  if (!WE.on || WE.chipId) return false;
+  const bar = S.song.bars[WE.bi], g = stripGeo(), B = barBeats(WE.bi);
+  const next = [...bar.chips].filter(c => c.t + chipFull(c, g) > WE.t + 1e-6).sort((a, b) => a.t - b.t)[0];
+  if (next && next.t <= WE.t + 0.25 + 1e-6) { weEntryTo(WE.bi, Math.min(B, next.t + chipFull(next, g))); if (next.locked) toast("Passed over a locked chip"); return true; }
+  if (WE.t + 0.25 < B - 1e-6) { weEntryTo(WE.bi, WE.t + 0.25); return true; }
+  if (WE.bi + 1 < S.song.bars.length) { weEntryTo(WE.bi + 1, 0); toast(`Bar ${barNo(WE.bi)}`); return true; }
+  toast("End of the song"); return true;
+}
 /* ⇥: the entry box jumps to the next beat line that is free */
 function weTab() {
   if (!WE.on) return;
@@ -9176,7 +9209,7 @@ function renderWeKeys() {
   if (!S.softKb) return;
   const caret = () => [inp.selectionStart == null ? inp.value.length : inp.selectionStart, inp.selectionEnd == null ? inp.value.length : inp.selectionEnd];
   const insert = ch => { if (inp.disabled) { toast("Locked — 🔒 unlocks it"); return; } const [s, e2] = caret(); inp.value = inp.value.slice(0, s) + ch + inp.value.slice(e2); WE.dirty = true; sizeInline(); inp.focus(); inp.setSelectionRange(s + ch.length, s + ch.length); if (weShift && !weCaps) { weShift = false; renderWeKeys(); } };
-  const back = () => { if (inp.disabled) return; let [s, e2] = caret(); if (s === e2 && s > 0) s = s - 1; inp.value = inp.value.slice(0, s) + inp.value.slice(e2); WE.dirty = true; sizeInline(); inp.focus(); inp.setSelectionRange(s, s); };
+  const back = () => { if (inp.disabled) return; if (!inp.value && !WE.chipId) { weBackChip(); return; } let [s, e2] = caret(); if (s === e2 && s > 0) s = s - 1; inp.value = inp.value.slice(0, s) + inp.value.slice(e2); WE.dirty = true; sizeInline(); inp.focus(); inp.setSelectionRange(s, s); };
   /* keys fire on the finger lifting inside the key: no 300 ms delay, no ghost clicks, mis-taps can slide off */
   const key = (label, fn, cls, title) => { let down = false; return el("button", { class: cls || "", title, onpointerdown: e => { e.preventDefault(); down = true; }, onpointerup: e => { e.preventDefault(); if (down) fn(); down = false; }, onpointerleave: () => { down = false; }, onpointercancel: () => { down = false; }, onclick: e => e.preventDefault() }, label); };
   WE_PAGES[wePage].forEach(row => {
@@ -9198,7 +9231,7 @@ function renderWeKeys() {
   const bottom = el("div", { class: "krow" });
   bottom.append(key(wePage === "abc" ? "?!’" : "abc", () => { wePage = wePage === "abc" ? "sym" : "abc"; renderWeKeys(); }, "wide", "symbols"));
   bottom.append(key(wePage === "acc" ? "abc" : "àéñ", () => { wePage = wePage === "acc" ? "abc" : "acc"; renderWeKeys(); }, "wide", "accents"));
-  bottom.append(key("space", () => insert(" "), "space"));
+  bottom.append(key("space", () => { if (!inp.value && !WE.chipId) { weSpaceChip(); return; } insert(" "); }, "space"));
   const lockedNow = (() => { const bar = S.song.bars[WE.bi]; const c = bar && (WE.chipId ? bar.chips.find(x => x.id === WE.chipId) : S.selChip && S.selChip.bi === WE.bi ? bar.chips.find(x => x.id === S.selChip.id) : null); return !!(c && c.locked); })();
   tools.append(key(lockedNow ? "🔓" : "🔒", toggleLyricLock, "wide lock" + (lockedNow ? " on" : ""), lockedNow ? "unlock this chip" : "lock this chip in place"));
   bottom.append(key("↵", () => commitWordEdit(true), "wide go", "make the chip"));
@@ -9293,7 +9326,7 @@ function normalizeLyrics(bar) {
 function initWordEdit() {
   const box = $("wordEdit"), inp = weInput(), close = box.querySelector("button.close");
   box.querySelector("button.kb").addEventListener("click", () => { S.softKb = !S.softKb; savePrefs(); renderWeKeys(); if (!S.softKb) { inp.blur(); setTimeout(() => inp.focus(), 30); } });
-  inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); commitWordEdit(true); } else if (e.key === "Tab") { e.preventDefault(); weTab(); } else if (e.key === "Escape") { e.preventDefault(); WE.dirty = false; closeWordEdit(); } });
+  inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); commitWordEdit(true); } else if (e.key === "Tab") { e.preventDefault(); weTab(); } else if (e.key === "Backspace" && !inp.value && !WE.chipId) { e.preventDefault(); weBackChip(); } else if (e.key === " " && !inp.value && !WE.chipId) { e.preventDefault(); weSpaceChip(); } else if (e.key === "Escape") { e.preventDefault(); WE.dirty = false; closeWordEdit(); } });
   inp.addEventListener("input", () => { WE.dirty = true; sizeInline(); });
   document.addEventListener("selectionchange", () => { if (WE.on) weCaret(); });
   ["keyup", "click", "focus"].forEach(ev => inp.addEventListener(ev, () => weCaret()));
