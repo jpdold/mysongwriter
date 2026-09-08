@@ -338,6 +338,9 @@ svg text { pointer-events: none; }
 #palette button.warn { color: var(--danger); }
 #palette button.undo { font-family: var(--sans); font-size: 17px; }
 #palette button.art { font-family: var(--serif); font-size: 16px; }
+#palette button.art.slurk { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; line-height: 1; }   /* the slur: its arc with SLUR beneath */
+#palette button.art.slurk .aglyph { font-size: 15px; line-height: 1; }
+#palette button.art.slurk .acap { font-family: var(--sans); font-size: 6.5px; font-weight: 800; letter-spacing: .04em; line-height: 1; }
 #palette button.art.armed { background: linear-gradient(#ffd27a, #f5a623); border-color: #a86d10; }
 #palette button.lyr { font-family: var(--sans); font-size: 10.5px; font-weight: 600; }
 #palette button:disabled { opacity: .35; }
@@ -8670,7 +8673,7 @@ function renderPalette() {
     return;
   }
   b("⌒", tapTie, { on: !!(ev && ev.tie), title: "Tie to the next note", disabled: !ev && !bar.ev.melody.length });
-  for (const k of ["staccato", "tenuto", "slur"]) b(ARTIC[k].glyph, () => tapArtic(k), { cls: "art" + (S.artic === k ? " armed" : ""), on: !!(ev && (k === "slur" ? ev.slur : ev.artic === k)), title: S.artic === k ? `${ARTIC[k].label} armed — tap notes to mark them; tap again to return to note entry` : `${ARTIC[k].label}: tap before entering a note, or arm it and tap existing notes` });
+  for (const k of ["staccato", "tenuto", "slur"]) b(k === "slur" ? [el("span", { class: "aglyph" }, ARTIC[k].glyph), el("span", { class: "acap" }, "SLUR")] : ARTIC[k].glyph, () => tapArtic(k), { cls: "art" + (k === "slur" ? " slurk" : "") + (S.artic === k ? " armed" : ""), on: !!(ev && (k === "slur" ? ev.slur : ev.artic === k)), title: S.artic === k ? `${ARTIC[k].label} armed — tap notes to mark them; tap again to return to note entry` : `${ARTIC[k].label}: tap before entering a note, or arm it and tap existing notes` });
   if (ev) {                                        // editing tools appear for the selected note
     b("✕", () => { S.sel = null; renderAll(); }, { cls: "txt", title: "Done" });
     p.append(el("span", { class: "who" }, (ev.rest ? "rest" : ev.m == null ? "slot" : noteName(ev.m, keyObj(S.song.key))) + " " + durGlyph(ev.d)));
