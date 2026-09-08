@@ -461,6 +461,7 @@ body.kbOpen #app { padding-bottom: 330px; }              /* room to scroll the s
 #wordEdit .weKeys button.go, #wordEdit .weKeys button.go2, #wordEdit .weKeys button.eq, #wordEdit .weKeys button.space { flex: 2.4 1 0; }   /* Split, the two NEW CHIP keys and space: one size */
 #wordEdit .weKeys button.go2 { background: #e8f1fc; border-color: #7fa6d6; color: #123d6e; }
 #wordEdit .weKeys .modes button.mode { height: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; }
+#wordEdit .weKeys .modes button.closek { flex: 0.55 1 0; gap: 2px; background: #fbe9e7; border-color: #d98b80; color: #7a1a15; }   /* the keyboard's own close, at the top right */
 #wordEdit .weKeys .mico { width: 60px; height: 14px; display: block; }
 #wordEdit .weKeys button.nudge, #wordEdit .weKeys button.splitk { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 0; }
 #wordEdit .weKeys button .big { font-size: 22px; line-height: 1; font-weight: 700; }
@@ -9254,6 +9255,7 @@ function renderWeKeys() {
   const modes = el("div", { class: "krow modes" });                                    // what the typed text becomes: one chip per word, or one chip in all
   const modeKey = (label, mode, n) => { const ico = svgEl("svg", { class: "mico", viewBox: "0 0 60 14", "aria-hidden": "true" }); for (let i = 0; i < n; i++) ico.append(svgEl("rect", { x: 1 + i * (58 / n), y: 1, width: 58 / n - (n > 1 ? 3 : 0), height: 12, rx: 4, fill: "none", stroke: "currentColor", "stroke-width": 1.3 })); let down = false; return el("button", { class: "mode" + (S.chipMode === mode ? " on" : ""), title: mode === "multi" ? "each word you type becomes its own chip" : "everything you type becomes one chip", onpointerdown: e => { e.preventDefault(); down = true; }, onpointerup: e => { e.preventDefault(); if (down) { S.chipMode = mode; if (mode === "single" && !WE.chipId && !(S.song.bars[WE.bi].chips || []).length) WE.t = 0; renderWeKeys(); sizeInline(); renderStrips(); } down = false; }, onpointerleave: () => { down = false; } }, el("span", { class: "mlbl" }, label), ico); };
   modes.append(modeKey("Multi-chip", "multi", 3), modeKey("Single chip", "single", 1));
+  { let down = false; modes.append(el("button", { class: "mode closek", title: "close the keyboard (what is typed is kept)", onpointerdown: e => { e.preventDefault(); down = true; }, onpointerup: e => { e.preventDefault(); if (down) closeWordEdit(); down = false; }, onpointerleave: () => { down = false; } }, el("span", { class: "big" }, "✕"), el("span", { class: "cap" }, "CLOSE"))); }
   k.append(modes);
   WE_PAGES[wePage].forEach(row => {
     const r = el("div", { class: "krow" });
