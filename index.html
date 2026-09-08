@@ -7940,7 +7940,7 @@ const viewBars = () => { const f = viewFirst(), out = []; for (let i = 0; i < S.
 let GEO = {};
 function geo(win) {
   const svg = $(win + "Svg"), B = barBeats(), { rows, step } = rowsOf(win), lo = viewOf(win), hi = lo + rows - 1;
-  const n = S.viewSpan, first = viewFirst(), W1 = Math.max(120, svg.parentNode.clientWidth || $("rhyStrip").querySelector(".body").clientWidth || 300), padL = 3, padR = 3, padT = 5, padB = 5;
+  const n = S.viewSpan, first = viewFirst(), W1 = Math.max(120, svg.parentNode.clientWidth || $("rhyStrip").querySelector(".body").clientWidth || 300), padL = 0, padR = 0, padT = 5, padB = 5;   // no pad at the ends: every beat, first and last, is exactly one share of the width
   const bars = viewBars(), beatPx = (W1 - padL - padR) / B, starts = {}; let accB = 0;
   for (const b of bars) { starts[b] = accB; accB += barBeats(b); }
   const W = padL + padR + Math.max(accB, B) * beatPx;
@@ -8281,8 +8281,8 @@ function drawStaff(svg, g, key) {
   }
   if (!S.halfLines) { const ty = Math.round(g.y(g.hi) - g.step / 2) + 0.5; svg.append(svgEl("line", { class: "stl", x1: 0, x2: g.W, y1: ty, y2: ty, stroke: css("--line"), "stroke-width": 2 })); }
   g.bars.forEach((bi, k) => {
-    for (let b = 1; b < barBeats(bi); b++) { const bx = Math.round(g.x(bi, b)); svg.append(svgEl("line", { class: "stl", x1: bx, x2: bx, y1: 0, y2: g.H, stroke: "#fff", "stroke-width": g.n > 1 ? 3 : 5, opacity: 0.9 })); svg.append(svgEl("line", { class: "stl", x1: bx, x2: bx, y1: 0, y2: g.H, stroke: css("--beat"), "stroke-width": g.n > 1 ? 2 : 3, "stroke-dasharray": "6 4", opacity: g.n > 1 ? 0.7 : 1 })); }
-    if (k > 0) { const bx = Math.round(g.x(bi, 0)); svg.append(svgEl("line", { class: "stl", x1: bx, x2: bx, y1: 0, y2: g.H, stroke: css("--beat"), "stroke-width": 3.5 })); }
+    for (let b = 1; b < barBeats(bi); b++) { const bx = g.x(bi, b); /* exact, not rounded: the halves either side match to the pixel */ svg.append(svgEl("line", { class: "stl", x1: bx, x2: bx, y1: 0, y2: g.H, stroke: "#fff", "stroke-width": g.n > 1 ? 3 : 5, opacity: 0.9 })); svg.append(svgEl("line", { class: "stl", x1: bx, x2: bx, y1: 0, y2: g.H, stroke: css("--beat"), "stroke-width": g.n > 1 ? 2 : 3, "stroke-dasharray": "6 4", opacity: g.n > 1 ? 0.7 : 1 })); }
+    if (k > 0) { const bx = g.x(bi, 0); svg.append(svgEl("line", { class: "stl", x1: bx, x2: bx, y1: 0, y2: g.H, stroke: css("--beat"), "stroke-width": 3.5 })); }
   });
   const defs = svgEl("defs"), grad = (id, x2, y2, a) => { const lg = svgEl("linearGradient", { id, x1: 0, y1: 0, x2, y2 }); lg.append(svgEl("stop", { offset: 0, "stop-color": "#000", "stop-opacity": a }), svgEl("stop", { offset: 1, "stop-color": "#000", "stop-opacity": 0 })); return lg; };
   defs.append(grad(g.win + "InT", 0, 1, 0.32), grad(g.win + "InL", 1, 0, 0.22), grad(g.win + "InB", 0, 1, 0.14)); svg.append(defs);
