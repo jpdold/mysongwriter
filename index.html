@@ -8654,7 +8654,6 @@ function renderPalette() {
   const sc = selChipObj();
   if (sc) {                                        // a word, letter, space or symbol on the Lyrics strip is selected
     p = r3;
-    b(ghostIcon(), tapGhostNote, { cls: "gn", on: S.ghostNext, title: "Ghost note: the next note is played softly, barely heard" });
     const { bar, chip } = sc, fine = 0.0625;
     p.append(el("span", { class: "who" }, `“${chip.text.trim()}”`));
     const sbi = S.song.bars.indexOf(bar);
@@ -8684,15 +8683,12 @@ function renderPalette() {
     b("✕", mvCancel, { cls: "txt", title: "Leave move mode" });
     return;
   }
-  b([el("span", { class: "aglyph" }, "⌒"), el("span", { class: "acap" }, "TIE")], tapTie, { cls: "art slurk", on: !!(ev && ev.tie), title: "Tie to the next note", disabled: !ev && !bar.ev.melody.length });
-  { const keep = p; p = r1; b("·", tapDot, { on: own ? isDotted(ev.d) : S.dot, title: "Dotted" }); r1.append(el("span", { class: "flexgap" })); /* the dot: up beside the 32nd rest */ for (const k of ["staccato", "tenuto"]) b(k === "slur" ? [el("span", { class: "aglyph" }, ARTIC[k].glyph), el("span", { class: "acap" }, "SLUR")] : ARTIC[k].glyph, () => tapArtic(k), { cls: "art" + (k === "slur" ? " slurk" : "") + (S.artic === k ? " armed" : ""), on: !!(ev && (k === "slur" ? ev.slur : ev.artic === k)), title: S.artic === k ? `${ARTIC[k].label} armed — tap notes to mark them; tap again to return to note entry` : `${ARTIC[k].label}: tap before entering a note, or arm it and tap existing notes` }); p = keep; }   // staccato and tenuto: the top row's upper right corner
-  for (const k of ["slur"]) b(k === "slur" ? [el("span", { class: "aglyph" }, ARTIC[k].glyph), el("span", { class: "acap" }, "SLUR")] : ARTIC[k].glyph, () => tapArtic(k), { cls: "art" + (k === "slur" ? " slurk" : "") + (S.artic === k ? " armed" : ""), on: !!(ev && (k === "slur" ? ev.slur : ev.artic === k)), title: S.artic === k ? `${ARTIC[k].label} armed — tap notes to mark them; tap again to return to note entry` : `${ARTIC[k].label}: tap before entering a note, or arm it and tap existing notes` });
+  { const keep = p; p = r1; r1.append(el("span", { class: "flexgap" })); for (const k of ["staccato", "tenuto"]) b(k === "slur" ? [el("span", { class: "aglyph" }, ARTIC[k].glyph), el("span", { class: "acap" }, "SLUR")] : ARTIC[k].glyph, () => tapArtic(k), { cls: "art" + (k === "slur" ? " slurk" : "") + (S.artic === k ? " armed" : ""), on: !!(ev && (k === "slur" ? ev.slur : ev.artic === k)), title: S.artic === k ? `${ARTIC[k].label} armed — tap notes to mark them; tap again to return to note entry` : `${ARTIC[k].label}: tap before entering a note, or arm it and tap existing notes` }); p = keep; }   // staccato and tenuto: the top row's upper right corner
   if (ev) {                                        // editing tools appear for the selected note
     b("✕", () => { S.sel = null; renderAll(); }, { cls: "txt", title: "Done" });
     p.append(el("span", { class: "who" }, (ev.rest ? "rest" : ev.m == null ? "slot" : noteName(ev.m, keyObj(S.song.key))) + " " + durGlyph(ev.d)));
   }
   p.append(el("span", { class: "flexgap" }));
-  b(ghostIcon(), tapGhostNote, { cls: "gn", on: own ? !!ev.ghost : S.ghostNext, title: own ? (ev.ghost ? "Not a ghost note" : "Make it a ghost note — played softly, barely heard") : "Ghost note: the next note is played softly, barely heard" });   // the ghost note sits beside the pop-out, at the right
   b("⧉", () => openFtp(), { cls: "txt pop", title: "Pop the tools out into a floating palette" });
 }
 function updatePlayhead() {
