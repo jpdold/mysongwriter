@@ -246,7 +246,9 @@ svg text { pointer-events: none; }
 .strip .body { border: 1.5px solid #141414; border-radius: 4px; overflow-x: auto; overflow-y: hidden; position: relative; scrollbar-width: none; box-shadow: 0 2px 5px rgba(0,0,0,.25); }
 .strip .body::-webkit-scrollbar { display: none; }
 .strip .body svg { display: block; touch-action: none; }
-#rhyStrip .body { background: var(--ground2); }
+/* the Rhythm strip: an inset bar of matte silver; the white entries carry a dark hairline so they stay crisp on it */
+#rhyStrip .body { background: linear-gradient(180deg, #a9adb4 0%, #d3d6db 38%, #c8cbd0 68%, #b0b4ba 100%); border-color: #3a3d42; box-shadow: inset 0 2px 6px rgba(0,0,0,.5), inset 0 1px 0 rgba(0,0,0,.28), inset 0 -1px 0 rgba(255,255,255,.55); }
+#rhySvg { filter: drop-shadow(0 0 0.7px rgba(0,0,0,.9)) drop-shadow(0 0.6px 0.6px rgba(0,0,0,.45)); }
 #lyrStrip .body { background: var(--lyric); box-shadow: 0 0 0 2px var(--tag) inset; }
 #lyrStrip .body svg text { font-family: var(--sans); font-weight: 700; fill: var(--lyric-ink); }
 #lyrStrip.serif .body svg text, #wordEdit.serif input { font-family: var(--serif); font-weight: 600; }
@@ -8544,12 +8546,12 @@ function renderStrips() {
   {
     const svg = $("rhySvg"), HR = 27; svg.replaceChildren(); svg.setAttribute("height", HR); svg.setAttribute("viewBox", `0 0 ${g.W} ${HR}`); svg.setAttribute("width", g.W); svg.style.width = g.W + "px"; svg.style.touchAction = g.n > 1 ? "pan-x" : "none";
     svg.append(svgEl("rect", { class: "hit", x: 0, y: 0, width: g.W, height: HR, fill: "transparent", "data-lane": "rhy" }));
-    dividers(svg, "#ddd", 0.6, HR);
+    dividers(svg, "#2b2e33", 0.55, HR);                                                  // dark ticks on the silver
     for (const bi of bars) for (const c of chains(song.bars[bi])) {                 // a slot that runs on past its beat: the beats it covers stay lit
       if (c.rest) continue;
       const edge = Math.floor(c.t + 1e-6) + 1, to = Math.min(barBeats(bi), c.t + c.d); if (to <= edge + 1e-6) continue;
       const x0 = g.x(bi, c.t), x1 = g.x(bi, to);
-      svg.append(svgEl("rect", { x: x0, y: 0, width: x1 - x0, height: HR, fill: "#fff", opacity: 0.16, "pointer-events": "none" }));
+      svg.append(svgEl("rect", { x: x0, y: 0, width: x1 - x0, height: HR, fill: "#000", opacity: 0.07, "pointer-events": "none" }));
       [0, HR - 5].forEach(y => svg.append(svgEl("rect", { x: x0 + 0.5, y: y + 0.5, width: x1 - x0 - 1, height: 4, fill: "#fff", "fill-opacity": 0.7, stroke: "rgba(0,0,0,.35)", "stroke-width": 1, "pointer-events": "none" })));
     }
     if (S.active && bars.includes(S.active.bi)) svg.append(svgEl("rect", { x: g.x(S.active.bi, S.active.beat), y: 0, width: g.x(S.active.bi, Math.min(barBeats(S.active.bi), S.active.beat + 1)) - g.x(S.active.bi, S.active.beat), height: HR, fill: css("--box"), opacity: 0.22, "pointer-events": "none" }));
