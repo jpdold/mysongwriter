@@ -8565,7 +8565,7 @@ function renderStrips() {
       svg.append(svgEl("rect", { x: x0, y: 0, width: x1 - x0, height: HR, fill: "#000", opacity: 0.07, "pointer-events": "none" }));
       [0, HR - 5].forEach(y => svg.append(svgEl("rect", { x: x0 + 0.5, y: y + 0.5, width: x1 - x0 - 1, height: 4, fill: "#fff", "fill-opacity": 0.7, stroke: "rgba(0,0,0,.35)", "stroke-width": 1, "pointer-events": "none" })));
     }
-    if (S.active && bars.includes(S.active.bi)) svg.append(svgEl("rect", { x: g.x(S.active.bi, S.active.beat), y: 0, width: g.x(S.active.bi, Math.min(barBeats(S.active.bi), S.active.beat + 1)) - g.x(S.active.bi, S.active.beat), height: HR, fill: css("--box"), opacity: 0.22, "pointer-events": "none" }));
+    if (S.active && bars.includes(S.active.bi)) { const ax = g.x(S.active.bi, S.active.beat), aw = g.x(S.active.bi, Math.min(barBeats(S.active.bi), S.active.beat + 1)) - ax; svg.append(svgEl("rect", { x: ax + 1, y: 1, width: Math.max(2, aw - 2), height: HR - 2, fill: "none", stroke: css("--box"), "stroke-width": 2, "pointer-events": "none" })); }   // the active beat on the strip: an outline only, nothing covering the entries
     const mini = { step: 6, y: () => 17, x: g.x, beatPx: g.beatPx, lo: 0, hi: 1, W: g.W, H: HR };
     for (const bi of bars) {
       const bar = song.bars[bi], sel = S.sel && S.sel.bi === bi && S.sel.part === "melody" ? S.sel.id : null;
