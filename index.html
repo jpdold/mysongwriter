@@ -346,9 +346,16 @@ svg text { pointer-events: none; }
 
 /* ── footer ── */
 /* the arrow row and UNDO / REDO: wide, not tall, between the Lyrics strip and the tools */
-#arrows { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-#undoRow { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+#arrows { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
+#undoRow { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-top: -7px; }             /* flush under the arrows: the grid's row gap is taken back */
 #arrows, #undoRow { width: 50%; justify-self: end; }                                             /* the right half of the row only */
+#arrows button, #undoRow button { border-radius: 0; }                                            /* one block: shared edges, rounded only at the corners */
+#arrows button + button, #undoRow button + button { border-left: none; }
+#undoRow button { border-top: none; }
+#arrows button:first-child { border-top-left-radius: 4px; } #arrows button:last-child { border-top-right-radius: 4px; }
+#undoRow button:first-child { border-bottom-left-radius: 4px; } #undoRow button:last-child { border-bottom-right-radius: 4px; }
+#arrows button { display: grid; place-items: center; }
+#arrows .aico { width: 20px; height: 20px; display: block; }
 #arrows button, #undoRow button { height: 30px; padding: 0; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); color: #111; font-size: 18px; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); }
 #undoRow button { font-family: var(--sans); font-size: 13px; letter-spacing: .05em; }
 #arrows button:active, #undoRow button:active { background: linear-gradient(#ffd27a, #f5a623); }
@@ -556,7 +563,7 @@ body.kbOpen #app { padding-bottom: 330px; }              /* room to scroll the s
     </div>
   </div>
 
-  <div id="arrows"><button id="arrUp" title="Up: the selected note a half step up, or the stave's register up">↑</button><button id="arrDn" title="Down: the selected note a half step down, or the stave's register down">↓</button><button id="arrL" title="Left: the selected note or word earlier, a picked run earlier, or the beat before">←</button><button id="arrR" title="Right: the selected note or word later, a picked run later, or the beat after">→</button></div>
+  <div id="arrows"><button id="arrUp" title="Up: the selected note a half step up, or the stave's register up"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V4M5 11l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="arrDn" title="Down: the selected note a half step down, or the stave's register down"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M5 13l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="arrL" title="Left: the selected note or word earlier, a picked run earlier, or the beat before"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H4M11 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="arrR" title="Right: the selected note or word later, a picked run later, or the beat after"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16M13 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
   <div id="undoRow"><button id="undoBtn" title="Undo">UNDO</button><button id="redoBtn" title="Redo">REDO</button></div>
   <div id="palette"><div class="prow" id="palRow1"></div><div class="prow" id="palRow2"></div><div class="prow" id="palRow3"></div><div class="prow" id="palRow4"></div></div>
 
