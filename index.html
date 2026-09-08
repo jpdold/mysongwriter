@@ -8555,7 +8555,7 @@ function renderStrips() {
   const dividers = (svg, color, op, HH = H) => { const nd = Math.max(1, Math.round((HH + 4) / 9)), dash = (HH - (nd - 1) * 4) / nd; for (const bi of bars) { for (let b = 1; b < barBeats(bi); b++) { const bx = Math.round(g.x(bi, b)); svg.append(svgEl("line", { x1: bx, x2: bx, y1: 0, y2: HH, stroke: color, "stroke-width": 2, "stroke-dasharray": `${dash.toFixed(2)} 4`, opacity: op * (g.n > 1 ? 0.7 : 1), "shape-rendering": "crispEdges" })); } if (bi > g.first) svg.append(svgEl("line", { x1: Math.round(g.x(bi, 0)), x2: Math.round(g.x(bi, 0)), y1: 0, y2: HH, stroke: color, "stroke-width": 2, opacity: op, "shape-rendering": "crispEdges" })); } if (g.totalBeats < g.B - 1e-6) { const ex = g.x(bars[bars.length - 1], barBeats(bars[bars.length - 1])); svg.append(svgEl("line", { x1: ex, x2: ex, y1: 0, y2: H, stroke: color, "stroke-width": 2, opacity: op })); } };
   /* rhythm strip: the slots as small glyphs, the ▶ marks where the next tap lands */
   {
-    const svg = $("rhySvg"), HR = 27; svg.replaceChildren(); svg.setAttribute("height", HR); svg.setAttribute("viewBox", `0 0 ${g.W} ${HR}`); svg.setAttribute("width", g.W); svg.style.width = g.W + "px"; svg.style.touchAction = g.n > 1 ? "pan-x" : "none";
+    const svg = $("rhySvg"), HR = 19; svg.replaceChildren(); svg.setAttribute("height", HR); svg.setAttribute("viewBox", `0 0 ${g.W} ${HR}`); svg.setAttribute("width", g.W); svg.style.width = g.W + "px"; svg.style.touchAction = g.n > 1 ? "pan-x" : "none";
     svg.append(svgEl("rect", { class: "hit", x: 0, y: 0, width: g.W, height: HR, fill: "transparent", "data-lane": "rhy" }));
     dividers(svg, "#2b2e33", 0.55, HR);                                                  // dark ticks on the silver
     for (const bi of bars) for (const c of chains(song.bars[bi])) {                 // a slot that runs on past its beat: the beats it covers stay lit
@@ -8566,24 +8566,24 @@ function renderStrips() {
       [0, HR - 5].forEach(y => svg.append(svgEl("rect", { x: x0 + 0.5, y: y + 0.5, width: x1 - x0 - 1, height: 4, fill: "#fff", "fill-opacity": 0.7, stroke: "rgba(0,0,0,.35)", "stroke-width": 1, "pointer-events": "none" })));
     }
     if (S.active && bars.includes(S.active.bi)) { const ax = g.x(S.active.bi, S.active.beat), aw = g.x(S.active.bi, Math.min(barBeats(S.active.bi), S.active.beat + 1)) - ax; svg.append(svgEl("rect", { x: ax + 1, y: 1, width: Math.max(2, aw - 2), height: HR - 2, fill: "none", stroke: css("--box"), "stroke-width": 2, "pointer-events": "none" })); }   // the active beat on the strip: an outline only, nothing covering the entries
-    const mini = { step: 6, y: () => 17, x: g.x, beatPx: g.beatPx, lo: 0, hi: 1, W: g.W, H: HR };
+    const mini = { step: 5, y: () => 12.5, x: g.x, beatPx: g.beatPx, lo: 0, hi: 1, W: g.W, H: HR };   // a shorter strip: smaller heads, shorter stems
     for (const bi of bars) {
       const bar = song.bars[bi], sel = S.sel && S.sel.bi === bi && S.sel.part === "melody" ? S.sel.id : null;
       const rhyEvs = bar.ev.melody.filter(e => !e.rest).map(e => ({ id: e.id, t: e.t, d: e.d, m: 0.5, noBeam: e.noBeam })), groups = beamGroups(rhyEvs), beamed = new Set(groups.flatMap(gp => gp.evs.map(e => e.id)));
-      groups.forEach(gp => drawBeamed(svg, mini, gp, "#fff", e => g.x(bi, e.t) + 2, { stem: 2.2, up: true }));
+      groups.forEach(gp => drawBeamed(svg, mini, gp, "#fff", e => g.x(bi, e.t) + 2, { stem: 1.8, up: true }));
       for (const c of chains(bar)) {
         const x0 = g.x(bi, c.t), x1 = g.x(bi, c.t + c.d);
         svg.append(svgEl("rect", { class: "noteEl", x: x0 + 1, y: 1, width: Math.max(4, x1 - x0 - 2), height: HR - 2, rx: 3, fill: c.members.some(e => e.id === sel) ? "rgba(245,166,35,.35)" : "transparent", "data-ev": c.head.id, "data-part": "melody", "data-bi": bi }));
-        if (c.rest) { svg.append(svgEl("text", { x: x0 + 5, y: 19, "font-size": 13, fill: "#fff", "font-family": "Georgia, serif" }, "𝄽")); continue; }
+        if (c.rest) { svg.append(svgEl("text", { x: x0 + 5, y: 15, "font-size": 11, fill: "#fff", "font-family": "Georgia, serif" }, "𝄽")); continue; }
         c.members.forEach((e, k) => {
           const saved = S.noteStyle; S.noteStyle = "trad";
-          drawNote(svg, mini, g.x(bi, e.t) + 2, 0.5, e.d, "#fff", { "data-ev": e.id, "data-part": "melody", "pointer-events": "none" }, { stem: 2.2, noStem: beamed.has(e.id), ghostNote: !!e.ghost });
+          drawNote(svg, mini, g.x(bi, e.t) + 2, 0.5, e.d, "#fff", { "data-ev": e.id, "data-part": "melody", "pointer-events": "none" }, { stem: 1.8, noStem: beamed.has(e.id), ghostNote: !!e.ghost });
           S.noteStyle = saved;
-          if (e.tie) { const nx = k < c.members.length - 1 ? g.x(bi, c.members[k + 1].t) + 2 + 3.3 : g.x(bi, barBeats(bi)) + (g.bars.includes(bi + 1) ? 5.3 : 0); tieArcAt(svg, g.x(bi, e.t) + 5.3, nx, 20, "#fff"); }
+          if (e.tie) { const nx = k < c.members.length - 1 ? g.x(bi, c.members[k + 1].t) + 2 + 3.3 : g.x(bi, barBeats(bi)) + (g.bars.includes(bi + 1) ? 5.3 : 0); tieArcAt(svg, g.x(bi, e.t) + 5.3, nx, 13, "#fff"); }
         });
       }
       const end = rhythmEnd(bar);
-      if (end < barBeats(bi) - 1e-6 && bi === S.bi) svg.append(svgEl("polygon", { points: `${g.x(bi, end) + 3},${HR / 2 - 6} ${g.x(bi, end) + 12},${HR / 2} ${g.x(bi, end) + 3},${HR / 2 + 6}`, fill: css("--box"), "pointer-events": "none" }));
+      if (end < barBeats(bi) - 1e-6 && bi === S.bi) svg.append(svgEl("polygon", { points: `${g.x(bi, end) + 3},${HR / 2 - 5} ${g.x(bi, end) + 11},${HR / 2} ${g.x(bi, end) + 3},${HR / 2 + 5}`, fill: css("--box"), "pointer-events": "none" }));
     }
     svg.append(svgEl("line", { id: "rhyHead", x1: -5, x2: -5, y1: 0, y2: HR, stroke: css("--box"), "stroke-width": 2, "pointer-events": "none" }));
   }
