@@ -356,7 +356,8 @@ svg text { pointer-events: none; }
 /* the arrow row and UNDO / REDO: wide, not tall, between the Lyrics strip and the tools */
 #arrows { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
 #undoRow { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-top: -7px; }             /* flush under the arrows: the grid's row gap is taken back */
-#arrows, #undoRow { width: 50%; justify-self: end; }                                             /* the right half of the row only */
+#arrows, #undoRow { width: 37.5%; justify-self: end; }                                           /* the right side of the row, three quarters of the size it was */
+#arrows { align-self: end; }                                                                    /* sits down against the UNDO row */
 #arrows button, #undoRow button { border-radius: 0; }                                            /* one block: shared edges, rounded only at the corners */
 #arrows button + button, #undoRow button + button { border-left: none; }
 #undoRow button { border-top: none; }
@@ -384,9 +385,9 @@ svg text { pointer-events: none; }
   background-size: 9px 8px; background-position: 0 0, 0 0; }
 #quick.float .qctl { grid-row: 2 / 4; }
 #app.focus-acc #quick, #app.focus-bass #quick { display: none; }
-#arrows .aico { width: 20px; height: 20px; display: block; }
-#arrows button, #undoRow button { height: 30px; padding: 0; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); color: #111; font-size: 18px; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); }
-#undoRow button { font-family: var(--sans); font-size: 13px; letter-spacing: .05em; }
+#arrows .aico { width: 15px; height: 15px; display: block; }
+#arrows button, #undoRow button { height: 22px; padding: 0; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); color: #111; font-size: 14px; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); }
+#undoRow button { font-family: var(--sans); font-size: 10px; letter-spacing: .05em; }
 #arrows button:active, #undoRow button:active { background: linear-gradient(#ffd27a, #f5a623); }
 #undoRow button:disabled { opacity: .45; }
 #transport { display: flex; gap: 6px; }
@@ -8680,7 +8681,7 @@ function renderPalette() {
     return;
   }
   b([el("span", { class: "aglyph" }, "⌒"), el("span", { class: "acap" }, "TIE")], tapTie, { cls: "art slurk", on: !!(ev && ev.tie), title: "Tie to the next note", disabled: !ev && !bar.ev.melody.length });
-  { const keep = p; p = r1; r1.append(el("span", { class: "flexgap" })); for (const k of ["staccato", "tenuto"]) b(k === "slur" ? [el("span", { class: "aglyph" }, ARTIC[k].glyph), el("span", { class: "acap" }, "SLUR")] : ARTIC[k].glyph, () => tapArtic(k), { cls: "art" + (k === "slur" ? " slurk" : "") + (S.artic === k ? " armed" : ""), on: !!(ev && (k === "slur" ? ev.slur : ev.artic === k)), title: S.artic === k ? `${ARTIC[k].label} armed — tap notes to mark them; tap again to return to note entry` : `${ARTIC[k].label}: tap before entering a note, or arm it and tap existing notes` }); p = keep; }   // staccato and tenuto: the top row's upper right corner
+  { const keep = p; p = r1; b("·", tapDot, { on: own ? isDotted(ev.d) : S.dot, title: "Dotted" }); r1.append(el("span", { class: "flexgap" })); /* the dot: up beside the 32nd rest */ for (const k of ["staccato", "tenuto"]) b(k === "slur" ? [el("span", { class: "aglyph" }, ARTIC[k].glyph), el("span", { class: "acap" }, "SLUR")] : ARTIC[k].glyph, () => tapArtic(k), { cls: "art" + (k === "slur" ? " slurk" : "") + (S.artic === k ? " armed" : ""), on: !!(ev && (k === "slur" ? ev.slur : ev.artic === k)), title: S.artic === k ? `${ARTIC[k].label} armed — tap notes to mark them; tap again to return to note entry` : `${ARTIC[k].label}: tap before entering a note, or arm it and tap existing notes` }); p = keep; }   // staccato and tenuto: the top row's upper right corner
   for (const k of ["slur"]) b(k === "slur" ? [el("span", { class: "aglyph" }, ARTIC[k].glyph), el("span", { class: "acap" }, "SLUR")] : ARTIC[k].glyph, () => tapArtic(k), { cls: "art" + (k === "slur" ? " slurk" : "") + (S.artic === k ? " armed" : ""), on: !!(ev && (k === "slur" ? ev.slur : ev.artic === k)), title: S.artic === k ? `${ARTIC[k].label} armed — tap notes to mark them; tap again to return to note entry` : `${ARTIC[k].label}: tap before entering a note, or arm it and tap existing notes` });
   if (ev) {                                        // editing tools appear for the selected note
     b("✕", () => { S.sel = null; renderAll(); }, { cls: "txt", title: "Done" });
@@ -9976,7 +9977,6 @@ function mvStart(mode = "move") {
 function renderRow3(r3) {
   const b = (t, fn, opts = {}) => r3.append(el("button", { onclick: fn, class: (opts.cls || "") + (opts.on ? " on" : "") + (opts.warn ? " warn" : ""), title: opts.title, disabled: opts.disabled }, t));
   const ev = selChipObj() ? null : selEv(), own = ev && !S.selAuto;                       // dot, rest and ＋ live here, under the lengths
-  b("·", tapDot, { on: own ? isDotted(ev.d) : S.dot, title: "Dotted" });
   r3.append(el("span", { class: "flexgap" }));                                             // Move and Delete: the bottom right corner
   $("undoBtn").disabled = !UNDO.stack.length; $("redoBtn").disabled = !UNDO.redo.length;       // the UNDO / REDO row above the tools
   b("Move", () => mvStart("move"), { cls: "lyr wide", on: !!(S.mv && S.mv.mode === "move"), title: "Move beats: pick a run of beats, then ← → shift what is in them into empty space" });
