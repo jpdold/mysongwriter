@@ -454,10 +454,11 @@ body.kbOpen #app { padding-bottom: 330px; }              /* room to scroll the s
 #wordEdit .weKeys .krow { gap: 4px; }
 #wordEdit .weKeys button.sym { font-family: var(--serif); }
 #wordEdit .weKeys button.wide { flex: 1.6 1 0; font-size: 12px; font-weight: 600; }
-#wordEdit .weKeys button.space { flex: 4 1 0; }
+#wordEdit .weKeys button.space { flex: 2.4 1 0; }
 #wordEdit .weKeys button.on { background: #cfe3fb; border-color: #7fa6d6; }
 #wordEdit .weKeys button.go { background: var(--accent); color: #fff; border-color: var(--accent); }
-#wordEdit .weKeys button.go, #wordEdit .weKeys button.go2 { flex: 2.4 1 0; font-size: 9.5px; font-weight: 800; letter-spacing: .02em; line-height: 1.1; white-space: normal; padding: 0 2px; }
+#wordEdit .weKeys button.go, #wordEdit .weKeys button.go2 { font-size: 9.5px; font-weight: 800; letter-spacing: .02em; line-height: 1.1; white-space: normal; padding: 0; }
+#wordEdit .weKeys button.go, #wordEdit .weKeys button.go2, #wordEdit .weKeys button.eq, #wordEdit .weKeys button.space { flex: 2.4 1 0; }   /* Split, the two NEW CHIP keys and space: one size */
 #wordEdit .weKeys button.go2 { background: #e8f1fc; border-color: #7fa6d6; color: #123d6e; }
 #wordEdit .weKeys .modes button.mode { height: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; }
 #wordEdit .weKeys .mico { width: 60px; height: 14px; display: block; }
@@ -7820,10 +7821,10 @@ function loadPrefs() {
   const p = readJSON(STORE.prefs, {});
   S.theme = p.theme || "auto"; S.followWords = false; S.noteStyle = p.noteStyle || "trad"; S.noteSize = NOTE_SCALE[p.noteSize] ? p.noteSize : "m"; S.chordColor = p.chordColor || "#ffffff"; S.halfLines = p.halfLines == null ? true : !!p.halfLines; S.ftp = Object.assign({}, FTP_DEFAULT, p.ftp || {});
   S.winSize = WIN[p.winSize] ? p.winSize : "m"; S.chordsDisp = p.chordsDisp || "names"; S.metro = p.metro || "off"; S.custom = p.custom || null; S.len = p.len || 1;
-  S.lyricFont = p.lyricFont || "sans"; S.chipMode = p.chipMode === "single" ? "single" : "multi"; S.winState = Object.assign({ mel: "open", acc: "closed", bass: "closed" }, p.winState || {}); S.zoomWin = Object.assign({ mel: 1, acc: 1, bass: 1 }, p.zoomWin || {}); S.midi = p.midi || {}; S.viewSpan = [1, 2, 3, 4].includes(p.viewSpan) ? p.viewSpan : 1; if (p.softKb != null) S.softKb = p.softKb2 == null ? true : !!p.softKb2; S.kbPos = p.kbPos || null;   // the app keyboard, on unless switched off S.layout = p.layout === "stack" ? "stack" : "rolled";
+  S.lyricFont = p.lyricFont || "sans"; S.chipMode = "multi"; S.winState = Object.assign({ mel: "open", acc: "closed", bass: "closed" }, p.winState || {}); S.zoomWin = Object.assign({ mel: 1, acc: 1, bass: 1 }, p.zoomWin || {}); S.midi = p.midi || {}; S.viewSpan = [1, 2, 3, 4].includes(p.viewSpan) ? p.viewSpan : 1; if (p.softKb != null) S.softKb = p.softKb2 == null ? true : !!p.softKb2; S.kbPos = p.kbPos || null;   // the app keyboard, on unless switched off S.layout = p.layout === "stack" ? "stack" : "rolled";
   applyTheme();
 }
-function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, chipMode: S.chipMode, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout }); }
+function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout }); }
 function applyTheme() {
   const r = document.documentElement;
   if (S.theme === "dark") r.setAttribute("data-theme", "dark"); else r.removeAttribute("data-theme");
@@ -7969,7 +7970,7 @@ function distributeChips(bar) {
 }
 const chipMinW = c => Math.ceil(chipW(c) * 0.72);                                    // how narrow a chip may be squeezed and still read
 const chipBeats = (c, g) => (chipMinW(c) + 3) / g.beatPx;                            // the least room a chip needs, in beats (squeezed)
-const chipFull = (c, g) => (chipW(c) + 3) / g.beatPx;                                // the room a chip takes at its full width: the next chip lines up flush after it
+const chipFull = (c, g) => c.full ? 1e6 : (chipW(c) + 3) / g.beatPx;                 // the room a chip takes at its full width: the next chip lines up flush after it (a bar-filling chip leaves none)
 function setChipTime(bar, chip, t) {
   const i = bar.chips.indexOf(chip), bi = S.song.bars.indexOf(bar), B = barBeats(bi), g = GEO.mel || geo("mel"), gap = 0.0625;
   const lo = i > 0 ? bar.chips[i - 1].t + Math.max(gap, chipBeats(bar.chips[i - 1], g)) : 0;
@@ -8546,7 +8547,7 @@ function renderStrips() {
         svg.append(svgEl("rect", { class: "chip", x: px, y: 3, width: pw, height: H - 6, rx: 6, fill: "#fff", "fill-opacity": isSel ? 0.42 : 0.2, stroke: c.locked ? "#f5c518" : "#fff", "stroke-width": c.locked ? 2 : isSel ? 1.5 : 0.8, "stroke-opacity": c.locked ? 1 : isSel ? 1 : 0.5, "data-chip": c.id, "data-bi": bi }));
         const editing = WE.on && WE.bi === bi && WE.chipId === c.id;
         const baseW = Math.round(natW / (c.wf || 1)), fit = pw < baseW - 0.5 ? { textLength: Math.max(8, pw - 8), lengthAdjust: "spacingAndGlyphs" } : pw > baseW + 1.5 && c.text.trim().length > 1 ? { textLength: Math.max(8, pw - 8), lengthAdjust: "spacing" } : {};   // condensed when squeezed or narrowed, letter-spaced when widened
-        if (!editing) svg.append(svgEl("text", Object.assign({ x, y: 24, "font-size": 16, fill: "#fff", "font-weight": 700, "font-family": "system-ui, sans-serif", "xml:space": "preserve", style: "white-space:pre", "pointer-events": "none" }, fit), c.text));
+        if (!editing) svg.append(svgEl("text", Object.assign({ x: c.full && pw > baseW ? px + pw / 2 : x, y: 24, "font-size": 16, fill: "#fff", "font-weight": 700, "font-family": "system-ui, sans-serif", "xml:space": "preserve", style: "white-space:pre", "pointer-events": "none" }, c.full && pw > baseW ? { "text-anchor": "middle" } : fit), c.text));
         if (c.locked) svg.append(svgEl("text", { x: px + pw - 3, y: 11, "text-anchor": "end", "font-size": 8, fill: "#f5c518", "pointer-events": "none" }, "🔒"));
       });
     }
@@ -9082,14 +9083,14 @@ function openWordEdit(bi, t, chip) {
      an existing chip edits in place (a locked one only shows). The box never sits on another chip. */
   const box = $("wordEdit"), inp = weInput(), lbl = box.querySelector(".lbl2"), bar = S.song.bars[bi];
   if (WE.on && WE.dirty) commitWordEdit(false, true);
-  if (!WE.on) { WE.firstChip = null; WE.lastChip = null; }               // a fresh keyboard session: the first word typed will be the one selected on close
+  if (!WE.on) { WE.firstChip = null; WE.lastChip = null; S.chipMode = "multi"; }               // a fresh keyboard session: the first word typed will be the one selected on close
   normalizeLyrics(bar);
   WE.on = true; WE.bi = bi; WE.dirty = false; WE.wid = null; WE.chipId = chip ? chip.id : null;
   const g = stripGeo();
   const afterLast = bar.chips.reduce((m, c) => Math.max(m, c.t + chipFull(c, g)), 0);
   WE.t = chip ? chip.t : (entrySpot(bar, bi, Math.max(t || 0, Math.ceil(afterLast * 16 - 1e-6) / 16), ENTRY_MIN) ?? 0);
   inp.value = chip ? chip.text : ""; inp.disabled = !!(chip && chip.locked); S.bi = bi; S.selChip = chip ? { bi, id: chip.id } : null;
-  lbl.textContent = chip ? (chip.locked ? "Locked · 🔒 unlocks" : "Editing · ↵ keeps it · Split at the cursor · 🔒 locks it") : `Bar ${barNo(bi)} · beat ${beatLabel(WE.t)} · NEW SAME BEAT makes the chip · NEW NEXT BEAT moves on`;
+  lbl.textContent = chip ? (chip.locked ? "Locked · 🔒 unlocks" : "Editing · ↵ keeps it · Split at the cursor · 🔒 locks it") : `Bar ${barNo(bi)} · beat ${beatLabel(WE.t)} · NEW CHIP SAME BEAT makes the chip · NEW CHIP NEXT BEAT moves on`;
   box.classList.add("on"); renderWeKeys(); applyKbPos(); renderStrips();
   const bodyEl = $("lyrStrip").querySelector(".body"), x = g.x(bi, WE.t);
   inp.classList.add("on"); sizeInline();
@@ -9123,7 +9124,7 @@ function repositionEntry() {
 /* the entry box moves to a spot of its own choosing (⌫ and space on an empty box) */
 function weEntryTo(bi, t) {
   WE.bi = bi; WE.t = r3(t); S.bi = bi; S.selChip = null;
-  $("wordEdit").querySelector(".lbl2").textContent = `Bar ${barNo(bi)} · beat ${beatLabel(WE.t)} · NEW SAME BEAT makes the chip · NEW NEXT BEAT moves on`;
+  $("wordEdit").querySelector(".lbl2").textContent = `Bar ${barNo(bi)} · beat ${beatLabel(WE.t)} · NEW CHIP SAME BEAT makes the chip · NEW CHIP NEXT BEAT moves on`;
   renderAll(); weCaret();
 }
 /* ⌫ on an empty entry box: back over what is behind it. An unlocked chip is removed; a locked chip is passed through and kept, the box
@@ -9221,7 +9222,7 @@ function renderWeKeys() {
   /* keys fire on the finger lifting inside the key: no 300 ms delay, no ghost clicks, mis-taps can slide off */
   const key = (label, fn, cls, title) => { let down = false; return el("button", { class: cls || "", title, onpointerdown: e => { e.preventDefault(); down = true; }, onpointerup: e => { e.preventDefault(); if (down) fn(); down = false; }, onpointerleave: () => { down = false; }, onpointercancel: () => { down = false; }, onclick: e => e.preventDefault() }, label); };
   const modes = el("div", { class: "krow modes" });                                    // what the typed text becomes: one chip per word, or one chip in all
-  const modeKey = (label, mode, n) => { const ico = svgEl("svg", { class: "mico", viewBox: "0 0 60 14", "aria-hidden": "true" }); for (let i = 0; i < n; i++) ico.append(svgEl("rect", { x: 1 + i * (58 / n), y: 1, width: 58 / n - (n > 1 ? 3 : 0), height: 12, rx: 4, fill: "none", stroke: "currentColor", "stroke-width": 1.3 })); let down = false; return el("button", { class: "mode" + (S.chipMode === mode ? " on" : ""), title: mode === "multi" ? "each word you type becomes its own chip" : "everything you type becomes one chip", onpointerdown: e => { e.preventDefault(); down = true; }, onpointerup: e => { e.preventDefault(); if (down) { S.chipMode = mode; savePrefs(); renderWeKeys(); } down = false; }, onpointerleave: () => { down = false; } }, el("span", { class: "mlbl" }, label), ico); };
+  const modeKey = (label, mode, n) => { const ico = svgEl("svg", { class: "mico", viewBox: "0 0 60 14", "aria-hidden": "true" }); for (let i = 0; i < n; i++) ico.append(svgEl("rect", { x: 1 + i * (58 / n), y: 1, width: 58 / n - (n > 1 ? 3 : 0), height: 12, rx: 4, fill: "none", stroke: "currentColor", "stroke-width": 1.3 })); let down = false; return el("button", { class: "mode" + (S.chipMode === mode ? " on" : ""), title: mode === "multi" ? "each word you type becomes its own chip" : "everything you type becomes one chip", onpointerdown: e => { e.preventDefault(); down = true; }, onpointerup: e => { e.preventDefault(); if (down) { S.chipMode = mode; renderWeKeys(); } down = false; }, onpointerleave: () => { down = false; } }, el("span", { class: "mlbl" }, label), ico); };
   modes.append(modeKey("Multi-chip", "multi", 3), modeKey("Single chip", "single", 1));
   k.append(modes);
   WE_PAGES[wePage].forEach(row => {
@@ -9236,15 +9237,15 @@ function renderWeKeys() {
   const tools = el("div", { class: "krow" });
   tools.append(key("←", () => weMoveCaret(-1), "wide", "cursor left"));
   tools.append(key("→", () => weMoveCaret(1), "wide", "cursor right"));
-  tools.append(key("Split", weSplit, "wide", "split this chip in two at the cursor"));
+  tools.append(key("Split", weSplit, "wide eq", "split this chip in two at the cursor"));
   if (wePage === "sym") tools.append(key("𝄽", weRestChip, "wide sym", "a rest chip — nothing sung here"));
-  tools.append(key("NEW NEXT BEAT", weNewNextBeat, "wide go2", "make the chip, then move to the next free beat"));
+  tools.append(key("NEW CHIP NEXT BEAT", weNewNextBeat, "wide go2", "make the chip, then move to the next free beat"));
   k.append(tools);
   const bottom = el("div", { class: "krow" });
   bottom.append(key(wePage === "abc" ? "?!’" : "abc", () => { wePage = wePage === "abc" ? "sym" : "abc"; renderWeKeys(); }, "wide", "symbols"));
   bottom.append(key(wePage === "acc" ? "abc" : "àéñ", () => { wePage = wePage === "acc" ? "abc" : "acc"; renderWeKeys(); }, "wide", "accents"));
   bottom.append(key("space", () => { if (!inp.value && !WE.chipId) { weSpaceChip(); return; } insert(" "); }, "space"));
-  bottom.append(key("NEW SAME BEAT", () => commitWordEdit(true), "wide go", "make the chip; the box stays in this beat, just after it"));
+  bottom.append(key("NEW CHIP SAME BEAT", () => commitWordEdit(true), "wide go", "make the chip; the box stays in this beat, just after it"));
   k.append(bottom);
 }
 function closeWordEdit() {
@@ -9267,16 +9268,18 @@ function commitWordEdit(advance, quiet) {
     if (c) { nextT = c.t + chipFull(c, stripGeo()); WE.lastChip = c.id; }
     WE.chipId = null;
   } else if (raw) {
-    const words = S.chipMode === "single" ? [raw] : raw.split(/\s+/).filter(Boolean);   // Multi-chip: a chip per word, flush one after another; Single chip: one chip in all
+    const words = S.chipMode === "single" ? [raw] : raw.split(/\s+/).filter(Boolean);   // Multi-chip: a chip per word, flush one after another; Single chip: one chip across the whole bar
     let from = WE.t, made = 0;
-    for (const w of words) { const c = addLyricChip(bar, bi, w, from); if (!c) break; if (!WE.firstChip) WE.firstChip = { bi, id: c.id }; WE.lastChip = c.id; made++; from = c.t + chipFull(c, stripGeo()); }
-    if (!made) { toast("No room for that here — NEW NEXT BEAT, or the next bar"); if (quiet) finish(); return; }
+    for (const w of words) { const c = addLyricChip(bar, bi, w, from); if (!c) break; if (S.chipMode === "single") { c.full = true; from = barBeats(bi); } else from = c.t + chipFull(c, stripGeo()); if (!WE.firstChip) WE.firstChip = { bi, id: c.id }; WE.lastChip = c.id; made++; }
+    if (!made) { toast("No room for that here — NEW CHIP NEXT BEAT, or the next bar"); if (quiet) finish(); return; }
     if (made < words.length) toast(`${words.length - made} word${words.length - made === 1 ? "" : "s"} did not fit in this bar`);
     nextT = from;
   }
   bar.lyric = lyricFromChips(bar); inp.value = ""; inp.disabled = false;
   if (quiet) { finish(); return; }
-  renderAll(); openWordEdit(bi, Math.ceil(nextT * 16 - 1e-6) / 16);
+  renderAll();
+  if (nextT >= barBeats(bi) - 1e-6 && bi + 1 < S.song.bars.length) { S.bi = bi + 1; openWordEdit(bi + 1, 0); toast(`Bar ${barNo(bi + 1)}`); return; }   // the bar is full: on to the next
+  openWordEdit(bi, Math.ceil(nextT * 16 - 1e-6) / 16);
 }
 /* a new chip lands at the first spot from `from` (default the left edge) wide enough for it; null when nothing fits */
 function addLyricChip(bar, bi, text, from = 0) {
@@ -9291,7 +9294,7 @@ function addLyricChip(bar, bi, text, from = 0) {
    its legible minimum when there is not, and pushes the next chip along when even that will not fit; a bar too full for the
    minimums shrinks them all alike, so the chips still sit side by side */
 function layoutChips(bar, bi, g) {
-  const GAP = 3, x0 = g.x(bi, 0), x1 = g.x(bi, barBeats(bi)), items = [...bar.chips].sort((a, b) => a.t - b.t).map(c => ({ c, x: g.x(bi, c.t), nat: chipW(c), min: chipMinW(c), w: 0 }));
+  const GAP = 3, x0 = g.x(bi, 0), x1 = g.x(bi, barBeats(bi)), items = [...bar.chips].sort((a, b) => a.t - b.t).map(c => ({ c, x: g.x(bi, c.t), nat: c.full ? Math.max(chipW(c), x1 - g.x(bi, c.t)) : chipW(c), min: chipMinW(c), w: 0 }));   // a bar-filling chip runs to the bar line
   for (let i = 0; i < items.length; i++) {
     const it = items[i], nextX = i + 1 < items.length ? items[i + 1].x : x1 + GAP;
     it.w = Math.min(it.nat, nextX - it.x - GAP);
@@ -10160,7 +10163,7 @@ function openHelp() {
     h("Pickup & repeats", "Setup → Pickup adds a short bar (½, 1 or 2 beats) before beat 1. Tap the bar name → Repeat this section to play a section several times."),
     h("Moving the keyboard", "Drag the grey bar at the top of the keyboard to put it anywhere; drop it near the bottom of the screen to dock it there again. It remembers where you left it. The floating palette moves by its bar in the same way."),
     h("Typing words", "Tap the Lyrics strip: the keyboard opens with the entry box at the left edge of the strip. Type a word and press ↵ — it becomes a chip at the first free spot, and the keyboard stays open for the next word. Close it with ✕ and the first word you typed is already selected."),
-    h("Keyboard keys", "Multi-chip / Single chip at the top: whether what you type becomes one chip per word, or one chip in all. NEW SAME BEAT makes the chip and keeps the box in this beat, just after it; NEW NEXT BEAT makes it and moves to the next free beat. 𝄽 on the symbols page drops a rest chip — a chip like any other, for a beat with nothing sung. ← → move the cursor inside the word. NEW NEXT BEAT also jumps the box to the next free beat line. Split breaks the chip you are editing in two at the cursor, the second half landing right after the first. The entry box only ever sits on free space, so nothing can be typed over a chip, locked or not."),
+    h("Keyboard keys", "Multi-chip / Single chip at the top: whether what you type becomes one chip per word, or one chip in all. NEW CHIP SAME BEAT makes the chip and keeps the box in this beat, just after it; NEW CHIP NEXT BEAT makes it and moves to the next free beat. Under Single chip the chip fills the whole bar and the box moves on to the next bar. 𝄽 on the symbols page drops a rest chip — a chip like any other, for a beat with nothing sung. ← → move the cursor inside the word. NEW CHIP NEXT BEAT also jumps the box to the next free beat line. Split breaks the chip you are editing in two at the cursor, the second half landing right after the first. The entry box only ever sits on free space, so nothing can be typed over a chip, locked or not."),
     h("Placing words", "Words have no bearing on the notes; you line them up by eye. Drag a chip anywhere along the strip — it clicks onto a beat line when close, and never overlaps another chip. To spread a word so its syllables sit under their notes, edit it and put spaces inside it (the space bar, as many as you like); it stays one chip. When a word sits right, press the gold 🔒 on the keyboard to lock it in place; select it and press 🔒 again to unlock. A locked chip cannot move or be edited."),
     h("Tempo", "♩= in the top row shows the tempo. − and + change it by one (hold to keep going); tap the number to type one."),
     h("Chord mode", "The two-row button beside each stave turns chord mode on for that stave. While it is on, a tap at a note's time stacks another note on it — the same pitch again gives a unison, marked with a red edge — and a tap on empty space starts the next chord at the next free spot. Notes entered in chord mode are drawn in the chord colour (white by default, changeable in Settings) with a thin black edge on head and stem. Rests enter as usual. Tap the button again to go back to single notes."),
