@@ -8529,12 +8529,11 @@ function renderStrips() {
     for (const bi of bars) {
       const bar = song.bars[bi], cursorId = S.cursor && S.cursor.bi === bi ? S.cursor.chipId : null, selId = S.selChip && S.selChip.bi === bi ? S.selChip.id : null;
       normalizeLyrics(bar);
+      const laid = layoutChips(bar, bi, g);
       bar.chips.forEach(c => {
         any = true;
         /* a chip is free text: a pill hugging the words, with the spaces you typed kept, and a gold edge once it is locked */
-        const x = g.x(bi, c.t) + 3, natW = chipW(c), isSel = c.id === selId, px = x - 3;
-        const nxt = bar.chips.filter(o => o.t > c.t + 1e-6).sort((a, b) => a.t - b.t)[0], roomPx = ((nxt ? nxt.t : barBeats(bi)) - c.t) * g.beatPx - 3;
-        const pw = Math.max(chipMinW(c), Math.min(natW, roomPx)), squeezed = pw < natW - 0.5;      // squeezed between neighbours: the text condenses to fit
+        const L = laid.get(c.id), natW = chipW(c), isSel = c.id === selId, px = L.x, x = px + 3, pw = L.w;
         svg.append(svgEl("rect", { class: "chip", x: px, y: 3, width: pw, height: H - 6, rx: 6, fill: "#fff", "fill-opacity": isSel ? 0.42 : 0.2, stroke: c.locked ? "#f5c518" : "#fff", "stroke-width": c.locked ? 2 : isSel ? 1.5 : 0.8, "stroke-opacity": c.locked ? 1 : isSel ? 1 : 0.5, "data-chip": c.id, "data-bi": bi }));
         const editing = WE.on && WE.bi === bi && WE.chipId === c.id;
         const baseW = Math.round(natW / (c.wf || 1)), fit = pw < baseW - 0.5 ? { textLength: Math.max(8, pw - 6), lengthAdjust: "spacingAndGlyphs" } : pw > baseW + 1.5 && c.text.trim().length > 1 ? { textLength: Math.max(8, pw - 6), lengthAdjust: "spacing" } : {};   // condensed when squeezed or narrowed, letter-spaced when widened
@@ -9236,6 +9235,24 @@ function addLyricChip(bar, bi, text, from = 0) {
   c.t = t; bar.chips.push(c); bar.chips.sort((a, b) => a.t - b.t); return c;
 }
 /* a new chip lands at the first gap wide enough for it, scanning left to right; null when the bar is full */
+/* where the chips of a bar are drawn: never overlapping. Left to right, a chip takes its full width when there is room, squeezes to
+   its legible minimum when there is not, and pushes the next chip along when even that will not fit; a bar too full for the
+   minimums shrinks them all alike, so the chips still sit side by side */
+function layoutChips(bar, bi, g) {
+  const GAP = 3, x0 = g.x(bi, 0), x1 = g.x(bi, barBeats(bi)), items = [...bar.chips].sort((a, b) => a.t - b.t).map(c => ({ c, x: g.x(bi, c.t), nat: chipW(c), min: chipMinW(c), w: 0 }));
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i], nextX = i + 1 < items.length ? items[i + 1].x : x1 + GAP;
+    it.w = Math.min(it.nat, nextX - it.x - GAP);
+    if (it.w < it.min) { it.w = it.min; if (i + 1 < items.length) items[i + 1].x = it.x + it.w + GAP; }
+  }
+  let right = x1;                                                                                       // pushed past the bar end: gather them back from the right
+  for (let i = items.length - 1; i >= 0; i--) { const it = items[i]; if (it.x + it.w > right) it.x = right - it.w; right = it.x - GAP; }
+  if (items.length && items[0].x < x0) {                                                                // still too full: all shrink alike
+    const avail = x1 - x0 - GAP * (items.length - 1), total = items.reduce((a, it) => a + it.w, 0), k = Math.max(0.2, avail / total);
+    let x = x0; for (const it of items) { it.w = Math.max(6, it.w * k); it.x = x; x += it.w + GAP; }
+  }
+  return new Map(items.map(it => [it.c.id, { x: it.x, w: it.w }]));
+}
 /* the lock beside the Lyrics strip: the selected chip, else the last chip in this bar (the keyboard's own rules when it is open) */
 function lockFromStrip() {
   if (WE.on) { toggleLyricLock(); return; }
