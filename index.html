@@ -8640,8 +8640,8 @@ function renderPalette() {
   renderFtp(); renderTempo(); renderQuick();
   const r1 = $("palRow1"), r2 = $("palRow2"), r3 = $("palRow3"), r4 = $("palRow4"); r1.replaceChildren(); r2.replaceChildren(); r3.replaceChildren(); r4.replaceChildren();
   renderRow3(r4); r2.hidden = true;                                                     // the second row is empty now
-  { const evR = selChipObj() ? null : selEv(), ownR = evR && !S.selAuto;                  // the top row's upper left: whole, half, eighth and 32nd rests (the quarter rest lives on the quick palette)
-    [4, 2, 0.5, 0.125].forEach(v => r1.append(el("button", { onclick: () => tapRestLen(v), class: "gn" + ((ownR ? evR.rest && Math.abs(baseLen(evR.d) - v) < 1e-9 : S.restNext && (S.restLen || S.len) === v) ? " on" : ""), title: ownR ? `Make it a ${REST_NAME[v]} rest` : `${REST_NAME[v]} rest: goes in at the next free spot, or arms one for your next tap` }, restIcon(v)))); }
+  { const evR = selChipObj() ? null : selEv(), ownR = evR && !S.selAuto;                  // the top row's upper left: whole, half, eighth, 16th and 32nd rests (the quarter rest lives on the quick palette)
+    [4, 2, 0.5, 0.25, 0.125].forEach(v => r1.append(el("button", { onclick: () => tapRestLen(v), class: "gn" + ((ownR ? evR.rest && Math.abs(baseLen(evR.d) - v) < 1e-9 : S.restNext && (S.restLen || S.len) === v) ? " on" : ""), title: ownR ? `Make it a ${REST_NAME[v]} rest` : `${REST_NAME[v]} rest: goes in at the next free spot, or arms one for your next tap` }, restIcon(v)))); }
   let p = r1;
   const ev = selEv(), bar = curBar();
   const b = (t, fn, opts = {}) => p.append(el("button", Object.assign({ onclick: fn }, opts.attrs || {}, { class: (opts.cls || "") + (opts.on ? " on" : "") + (opts.warn ? " warn" : ""), title: opts.title, disabled: opts.disabled }), t));
@@ -8827,7 +8827,7 @@ function tapRestLen(v) {
 /* the rest buttons are drawn on a few stave lines, since a whole rest hangs from a line and a half rest sits on one */
 function restIcon(v) {
   const s = svgEl("svg", { viewBox: "0 0 24 26", width: 22, height: 24, "aria-hidden": "true" }), c = "currentColor";
-  [5, 9.5, 14, 18.5, 23].forEach(y => s.append(svgEl("line", { x1: 1, x2: 23, y1: y, y2: y, stroke: c, "stroke-width": 0.8, opacity: 0.35 })));
+  if (v >= 2) [5, 9.5, 14, 18.5, 23].forEach(y => s.append(svgEl("line", { x1: 1, x2: 23, y1: y, y2: y, stroke: c, "stroke-width": 0.8, opacity: 0.35 })));   // lines only where the rest needs one to read (it hangs from or sits on a line)
   if (v >= 8) s.append(svgEl("rect", { x: 9, y: 9.5, width: 6, height: 4.5, fill: c }));
   else if (v >= 4) s.append(svgEl("rect", { x: 7.5, y: 9.5, width: 9, height: 2.9, fill: c }));
   else if (v >= 2) s.append(svgEl("rect", { x: 7.5, y: 11.1, width: 9, height: 2.9, fill: c }));
