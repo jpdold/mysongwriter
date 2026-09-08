@@ -89,7 +89,7 @@ svg text { pointer-events: none; }
 .rollItem.open { background: var(--ground2); }
 .rollItem.open button { background: var(--box); color: #111; border-color: #a86d10; }
 #head { grid-area: head; } #nav { grid-area: nav; } #melWin { grid-area: mel; } #rhyStrip { grid-area: rhy; }
-#lyrStrip { grid-area: lyr; } #palette { grid-area: pal; } #accWin { grid-area: acc; } #bassWin { grid-area: bass; } #arrows { grid-area: arrows; } #undoRow { grid-area: undo; }
+#lyrStrip { grid-area: lyr; } #palette { grid-area: pal; } #accWin { grid-area: acc; } #bassWin { grid-area: bass; } #arrows { grid-area: arrows; } #undoRow, #mvRow { grid-area: undo; }
 @media (min-width: 860px) and (min-aspect-ratio: 5/4) {
   #app { max-width: 1180px; grid-template-columns: 1fr 1fr; column-gap: 14px; align-content: start;
     grid-template-areas: "head head" "nav nav" "mel acc" "rhy bass" "lyr bass" "arrows bass" "undo bass" "pal bass"; }
@@ -356,13 +356,14 @@ svg text { pointer-events: none; }
 /* the arrow row and UNDO / REDO: wide, not tall, between the Lyrics strip and the tools */
 #arrows { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
 #undoRow { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-top: 22px; }             /* the arrows are 22px tall: this row sits flush beneath them */
-#arrows, #undoRow { width: 37.5%; justify-self: end; }                                           /* the right side of the row, three quarters of the size it was */
-#arrows, #undoRow { grid-row: arrows-start / undo-end; align-self: start; }                     /* both share the tall cell beside the quick palette, at its top, the same distance from the Lyrics strip */
-#arrows button, #undoRow button { border-radius: 0; }                                            /* one block: shared edges, rounded only at the corners */
-#arrows button + button, #undoRow button + button { border-left: none; }
-#undoRow button { border-top: none; }
+#mvRow { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-top: 44px; }               /* and MOVE / DELETE flush beneath UNDO / REDO */
+#arrows, #undoRow, #mvRow { width: 37.5%; justify-self: end; }                                           /* the right side of the row, three quarters of the size it was */
+#arrows, #undoRow, #mvRow { grid-row: arrows-start / undo-end; align-self: start; }                     /* both share the tall cell beside the quick palette, at its top, the same distance from the Lyrics strip */
+#arrows button, #undoRow button, #mvRow button { border-radius: 0; }                                            /* one block: shared edges, rounded only at the corners */
+#arrows button + button, #undoRow button + button, #mvRow button + button { border-left: none; }
+#undoRow button, #mvRow button { border-top: none; }
 #arrows button:first-child { border-top-left-radius: 4px; } #arrows button:last-child { border-top-right-radius: 4px; }
-#undoRow button:first-child { border-bottom-left-radius: 4px; } #undoRow button:last-child { border-bottom-right-radius: 4px; }
+#mvRow button:first-child { border-bottom-left-radius: 4px; } #mvRow button:last-child { border-bottom-right-radius: 4px; }
 #arrows button { display: grid; place-items: center; }
 /* the quick palette: the left half beside the arrows — its own lengths, movable when unlocked, and it can float */
 #quick { grid-column: arrows; grid-row: arrows-start / undo-end; justify-self: start; align-self: start; width: calc(50% - 3px); display: grid; grid-template-columns: 24px repeat(4, 1fr); grid-template-rows: repeat(3, 30px); gap: 0; border: 1.5px solid #141414; border-radius: 4px; background: var(--ground2); overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,.4); user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: none; }
@@ -390,9 +391,11 @@ svg text { pointer-events: none; }
 #quick.float .qctl { grid-row: 2 / 5; }
 #app.focus-acc #quick, #app.focus-bass #quick { display: none; }
 #arrows .aico { width: 15px; height: 15px; display: block; }
-#arrows button, #undoRow button { height: 22px; padding: 0; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); color: #111; font-size: 14px; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); }
-#undoRow button { font-family: var(--sans); font-size: 10px; letter-spacing: .05em; }
-#arrows button:active, #undoRow button:active { background: linear-gradient(#ffd27a, #f5a623); }
+#arrows button, #undoRow button, #mvRow button { height: 22px; padding: 0; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); color: #111; font-size: 14px; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); }
+#undoRow button, #mvRow button { font-family: var(--sans); font-size: 10px; letter-spacing: .05em; }
+#mvRow #delBtn { color: var(--danger); }
+#mvRow button.on { background: linear-gradient(#6fb3ff, #2f7fd6); color: #fff; }
+#arrows button:active, #undoRow button:active, #mvRow button:active { background: linear-gradient(#ffd27a, #f5a623); }
 #undoRow button:disabled { opacity: .45; }
 #transport { display: flex; gap: 6px; }
 #transport button { width: 42px; height: 40px; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #cfcfcf); color: #111; font-size: 17px; padding: 0; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
@@ -599,6 +602,7 @@ body.kbOpen #app { padding-bottom: 330px; }              /* room to scroll the s
 
   <div id="arrows"><button id="arrUp" title="Up: the selected note a half step up, or the stave's register up"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V4M5 11l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="arrDn" title="Down: the selected note a half step down, or the stave's register down"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M5 13l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="arrL" title="Left: the selected note or word earlier, a picked run earlier, or the beat before"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H4M11 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="arrR" title="Right: the selected note or word later, a picked run later, or the beat after"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16M13 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
   <div id="undoRow"><button id="undoBtn" title="Undo">UNDO</button><button id="redoBtn" title="Redo">REDO</button></div>
+  <div id="mvRow"><button id="moveBtn" title="Move beats: pick a run of beats, then ← → shift what is in them into empty space">MOVE</button><button id="delBtn" title="Delete part or all of a beat, a bar or a section">DELETE</button></div>
   <div id="quick" title="Quick palette"></div>
   <div id="palette"><div class="prow" id="palRow1"></div><div class="prow" id="palRow2"></div><div class="prow" id="palRow3"></div><div class="prow" id="palRow4"></div></div>
 
@@ -9987,10 +9991,9 @@ function mvStart(mode = "move") {
 function renderRow3(r3) {
   const b = (t, fn, opts = {}) => r3.append(el("button", { onclick: fn, class: (opts.cls || "") + (opts.on ? " on" : "") + (opts.warn ? " warn" : ""), title: opts.title, disabled: opts.disabled }, t));
   const ev = selChipObj() ? null : selEv(), own = ev && !S.selAuto;                       // dot, rest and ＋ live here, under the lengths
-  r3.append(el("span", { class: "flexgap" }));                                             // Move and Delete: the bottom right corner
   $("undoBtn").disabled = !UNDO.stack.length; $("redoBtn").disabled = !UNDO.redo.length;       // the UNDO / REDO row above the tools
-  b("Move", () => mvStart("move"), { cls: "lyr wide", on: !!(S.mv && S.mv.mode === "move"), title: "Move beats: pick a run of beats, then ← → shift what is in them into empty space" });
-  b("Delete", () => mvStart("delete"), { cls: "lyr wide", on: !!(S.mv && S.mv.mode === "delete"), warn: !(S.mv && S.mv.mode === "delete"), title: "Delete part or all of a beat, a bar or a section" });
+  $("moveBtn").classList.toggle("on", !!(S.mv && S.mv.mode === "move")); $("delBtn").classList.toggle("on", !!(S.mv && S.mv.mode === "delete"));   // MOVE / DELETE live under UNDO / REDO
+  r3.hidden = !r3.querySelector("button");                                                 // nothing left on this row: it folds away
 }
 /* delete what the picker points at */
 function delRun(scope) {
@@ -10506,6 +10509,7 @@ async function boot() {
   $("arrUp").addEventListener("click", () => arrowUD(1)); $("arrDn").addEventListener("click", () => arrowUD(-1));
   $("arrL").addEventListener("click", () => arrowLR(-1)); $("arrR").addEventListener("click", () => arrowLR(1));
   $("undoBtn").addEventListener("click", undo); $("redoBtn").addEventListener("click", redo);
+  $("moveBtn").addEventListener("click", () => mvStart("move")); $("delBtn").addEventListener("click", () => mvStart("delete"));
   $("playAllBtn").addEventListener("click", playAll);
   $("rangeBtn").addEventListener("click", openPlayRange);
   $("stopBtn").addEventListener("click", stopAll);
