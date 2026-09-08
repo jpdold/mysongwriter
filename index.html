@@ -8370,7 +8370,7 @@ function drawSelFrame(svg, x, y, w, h, rx) {
              svgEl("rect", { x, y, width: w, height: h, rx, fill: "none", stroke: "#fff", "stroke-width": 2.2, "pointer-events": "none" }));
 }
 function drawGhost(svg, g, bi, ghost, color) {
-  const x0 = g.x(bi, ghost.t) + 1, x1 = g.x(bi, ghost.t + ghost.d) - 2;
+  const x0 = g.x(bi, ghost.t) + 1, x1 = g.x(bi, ghost.t + ghost.d) - 1;                  // inset the same on both sides, so a half-beat box is exactly half
   if (ghost.t + ghost.d > barBeats(bi) + 1e-6) drawSpillArrows(svg, g, bi);
   svg.append(svgEl("rect", { x: x0, y: 2, width: Math.max(4, x1 - x0), height: g.H - 4, rx: 2, fill: color, "fill-opacity": 0.18, stroke: color, "stroke-width": 2.2, "stroke-dasharray": "6 3", "pointer-events": "none" }));
   if (ghost.rest) svg.append(svgEl("text", { x: (x0 + x1) / 2, y: g.H / 2 + 6, "text-anchor": "middle", "font-size": Math.min(18, g.step * 1.4), fill: color, opacity: 0.7, "font-family": "Georgia, serif", "pointer-events": "none" }, "𝄽"));
@@ -8451,7 +8451,7 @@ function renderWindows() {
     drawMoveSel(svg, g, bi, "melody"); drawSpanBands(svg, g, bi, "melody");
     if (S.ghost && S.ghost.part === "melody" && S.ghost.bi === bi) drawGhost(svg, g, bi, S.ghost, box);
     for (const c of chains(bar)) {
-      const x0 = g.x(bi, c.t) + 1, x1 = g.x(bi, c.t + c.d) - 2, selected = c.members.some(e => e.id === sel);
+      const x0 = g.x(bi, c.t) + 1, x1 = g.x(bi, c.t + c.d) - 1, selected = c.members.some(e => e.id === sel);
       svg.append(svgEl("rect", { class: "slot", x: x0, y: 2, width: Math.max(4, x1 - x0), height: g.H - 4, rx: 2, fill: selected ? box : "none", "fill-opacity": 0.14, stroke: c.rest ? css("--ink2") : box, "stroke-width": selected ? 2.8 : 2, "stroke-dasharray": c.rest ? "3 3" : "6 3", "data-ev": c.head.id, "data-part": "melody", "data-bi": bi }));
       if (c.rest) { svg.append(svgEl("text", { x: (x0 + x1) / 2, y: g.H / 2 + 6, "text-anchor": "middle", "font-size": Math.min(18, g.step * 1.4), fill: css("--ink2"), "font-family": "Georgia, serif" }, "𝄽")); continue; }
       if (c.head.m == null && S.viewSpan === 4) { /* unpitched: nothing to draw */ }
@@ -8519,7 +8519,7 @@ function renderWindows() {
         if (e.slur) { const end = bar.ev[part].find(x => x.id === e.slur); if (end) drawSlur(svg, g, g.x(bi, e.t) + 2, e.m, g.x(bi, end.t) + 2, clamp(end.m, g.lo, g.hi), color, up); }
       }
       for (const e of [...bar.ev[part]].sort((a, b) => a.t - b.t)) {
-        const x0 = g.x(bi, e.t) + 1, x1 = g.x(bi, e.t + Math.min(e.d, g.B - e.t)) - 2;
+        const x0 = g.x(bi, e.t) + 1, x1 = g.x(bi, e.t + Math.min(e.d, g.B - e.t)) - 1;
         if (e.rest) { svg.append(svgEl("rect", { class: "noteEl", x: x0, y: 2, width: Math.max(4, x1 - x0), height: g.H - 4, rx: 2, fill: "none", stroke: css("--ink2"), "stroke-dasharray": "3 3", "data-ev": e.id, "data-part": part, "data-bi": bi })); continue; }
         if (e.m < g.lo || e.m > g.hi) { svg.append(svgEl("text", { class: "noteEl", x: x0 + 2, y: e.m > g.hi ? 9 : g.H - 3, "font-size": 8, "font-weight": 700, fill: color, "data-ev": e.id, "data-part": part, "data-bi": bi, style: "pointer-events:all" }, (e.m > g.hi ? "▲" : "▼") + noteName(e.m, key))); continue; }
         drawNote(svg, g, x0 + 1, e.m, e.d, e.chord ? S.chordColor : color, { "data-ev": e.id, "data-part": part, "data-bi": bi }, { noStem: beamed.has(e.id), outline: e.chord ? "#111" : null, uni: unison.has(e.id), ghostNote: !!e.ghost });
