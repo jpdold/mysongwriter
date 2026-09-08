@@ -355,9 +355,9 @@ svg text { pointer-events: none; }
 /* ── footer ── */
 /* the arrow row and UNDO / REDO: wide, not tall, between the Lyrics strip and the tools */
 #arrows { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
-#undoRow { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-top: -7px; }             /* flush under the arrows: the grid's row gap is taken back */
+#undoRow { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-top: 22px; }             /* the arrows are 22px tall: this row sits flush beneath them */
 #arrows, #undoRow { width: 37.5%; justify-self: end; }                                           /* the right side of the row, three quarters of the size it was */
-#arrows { align-self: end; }                                                                    /* sits down against the UNDO row */
+#arrows, #undoRow { grid-row: arrows-start / undo-end; align-self: start; }                     /* both share the tall cell beside the quick palette, at its top, the same distance from the Lyrics strip */
 #arrows button, #undoRow button { border-radius: 0; }                                            /* one block: shared edges, rounded only at the corners */
 #arrows button + button, #undoRow button + button { border-left: none; }
 #undoRow button { border-top: none; }
