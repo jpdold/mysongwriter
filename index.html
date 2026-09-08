@@ -468,6 +468,9 @@ body.kbOpen #app { padding-bottom: 330px; }              /* room to scroll the s
 #wordEdit .weKeys button .big { font-size: 22px; line-height: 1; font-weight: 700; }
 #wordEdit .weKeys button .cap { font-size: 7.5px; font-weight: 800; letter-spacing: .04em; line-height: 1; }
 #wordEdit .weKeys .sico { width: 56px; height: 12px; display: block; }
+#wordEdit .weKeys button.backk { flex: 2.3 1 0; display: flex; align-items: center; justify-content: center; gap: 1px; padding: 0; }   /* a small arrow tight against the B */
+#wordEdit .weKeys button.backk .cap { letter-spacing: .01em; }
+#wordEdit .weKeys button .sarr { font-size: 11px; line-height: 1; font-weight: 700; }
 #palette button.lock { background: linear-gradient(#ffe38a, #e6b400); border-color: #a07d00; }
 .strip .lock { width: 28px; height: 26px; padding: 0; border: 1.5px solid #a07d00; border-radius: 5px; background: linear-gradient(#ffe38a, #e6b400); color: #3a2d00; font-size: 13px; line-height: 1; justify-self: center; }
 .strip .lock.on { background: linear-gradient(#fff2b8, #f2c200); box-shadow: 0 0 0 2px rgba(242,194,0,.45); }
@@ -9275,7 +9278,7 @@ function renderWeKeys() {
     const r = el("div", { class: "krow" });
     row.split(" ").forEach(ch => {
       if (ch === "⇧") r.append(key("⇧", () => { const now = performance.now(); if (now - weShiftAt < 350) { weCaps = !weCaps; weShift = weCaps; } else { weShift = !weShift; weCaps = false; } weShiftAt = now; renderWeKeys(); }, "wide" + (weShift ? " on" : ""), weCaps ? "caps lock" : "shift (double-tap for caps)"));
-      else if (ch === "⌫") r.append(key("⌫", back, "wide", "delete"));
+      else if (ch === "⌫") r.append(key([el("span", { class: "sarr" }, "←"), el("span", { class: "cap" }, "BACKSPACE")], back, "wide backk", "delete"));
       else r.append(key(wePage === "abc" && weShift ? ch.toUpperCase() : ch, () => insert(wePage === "abc" && weShift ? ch.toUpperCase() : ch), wePage === "abc" ? "" : "sym", WE_TITLES[ch] || ""));
     });
     k.append(r);
