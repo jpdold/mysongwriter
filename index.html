@@ -368,9 +368,9 @@ svg text { pointer-events: none; }
 #quick .cell button.lift { position: relative; z-index: 5; opacity: .9; box-shadow: 0 6px 14px rgba(0,0,0,.5); }
 #quick .cell.over { outline: 2px dashed #f5a623; outline-offset: -3px; }
 #quick.unlocked .cell button { cursor: grab; }
-#quick.float { position: fixed; z-index: 60; width: 190px; grid-template-rows: 14px 30px 30px; }
-#quick.float .qgrip { display: block; grid-column: 1 / -1; height: 14px; background: #333; cursor: move; position: relative; }
-#quick.float .qgrip::after { content: ""; position: absolute; left: 50%; top: 5px; width: 36px; height: 4px; margin-left: -18px; border-radius: 2px; background: #888; }
+#quick.float { position: fixed; z-index: 60; width: 190px; grid-template-rows: 24px 30px 30px; }
+#quick.float .qgrip { display: block; grid-column: 1 / -1; height: 24px; background: #333; cursor: move; position: relative; touch-action: none; }
+#quick.float .qgrip::after { content: ""; position: absolute; left: 50%; top: 10px; width: 44px; height: 5px; margin-left: -22px; border-radius: 3px; background: #999; }
 #quick.float .qctl { grid-row: 2 / 4; }
 #app.focus-acc #quick, #app.focus-bass #quick { display: none; }
 #arrows .aico { width: 20px; height: 20px; display: block; }
@@ -9036,14 +9036,14 @@ function initQuick() {
   const box = $("quick"); if (!box) return; let st = null;
   box.addEventListener("pointerdown", e => {
     const Q = S.quick;
-    if (e.target.closest(".qgrip")) { const r = box.getBoundingClientRect(); st = { mode: "move", id: e.pointerId, dx: e.clientX - r.left, dy: e.clientY - r.top }; try { box.setPointerCapture(e.pointerId); } catch (x) {} e.preventDefault(); return; }
+    if (e.target.closest(".qgrip") || (Q.float && !e.target.closest("button"))) { const r = box.getBoundingClientRect(); st = { mode: "move", id: e.pointerId, dx: e.clientX - r.left, dy: e.clientY - r.top }; try { box.setPointerCapture(e.pointerId); } catch (x) {} e.preventDefault(); return; }   // floating: the grip, or any part of the frame that is not a button, drags it
     const cb = e.target.closest(".qctl button"); if (cb) { st = { mode: "ctl", id: e.pointerId, cb }; return; }
     const btn = e.target.closest(".cell button"); if (!btn) return;
     st = { mode: "tap", id: e.pointerId, btn, x0: e.clientX, y0: e.clientY, from: +btn.parentNode.dataset.i, lifted: false, to: null, timer: null };
     if (!Q.locked) { const s = st; s.timer = setTimeout(() => { if (st !== s) return; s.lifted = true; btn.classList.add("lift"); try { box.setPointerCapture(e.pointerId); } catch (x) {} }, 320); }
     e.preventDefault();
   });
-  box.addEventListener("pointermove", e => {
+  window.addEventListener("pointermove", e => {                                              // window-level, so a drag survives even if the phone refuses pointer capture
     if (!st || e.pointerId !== st.id) return;
     if (st.mode === "move") { const Q = S.quick; Q.x = clamp(e.clientX - st.dx, 0, Math.max(0, innerWidth - box.offsetWidth)); Q.y = clamp(e.clientY - st.dy, 0, Math.max(0, innerHeight - box.offsetHeight)); box.style.left = Q.x + "px"; box.style.top = Q.y + "px"; return; }
     if (st.mode !== "tap") return;
@@ -9068,7 +9068,7 @@ function initQuick() {
     if (s.to != null) quickMove(s.from, s.to);
     renderQuick();
   };
-  box.addEventListener("pointerup", up); box.addEventListener("pointercancel", up);
+  window.addEventListener("pointerup", up); window.addEventListener("pointercancel", up);
 }
 /* keep the screen awake while the app is open (a setting, on by default). The browser grants the lock only after a touch and
    drops it when the app is hidden, so it is asked for on the first touch and again whenever the app comes back into view. */
