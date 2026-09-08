@@ -7959,7 +7959,8 @@ function distributeChips(bar) {
   syncNotesToChips(bar);
 }
 const chipMinW = c => Math.ceil(chipW(c) * 0.72);                                    // how narrow a chip may be squeezed and still read
-const chipBeats = (c, g) => (chipMinW(c) + 3) / g.beatPx;                            // the room a chip needs, in beats
+const chipBeats = (c, g) => (chipMinW(c) + 3) / g.beatPx;                            // the least room a chip needs, in beats (squeezed)
+const chipFull = (c, g) => (chipW(c) + 3) / g.beatPx;                                // the room a chip takes at its full width: the next chip lines up flush after it
 function setChipTime(bar, chip, t) {
   const i = bar.chips.indexOf(chip), bi = S.song.bars.indexOf(bar), B = barBeats(bi), g = GEO.mel || geo("mel"), gap = 0.0625;
   const lo = i > 0 ? bar.chips[i - 1].t + Math.max(gap, chipBeats(bar.chips[i - 1], g)) : 0;
@@ -9077,7 +9078,7 @@ function openWordEdit(bi, t, chip) {
   normalizeLyrics(bar);
   WE.on = true; WE.bi = bi; WE.dirty = false; WE.wid = null; WE.chipId = chip ? chip.id : null;
   const g = stripGeo();
-  const afterLast = bar.chips.reduce((m, c) => Math.max(m, c.t + chipBeats(c, g)), 0);
+  const afterLast = bar.chips.reduce((m, c) => Math.max(m, c.t + chipFull(c, g)), 0);
   WE.t = chip ? chip.t : (entrySpot(bar, bi, Math.max(t || 0, Math.ceil(afterLast * 16 - 1e-6) / 16), ENTRY_MIN) ?? 0);
   inp.value = chip ? chip.text : ""; inp.disabled = !!(chip && chip.locked); S.bi = bi; S.selChip = chip ? { bi, id: chip.id } : null;
   lbl.textContent = chip ? (chip.locked ? "Locked · 🔒 unlocks" : "Editing · ↵ keeps it · Split at the cursor · 🔒 locks it") : `Bar ${barNo(bi)} · beat ${beatLabel(WE.t)} · ↵ makes the chip · ⇥ next beat`;
@@ -9090,17 +9091,17 @@ function openWordEdit(bi, t, chip) {
 }
 const ENTRY_MIN = 0.25;                                                  // the smallest room the entry box asks for, in beats
 /* the first t at or after `from` where a chip `w` beats wide fits without touching another; null when the bar has no such spot */
-function entrySpot(bar, bi, from, w) {
-  const g = stripGeo(), B = barBeats(bi), sorted = [...bar.chips].sort((a, b) => a.t - b.t);
+function entrySpot(bar, bi, from, w, tight = false) {
+  const g = stripGeo(), B = barBeats(bi), sorted = [...bar.chips].sort((a, b) => a.t - b.t), room = tight ? chipBeats : chipFull;   // others at full width; tight = squeezed
   let start = Math.max(0, from);
   for (const o of sorted) {
-    const oEnd = o.t + chipBeats(o, g);
+    const oEnd = o.t + room(o, g);
     if (oEnd <= start + 1e-6) continue;                                  // entirely before us
     if (start + w <= o.t + 1e-6) break;                                  // we fit before this one
     start = oEnd;                                                        // else skip past it
   }
   start = Math.ceil(start * 16 - 1e-6) / 16;
-  const next = sorted.find(o => o.t + chipBeats(o, g) > start + 1e-6);
+  const next = sorted.find(o => o.t + room(o, g) > start + 1e-6);
   if (start + w > B + 1e-6 || (next && start + w > next.t + 1e-6)) return null;
   return r3(start);
 }
@@ -9128,11 +9129,11 @@ function weSplit() {
   const left = text.slice(0, at).replace(/\s+$/, ""), right = text.slice(at).replace(/^\s+/, "");
   if (!left || !right) { toast("Put the cursor inside the word, between the two parts"); return; }
   const keep = c.text; c.text = left;
-  const g = stripGeo(), t = entrySpot(bar, WE.bi, c.t + chipBeats(c, g), (chipW({ text: right }) + 3) / g.beatPx);
+  const g = stripGeo(), t = entrySpot(bar, WE.bi, c.t + chipFull(c, g), (chipW({ text: right }) + 3) / g.beatPx);
   if (t == null) { c.text = keep; toast("No room for the second part in this bar"); return; }
   const n = { id: uid(), text: right, t, locked: false }; bar.chips.push(n); bar.chips.sort((a, b) => a.t - b.t); bar.lyric = lyricFromChips(bar);
   WE.chipId = null; WE.dirty = false; inp.value = ""; renderAll();
-  openWordEdit(WE.bi, n.t + chipBeats(n, g)); S.selChip = { bi: WE.bi, id: n.id }; renderStrips(); renderPalette();
+  openWordEdit(WE.bi, n.t + chipFull(n, g)); S.selChip = { bi: WE.bi, id: n.id }; renderStrips(); renderPalette();
 }
 /* 𝄽 on the keyboard: a rest chip at the entry spot (or the rest sign typed into the chip being edited) */
 function weRestChip() {
@@ -9214,13 +9215,13 @@ function commitWordEdit(advance, quiet) {
     const c = bar.chips.find(x => x.id === WE.chipId);
     if (c && !c.locked) { if (!raw) bar.chips = bar.chips.filter(x => x !== c); else { c.text = raw; resolveChipOverlaps(bar); } }
     if (c && !WE.firstChip) WE.firstChip = { bi, id: c.id };
-    if (c) { nextT = c.t + chipBeats(c, stripGeo()); WE.lastChip = c.id; }
+    if (c) { nextT = c.t + chipFull(c, stripGeo()); WE.lastChip = c.id; }
     WE.chipId = null;
   } else if (raw) {
     const c = addLyricChip(bar, bi, raw, WE.t);
     if (!c) { toast("No room for that here — ⇥ to a later beat, or the next bar"); if (quiet) finish(); return; }
     if (!WE.firstChip) WE.firstChip = { bi, id: c.id }; WE.lastChip = c.id;
-    nextT = c.t + chipBeats(c, stripGeo());
+    nextT = c.t + chipFull(c, stripGeo());
   }
   bar.lyric = lyricFromChips(bar); inp.value = ""; inp.disabled = false;
   if (quiet) { finish(); return; }
@@ -9230,7 +9231,7 @@ function commitWordEdit(advance, quiet) {
 function addLyricChip(bar, bi, text, from = 0) {
   const g = stripGeo(), c = { id: uid(), text, t: 0, locked: false }, wNat = (chipW(c) + 3) / g.beatPx, wMin = chipBeats(c, g);
   normalizeLyrics(bar);
-  const t = entrySpot(bar, bi, from, wNat) ?? entrySpot(bar, bi, from, wMin);
+  const t = entrySpot(bar, bi, from, wNat) ?? entrySpot(bar, bi, from, wMin) ?? entrySpot(bar, bi, from, wMin, true);
   if (t == null) return null;
   c.t = t; bar.chips.push(c); bar.chips.sort((a, b) => a.t - b.t); return c;
 }
@@ -9257,7 +9258,7 @@ function toggleLyricLock() {
   if (c.locked) { c.locked = false; WE.chipId = c.id; WE.t = c.t; inp.disabled = false; inp.value = c.text; S.selChip = { bi: WE.bi, id: c.id }; renderWeKeys(); renderAll(); toast("Unlocked — it can move and be edited again"); setTimeout(() => inp.focus(), 20); return; }
   if (WE.chipId === c.id) { const raw = inp.value.replace(/^\s+|\s+$/g, ""); if (raw) c.text = raw; resolveChipOverlaps(bar); }
   c.locked = true; WE.chipId = null; WE.dirty = false; inp.value = ""; inp.disabled = false; bar.lyric = lyricFromChips(bar);
-  renderAll(); openWordEdit(WE.bi, c.t + chipBeats(c, stripGeo())); toast("Locked in place");
+  renderAll(); openWordEdit(WE.bi, c.t + chipFull(c, stripGeo())); toast("Locked in place");
 }
 /* lyrics are free text now: old syllable, letter and rest chips just become plain chips */
 function normalizeLyrics(bar) {
