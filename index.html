@@ -468,6 +468,7 @@ body.kbOpen #app { padding-bottom: 330px; }              /* room to scroll the s
 #wordEdit .weKeys button .big { font-size: 22px; line-height: 1; font-weight: 700; }
 #wordEdit .weKeys button .cap { font-size: 7.5px; font-weight: 800; letter-spacing: .04em; line-height: 1; }
 #wordEdit .weKeys .sico { width: 56px; height: 12px; display: block; }
+#wordEdit .weKeys .narr { width: 28px; height: 14px; display: block; margin: 2px auto 0; }
 #wordEdit .weKeys button.backk { flex: 2.3 1 0; display: flex; align-items: center; justify-content: center; gap: 1px; padding: 0; }   /* a small arrow tight against the B */
 #wordEdit .weKeys button.backk .cap { letter-spacing: .01em; }
 #wordEdit .weKeys button .sarr { font-size: 11px; line-height: 1; font-weight: 700; }
@@ -9285,8 +9286,9 @@ function renderWeKeys() {
   });
   const tools = el("div", { class: "krow" });
   const cap = t => el("span", { class: "cap" }, t);
-  tools.append(key([el("span", { class: "big" }, "←"), cap("NUDGE CHIP")], () => weNudge(-1), "wide nudge", "nudge the chip a sixteenth of a beat earlier"));
-  tools.append(key([el("span", { class: "big" }, "→"), cap("NUDGE CHIP")], () => weNudge(1), "wide nudge", "nudge the chip a sixteenth of a beat later"));
+  const arrow = dir => { const s = svgEl("svg", { class: "narr", viewBox: "0 0 24 12", "aria-hidden": "true" }); s.append(svgEl("path", { d: dir < 0 ? "M 21 6 H 4 M 9 1.5 L 4 6 L 9 10.5" : "M 3 6 H 20 M 15 1.5 L 20 6 L 15 10.5", fill: "none", stroke: "currentColor", "stroke-width": 2.2, "stroke-linecap": "round", "stroke-linejoin": "round" })); return s; };   // drawn, so both arrows are one size and sit centred
+  tools.append(key([arrow(-1), cap("NUDGE CHIP")], () => weNudge(-1), "wide nudge", "nudge the chip a sixteenth of a beat earlier"));
+  tools.append(key([arrow(1), cap("NUDGE CHIP")], () => weNudge(1), "wide nudge", "nudge the chip a sixteenth of a beat later"));
   tools.append(key([splitIcon(), cap("SPLIT")], weSplit, "wide eq splitk", "split this chip in two at the cursor"));
   if (wePage === "sym") tools.append(key("𝄽", weRestChip, "wide sym", "a rest chip — nothing sung here"));
   tools.append(key("NEW CHIP NEXT BEAT", weNewNextBeat, "wide go2", "make the chip, then move to the next free beat"));
