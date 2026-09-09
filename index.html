@@ -8025,8 +8025,8 @@ function distributeChips(bar) {
   syncNotesToChips(bar);
 }
 const chipMinW = c => Math.ceil(chipW(c) * 0.72);                                    // how narrow a chip may be squeezed and still read
-const chipBeats = (c, g) => (chipMinW(c) + 3) / g.beatPx;                            // the least room a chip needs, in beats (squeezed)
-const chipFull = (c, g) => c.full ? 1e6 : (chipW(c) + 3) / g.beatPx;                 // the room a chip takes at its full width: the next chip lines up flush after it (a bar-filling chip leaves none)
+const chipBeats = (c, g) => chipMinW(c) / g.beatPx;                                  // the least room a chip needs, in beats (squeezed); chips sit edge to edge
+const chipFull = (c, g) => c.full ? 1e6 : chipW(c) / g.beatPx;                 // the room a chip takes at its full width: the next chip lines up flush after it (a bar-filling chip leaves none)
 function setChipTime(bar, chip, t) {
   const i = bar.chips.indexOf(chip), bi = S.song.bars.indexOf(bar), B = barBeats(bi), g = GEO.mel || geo("mel"), gap = 0.0625;
   const lo = i > 0 ? bar.chips[i - 1].t + Math.max(gap, chipBeats(bar.chips[i - 1], g)) : 0;
@@ -8041,7 +8041,7 @@ function resolveChipOverlaps(bar) {
   bar.chips.sort((a, b) => a.t - b.t);
   for (let i = 1; i < bar.chips.length; i++) {
     const p = bar.chips[i - 1], c = bar.chips[i], min = r3(p.t + chipBeats(p, g));
-    if (c.t < min - 1e-6) c.t = r3(Math.min(Math.ceil(min * 16) / 16, B - 0.125));
+    if (c.t < min - 1e-6) c.t = r3(Math.min(min, B - 0.125));                            // pushed along just far enough: edge to edge
   }
   refitChips(bar);
 }
@@ -9258,7 +9258,7 @@ function openWordEdit(bi, t, chip) {
   WE.on = true; WE.bi = bi; WE.dirty = false; WE.wid = null; WE.chipId = chip ? chip.id : null;
   const g = stripGeo();
   const afterLast = bar.chips.reduce((m, c) => Math.max(m, c.t + chipFull(c, g)), 0);
-  WE.t = chip ? chip.t : (entrySpot(bar, bi, Math.max(t || 0, Math.ceil(afterLast * 16 - 1e-6) / 16), ENTRY_MIN) ?? 0);
+  WE.t = chip ? chip.t : (entrySpot(bar, bi, Math.max(t || 0, afterLast), ENTRY_MIN) ?? 0);   // exactly at the last chip's edge, not rounded to a grid
   inp.value = chip ? chip.text : ""; inp.disabled = !!(chip && chip.locked); S.bi = bi; S.selChip = chip ? { bi, id: chip.id } : null;
   lbl.textContent = chip ? (chip.locked ? "Locked · 🔒 unlocks" : "Editing · NEW CHIP SAME BEAT keeps it · SPLIT at the cursor · 🔒 beside the strip locks it") : `Bar ${barNo(bi)} · beat ${beatLabel(WE.t)} · NEW CHIP SAME BEAT makes the chip · NEW CHIP NEXT BEAT moves on`;
   box.classList.add("on"); renderWeKeys(); applyKbPos(); renderStrips();
@@ -9278,7 +9278,7 @@ function entrySpot(bar, bi, from, w, tight = false) {
     if (start + w <= o.t + 1e-6) break;                                  // we fit before this one
     start = oEnd;                                                        // else skip past it
   }
-  start = Math.ceil(start * 16 - 1e-6) / 16;
+  start = r3(start);                                                                     // flush: no rounding up to a grid
   const next = sorted.find(o => o.t + room(o, g) > start + 1e-6);
   if (start + w > B + 1e-6 || (next && start + w > next.t + 1e-6)) return null;
   return r3(start);
@@ -9478,7 +9478,7 @@ function commitWordEdit(advance, quiet) {
   if (quiet) { finish(); return; }
   renderAll();
   if (nextT >= barBeats(bi) - 1e-6 && bi + 1 < S.song.bars.length) { S.bi = bi + 1; openWordEdit(bi + 1, 0); toast(`Bar ${barNo(bi + 1)}`); return; }   // the bar is full: on to the next
-  openWordEdit(bi, Math.ceil(nextT * 16 - 1e-6) / 16);
+  openWordEdit(bi, nextT);
 }
 /* a new chip lands at the first spot from `from` (default the left edge) wide enough for it; null when nothing fits */
 function addLyricChip(bar, bi, text, from = 0) {
@@ -9493,7 +9493,7 @@ function addLyricChip(bar, bi, text, from = 0) {
    its legible minimum when there is not, and pushes the next chip along when even that will not fit; a bar too full for the
    minimums shrinks them all alike, so the chips still sit side by side */
 function layoutChips(bar, bi, g) {
-  const GAP = 3, x0 = g.x(bi, 0), x1 = g.x(bi, barBeats(bi)), items = [...bar.chips].sort((a, b) => a.t - b.t).map(c => ({ c, x: g.x(bi, c.t), nat: c.full ? Math.max(chipW(c), x1 - g.x(bi, c.t)) : chipW(c), min: chipMinW(c), w: 0 }));   // a bar-filling chip runs to the bar line
+  const GAP = 0, x0 = g.x(bi, 0), x1 = g.x(bi, barBeats(bi)), items = [...bar.chips].sort((a, b) => a.t - b.t).map(c => ({ c, x: g.x(bi, c.t), nat: c.full ? Math.max(chipW(c), x1 - g.x(bi, c.t)) : chipW(c), min: chipMinW(c), w: 0 }));   // a bar-filling chip runs to the bar line
   for (let i = 0; i < items.length; i++) {
     const it = items[i], nextX = i + 1 < items.length ? items[i + 1].x : x1 + GAP;
     it.w = Math.min(it.nat, nextX - it.x - GAP);
