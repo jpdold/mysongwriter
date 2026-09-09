@@ -6467,7 +6467,7 @@ function svgEl(tag, attrs = {}, text) {
   return e;
 }
 let toastTimer = null;
-function toast(msg, ms = 2200) {
+function toast(msg, ms = 3700) {
   const t = $("toast"); t.textContent = msg; t.classList.add("on");
   clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("on"), ms);
 }
@@ -9258,7 +9258,12 @@ function initPointer() {
     if (WE.on && WE.picking && d.chip) { const i = WE.picks.findIndex(p => p.id === d.chip.id); if (i >= 0) WE.picks.splice(i, 1); else WE.picks.push({ bi: d.bi, id: d.chip.id }); renderStrips(); return; }   // SELECT CHIP(S) is on: the tap picks the chip, or unpicks it
     const p = svgPoint(lyr, e), at = stripGeo().at(p.x);
     S.sel = null;
-    if (d.chip) { if (S.selChip && S.selChip.id === d.chip.id) openWordEdit(d.bi, d.chip.t, d.chip); else { S.selChip = { bi: d.bi, id: d.chip.id }; S.bi = d.bi; if (WE.on) { WE.dirty = false; closeWordEdit(); S.selChip = { bi: d.bi, id: d.chip.id }; } renderAll(); } }
+    if (WE.on) {                                                                       // the keyboard stays open: a chip comes into the box to edit (what was typed becomes its chip first); empty space is where the next chip starts
+      if (d.chip) openWordEdit(d.bi, d.chip.t, d.chip);
+      else { S.selChip = null; openWordEdit(at.bi, at.t); }
+      return;
+    }
+    if (d.chip) { if (S.selChip && S.selChip.id === d.chip.id) openWordEdit(d.bi, d.chip.t, d.chip); else { S.selChip = { bi: d.bi, id: d.chip.id }; S.bi = d.bi; renderAll(); } }
     else { S.selChip = null; S.bi = at.bi; openWordEdit(at.bi, 0); }
   });
   lyr.addEventListener("pointercancel", () => { ld = null; });
@@ -9577,7 +9582,7 @@ function weTogglePick() {
   WE.picking = !WE.picking; if (!WE.picking) WE.picks = [];
   renderWeKeys(); renderStrips(); toast(WE.picking ? "Tap chips on the strip to select them — the tools then act on all of them" : "Selection cleared");
 }
-/* DELETE CHIP(S): the picked chips go, else the chip in hand */
+/* DELETE CHIP(S): the picked chips go, else the chip in hand; with neither, it starts picking and the next press deletes the picks */
 function weDeleteChips() {
   if (!WE.on) return;
   const picks = WE.picks.filter(p => S.song.bars[p.bi] && S.song.bars[p.bi].chips.some(c => c.id === p.id));
@@ -9588,7 +9593,7 @@ function weDeleteChips() {
     renderWeKeys(); renderAll(); placeInline(); weCaret();
     const n = picks.length; toast(`${n} chip${n > 1 ? "s" : ""} deleted`); return;
   }
-  const tg = weTarget(); if (!tg) { toast("Tap a chip to select it first"); return; }
+  const tg = weTarget(); if (!tg) { WE.picking = true; renderWeKeys(); renderStrips(); toast("Tap the chip — or chips — to delete, then DELETE CHIP(S) again"); return; }
   if (WE.chipId === tg.chip.id) { WE.chipId = null; weInput().value = ""; WE.dirty = false; }
   deleteChip(tg.bar, tg.chip); placeInline(); weCaret();
 }
