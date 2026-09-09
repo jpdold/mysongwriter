@@ -510,7 +510,8 @@ body.kbOpen #app { padding-bottom: 330px; }              /* room to scroll the s
 #wordEdit .weKeys button.on { background: #cfe3fb; border-color: #7fa6d6; }
 #wordEdit .weKeys button.go { background: var(--accent); color: #fff; border-color: var(--accent); }
 #wordEdit .weKeys button.go, #wordEdit .weKeys button.go2 { font-size: 9.5px; font-weight: 800; letter-spacing: .02em; line-height: 1.1; white-space: normal; padding: 0; }
-#wordEdit .weKeys button.eq, #wordEdit .weKeys button.space { flex: 2.4 1 0; }               /* Split and space: one size */
+#wordEdit .weKeys button.eq, #wordEdit .weKeys button.space { flex: 2.4 1 0; }               /* Split, SET and space: one size */
+#wordEdit .weKeys button.setk { background: var(--lyric); border-color: #2a6aa0; color: #fff; font-size: 12px; font-weight: 800; letter-spacing: .06em; box-shadow: inset 0 0 0 4px rgba(255,255,255,.22), inset 0 0 0 5px rgba(255,255,255,.55); }   /* SET: looks like a chip sitting on the Lyrics strip */
 #wordEdit .weKeys .ktail { display: grid; grid-template-columns: 5.6fr 2.4fr; gap: 4px; }   /* the keyboard's tail: two rows on the left, a stack on the right the width of the NEW CHIP keys */
 #wordEdit .weKeys .kleft { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 #wordEdit .weKeys .kright { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
@@ -9241,7 +9242,7 @@ function initPointer() {
   });
   /* lyric strip: drag a word, tap to edit or add */
   const lyr = $("lyrSvg"); let ld = null;
-  lyr.addEventListener("pointerdown", e => { const T = e.target, id = T.getAttribute && T.getAttribute("data-chip"); const bi = id ? parseInt(T.getAttribute("data-bi"), 10) : S.bi; const chip = id ? S.song.bars[bi].chips.find(c => c.id === id) : null; ld = { id: e.pointerId, x0: e.clientX, chip, bi, t0: chip ? chip.t : 0, moved: false }; try { lyr.setPointerCapture(e.pointerId); } catch (err) {} });
+  lyr.addEventListener("pointerdown", e => { const T = e.target, id = T.getAttribute && T.getAttribute("data-chip"); const bi = id ? parseInt(T.getAttribute("data-bi"), 10) : S.bi; const chip = id ? S.song.bars[bi].chips.find(c => c.id === id) : null; { const bar0 = S.song.bars[S.bi], p = bar0 && bar0.chips.find(c => c.placing); if (p && p !== chip) placeGapChip(bar0, S.bi, p); } ld = { id: e.pointerId, x0: e.clientX, chip, bi, t0: chip ? chip.t : 0, moved: false }; try { lyr.setPointerCapture(e.pointerId); } catch (err) {} });
   /* a landing spot: a beat line or a note start when one is close, else the nearest eighth */
   const snapStripT = (bar, bi, t, reach) => { const B = barBeats(bi), marks = []; for (let b = 0; b <= B; b++) marks.push(b); chains(bar).filter(c => !c.rest).forEach(c => marks.push(c.t)); const near = marks.sort((a, b) => Math.abs(a - t) - Math.abs(b - t)).find(m => Math.abs(m - t) < reach); return near != null ? near : Math.round(t * 8) / 8; };
   lyr.addEventListener("pointermove", e => {
@@ -9504,6 +9505,7 @@ function renderWeKeys() {
   tools.append(key([arrow(-1), cap("NUDGE CHIP")], () => weNudge(-1), "wide nudge", "nudge the chip a sixteenth of a beat earlier"));
   tools.append(key([arrow(1), cap("NUDGE CHIP")], () => weNudge(1), "wide nudge", "nudge the chip a sixteenth of a beat later"));
   tools.append(key([splitIcon(), cap("SPLIT")], weSplit, "wide eq splitk", "split this chip in two at the cursor"));
+  tools.append(key("SET", () => { if (!weSetChip()) toast("Nothing in hand to set"); }, "wide eq setk", "set the chip in place as it is"));
   if (wePage === "sym") tools.append(key("𝄽", weRestChip, "wide sym", "a rest chip — nothing sung here"));
   const keyNext = key("NEW CHIP NEXT BEAT", weNewNextBeat, "wide go2", "make the chip, then move to the next free beat");
   const bottom = el("div", { class: "krow" });
@@ -9516,6 +9518,14 @@ function renderWeKeys() {
   const keyGap = key([el("span", { class: "big" }, "↔"), cap("NEW CHIP")], weNewGapChip, "wide go3", "a blank chip: drag it along the strip to a chip's edge, a beat line or a space; let go and it fills the room up to the next line or chip");
   const right = el("div", { class: "kright" }); right.append(ur, keyNext, keySame, keyGap);
   const tail = el("div", { class: "ktail" }); tail.append(left, right); k.append(tail);
+}
+/* SET: the chip in hand is set in place as it is — a spacer still being placed settles where it sits, typed words become their chip at the box */
+function weSetChip() {
+  if (!WE.on) return false;
+  const bar = S.song.bars[WE.bi], placing = bar.chips.find(c => c.placing);
+  if (placing) { placeGapChip(bar, WE.bi, placing); return true; }
+  if (weInput().value.trim() || WE.chipId) { commitWordEdit(true); return true; }
+  return false;
 }
 function weBlink() { const box = $("wordEdit"); box.classList.remove("blink"); void box.offsetWidth; box.classList.add("blink"); setTimeout(() => box.classList.remove("blink"), 950); }
 function closeWordEdit() {
@@ -9625,7 +9635,8 @@ function initWordEdit() {
   document.addEventListener("pointerdown", e => {
     if (!WE.on || !e.target.closest) return;
     if (e.target.closest("#wordEdit, #lyrStrip, #overlay, .toast")) return;
-    e.preventDefault(); e.stopPropagation(); weBlink();
+    e.preventDefault(); e.stopPropagation();
+    if (!weSetChip()) weBlink();                                                          // something in hand is set by the tap; otherwise the keyboard says it is still open
   }, true);
   box.addEventListener("pointerdown", e => { e.stopPropagation(); e.preventDefault(); });
   const grip = box.querySelector(".weGrip"); let kd = null;
