@@ -8633,7 +8633,8 @@ function renderStrips() {
         svg.append(svgEl("rect", { class: "chip", x: px, y: 3, width: pw, height: H - 6, rx: 6, fill: "#fff", "fill-opacity": isSel ? 0.42 : 0.2, stroke: c.locked ? "#f5c518" : "#fff", "stroke-width": c.locked ? 2 : isSel ? 1.5 : 0.8, "stroke-opacity": c.locked ? 1 : isSel ? 1 : 0.5, "data-chip": c.id, "data-bi": bi }));
         const editing = WE.on && WE.bi === bi && WE.chipId === c.id;
         const baseW = Math.round(natW / (c.wf || 1)), fit = pw < baseW - 0.5 ? { textLength: Math.max(8, pw - 8), lengthAdjust: "spacingAndGlyphs" } : pw > baseW + 1.5 && c.text.trim().length > 1 ? { textLength: Math.max(8, pw - 8), lengthAdjust: "spacing" } : {};   // condensed when squeezed or narrowed, letter-spaced when widened
-        if (!editing) svg.append(svgEl("text", Object.assign({ x: c.full && pw > baseW ? px + pw / 2 : x, y: 24, "font-size": 16, fill: "#fff", "font-weight": 700, "font-family": "system-ui, sans-serif", "xml:space": "preserve", style: "white-space:pre", "pointer-events": "none" }, c.full && pw > baseW ? { "text-anchor": "middle" } : fit), c.text));
+        if (!editing && c.full && c.words) c.words.forEach(w => svg.append(svgEl("text", { x: g.x(bi, w.t) + 4, y: 24, "font-size": 16, fill: "#fff", "font-weight": 700, "font-family": "system-ui, sans-serif", "xml:space": "preserve", style: "white-space:pre", "pointer-events": "none" }, w.text)));   // combined: each word where it was
+        else if (!editing) svg.append(svgEl("text", Object.assign({ x: c.full && pw > baseW ? px + pw / 2 : x, y: 24, "font-size": 16, fill: "#fff", "font-weight": 700, "font-family": "system-ui, sans-serif", "xml:space": "preserve", style: "white-space:pre", "pointer-events": "none" }, c.full && pw > baseW ? { "text-anchor": "middle" } : fit), c.text));
         if (c.locked) svg.append(svgEl("text", { x: px + pw - 3, y: 11, "text-anchor": "end", "font-size": 8, fill: "#f5c518", "pointer-events": "none" }, "🔒"));
       });
     }
@@ -9527,6 +9528,21 @@ function weSetChip() {
   if (weInput().value.trim() || WE.chipId) { commitWordEdit(true); return true; }
   return false;
 }
+/* Single chip tapped while the bar already holds chips: delete them (a bar-wide box appears), combine them into one bar-wide
+   chip whose words stay where they were, or leave things as they are */
+function askSingleChip(bi) {
+  const bar = S.song.bars[bi];
+  const go = () => { S.chipMode = "single"; WE.chipId = null; weInput().value = ""; WE.dirty = false; WE.t = 0; renderWeKeys(); sizeInline(); renderAll(); };
+  const del = el("button", { class: "btn danger", onclick: () => { closeModal(); bar.chips = []; refitChips(bar); S.selChip = null; go(); toast("Bar cleared — type the single chip"); } }, "Delete existing");
+  const comb = el("button", { class: "btn acc", onclick: () => {
+    closeModal();
+    const cs = [...bar.chips].sort((a, b) => a.t - b.t).filter(c => !c.gap || c.text.trim());
+    const one = { id: uid(), text: cs.map(c => c.text.trim()).filter(Boolean).join(" "), t: 0, locked: false, full: true, words: cs.filter(c => c.text.trim()).map(c => ({ text: c.text.trim(), t: c.t })) };
+    bar.chips = [one]; refitChips(bar); S.selChip = { bi, id: one.id }; go(); toast("Combined into one chip");
+  } }, "Combine existing");
+  const cancel = el("button", { class: "btn", onclick: closeModal }, "Cancel");
+  openModal("Single chip", el("p", { style: "font-size:15px;margin:6px 0 4px" }, "This bar already has chips. Delete them and start the single chip fresh, or combine them into one chip with the words kept where they are?"), [del, comb, cancel]);
+}
 function weBlink() { const box = $("wordEdit"); box.classList.remove("blink"); void box.offsetWidth; box.classList.add("blink"); setTimeout(() => box.classList.remove("blink"), 950); }
 function closeWordEdit() {
   if (WE.on && WE.dirty) { commitWordEdit(false, true); return; }
@@ -9543,7 +9559,7 @@ function commitWordEdit(advance, quiet, sameBeat) {
   let nextT = WE.t;
   if (WE.chipId) {
     const c = bar.chips.find(x => x.id === WE.chipId);
-    if (c && !c.locked) { if (!raw) bar.chips = bar.chips.filter(x => x !== c); else { c.text = raw; delete c.gap; resolveChipOverlaps(bar); } }
+    if (c && !c.locked) { if (!raw) bar.chips = bar.chips.filter(x => x !== c); else { if (raw !== c.text) delete c.words; c.text = raw; delete c.gap; resolveChipOverlaps(bar); } }
     if (c && !WE.firstChip) WE.firstChip = { bi, id: c.id };
     if (c) { nextT = c.t + chipFull(c, stripGeo()); WE.lastChip = c.id; }
     WE.chipId = null;
@@ -9630,7 +9646,7 @@ function initWordEdit() {
   inp.addEventListener("blur", () => { /* the keyboard stays open until its ✕ (or NEW CHIP NEXT BEAT at the song's end) closes it */ });
   inp.addEventListener("pointerdown", e => e.stopPropagation());
   close.addEventListener("click", () => { if (WE.dirty) commitWordEdit(false, true); else closeWordEdit(); });
-  box.querySelectorAll(".weRow .wmode").forEach(b => b.addEventListener("pointerdown", e => { e.preventDefault(); const mode = b.dataset.mode; S.chipMode = mode; if (mode === "single" && !WE.chipId && !(S.song.bars[WE.bi].chips || []).length) WE.t = 0; renderWeKeys(); sizeInline(); renderStrips(); }));
+  box.querySelectorAll(".weRow .wmode").forEach(b => b.addEventListener("pointerdown", e => { e.preventDefault(); const mode = b.dataset.mode; if (mode === "single" && (S.song.bars[WE.bi].chips || []).some(c => c.id !== WE.chipId)) { askSingleChip(WE.bi); return; } S.chipMode = mode; if (mode === "single" && !WE.chipId) WE.t = 0; renderWeKeys(); sizeInline(); renderStrips(); }));
   /* while the keyboard is open, a tap on the Lyrics strip works as usual; a tap anywhere else is held off — the keyboard blinks twice and its ✕ flashes to say so */
   document.addEventListener("pointerdown", e => {
     if (!WE.on || !e.target.closest) return;
