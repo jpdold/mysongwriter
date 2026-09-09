@@ -502,7 +502,13 @@ body.kbOpen #app { padding-bottom: 330px; }              /* room to scroll the s
 #wordEdit .weKeys button.on { background: #cfe3fb; border-color: #7fa6d6; }
 #wordEdit .weKeys button.go { background: var(--accent); color: #fff; border-color: var(--accent); }
 #wordEdit .weKeys button.go, #wordEdit .weKeys button.go2 { font-size: 9.5px; font-weight: 800; letter-spacing: .02em; line-height: 1.1; white-space: normal; padding: 0; }
-#wordEdit .weKeys button.go, #wordEdit .weKeys button.go2, #wordEdit .weKeys button.eq, #wordEdit .weKeys button.space { flex: 2.4 1 0; }   /* Split, the two NEW CHIP keys and space: one size */
+#wordEdit .weKeys button.eq, #wordEdit .weKeys button.space { flex: 2.4 1 0; }               /* Split and space: one size */
+#wordEdit .weKeys .ktail { display: grid; grid-template-columns: 5.6fr 2.4fr; gap: 4px; }   /* the keyboard's tail: two rows on the left, a stack on the right the width of the NEW CHIP keys */
+#wordEdit .weKeys .kleft { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+#wordEdit .weKeys .kright { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+#wordEdit .weKeys .kright button.go, #wordEdit .weKeys .kright button.go2 { flex: 0 0 25px; height: 25px; width: 100%; }   /* a third shorter, to make room for UNDO / REDO above */
+#wordEdit .weKeys .krow.ur { gap: 4px; }
+#wordEdit .weKeys button.urk { flex: 1 1 0; height: 22px; font-size: 9px; font-weight: 800; letter-spacing: .05em; }
 #wordEdit .weKeys button.go2 { background: #e8f1fc; border-color: #7fa6d6; color: #123d6e; }
 #wordEdit .weKeys .modes button.mode { height: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; }
 #wordEdit .weKeys .modes button.closek { flex: 0.55 1 0; gap: 2px; background: #fbe9e7; border-color: #d98b80; color: #7a1a15; }   /* the keyboard's own close, at the top right */
@@ -9008,7 +9014,11 @@ function sizeChip(bar, chip, d) {
   chip.wf = Math.round(clamp((chip.wf || 1) + d, 0.5, 2.5) * 10) / 10; if (Math.abs(chip.wf - 1) < 1e-6) delete chip.wf;
   resolveChipOverlaps(bar); renderAll();
 }
-function deleteChip(bar, chip) { bar.chips = bar.chips.filter(c => c !== chip); refitChips(bar); S.selChip = null; renderAll(); }
+function deleteChip(bar, chip) {
+  const left = bar.chips.filter(c => c !== chip && c.t < chip.t + 1e-9).sort((a, b) => b.t - a.t)[0];   // the neighbour on the left takes the selection
+  bar.chips = bar.chips.filter(c => c !== chip); refitChips(bar);
+  S.selChip = left ? { bi: S.song.bars.indexOf(bar), id: left.id } : null; renderAll();
+}
 
 /* ═══════════════════════════════════════════════════════════════════════
    SECTION 12 · POINTER HANDLING — taps and drags on windows and strips
@@ -9449,14 +9459,16 @@ function renderWeKeys() {
   tools.append(key([arrow(1), cap("NUDGE CHIP")], () => weNudge(1), "wide nudge", "nudge the chip a sixteenth of a beat later"));
   tools.append(key([splitIcon(), cap("SPLIT")], weSplit, "wide eq splitk", "split this chip in two at the cursor"));
   if (wePage === "sym") tools.append(key("𝄽", weRestChip, "wide sym", "a rest chip — nothing sung here"));
-  tools.append(key("NEW CHIP NEXT BEAT", weNewNextBeat, "wide go2", "make the chip, then move to the next free beat"));
-  k.append(tools);
+  const keyNext = key("NEW CHIP NEXT BEAT", weNewNextBeat, "wide go2", "make the chip, then move to the next free beat");
   const bottom = el("div", { class: "krow" });
   bottom.append(key(wePage === "abc" ? "?!’" : "abc", () => { wePage = wePage === "abc" ? "sym" : "abc"; renderWeKeys(); }, "wide", "symbols"));
   bottom.append(key(wePage === "acc" ? "abc" : "àéñ", () => { wePage = wePage === "acc" ? "abc" : "acc"; renderWeKeys(); }, "wide", "accents"));
   bottom.append(key("space", () => { if (!inp.value && !WE.chipId) { weSpaceChip(); return; } insert(" "); }, "space"));
-  bottom.append(key("NEW CHIP SAME BEAT", () => commitWordEdit(true, false, true), "wide go", "make the chip; the box stays in this beat, just after it"));
-  k.append(bottom);
+  const keySame = key("NEW CHIP SAME BEAT", () => commitWordEdit(true, false, true), "wide go", "make the chip; the box stays in this beat, just after it");
+  const ur = el("div", { class: "krow ur" }); ur.append(key("UNDO", undo, "wide urk", "undo"), key("REDO", redo, "wide urk", "redo"));
+  const left = el("div", { class: "kleft" }); left.append(tools, bottom);
+  const right = el("div", { class: "kright" }); right.append(ur, keyNext, keySame);
+  const tail = el("div", { class: "ktail" }); tail.append(left, right); k.append(tail);
 }
 function closeWordEdit() {
   if (WE.on && WE.dirty) { commitWordEdit(false, true); return; }
