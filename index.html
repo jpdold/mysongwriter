@@ -7835,6 +7835,7 @@ const _chipW = new Map(); let _measureCtx = null, _measureText = null;
 /* a chip's width: the words measured in the strip's own font (a hidden text in the strip, so serif and small caps count), plus 4px each side */
 function chipW(c) {
   if (c.rest) return 22;
+  if (c.wpx) return Math.round(c.wpx * (c.wf || 1));                          // a spacer chip: the width it was given when placed
   const key = (S.lyricFont || "sans") + "|" + c.text;
   let w = _chipW.get(key);
   if (w == null) {
@@ -8609,6 +8610,12 @@ function renderStrips() {
         any = true;
         /* a chip is free text: a pill hugging the words, with the spaces you typed kept, and a gold edge once it is locked */
         const L = laid.get(c.id), natW = chipW(c), isSel = c.id === selId, px = L.x, x = px + 4, pw = L.w;
+        if (c.gap) {                                                                    // a spacer chip: solid white, a thin dashed black edge, ↔ in the middle (it drags into place, then fills its gap)
+          svg.append(svgEl("rect", { class: "chip", x: px, y: 3, width: pw, height: H - 6, rx: 6, fill: "#fff", stroke: c.locked ? "#f5c518" : "#111", "stroke-width": c.locked ? 2 : 1, "stroke-dasharray": c.locked ? "" : "3 2", "data-chip": c.id, "data-bi": bi }),
+                     svgEl("text", { x: px + pw / 2, y: 24, "text-anchor": "middle", "font-size": 16, "font-weight": 700, fill: c.placing ? "#2f7fd6" : "#111", "font-family": "system-ui, sans-serif", "pointer-events": "none" }, "↔"));
+          if (isSel) svg.append(svgEl("rect", { x: px - 1.5, y: 1.5, width: pw + 3, height: H - 3, rx: 7, fill: "none", stroke: "#2f7fd6", "stroke-width": 1.5, "pointer-events": "none" }));
+          return;
+        }
         svg.append(svgEl("rect", { class: "chip", x: px, y: 3, width: pw, height: H - 6, rx: 6, fill: "#fff", "fill-opacity": isSel ? 0.42 : 0.2, stroke: c.locked ? "#f5c518" : "#fff", "stroke-width": c.locked ? 2 : isSel ? 1.5 : 0.8, "stroke-opacity": c.locked ? 1 : isSel ? 1 : 0.5, "data-chip": c.id, "data-bi": bi }));
         const editing = WE.on && WE.bi === bi && WE.chipId === c.id;
         const baseW = Math.round(natW / (c.wf || 1)), fit = pw < baseW - 0.5 ? { textLength: Math.max(8, pw - 8), lengthAdjust: "spacingAndGlyphs" } : pw > baseW + 1.5 && c.text.trim().length > 1 ? { textLength: Math.max(8, pw - 8), lengthAdjust: "spacing" } : {};   // condensed when squeezed or narrowed, letter-spaced when widened
@@ -9015,9 +9022,10 @@ function sizeChip(bar, chip, d) {
   resolveChipOverlaps(bar); renderAll();
 }
 function deleteChip(bar, chip) {
-  const left = bar.chips.filter(c => c !== chip && c.t < chip.t + 1e-9).sort((a, b) => b.t - a.t)[0];   // the neighbour on the left takes the selection
+  const left = bar.chips.filter(c => c !== chip && c.t < chip.t + 1e-9).sort((a, b) => b.t - a.t)[0];   // the neighbour on the left takes the selection, else the one on the right
+  const right = bar.chips.filter(c => c !== chip && c.t > chip.t - 1e-9).sort((a, b) => a.t - b.t)[0], heir = left || right;
   bar.chips = bar.chips.filter(c => c !== chip); refitChips(bar);
-  S.selChip = left ? { bi: S.song.bars.indexOf(bar), id: left.id } : null; renderAll();
+  S.selChip = heir ? { bi: S.song.bars.indexOf(bar), id: heir.id } : null; renderAll();
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -9228,6 +9236,7 @@ function initPointer() {
     const dx = e.clientX - ld.x0; if (!ld.moved && Math.abs(dx) < 6) return; ld.moved = true;
     if (ld.chip.locked) return;                                                        // a locked chip stays put
     const g = stripGeo(), r = lyr.getBoundingClientRect(), raw = ld.t0 + dx * (g.W / r.width) / g.beatPx, bar = S.song.bars[ld.bi];
+    if (ld.chip.placing) { ld.chip.t = gapSnap(bar, ld.bi, ld.chip, raw, g); bar.chips.sort((a, b) => a.t - b.t); S.selChip = { bi: ld.bi, id: ld.chip.id }; renderStrips(); return; }   // a spacer on its way: it clicks onto chip edges and beat lines
     const beat = Math.round(raw), snap = Math.abs(raw - beat) < 0.08 ? beat : Math.round(raw * 16) / 16;   // slides freely; clicks onto a beat line when close
     setChipTime(bar, ld.chip, snap);
     S.selChip = { bi: ld.bi, id: ld.chip.id };
@@ -9235,6 +9244,7 @@ function initPointer() {
   });
   lyr.addEventListener("pointerup", e => {
     if (!ld || e.pointerId !== ld.id) return; const d = ld; ld = null;
+    if (d.chip && d.chip.placing) { placeGapChip(S.song.bars[d.bi], d.bi, d.chip); return; }   // a spacer let go: it settles and fills its gap
     if (d.moved) { S.selChip = null; renderAll(); return; }                 // the bar goes with the release; tap again to bring it back
     const p = svgPoint(lyr, e), at = stripGeo().at(p.x);
     S.sel = null;
@@ -9333,7 +9343,34 @@ function weSpaceChip() {
   if (WE.bi + 1 < S.song.bars.length) { weEntryTo(WE.bi + 1, 0); toast(`Bar ${barNo(WE.bi)}`); return true; }
   toast("End of the song"); return true;
 }
-/* NEW NEXT BEAT: whatever is typed becomes its chip(s), then the box moves on to the next free beat line */
+/* NEW CHIP ↔: a blank spacer chip of standard width at the entry spot. While it is being placed it snaps, as it is dragged, to
+   the edges of other chips, to beat lines, or sits in free space; on release it grows to fill the room up to the next beat line
+   or chip (when there is room), and from then on it is an ordinary chip. */
+function weNewGapChip() {
+  const bi = WE.on ? WE.bi : S.bi, bar = S.song.bars[bi], g = stripGeo(); normalizeLyrics(bar);
+  const c = { id: uid(), text: "", t: 0, locked: false, gap: true, placing: true, wpx: 45 };
+  const from = Math.max(WE.on ? WE.t : 0, chipsEdge(bar, g)), w = chipFull(c, g);
+  const t = entrySpot(bar, bi, from, w) ?? entrySpot(bar, bi, 0, w);
+  if (t == null) { toast("No room for a chip in this bar"); return; }
+  c.t = t; bar.chips.push(c); bar.chips.sort((a, b) => a.t - b.t); S.selChip = { bi, id: c.id }; renderAll();
+  toast("Drag the ↔ chip into place, then let go");
+}
+/* where a spacer being dragged clicks into place: a chip's left or right edge, or a beat line, when one is within reach */
+function gapSnap(bar, bi, chip, t, g) {
+  const marks = []; for (let b = 0; b <= barBeats(bi); b++) marks.push(b);
+  bar.chips.forEach(o => { if (o !== chip) { marks.push(o.t, o.t + chipFull(o, g)); } });
+  const reach = 8 / g.beatPx, near = marks.sort((a, b) => Math.abs(a - t) - Math.abs(b - t)).find(m => Math.abs(m - t) < reach);
+  return r3(clamp(near != null ? near : t, 0, Math.max(0, barBeats(bi) - chipFull(chip, g))));
+}
+/* on release: the spacer fills the room from where it sits to the next beat line or chip, when that room is at least a few pixels */
+function placeGapChip(bar, bi, chip) {
+  const g = stripGeo(), B = barBeats(bi);
+  const nextLine = Math.floor(chip.t + 1e-6) + 1, nextChip = bar.chips.filter(o => o !== chip && o.t > chip.t + 1e-6).map(o => o.t).sort((a, b) => a - b)[0];
+  const to = Math.min(B, nextLine, nextChip != null ? nextChip : B), room = (to - chip.t) * g.beatPx;
+  if (room >= 8) chip.wpx = Math.round(room * 100) / 100;
+  delete chip.placing; resolveChipOverlaps(bar); S.selChip = { bi, id: chip.id }; renderAll();
+}
+/* NEW CHIP NEXT BEAT: whatever is typed becomes its chip(s), then the box moves on to the next free beat line */
 /* the right edge of the right-most chip in the bar (in beats): no new chip may enter before it */
 function chipsEdge(bar, g) { return bar.chips.reduce((m, c) => Math.max(m, c.t + chipFull(c, g)), 0); }
 /* where a new chip would go in the beat it is in, and whether that beat has room for at least one letter (the widest of I . a A) */
@@ -9458,6 +9495,7 @@ function renderWeKeys() {
   tools.append(key([arrow(-1), cap("NUDGE CHIP")], () => weNudge(-1), "wide nudge", "nudge the chip a sixteenth of a beat earlier"));
   tools.append(key([arrow(1), cap("NUDGE CHIP")], () => weNudge(1), "wide nudge", "nudge the chip a sixteenth of a beat later"));
   tools.append(key([splitIcon(), cap("SPLIT")], weSplit, "wide eq splitk", "split this chip in two at the cursor"));
+  tools.append(key([el("span", { class: "big" }, "↔"), cap("NEW CHIP")], weNewGapChip, "wide nudge", "a blank chip: drag it along the strip to a chip's edge, a beat line or a space; let go and it fills the room up to the next line or chip"));
   if (wePage === "sym") tools.append(key("𝄽", weRestChip, "wide sym", "a rest chip — nothing sung here"));
   const keyNext = key("NEW CHIP NEXT BEAT", weNewNextBeat, "wide go2", "make the chip, then move to the next free beat");
   const bottom = el("div", { class: "krow" });
@@ -9485,7 +9523,7 @@ function commitWordEdit(advance, quiet, sameBeat) {
   let nextT = WE.t;
   if (WE.chipId) {
     const c = bar.chips.find(x => x.id === WE.chipId);
-    if (c && !c.locked) { if (!raw) bar.chips = bar.chips.filter(x => x !== c); else { c.text = raw; resolveChipOverlaps(bar); } }
+    if (c && !c.locked) { if (!raw) bar.chips = bar.chips.filter(x => x !== c); else { c.text = raw; delete c.gap; resolveChipOverlaps(bar); } }
     if (c && !WE.firstChip) WE.firstChip = { bi, id: c.id };
     if (c) { nextT = c.t + chipFull(c, stripGeo()); WE.lastChip = c.id; }
     WE.chipId = null;
@@ -9560,7 +9598,7 @@ function toggleLyricLock() {
 function normalizeLyrics(bar) {
   if (bar._lyrOk) return; bar._lyrOk = true;
   bar.chips = (bar.chips || []).filter(c => !c.rest && c.text != null);
-  bar.chips.forEach(c => { delete c.pos; delete c.kind; delete c.wid; delete c.span; delete c.d; if (c.locked == null) c.locked = false; if (c.text === " ") c.text = " "; });
+  bar.chips.forEach(c => { delete c.placing; delete c.pos; delete c.kind; delete c.wid; delete c.span; delete c.d; if (c.locked == null) c.locked = false; if (c.text === " ") c.text = " "; });
 }
 function initWordEdit() {
   const box = $("wordEdit"), inp = weInput(), close = box.querySelector("button.close");
