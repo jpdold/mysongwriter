@@ -9454,6 +9454,13 @@ function splitIcon() {
 /* NUDGE CHIP ← →: the chip being edited (or the selected chip) a sixteenth of a beat earlier or later; with a new word, the entry box itself */
 function weNudge(d) {
   if (!WE.on) return;
+  const picks = wePicked();
+  if (picks.length) {                                                                 // every picked chip moves together, the leading one first so none blocks another; locked ones stay
+    let locked = 0;
+    [...picks].sort((a, b) => d > 0 ? b.chip.t - a.chip.t : a.chip.t - b.chip.t).forEach(p => { if (p.chip.locked) { locked++; return; } setChipTime(p.bar, p.chip, p.chip.t + d / 16); });
+    if (WE.chipId) { const me = S.song.bars[WE.bi].chips.find(x => x.id === WE.chipId); if (me) WE.t = me.t; }
+    renderAll(); placeInline(); weCaret(); if (locked) toast(`${locked} locked chip${locked > 1 ? "s" : ""} stayed`); return;
+  }
   const bar = S.song.bars[WE.bi], id = WE.chipId || (S.selChip && S.selChip.bi === WE.bi ? S.selChip.id : null), c = id ? bar.chips.find(x => x.id === id) : null;
   if (c) {
     if (c.locked) { toast("That chip is locked — 🔒 beside the strip unlocks it"); return; }
@@ -9578,11 +9585,17 @@ function weTarget() {
   if (WE.chipId) { const bar = S.song.bars[WE.bi], chip = bar.chips.find(c => c.id === WE.chipId); if (chip) return { bar, chip }; }
   return selChipObj();
 }
+/* the chips picked with SELECT CHIP(S): the panel's tools act on all of them together */
+function wePicked() {
+  if (!WE.on) return [];
+  WE.picks = WE.picks.filter(p => S.song.bars[p.bi] && S.song.bars[p.bi].chips.some(c => c.id === p.id));
+  return WE.picks.map(p => { const bar = S.song.bars[p.bi]; return { bi: p.bi, bar, chip: bar.chips.find(c => c.id === p.id) }; });
+}
 /* SELECT CHIP(S): on, taps on the strip pick chips (a second tap unpicks); off again, the picks are let go */
 function weTogglePick() {
   if (!WE.on) return;
   WE.picking = !WE.picking; if (!WE.picking) WE.picks = [];
-  renderWeKeys(); renderStrips(); toast(WE.picking ? "Tap chips on the strip to select them" : "Selection cleared");
+  renderWeKeys(); renderStrips(); toast(WE.picking ? "Tap chips on the strip to select them — the tools then act on all of them" : "Selection cleared");
 }
 /* DELETE CHIP(S): the picked chips go (locked ones stay), else the chip in hand */
 function weDeleteChips() {
@@ -9601,25 +9614,38 @@ function weDeleteChips() {
   if (WE.chipId === tg.chip.id) { WE.chipId = null; weInput().value = ""; WE.dirty = false; }
   deleteChip(tg.bar, tg.chip); placeInline(); weCaret();
 }
-/* WIDEN: the chip in hand grows to fill the room beside it, up to the next chip or the bar line.
-   SHORTEN: back to the word's own width, then down to the least it can be while it still reads. */
-function weSizeChip(d) {
-  const tg = weTarget(); if (!tg) { toast("Tap a chip to select it first"); return; }
-  const { bar, chip } = tg; if (chip.locked) { toast("That chip is locked — 🔒 beside the strip unlocks it"); return; }
-  if (chip.full) { toast("A single chip already fills its bar"); return; }
+/* WIDEN / SHORTEN one chip: wider to fill the room beside it, up to the next chip or the bar line; shorter back to the
+   word's own width, then down to the least it can be while it still reads. Returns why it could not, or nothing when it did. */
+function sizeChipRoom(bar, chip, d) {
+  if (chip.locked) return "locked";
+  if (chip.full) return "full";
   const bi = S.song.bars.indexOf(bar), g = stripGeo(), base = chipW(chip) / (chip.wf || 1), cur = chip.wf || 1;
   let want;
   if (d > 0) {
     const next = bar.chips.filter(o => o !== chip && o.t > chip.t + 1e-6).map(o => o.t).sort((a, b) => a - b)[0];
     const room = (Math.min(barBeats(bi), next != null ? next : barBeats(bi)) - chip.t) * g.beatPx;
     want = Math.max(0.5, Math.floor(room / base * 100) / 100);
-    if (want <= cur + 1e-6) { toast("No more room beside it — move the next chip, or nudge this one"); return; }
+    if (want <= cur + 1e-6) return "noroom";
   } else {
     want = cur > 1 + 1e-6 ? 1 : 0.72;
-    if (want >= cur - 1e-6) { toast("That is as short as it goes"); return; }
+    if (want >= cur - 1e-6) return "short";
   }
   chip.wf = want; if (Math.abs(chip.wf - 1) < 1e-6) delete chip.wf;
-  resolveChipOverlaps(bar); renderAll(); placeInline(); weCaret();
+  resolveChipOverlaps(bar); return null;
+}
+const SIZE_WHY = { locked: "That chip is locked — 🔒 beside the strip unlocks it", full: "A single chip already fills its bar", noroom: "No more room beside it — move the next chip, or nudge this one", short: "That is as short as it goes" };
+/* WIDEN / SHORTEN on the panel: every picked chip (the right-most first, so each fills the room up to the next), else the chip in hand */
+function weSizeChip(d) {
+  const picks = wePicked();
+  if (picks.length) {
+    const why = [...picks].sort((a, b) => b.chip.t - a.chip.t).map(p => sizeChipRoom(p.bar, p.chip, d)), done = why.filter(w => !w).length, locked = why.filter(w => w === "locked").length;
+    renderAll(); placeInline(); weCaret();
+    toast(done ? `${done} chip${done > 1 ? "s" : ""} ${d > 0 ? "widened" : "shortened"}${locked ? `, ${locked} locked kept` : ""}${done + locked < picks.length ? (d > 0 ? ", the rest had no room" : ", the rest as short as they go") : ""}` : d > 0 ? "No room beside them" : "They are as short as they go");
+    return;
+  }
+  const tg = weTarget(); if (!tg) { toast("Tap a chip to select it first"); return; }
+  const why = sizeChipRoom(tg.bar, tg.chip, d); if (why) { toast(SIZE_WHY[why]); return; }
+  renderAll(); placeInline(); weCaret();
 }
 function weBlink() { const box = $("wordEdit"); box.classList.remove("blink"); void box.offsetWidth; box.classList.add("blink"); setTimeout(() => box.classList.remove("blink"), 950); }
 function closeWordEdit() {
@@ -9686,6 +9712,12 @@ function layoutChips(bar, bi, g) {
 }
 /* the lock beside the Lyrics strip: the selected chip, else the last chip in this bar (the keyboard's own rules when it is open) */
 function lockFromStrip() {
+  const picks = wePicked();
+  if (picks.length) {                                                                 // all the picked chips: locked if any was free, else all unlocked
+    const lock = picks.some(p => !p.chip.locked); picks.forEach(p => { p.chip.locked = lock; });
+    if (lock && WE.chipId && picks.some(p => p.chip.id === WE.chipId)) { WE.chipId = null; weInput().value = ""; WE.dirty = false; }
+    renderAll(); placeInline(); weCaret(); toast(`${picks.length} chip${picks.length > 1 ? "s" : ""} ${lock ? "locked" : "unlocked"}`); return;
+  }
   if (WE.on) { toggleLyricLock(); return; }
   const bi = S.selChip ? S.selChip.bi : S.bi, bar = S.song.bars[bi]; if (!bar) return;
   let c = S.selChip ? bar.chips.find(x => x.id === S.selChip.id) : null;
