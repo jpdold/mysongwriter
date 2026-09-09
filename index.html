@@ -482,7 +482,7 @@ body.kbOpen #app { padding-bottom: 330px; }              /* room to scroll the s
 #wordEdit .weRow .flex { flex: 1; }
 #wordEdit .weRow button { width: 32px; height: 30px; }
 #lyrInline { position: absolute; top: 3px; height: 30px; display: none; border: none; outline: none; background: rgba(255,255,255,.18); border-radius: 4px; padding: 0 3px;
-  font-family: var(--sans); font-weight: 700; font-size: 16px; color: #fff; caret-color: transparent; min-width: 40px; }
+  font-family: var(--sans); font-weight: 700; font-size: 16px; color: #fff; caret-color: transparent; min-width: 10px; }   /* the empty box may be as narrow as what is left of its beat */
 #weCaret { position: absolute; top: 8px; width: 2px; height: 20px; background: #fff; border-radius: 1px; display: none; pointer-events: none; z-index: 3; }
 #weCaret.on { display: block; }
 #lyrSvg rect.chip { cursor: grab; } #lyrSvg rect.grip { cursor: ew-resize; }
@@ -9258,7 +9258,7 @@ function openWordEdit(bi, t, chip) {
   WE.on = true; WE.bi = bi; WE.dirty = false; WE.wid = null; WE.chipId = chip ? chip.id : null;
   const g = stripGeo();
   const afterLast = bar.chips.reduce((m, c) => Math.max(m, c.t + chipFull(c, g)), 0);
-  WE.t = chip ? chip.t : (entrySpot(bar, bi, Math.max(t || 0, afterLast), ENTRY_MIN) ?? 0);   // exactly at the last chip's edge, not rounded to a grid
+  WE.t = chip ? chip.t : (entrySpot(bar, bi, Math.max(t || 0, afterLast), ENTRY_MIN) ?? Math.min(Math.max(t || 0, afterLast), barBeats(bi)));   // exactly at the last chip's edge; never back at the bar's start
   inp.value = chip ? chip.text : ""; inp.disabled = !!(chip && chip.locked); S.bi = bi; S.selChip = chip ? { bi, id: chip.id } : null;
   lbl.textContent = chip ? (chip.locked ? "Locked · 🔒 unlocks" : "Editing · NEW CHIP SAME BEAT keeps it · SPLIT at the cursor · 🔒 beside the strip locks it") : `Bar ${barNo(bi)} · beat ${beatLabel(WE.t)} · NEW CHIP SAME BEAT makes the chip · NEW CHIP NEXT BEAT moves on`;
   box.classList.add("on"); renderWeKeys(); applyKbPos(); renderStrips();
@@ -9324,9 +9324,19 @@ function weSpaceChip() {
   toast("End of the song"); return true;
 }
 /* NEW NEXT BEAT: whatever is typed becomes its chip(s), then the box moves on to the next free beat line */
+/* the right edge of the right-most chip in the bar (in beats): no new chip may enter before it */
+function chipsEdge(bar, g) { return bar.chips.reduce((m, c) => Math.max(m, c.t + chipFull(c, g)), 0); }
+/* where a new chip would go in the beat it is in, and whether that beat has room for at least one letter (the widest of I . a A) */
+function sameBeatRoom(bar, bi) {
+  const g = stripGeo(), from = Math.max(WE.t, chipsEdge(bar, g)), beatEnd = Math.min(Math.floor(from + 1e-6) + 1, barBeats(bi));
+  const need = Math.max(...["I", ".", "a", "A"].map(t => chipW({ text: t })));
+  return { from, ok: (beatEnd - from) * g.beatPx >= need - 1e-6 };
+}
 function weNewNextBeat() {
   if (!WE.on) return;
-  if (weInput().value.trim() || WE.chipId) commitWordEdit(true);
+  const typed = weInput().value.trim();
+  if (typed && !WE.chipId && S.chipMode !== "single" && !sameBeatRoom(S.song.bars[WE.bi], WE.bi).ok) { const inp = weInput(); inp.value = ""; WE.dirty = false; weTab(); inp.value = typed; WE.dirty = true; commitWordEdit(true); return; }   // no room in this beat: the words travel with the box to the next beat and go in there
+  if (typed || WE.chipId) commitWordEdit(true);
   weTab();
 }
 /* ⇥: the entry box jumps to the next beat line that is free */
@@ -9334,7 +9344,7 @@ function weTab() {
   if (!WE.on) return;
   if (WE.chipId) { toast("Finish this chip first (↵), then ⇥ moves on"); return; }
   const bar = S.song.bars[WE.bi], B = barBeats(WE.bi);
-  for (let b = Math.floor(WE.t + 1e-6) + 1; b < B; b++) { const t = entrySpot(bar, WE.bi, b, ENTRY_MIN); if (t != null && Math.abs(t - b) < 1e-6) { openWordEdit(WE.bi, b); return; } }
+  for (let b = Math.max(Math.floor(WE.t + 1e-6) + 1, Math.ceil(chipsEdge(bar, stripGeo()) - 1e-6)); b < B; b++) { const t = entrySpot(bar, WE.bi, b, ENTRY_MIN); if (t != null && Math.abs(t - b) < 1e-6) { openWordEdit(WE.bi, b); return; } }
   if (WE.bi + 1 < S.song.bars.length) { S.bi = WE.bi + 1; renderAll(); openWordEdit(WE.bi + 1, 0); toast(`Bar ${barNo(WE.bi)}`); return; }
   toast("No free beat left");
 }
@@ -9385,7 +9395,8 @@ function weMoveCaret(d) { const inp = weInput(); if (inp.disabled) return; const
 function placeInline() {
   const inp = weInput(); if (!WE.on) return; const g = stripGeo();
   if (S.chipMode === "single" && !WE.chipId) { const x0 = g.x(WE.bi, 0), x1 = g.x(WE.bi, barBeats(WE.bi)); inp.style.left = (x0 + 1) + "px"; inp.style.width = Math.max(44, x1 - x0 - 2) + "px"; return; }
-  inp.style.width = Math.max(44, chipW({ text: inp.value || "word" }) + 8) + "px";
+  const roomPx = Math.max(12, (Math.floor(WE.t + 1e-6) + 1 - WE.t) * g.beatPx);
+  inp.style.width = (inp.value ? chipW({ text: inp.value }) + 8 : Math.min(44, roomPx)) + "px";   // empty: only what is left of the beat; typed: the word's width
   const x = g.x(WE.bi, WE.t); inp.style.left = clamp(x + 1, 0, Math.max(0, g.W - inp.offsetWidth - 2)) + "px";
 }
 function sizeInline() { placeInline(); repositionEntry(); weCaret(); }
@@ -9444,7 +9455,7 @@ function renderWeKeys() {
   bottom.append(key(wePage === "abc" ? "?!’" : "abc", () => { wePage = wePage === "abc" ? "sym" : "abc"; renderWeKeys(); }, "wide", "symbols"));
   bottom.append(key(wePage === "acc" ? "abc" : "àéñ", () => { wePage = wePage === "acc" ? "abc" : "acc"; renderWeKeys(); }, "wide", "accents"));
   bottom.append(key("space", () => { if (!inp.value && !WE.chipId) { weSpaceChip(); return; } insert(" "); }, "space"));
-  bottom.append(key("NEW CHIP SAME BEAT", () => commitWordEdit(true), "wide go", "make the chip; the box stays in this beat, just after it"));
+  bottom.append(key("NEW CHIP SAME BEAT", () => commitWordEdit(true, false, true), "wide go", "make the chip; the box stays in this beat, just after it"));
   k.append(bottom);
 }
 function closeWordEdit() {
@@ -9453,7 +9464,7 @@ function closeWordEdit() {
   const f = WE.firstChip; WE.firstChip = null;
   if (was && f && S.song.bars[f.bi] && S.song.bars[f.bi].chips.some(c => c.id === f.id)) { S.selChip = { bi: f.bi, id: f.id }; S.bi = f.bi; renderAll(); }   // the first word you typed is ready to move or stretch
 }
-function commitWordEdit(advance, quiet) {
+function commitWordEdit(advance, quiet, sameBeat) {
   /* ↵: the text becomes a chip at the entry spot (or updates the chip being edited); the box moves on to just after it */
   if (!WE.on) return;
   const inp = weInput(), raw = inp.value.replace(/^\s+|\s+$/g, ""), bi = WE.bi, bar = S.song.bars[bi];
@@ -9468,7 +9479,9 @@ function commitWordEdit(advance, quiet) {
     WE.chipId = null;
   } else if (raw) {
     const words = S.chipMode === "single" ? [raw] : raw.split(/\s+/).filter(Boolean);   // Multi-chip: a chip per word, flush one after another; Single chip: one chip across the whole bar
-    let from = WE.t, made = 0;
+    const room = sameBeatRoom(bar, bi);
+    if (sameBeat && S.chipMode !== "single" && !room.ok) { WE.dirty = true; noticeModal("Not enough room here — please enter NEW CHIP NEXT BEAT"); return; }
+    let from = room.from, made = 0;                                                        // never before the right-most chip's edge
     for (const w of words) { const c = addLyricChip(bar, bi, w, from); if (!c) break; if (S.chipMode === "single") { c.full = true; from = barBeats(bi); } else from = c.t + chipFull(c, stripGeo()); if (!WE.firstChip) WE.firstChip = { bi, id: c.id }; WE.lastChip = c.id; made++; }
     if (!made) { toast("No room for that here — NEW CHIP NEXT BEAT, or the next bar"); if (quiet) finish(); return; }
     if (made < words.length) toast(`${words.length - made} word${words.length - made === 1 ? "" : "s"} did not fit in this bar`);
@@ -9540,7 +9553,7 @@ function normalizeLyrics(bar) {
 function initWordEdit() {
   const box = $("wordEdit"), inp = weInput(), close = box.querySelector("button.close");
   box.querySelector("button.kb").addEventListener("click", () => { S.softKb = !S.softKb; savePrefs(); renderWeKeys(); if (!S.softKb) { inp.blur(); setTimeout(() => inp.focus(), 30); } });
-  inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); commitWordEdit(true); } else if (e.key === "Tab") { e.preventDefault(); weNewNextBeat(); } else if (e.key === "Backspace" && !inp.value && !WE.chipId) { e.preventDefault(); weBackChip(); } else if (e.key === " " && !inp.value && !WE.chipId) { e.preventDefault(); weSpaceChip(); } else if (e.key === "Escape") { e.preventDefault(); WE.dirty = false; closeWordEdit(); } });
+  inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); commitWordEdit(true, false, true); } else if (e.key === "Tab") { e.preventDefault(); weNewNextBeat(); } else if (e.key === "Backspace" && !inp.value && !WE.chipId) { e.preventDefault(); weBackChip(); } else if (e.key === " " && !inp.value && !WE.chipId) { e.preventDefault(); weSpaceChip(); } else if (e.key === "Escape") { e.preventDefault(); WE.dirty = false; closeWordEdit(); } });
   inp.addEventListener("input", () => { WE.dirty = true; sizeInline(); });
   document.addEventListener("selectionchange", () => { if (WE.on) weCaret(); });
   ["keyup", "click", "focus"].forEach(ev => inp.addEventListener(ev, () => weCaret()));
