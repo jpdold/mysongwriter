@@ -8642,7 +8642,7 @@ function renderStrips() {
         pickFrame();
       });
     }
-    if (!any && !WE.on) svg.append(svgEl("text", { x: g.W1 / 2, y: 23, "text-anchor": "middle", "font-size": 11, fill: "rgba(255,255,255,.75)", "font-weight": 400 }, "tap here or Lyrics to type words"));
+    if (!any && !WE.on) svg.append(svgEl("text", { x: g.W1 / 2, y: 23, "text-anchor": "middle", "font-size": 11, fill: "rgba(255,255,255,.75)", "font-weight": 700, "letter-spacing": ".06em" }, "TAP HERE TO TYPE LYRICS/WORDS"));
   }
   const ph = $("lyrSvg"); ph.append(svgEl("line", { id: "lyrHead", x1: -5, x2: -5, y1: 0, y2: H, stroke: "#fff", "stroke-width": 2, "pointer-events": "none" }));
   if (WE.on) { const inp = weInput(); if (viewBars().includes(WE.bi)) { inp.classList.add("on"); placeInline(); } else inp.classList.remove("on"); }
@@ -9030,11 +9030,6 @@ function joinLetters(bar, chip) {
   const fresh = tokenizeLyric(text); fresh.forEach((c, k) => { c.t = r3(t + k * 0.25); });
   bar.chips.push(...fresh); bar.chips.sort((a, b) => a.t - b.t); refitChips(bar);
   S.selChip = fresh.length ? { bi: S.song.bars.indexOf(bar), id: fresh[0].id } : null; renderAll();
-}
-/* Narrow / Widen: a chip's own width, in steps of a tenth; it works wherever the chip is — neighbours make way when it grows */
-function sizeChip(bar, chip, d) {
-  chip.wf = Math.round(clamp((chip.wf || 1) + d, 0.5, 2.5) * 10) / 10; if (Math.abs(chip.wf - 1) < 1e-6) delete chip.wf;
-  resolveChipOverlaps(bar); renderAll();
 }
 function deleteChip(bar, chip) {
   const left = bar.chips.filter(c => c !== chip && c.t < chip.t + 1e-9).sort((a, b) => b.t - a.t)[0];   // the neighbour on the left takes the selection, else the one on the right
