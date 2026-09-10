@@ -9478,6 +9478,9 @@ function weNewCurrentBeat() {
     button("Proceed", proceed, "acc"),
     button("Cancel", restore)]);
 }
+/* a chip just set is selected — the panel's tools act on it — until typing begins, when the words go into the box as usual */
+function weSelectLast(bi) { const id = WE.lastChip; if (WE.on && id && S.song.bars[bi] && S.song.bars[bi].chips.some(c => c.id === id)) { S.selChip = { bi, id }; renderStrips(); renderPalette(); } }
+function weTypingStarts() { if (S.selChip && !WE.chipId) { S.selChip = null; renderStrips(); renderPalette(); } }
 /* words set aside while another chip is modified come back to the box once it is set */
 function weUncarry() { if (!WE.carry || !WE.on) return; const inp = weInput(); inp.value = WE.carry; WE.carry = ""; WE.dirty = true; sizeInline(); toast("Your words are back in the box"); }
 /* NEW CHIP → NEXT BEAT. The words in the box are set here when they fit; then the box goes to the next beat line — the line after
@@ -9609,7 +9612,7 @@ function renderWeKeys() {
   inp.setAttribute("inputmode", S.softKb ? "none" : "text");
   if (!S.softKb) return;
   const caret = () => [inp.selectionStart == null ? inp.value.length : inp.selectionStart, inp.selectionEnd == null ? inp.value.length : inp.selectionEnd];
-  const insert = ch => { if (!weAdoptSpacer()) return; const [s, e2] = caret(); inp.value = inp.value.slice(0, s) + ch + inp.value.slice(e2); WE.dirty = true; sizeInline(); inp.focus(); inp.setSelectionRange(s + ch.length, s + ch.length); if (weShift && !weCaps) { weShift = false; renderWeKeys(); } };
+  const insert = ch => { if (!weAdoptSpacer()) return; weTypingStarts(); const [s, e2] = caret(); inp.value = inp.value.slice(0, s) + ch + inp.value.slice(e2); WE.dirty = true; sizeInline(); inp.focus(); inp.setSelectionRange(s + ch.length, s + ch.length); if (weShift && !weCaps) { weShift = false; renderWeKeys(); } };
   const back = () => { if (inp.disabled) return; if (!inp.value && !WE.chipId) { weBackChip(); return; } let [s, e2] = caret(); if (s === e2 && s > 0) s = s - 1; inp.value = inp.value.slice(0, s) + inp.value.slice(e2); WE.dirty = true; sizeInline(); inp.focus(); inp.setSelectionRange(s, s); };
   /* keys fire on the finger lifting inside the key: no 300 ms delay, no ghost clicks, mis-taps can slide off */
   const key = (label, fn, cls, title) => { let down = false; return el("button", { class: cls || "", title, onpointerdown: e => { e.preventDefault(); down = true; }, onpointerup: e => { e.preventDefault(); if (down) fn(); down = false; }, onpointerleave: () => { down = false; }, onpointercancel: () => { down = false; }, onclick: e => e.preventDefault() }, label); };
@@ -9824,8 +9827,8 @@ function commitWordEdit(advance, quiet, sameBeat) {
   bar.lyric = lyricFromChips(bar); inp.value = ""; inp.disabled = false;
   if (quiet) { finish(); return; }
   renderAll();
-  if (nextT >= barBeats(bi) - 1e-6 && bi + 1 < S.song.bars.length) { S.bi = bi + 1; openWordEdit(bi + 1, 0); toast(`Bar ${barNo(bi + 1)}`); weUncarry(); return; }   // the bar is full: on to the next
-  openWordEdit(bi, nextT); weUncarry();
+  if (nextT >= barBeats(bi) - 1e-6 && bi + 1 < S.song.bars.length) { S.bi = bi + 1; openWordEdit(bi + 1, 0); toast(`Bar ${barNo(bi + 1)}`); weSelectLast(bi); weUncarry(); return; }   // the bar is full: on to the next
+  openWordEdit(bi, nextT); weSelectLast(bi); weUncarry();
 }
 /* a new chip lands at the first spot from `from` (default the left edge) wide enough for it; null when nothing fits */
 function addLyricChip(bar, bi, text, from = 0) {
@@ -9865,7 +9868,7 @@ function initWordEdit() {
   const box = $("wordEdit"), inp = weInput(), close = box.querySelector("button.close");
   box.querySelector("button.kb").addEventListener("click", () => { S.softKb = !S.softKb; savePrefs(); renderWeKeys(); if (!S.softKb) { inp.blur(); setTimeout(() => inp.focus(), 30); } });
   inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); commitWordEdit(true, false, true); } else if (e.key === "Tab") { e.preventDefault(); weNewNextBeat(); } else if (e.key === "Backspace" && !inp.value && !WE.chipId) { e.preventDefault(); weBackChip(); } else if (e.key === " " && !inp.value && !WE.chipId) { e.preventDefault(); weSpaceChip(); } else if (e.key === "Escape") { e.preventDefault(); WE.dirty = false; closeWordEdit(); } });
-  inp.addEventListener("input", () => { { const bar = S.song.bars[WE.bi], p = bar && !WE.chipId && bar.chips.find(c => c.placing); if (p) { const v = inp.value; if (placeGapChip(bar, WE.bi, p)) { openWordEdit(WE.bi, p.t, p); inp.value = v; } else inp.value = ""; } } WE.dirty = true; sizeInline(); });   // typing with a ↔ chip in hand sets it and the words go into it
+  inp.addEventListener("input", () => { weTypingStarts(); { const bar = S.song.bars[WE.bi], p = bar && !WE.chipId && bar.chips.find(c => c.placing); if (p) { const v = inp.value; if (placeGapChip(bar, WE.bi, p)) { openWordEdit(WE.bi, p.t, p); inp.value = v; } else inp.value = ""; } } WE.dirty = true; sizeInline(); });   // typing with a ↔ chip in hand sets it and the words go into it
   document.addEventListener("selectionchange", () => { if (WE.on) weCaret(); });
   ["keyup", "click", "focus"].forEach(ev => inp.addEventListener(ev, () => weCaret()));
   inp.addEventListener("blur", () => { /* the keyboard stays open until its ✕ (or NEW CHIP NEXT BEAT at the song's end) closes it */ });
