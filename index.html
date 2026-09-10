@@ -260,11 +260,14 @@ svg text { pointer-events: none; }
 #app.deck #addView { display: flex; grid-area: addv; align-self: center; justify-self: stretch; height: 22px; margin-top: 6px; padding: 0 2px; align-items: center; justify-content: center; text-align: center; border: 1px solid #3a8a1e; border-radius: 4px; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); font-size: 7px; font-weight: 800; letter-spacing: .02em; line-height: 1.05; white-space: normal; box-shadow: 0 1px 2px rgba(0,0,0,.3); }   /* ADD to VIEW: in the column beside the stave, so the selectors centre freely */
 #app.deck.noparts #addView { display: none; }
 #app.deck #beatRow { display: none !important; }                                            /* no beat labels on the deck: the stave takes the room */
-#app.deck #topTransport { justify-self: start; flex: 0 0 auto; gap: 2px; }
-#app.deck #topTransport button { width: 30px; height: 26px; font-size: 14px; box-shadow: none; }
+#app.deck #topTransport { justify-self: start; flex: 0 0 auto; gap: 1px; }
+#app.deck #topTransport button { width: 28px; height: 26px; font-size: 13px; box-shadow: none; }
 #app.deck #tempo, #app.deck #topTransport #tempo button { height: 26px; }
-#app.deck #topTransport #tempo { box-shadow: none; }
-#app.deck #topTransport #tempo button#tempoLbl { min-width: 42px; font-size: 10px; }
+#app.deck #topTransport #tempo { box-shadow: none; margin-left: 1px; }
+#app.deck #topTransport #tempo button { width: 20px; }
+#app.deck #topTransport #tempo button#tempoLbl { min-width: 38px; font-size: 9.5px; }
+#app.deck #topTransport #saveBtn { width: 26px; }
+#app.deck #topTransport #saveBtn .ico { width: 17px; height: 17px; }
 /* the tools: one bar, a button high, across the foot of the screen */
 #app.deck #arrows { width: 92px; flex: 0 0 auto; }
 #app.deck #undoRow { width: 78px; flex: 0 0 auto; margin-top: 0; }
@@ -8552,7 +8555,7 @@ function placeDeckLabels() {
     if (!top) { top = el("div", { class: "deckLbl top" }, DECK_NAME[w]); bot = el("div", { class: "deckLbl bot" }, DECK_NAME[w]); win.append(top, bot); }
     if (!deckMode() || !win.classList.contains("deckOn")) continue;
     const x = frame.offsetLeft + frame.offsetWidth / 2;
-    for (const id of ["nav", "rollBar"]) { const e = $(id); if (!e) continue; e.style.position = "relative"; const cur = parseFloat(e.style.left) || 0, fr = frame.getBoundingClientRect(), eb = e.getBoundingClientRect(); const mid = (fr.left + fr.right) / 2; let eMid = (eb.left + eb.right) / 2; if (id === "rollBar") { const items = e.querySelectorAll(".rollItem"); if (items.length) eMid = (items[0].getBoundingClientRect().left + items[items.length - 1].getBoundingClientRect().right) / 2; } e.style.left = Math.round(cur + mid - eMid) + "px"; }   // the bracket and the selectors centred on the stave's frame
+    for (const id of ["nav", "rollBar"]) { const e = $(id); if (!e) continue; e.style.position = "relative"; const cur = parseFloat(e.style.left) || 0, fr = frame.getBoundingClientRect(), eb = e.getBoundingClientRect(); const mid = (fr.left + fr.right) / 2; let eMid = (eb.left + eb.right) / 2; if (id === "rollBar") { const items = e.querySelectorAll(".rollItem"); if (items.length) eMid = (items[0].getBoundingClientRect().left + items[items.length - 1].getBoundingClientRect().right) / 2; } else { const a = $("prevBar"), b = $("nextBar"); if (a && b) eMid = (a.getBoundingClientRect().left + b.getBoundingClientRect().right) / 2; } /* the bracket itself (← to →) over the part label, the parts button riding beside it */ e.style.left = Math.round(cur + mid - eMid) + "px"; }   // the bracket and the selectors centred on the stave's frame
     { const nav = $("deckNav"), rowTop = nav.getBoundingClientRect().top - (parseFloat(nav.style.marginTop) || 0); nav.style.marginTop = Math.max(0, frame.getBoundingClientRect().top - rowTop) + "px"; nav.style.height = frame.offsetHeight + "px"; }   // the column beside the stave: level with the frame, exactly as tall
     top.style.left = x + "px"; top.style.top = frame.offsetTop + "px";
     bot.style.left = x + "px"; bot.style.top = (frame.offsetTop + frame.offsetHeight) + "px";
