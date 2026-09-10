@@ -7874,7 +7874,7 @@ function chipW(c) {
     else { if (!_measureCtx) { _measureCtx = document.createElement("canvas").getContext("2d"); _measureCtx.font = "700 16px -apple-system, 'Segoe UI', Roboto, Arial, sans-serif"; } w = Math.ceil(_measureCtx.measureText(c.text).width + 2 * chipPad()); }
     _chipW.set(key, w);
   }
-  return Math.round(w * (c.wf || 1));                                       // wf: the chip's own width factor, set with Narrow / Widen
+  return Math.round(w * (typeof WE !== "undefined" && WE.on && WE.chipId === c.id ? 1 : (c.wf || 1)));   // wf: the chip's own width factor (SHORTEN / WIDEN); a chip in the entry box shows at its word's own width, box and text as one
 }
 function reloadGenreChords() {
   const g = SONG_DATA.genres.find(x => x.name === S.song.genre); if (!g) return;
@@ -9631,8 +9631,16 @@ function sizeChipRoom(bar, chip, d) {
   resolveChipOverlaps(bar); return null;
 }
 const SIZE_WHY = { full: "A single chip already fills its bar", noroom: "No more room beside it — move the next chip, or nudge this one", short: "That is as short as it goes" };
+/* the chip in the entry box is set first, so sizing shows on the chip itself (its text condensed or spread) and never on the box alone */
+function weSetInHand() {
+  if (!WE.on || !WE.chipId) return;
+  const id = WE.chipId, bi = WE.bi;
+  commitWordEdit(true, false, true);
+  if (S.song.bars[bi] && S.song.bars[bi].chips.some(c => c.id === id)) S.selChip = { bi, id };
+}
 /* WIDEN / SHORTEN on the panel: every picked chip (the right-most first, so each fills the room up to the next), else the chip in hand */
 function weSizeChip(d) {
+  weSetInHand();
   const picks = wePicked();
   if (picks.length) {
     const why = [...picks].sort((a, b) => b.chip.t - a.chip.t).map(p => sizeChipRoom(p.bar, p.chip, d)), done = why.filter(w => !w).length;
