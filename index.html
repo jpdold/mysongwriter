@@ -265,11 +265,11 @@ svg text { pointer-events: none; }
 #app.deck #arrows .aico { width: 12px; height: 12px; }
 #app.deck #arrows button:first-child, #app.deck #undoRow button:first-child, #app.deck #mvRow button:first-child { border-radius: 4px 0 0 4px; }
 #app.deck #arrows button:last-child, #app.deck #undoRow button:last-child, #app.deck #mvRow button:last-child { border-radius: 0 4px 4px 0; }
-#app.deck #quick { width: auto; flex: 1 1 320px; min-width: 0; grid-template-columns: repeat(12, 1fr); grid-template-rows: 28px; position: static; }
+#app.deck #quick { width: 336px; flex: 0 0 336px; grid-template-columns: repeat(12, 1fr); grid-template-rows: 28px; position: static; }
 #app.deck #quick .qctl, #app.deck #quick .qgrip { display: none; }                         /* part of the bar: nothing to lock or float */
 #app.deck #quick .cell:nth-child(n+7) button { border-top: none; }
 #app.deck #quick .cell:first-of-type { border-left: none; }
-#app.deck #palette { flex: 1 1 0; min-width: 0; flex-direction: row; align-items: center; gap: 6px; padding: 0; background: none; border: none; box-shadow: none; }
+#app.deck #palette { flex: 0 0 auto; width: auto; overflow: visible; flex-direction: row; align-items: center; gap: 6px; padding: 0; background: none; border: none; box-shadow: none; }
 #app.deck #palette .prow { height: 30px; }
 /* each part's stave wears its colour, with its name centred on the top and bottom edges */
 #app.deck .win .frame { border-width: 3px; }
@@ -293,14 +293,18 @@ svg text { pointer-events: none; }
 #app.deck #toolL button.tplay { height: 26px; font-size: 8px; padding: 0 6px; box-shadow: none; margin-left: 4px; }
 #app.deck #toolL button.tplay + button.tplay { margin-left: 2px; }
 #app.deck.nostrips #toolbar { margin-top: 0; }                                              /* the strips away: the tool bar flush on the stave */
-#toolL, #toolR { flex: 1 1 0; min-width: 0; display: flex; gap: 6px; align-items: center; }
+#toolL { flex: 0 0 auto; display: flex; gap: 6px; align-items: center; }                     /* the static half: its own width */
+#toolR { flex: 1 1 0; min-width: 120px; display: flex; gap: 6px; align-items: center; overflow: hidden; }   /* the flipping half: what is left, and no more */
+#toolScroll { flex: 1 1 0; min-width: 0; display: flex; gap: 6px; align-items: center; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -webkit-overflow-scrolling: touch; touch-action: pan-x; }   /* the palettes scroll sideways: items vanish at its edge and return as it scrolls back */
+#toolScroll::-webkit-scrollbar { display: none; }
+#toolScroll > * { flex: 0 0 auto; }
 #toolL button.tplay { height: 30px; padding: 0 7px; flex: 0 0 auto; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); color: #111; font-size: 8.5px; font-weight: 800; letter-spacing: .04em; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
 #toolL button.tplay.on { background: #2f7fd6; color: #fff; }
 #toolL button.tplay.playing, #toolL button.tplay:active { background: linear-gradient(#ffd27a, #f5a623); color: #111; }
 #flipBtn { margin-left: auto; flex: 0 0 auto; width: 38px; height: 30px; padding: 0; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); color: #111; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
 #flipBtn .big { font-size: 15px; line-height: 1; } #flipBtn .cap { font-size: 6.5px; font-weight: 800; letter-spacing: .04em; line-height: 1; }
 #flipBtn:active { background: linear-gradient(#ffd27a, #f5a623); }
-#flipPal { display: flex; gap: 4px; align-items: center; flex: 1 1 0; min-width: 0; overflow: hidden; }
+#flipPal { display: flex; gap: 4px; align-items: center; flex: 0 0 auto; }
 #flipPal[hidden] { display: none; }
 #app.deck #quick[hidden], #app.deck #palette[hidden] { display: none !important; }        /* flipped away: their own display rules must not keep them on top */
 #flipPal .grp { display: flex; gap: 3px; flex: 0 0 auto; } #flipPal .sep { width: 10px; flex: 0 0 10px; }
@@ -717,7 +721,7 @@ body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the s
 
   <div id="rollBar"></div>
   <div id="deckNav"></div>
-  <div id="toolbar"><div id="toolL"></div><div id="toolR"><div id="flipPal"></div><button id="flipBtn" title="Flip the palette: notes · rests · dynamics · marks"></button></div></div>
+  <div id="toolbar"><div id="toolL"></div><div id="toolR"><div id="toolScroll"><div id="flipPal"></div></div><button id="flipBtn" title="Flip the palette: notes · rests · dynamics · marks"></button></div></div>
   <div id="beatRow"></div>
 
   <section class="win" id="melWin">
@@ -8510,7 +8514,15 @@ function renderRollBar() {
       el("button", { class: "tplay", id: "tChord", title: "Chord mode: every tap stacks a note on the chord being built", onclick: () => toggleChordMode(deckActive()) }, "CHORD"));
     $("tPlaySel").classList.toggle("on", !!(typeof PSEL !== "undefined" && PSEL.on)); $("tChord").classList.toggle("on", !!(S.chordWin && S.chordWin[active]));
     if (S.quick) { S.quick.float = false; S.quick.locked = true; }                       // on the deck the quick palette is part of the bar: fixed, never floating
-    tr.prepend($("quick"), $("palette"));
+    const sc = $("toolScroll"); sc.prepend($("quick"), $("palette"));
+    if (!sc.dataset.wired) {                                                                // a mouse wheel or a drag on the bar's background scrolls the palettes sideways; touch pans natively
+      sc.dataset.wired = "1";
+      sc.addEventListener("wheel", e => { const d = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX; if (d) { sc.scrollLeft += d; e.preventDefault(); } }, { passive: false });
+      let drag = null;
+      sc.addEventListener("pointerdown", e => { if (e.pointerType === "touch" || e.target.closest("button")) return; drag = { id: e.pointerId, x: e.clientX, left: sc.scrollLeft }; });
+      sc.addEventListener("pointermove", e => { if (drag && e.pointerId === drag.id) sc.scrollLeft = drag.left - (e.clientX - drag.x); });
+      const done = () => { drag = null; }; sc.addEventListener("pointerup", done); sc.addEventListener("pointercancel", done); sc.addEventListener("pointerleave", done);
+    }
     const flip = S.deckFlip || 0, FLIP_NAME = ["NOTES", "RESTS", "DYNAMICS", "MARKS"];
     $("quick").hidden = flip !== 0; $("palette").hidden = flip !== 0; $("flipPal").hidden = flip === 0;
     const fb = $("flipBtn"); fb.replaceChildren(el("span", { class: "big" }, "⟳"), el("span", { class: "cap" }, FLIP_NAME[flip])); fb.onclick = () => { S.deckFlip = ((S.deckFlip || 0) + 1) % 4; renderAll(); };
