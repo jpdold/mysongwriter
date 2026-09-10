@@ -320,13 +320,15 @@ body.kbOpen #app.deck { padding-bottom: 6px; }
 #app.deck .win:not(.deckOn) { display: none !important; }
 #app.deck .win .sizer, #app.deck .win .focus, #app.deck .win .winHead, #app.deck .win .side { display: none !important; }   /* the side buttons live in the column beside the stave */
 #app.deck .win { grid-template-columns: 48px 1fr; gap: 0 2px; }                             /* the gutter: the pitch labels, then the skinny ↑ ↓ */
-#app.deck .win .gutter svg { width: 34px; }
-#app.deck .win .rArr { display: block; position: absolute; left: 36px; width: 12px; height: 46px; padding: 0; margin: 0; border-radius: 3px; font-size: 0; }   /* skinny, tucked in beside the range markers, centred on the stave */
+#app.deck .win .gutter svg { width: 34px; margin-left: 14px; }                             /* the pitch labels beside the frame, as before */
+#app.deck .win .rArr { display: block; position: absolute; left: 0; width: 12px; height: 46px; padding: 0; margin: 0; border-radius: 3px; font-size: 0; }   /* skinny, on the far side of the range markers, centred on the stave */
 #app.deck .win .rArr::before { display: none; }
 #app.deck .win .rArr::after { font-size: 13px; font-weight: 700; color: #111; line-height: 1; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
 #app.deck .win .rArr.up { top: calc(50% - 47px); bottom: auto; } #app.deck .win .rArr.up::after { content: "↑"; }
 #app.deck .win .rArr.dn { top: calc(50% + 1px); bottom: auto; } #app.deck .win .rArr.dn::after { content: "↓"; }
 #app.deck .strip { grid-template-columns: 48px 1fr; gap: 0 2px; position: relative; }   /* the strips line up with the stave */
+#app.deck #wordEdit { transform: scale(.8); transform-origin: 50% 100%; }                   /* the keyboard on the deck: a fifth smaller, at the foot of the screen */
+#app.deck.kbUp #rhyStrip, #app.deck.kbUp #lyrStrip { z-index: 71; }                         /* while the keyboard is open the strips ride on top of it (placed by script); closed, they return to their rows */
 #app.deck #lyrEdit { position: absolute; right: 3px; top: 50%; transform: translateY(-50%); z-index: 3; }                                          /* the stave reaches the column beside it */
 #app.deck #rhyStrip { margin-top: 0 !important; }                                          /* flush on the stave */
 #app.deck #deckNav { display: flex; }
@@ -8071,7 +8073,7 @@ function rowsOf(win) { const deck = deckMode() && DECK_ROWS[win]; const rows = d
 /* share the screen among the open windows: melody weighs most; half windows count half; closed ones show a bar */
 function allocate() {
   if (deckMode()) {                                                                       // the deck: the one part in view fills the stage exactly — flush on the strips, or on the tool bar when they are hidden
-    const active = deckActive(), h = id => ($(id) ? $(id).offsetHeight : 0), shown = S.stripsShown !== false;
+    const active = deckActive(), h = id => ($(id) ? $(id).offsetHeight : 0), shown = S.stripsShown !== false && !(typeof WE !== "undefined" && WE.on);   // with the keyboard open the strips ride on it, and the stave takes their rows
     const topExtra = 0;                                                                   // no beat labels on the deck: the frame starts at its window's top
     for (const w of ["mel", "acc", "bass"]) {
       const [rows0, lo, hi0] = WIN[S.winSize][w], hi = Math.max(hi0, WIN[S.winSize].mel[2]);
@@ -8456,8 +8458,18 @@ function renderFlipPal() {
     box.append(g);
   }
 }
+/* on the deck, while the keyboard is open, the Rhythm and Lyrics strips sit flush on top of it, chips and all; closed, they go back to their rows */
+function placeDeckStrips() {
+  const app = $("app"), kbUp = deckMode() && WE.on && $("wordEdit").classList.contains("on"); app.classList.toggle("kbUp", kbUp);
+  const rhy = $("rhyStrip"), lyr = $("lyrStrip");
+  if (!kbUp) { if (rhy.style.position) { rhy.style.cssText = ""; lyr.style.cssText = ""; } return; }
+  const kb = $("wordEdit").getBoundingClientRect(), win = $(deckActive() + "Win").getBoundingClientRect(), lyrH = lyr.offsetHeight;
+  lyr.style.cssText = `position:fixed;left:${Math.round(win.left)}px;width:${Math.round(win.width)}px;bottom:${Math.round(window.innerHeight - kb.top)}px;margin:0;display:grid`;
+  rhy.style.cssText = `position:fixed;left:${Math.round(win.left)}px;width:${Math.round(win.width)}px;bottom:${Math.round(window.innerHeight - kb.top + lyrH)}px;margin:0;display:grid`;
+}
 /* MELODY / ACCOMPANIMENT / BASS, centred on the top and bottom edges of the stave in view */
 function placeDeckLabels() {
+  placeDeckStrips();
   for (const w of ["mel", "acc", "bass"]) {
     const win = $(w + "Win"), frame = win.querySelector(".frame");
     let top = win.querySelector(".deckLbl.top"), bot = win.querySelector(".deckLbl.bot");
