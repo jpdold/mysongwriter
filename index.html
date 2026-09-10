@@ -104,21 +104,21 @@ svg text { pointer-events: none; }
 /* ── header ── */
 #head { display: grid; grid-template-columns: 44px 1fr 44px; grid-template-rows: auto auto; gap: 2px 6px; align-items: center; }
 #topTransport { justify-self: center; display: flex; gap: 4px; min-width: 0; }
-#topTransport button { width: 36px; height: 34px; position: relative; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #cfcfcf); color: #111; font-size: 17px; padding: 0; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
-#topTransport button.on { background: linear-gradient(#ffd27a, #f5a623); }
-#topTransport button .bar { position: absolute; left: calc(50% + 4.5px); top: 50%; transform: translateY(-50%); width: 3.5px; height: 12px; background: #111; border-radius: 1px; }   /* almost touching the triangle, as tall as its base */
-#topTransport #playAllBtn { padding-right: 6px; }
-#topTransport button .dots { font-size: 11px; font-weight: 800; margin-left: 1px; letter-spacing: -1px; }
-#topTransport #stopBtn { font-size: 15px; }
-#topTransport #saveBtn { background: linear-gradient(#ff5a4e, #e5322d); color: #fff; border-color: #6e1712; display: grid; place-items: center; }   /* the floppy: save, beside the tempo */
-#topTransport #saveBtn .ico { width: 21px; height: 21px; display: block; }
-#topTransport #rangeBtn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; }
-#topTransport #rangeBtn .top { display: block; line-height: 15px; }
-#topTransport #rangeBtn .sub { display: block; font-size: 6.5px; font-weight: 800; letter-spacing: .04em; line-height: 8px; font-family: var(--sans); margin-top: 1px; }
+#topTransport button, #navRight button { width: 36px; height: 34px; position: relative; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #cfcfcf); color: #111; font-size: 17px; padding: 0; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
+#topTransport button.on, #navRight button.on { background: linear-gradient(#ffd27a, #f5a623); }
+#topTransport button .bar, #navRight button .bar { position: absolute; left: calc(50% + 4.5px); top: 50%; transform: translateY(-50%); width: 3.5px; height: 12px; background: #111; border-radius: 1px; }   /* almost touching the triangle, as tall as its base */
+#topTransport #playAllBtn, #navRight #playAllBtn { padding-right: 6px; }
+#topTransport button .dots, #navRight button .dots { font-size: 11px; font-weight: 800; margin-left: 1px; letter-spacing: -1px; }
+#topTransport #stopBtn, #navRight #stopBtn { font-size: 15px; }
+#topTransport #saveBtn, #navRight #saveBtn { background: linear-gradient(#ff5a4e, #e5322d); color: #fff; border-color: #6e1712; display: grid; place-items: center; }   /* the floppy: save, beside the tempo */
+#topTransport #saveBtn .ico, #navRight #saveBtn .ico { width: 21px; height: 21px; display: block; }
+#topTransport #rangeBtn, #navRight #rangeBtn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; }
+#topTransport #rangeBtn .top, #navRight #rangeBtn .top { display: block; line-height: 15px; }
+#topTransport #rangeBtn .sub, #navRight #rangeBtn .sub { display: block; font-size: 6.5px; font-weight: 800; letter-spacing: .04em; line-height: 8px; font-family: var(--sans); margin-top: 1px; }
 #tempo { display: flex; align-items: center; margin-left: 2px; border: 1.5px solid #141414; border-radius: 4px; overflow: hidden; height: 34px; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
-#topTransport #tempo button { width: 24px; height: 34px; border: none; border-radius: 0; box-shadow: none; font-size: 18px; font-weight: 700; }
-#topTransport #tempo button#tempoLbl { width: auto; min-width: 46px; padding: 0 2px; font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums; background: #111; color: #fff; }
-#topTransport #tempo button:active { background: linear-gradient(#ffd27a, #f5a623); }
+#topTransport #tempo button, #navRight #tempo button { width: 24px; height: 34px; border: none; border-radius: 0; box-shadow: none; font-size: 18px; font-weight: 700; }
+#topTransport #tempo button#tempoLbl, #navRight #tempo button#tempoLbl { width: auto; min-width: 46px; padding: 0 2px; font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums; background: #111; color: #fff; }
+#topTransport #tempo button:active, #navRight #tempo button:active { background: linear-gradient(#ffd27a, #f5a623); }
 #app { overflow-x: hidden; }
 .btn.warn { background: #c8402f; color: #fff; border-color: #a93226; }
 #app > * { min-width: 0; }                     /* no child may widen the column: text and svgs never push the staves about */
@@ -240,7 +240,20 @@ svg text { pointer-events: none; }
 #app.deck #head { grid-template-columns: 44px auto 1fr 44px; grid-template-rows: auto; }
 #app.deck #menuBtn { grid-column: 1; } #app.deck #gearBtn { grid-column: 4; }
 #app.deck #songTitle { grid-column: 2; grid-row: 1; justify-self: start; width: 220px; font-size: 13px; line-height: 1.2; padding: 3px 8px; text-align: left; }
-#app.deck #nav { grid-template-columns: auto 30px 1fr 30px; }
+#app.deck #nav { grid-template-columns: auto 30px 1fr 30px auto; }                        /* play buttons · ← bracket → · tempo and save */
+#navRight { display: none; }
+#app.deck #navRight { display: flex; gap: 4px; align-items: center; justify-self: end; }
+#app.deck #navRight button { width: 32px; height: 30px; font-size: 15px; }
+#app.deck #navRight #tempo button { width: 24px; }
+#app.deck #navRight #tempo button#tempoLbl { width: auto; }
+/* the part selectors: shown or hidden from the head; ADD to VIEW keeps its place at the row's right */
+#partsBtn { display: none; }
+#app.deck #partsBtn { display: inline-flex; grid-column: 3; grid-row: 1; justify-self: start; align-items: center; height: 26px; padding: 0 10px; margin-left: 8px; border: 1px solid #3a8a1e; border-radius: 4px; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); font-size: 9px; font-weight: 800; letter-spacing: .04em; white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
+#app.deck #partsBtn:active { filter: brightness(1.1); }
+#app.deck.noparts #rollBar { display: none; }
+#app.deck #rollBar .rollItem { flex: 1 1 0; min-width: 0; }
+#app.deck #rollBar .addView { flex: 0 0 auto; width: 96px; padding: 0; margin-left: 8px; }
+#app.deck #beatRow { display: none !important; }                                            /* no beat labels on the deck: the stave takes the room */
 #app.deck #topTransport { justify-self: start; }
 #app.deck #topTransport button { width: 32px; height: 30px; font-size: 15px; }
 #app.deck #tempo, #app.deck #topTransport #tempo button { height: 30px; }
@@ -689,6 +702,7 @@ body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the s
   <header id="head">
     <input id="songTitle" type="text" placeholder="“My Song Title”" autocomplete="off" spellcheck="false" aria-label="Song title">
     <button class="iconBtn" id="menuBtn" title="Menu" aria-label="Menu">☰</button>
+    <button id="partsBtn" title="Show or hide the part selectors">HIDE PARTS</button>
     <div id="topTransport"><button id="playAllBtn" title="Play All — the whole song from the start">▶<span class="bar"></span></button><button id="rangeBtn" title="Play Range — bars and beats you type in"><span class="top">▶<span class="dots">…</span></span><span class="sub">RANGE</span></button><button id="stopBtn" title="Stop">■</button><div id="tempo" title="Tempo"><button id="tempoDn" aria-label="Slower">−</button><button id="tempoLbl" title="Tap to type a tempo">♩=120</button><button id="tempoUp" aria-label="Faster">+</button></div><button id="saveBtn" title="Save — the song library"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 3 h11 l3 3 v11 h-14 z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><rect x="6" y="3.6" width="7" height="4.4" fill="currentColor"/><rect x="5.5" y="11" width="9" height="5.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></button></div>
     <button class="iconBtn" id="gearBtn" title="Settings" aria-label="Settings"><svg class="ico"><use href="#icoGear"/></svg></button>
   </header>
@@ -697,6 +711,7 @@ body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the s
     <button class="arrow" id="prevBar" title="Previous bar">←</button>
     <div id="bracket"><button id="barLabel">MELODY: BAR 1</button><div id="barDots"></div></div>
     <button class="arrow" id="nextBar" title="Next bar">→</button>
+    <div id="navRight"></div>
   </div>
 
   <div id="rollBar"></div>
@@ -8009,7 +8024,7 @@ const WIN_LO = { mel: "melLo", acc: "accLo", bass: "bassLo" };
 const NOTE_SCALE = { s: 0.55, m: 0.72, l: 0.92 }; const NS = () => NOTE_SCALE[S.noteSize] || 1;   // note size: heads, stems and flags; the stave never changes
 const HK = () => S.halfLines ? 1.55 : 1;         // lines-and-spaces: heads grow to fill a space (two rows)
 const STEP_K = { s: 0.94, m: 1, l: 1.06 };       // row height nudges a little with the note size
-Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", noteSize: "m", chordMode: false, chordWin: { mel: false, acc: false, bass: false }, chordColor: "#ffffff", justEntered: null, activePart: "melody", lastEntered: null, ftp: null, mv: null, selAuto: false, halfLines: true, winSize: "m", chordsDisp: "names", metro: "off", winState: { mel: "open", acc: "closed", bass: "closed" }, zoomWin: { mel: 1, acc: 1, bass: 1 }, lyricFont: "sans", viewSpan: 1, layout: "rolled", selChip: null, deck: ["mel", "acc", "bass"], deckSel: null, stripsShown: true, ghost: null, restNext: false, restLen: null, ghostNext: false, artic: null, slurFrom: null, active: null, softKb: ("ontouchstart" in window), popPos: null, mode: "melody" });
+Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", noteSize: "m", chordMode: false, chordWin: { mel: false, acc: false, bass: false }, chordColor: "#ffffff", justEntered: null, activePart: "melody", lastEntered: null, ftp: null, mv: null, selAuto: false, halfLines: true, winSize: "m", chordsDisp: "names", metro: "off", winState: { mel: "open", acc: "closed", bass: "closed" }, zoomWin: { mel: 1, acc: 1, bass: 1 }, lyricFont: "sans", viewSpan: 1, layout: "rolled", selChip: null, deck: ["mel", "acc", "bass"], deckSel: null, stripsShown: true, partsShown: true, ghost: null, restNext: false, restLen: null, ghostNext: false, artic: null, slurFrom: null, active: null, softKb: ("ontouchstart" in window), popPos: null, mode: "melody" });
 const UNDO = { stack: [], redo: [], last: null, max: 60 };
 const setMode = () => {};                          // engine shims (the old mode sheets are gone)
 const renderPanel = () => renderAll();
@@ -8017,12 +8032,12 @@ function loadPrefs() {
   const p = readJSON(STORE.prefs, {});
   S.theme = p.theme || "auto"; S.followWords = false; S.noteStyle = p.noteStyle || "trad"; S.noteSize = NOTE_SCALE[p.noteSize] ? p.noteSize : "m"; S.chordColor = p.chordColor || "#ffffff"; S.halfLines = p.halfLines == null ? true : !!p.halfLines; S.ftp = Object.assign({}, FTP_DEFAULT, p.ftp || {});
   S.winSize = WIN[p.winSize] ? p.winSize : "m"; S.chordsDisp = p.chordsDisp || "names"; S.metro = p.metro || "off"; S.custom = p.custom || null; S.len = p.len || 1;
-  S.stripsShown = p.stripsShown !== false;
+  S.stripsShown = p.stripsShown !== false; S.partsShown = p.partsShown !== false;
   S.deck = Array.isArray(p.deck) && p.deck.length ? p.deck.filter(w => ["mel", "acc", "bass"].includes(w)) : ["mel", "acc", "bass"]; if (!S.deck.length) S.deck = ["mel"];
   S.lyricFont = p.lyricFont || "sans"; S.chipMode = "multi"; S.keepAwake = p.keepAwake !== false; S.paper = Object.assign({ mel: "default", acc: "default", bass: "default" }, p.paper || {}); S.quick = Object.assign({ cells: QUICK_DEFAULT.slice(), locked: true, float: false, x: null, y: null }, p.quick || {}); if (!Array.isArray(S.quick.cells) || S.quick.cells.join() === QUICK_OLD.join()) S.quick.cells = QUICK_DEFAULT.slice(); if (S.quick.cells.length === 8) S.quick.cells.push("sl", "ti", "gh", "dt"); if (S.quick.cells.length !== 12) S.quick.cells = QUICK_DEFAULT.slice();   // a third row joined: slur, tie, ghost note, dot S.winState = Object.assign({ mel: "open", acc: "closed", bass: "closed" }, p.winState || {}); S.zoomWin = Object.assign({ mel: 1, acc: 1, bass: 1 }, p.zoomWin || {}); S.midi = p.midi || {}; S.viewSpan = [1, 2, 3, 4].includes(p.viewSpan) ? p.viewSpan : 1; if (p.softKb != null) S.softKb = p.softKb2 == null ? true : !!p.softKb2; S.kbPos = p.kbPos || null;   // the app keyboard, on unless switched off S.layout = p.layout === "stack" ? "stack" : "rolled";
   applyTheme();
 }
-function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, deck: S.deck, stripsShown: S.stripsShown, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, keepAwake: S.keepAwake, paper: S.paper, quick: S.quick, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout }); }
+function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, deck: S.deck, stripsShown: S.stripsShown, partsShown: S.partsShown, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, keepAwake: S.keepAwake, paper: S.paper, quick: S.quick, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout }); }
 function applyTheme() {
   const r = document.documentElement;
   if (S.theme === "dark") r.setAttribute("data-theme", "dark"); else r.removeAttribute("data-theme");
@@ -8049,11 +8064,11 @@ function rowsOf(win) { const rows = deckMode() && DECK_ROWS[win] ? DECK_ROWS[win
 function allocate() {
   if (deckMode()) {                                                                       // the deck: the one part in view fills the stage exactly — flush on the strips, or on the tool bar when they are hidden
     const active = deckActive(), h = id => ($(id) ? $(id).offsetHeight : 0), shown = S.stripsShown !== false;
-    const br = $("beatRow"); if (br && br.offsetHeight > 0) DECK_TOP = br.offsetHeight + (parseFloat(getComputedStyle(br).marginBottom) || 0); const topExtra = DECK_TOP;   // the beat labels ride above the stave inside its window (measured when visible, else as last seen)
+    const topExtra = 0;                                                                   // no beat labels on the deck: the frame starts at its window's top
     for (const w of ["mel", "acc", "bass"]) {
       const [rows0, lo, hi0] = WIN[S.winSize][w], hi = Math.max(hi0, WIN[S.winSize].mel[2]);
       if (w !== active) { STEPS[w] = lo; DECK_ROWS[w] = 0; continue; }
-      let target = window.innerHeight - 12 - h("head") - h("nav") - h("rollBar") - 18 - (shown ? h("rhyStrip") + h("lyrStrip") + 6 : 0) - Math.max(h("toolbar"), 30) - topExtra - 16;
+      let target = window.innerHeight - 12 - h("head") - h("nav") - h("rollBar") - 12 - (h("rollBar") ? 6 : 0) - (shown ? h("rhyStrip") + h("lyrStrip") + 6 : 0) - Math.max(h("toolbar"), 30) - topExtra - 16;
       { const side = $(w + "Win").querySelector(".side"); if (side && side.offsetHeight > 0) { const kids = [...side.children].filter(k => k.offsetHeight > 0), cs = getComputedStyle(side); const need = kids.reduce((a, k) => a + k.offsetHeight, 0) + Math.max(0, kids.length - 1) * (parseFloat(cs.rowGap) || 0) + (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0); target = Math.max(target, need - 16); } }   // never shorter than the buttons beside it need: they would hold the stave's row open and leave a gap   // the stave's drawing height: the screen less the rows above and below, the three 6px margins, the tool bar's 6px when the strips show, the frame's borders and pads
       const k = STEP_K[S.noteSize] || 1, rows = clamp(Math.floor(target / (hi * k)), rows0, 48);   // at the stave's full scale, as many rows as fill the height — never fewer than usual
       DECK_ROWS[w] = rows; STEPS[w] = Math.max(lo, target / rows / k);                      // and the rows share that height exactly
@@ -8449,7 +8464,7 @@ function deckShow(w) { S.focus = null; ["mel", "acc", "bass"].forEach(x => { S.w
 function renderRollBar() {
   const bar = $("rollBar"); bar.replaceChildren(); const nav = $("deckNav"); nav.replaceChildren();
   const deck = deckMode(), app = $("app"); app.classList.toggle("deck", deck);
-  { const tr = $("topTransport"); if (deck) { if (tr.parentNode !== $("nav")) $("nav").prepend(tr); } else if (tr.parentNode !== $("head")) $("head").insertBefore(tr, $("gearBtn")); }   // the play buttons: left of the bar bracket on the deck, in the head otherwise
+  { const tr = $("topTransport"); if (deck) { if (tr.parentNode !== $("nav")) $("nav").prepend(tr); } else { if (tr.parentNode !== $("head")) $("head").insertBefore(tr, $("gearBtn")); if ($("tempo").parentNode !== tr) tr.append($("tempo"), $("saveBtn")); } }   // the play buttons: left of the bar bracket on the deck (tempo and save at its right), all in the head otherwise
   if (deck) app.style.setProperty("--deckW", Math.max(28, Math.round((app.clientWidth - 24 - 10 - 80) / 17)) + "px");   // the part buttons' column: exactly a quarter of a beat of the stave beside it
   app.classList.toggle("rolled", S.layout === "rolled" && !deck);
   ["mel", "acc", "bass"].forEach(w => { app.classList.toggle("open-" + w, S.layout === "rolled" && !deck && S.winState[w] !== "closed"); $(w + "Win").classList.remove("deckOn"); });
@@ -8459,6 +8474,9 @@ function renderRollBar() {
     ["mel", "acc", "bass"].forEach(x => { S.winState[x] = x === active ? "open" : "closed"; });
     $(active + "Win").classList.add("deckOn");
     app.classList.toggle("nostrips", S.stripsShown === false);                              // the strips: shown, they push the stave up; hidden, it takes the room
+    app.classList.toggle("noparts", S.partsShown === false);                                // the part selectors likewise
+    { const pb = $("partsBtn"); pb.textContent = S.partsShown === false ? "SHOW PARTS" : "HIDE PARTS"; pb.onclick = () => { S.partsShown = S.partsShown === false; savePrefs(); renderAll(); }; }
+    { const nr = $("navRight"); if ($("tempo").parentNode !== nr) nr.append($("tempo"), $("saveBtn")); }   // tempo and save at the right of the bar row
     const sb = el("button", { id: "stripsBtn", title: "Show or hide the Rhythm and Lyrics strips", onclick: () => { S.stripsShown = S.stripsShown === false; savePrefs(); renderAll(); } }, el("span", {}, S.stripsShown === false ? "SHOW" : "HIDE"), el("span", {}, "STRIPS"));   // built afresh each render, at the foot of the column beside the stave
     if (!S.deckSel) S.deckSel = [...S.deck];
     for (const w of ["mel", "acc", "bass"]) {                                            // the part selection: a check box each
