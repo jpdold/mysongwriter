@@ -233,7 +233,7 @@ svg text { pointer-events: none; }
 #app.rolled.open-bass #bassWin.lead { margin-top: -14px; }
 /* ── the widescreen deck: one part in view at a time, its up / down part buttons a quarter beat wide beside it, the tools in a
    column on the right; the whole screen, nothing scrolls ── */
-#app.deck { max-width: none !important; height: 100vh; height: 100dvh; box-sizing: border-box; overflow: hidden; padding: 6px 12px; gap: 6px 10px;
+#app.deck { max-width: none !important; height: 100vh; height: 100dvh; box-sizing: border-box; overflow: hidden; padding: 6px 12px; gap: 0 10px;   /* no row gaps: the spacing is explicit, so the stave can be sized to sit flush */
   grid-template-columns: 118px 108px 108px minmax(330px, 1fr) minmax(0, 1fr) var(--deckW, 44px) !important; grid-template-rows: auto auto auto auto auto auto minmax(0, 1fr) auto;
   grid-template-areas: "head head head head head head" "nav nav nav nav nav nav" "rollbar rollbar rollbar rollbar rollbar rollbar" "stage stage stage stage stage deck" "rhy rhy rhy rhy rhy deck" "lyr lyr lyr lyr lyr deck" ". . . . . deck" "t1 t2 t3 t4 t5 t5" !important; }
 /* the head: a small title at the top left; the play buttons move to the left of the bar bracket */
@@ -271,16 +271,20 @@ svg text { pointer-events: none; }
 #app.deck #stripsBtn { display: flex; grid-row: rhy-start / lyr-end; grid-column: 1; width: 42px; min-height: 24px; justify-self: start; align-self: stretch; z-index: 2; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 0; font-size: 7.5px; font-weight: 800; letter-spacing: .04em; line-height: 1.1; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); border: 1px solid #3a8a1e; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
 #app.deck #stripsBtn:active { filter: brightness(1.1); }
 #app.deck #rhyStrip .tag, #app.deck #lyrStrip .tag { visibility: hidden; }
-#app.deck #lyrStrip { margin-top: -6px; }
+#app.deck #lyrStrip { margin-top: 0; }                                                       /* flush on the rhythm strip */
 #app.deck.nostrips #rhyStrip, #app.deck.nostrips #lyrStrip { display: none; }
+#app.deck.nostrips #stripsBtn { grid-row: stage; align-self: end; margin-bottom: 26px; height: 24px; min-height: 0; z-index: 4; }   /* the strips away: the button rests at the stave's foot, in its gutter, so the tool bar can sit flush on the stave */
+#app.deck #arrows, #app.deck #undoRow, #app.deck #mvRow, #app.deck #quick, #app.deck #palette { margin-top: 6px; }
+#app.deck.nostrips #arrows, #app.deck.nostrips #undoRow, #app.deck.nostrips #mvRow, #app.deck.nostrips #quick, #app.deck.nostrips #palette { margin-top: 0; }   /* the strips away: the tool bar flush on the stave */
 body.kbOpen #app.deck { padding-bottom: 6px; }
 #app.deck #rollBar { display: flex; align-items: center; }
-#app.deck #melWin, #app.deck #accWin, #app.deck #bassWin { grid-area: stage; margin-top: 0 !important; min-height: 0; }
+#app.deck #melWin, #app.deck #accWin, #app.deck #bassWin { grid-area: stage; margin-top: 6px !important; }
+#app.deck #nav, #app.deck #rollBar { margin-top: 6px; }
 #app.deck .win:not(.deckOn) { display: none !important; }
 #app.deck .win .sizer, #app.deck .win .focus, #app.deck .win .winHead { display: none !important; }
-#app.deck #rhyStrip { margin-top: 0 !important; }
+#app.deck #rhyStrip { margin-top: 0 !important; }                                          /* flush on the stave */
 #app.deck #deckNav { display: flex; }
-#deckNav { grid-area: deck; display: none; flex-direction: column; gap: 6px; align-self: start; min-width: 0; }
+#deckNav { grid-area: deck; display: none; flex-direction: column; gap: 6px; align-self: start; min-width: 0; height: 0; overflow: visible; }   /* its buttons hang down without stretching the stave's rows */
 #deckNav button { width: 100%; min-height: 96px; padding: 6px 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; background: #111; color: #fff; border: 1px solid #000; border-radius: 6px; font-size: 9.5px; font-weight: 800; letter-spacing: .06em; box-shadow: 0 1px 2px rgba(0,0,0,.35); }
 #deckNav button .big { font-size: 26px; line-height: 1; }
 #deckNav button .name { writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); white-space: nowrap; }
@@ -8005,16 +8009,20 @@ const gridStep = () => S.song.snap ? 0.5 : 0.25;
 const snapT = t => Math.round(t / gridStep()) * gridStep();
 const curBar = () => S.song.bars[S.bi];
 function viewOf(win) { const v = S.song.view; if (v.bassLo == null) v.bassLo = 36; return v[WIN_LO[win]]; }
-function rowsOf(win) { const [rows] = WIN[S.winSize][win]; return { rows, step: Math.round(STEPS[win] * (STEP_K[S.noteSize] || 1) * 10) / 10 }; }
+const DECK_ROWS = { mel: 0, acc: 0, bass: 0 }; let DECK_TOP = 17;                        // the beat labels' height above the stave, as last seen                                          // on the deck the stave shows as many rows as fill the screen (computed by allocate)
+function rowsOf(win) { const rows = deckMode() && DECK_ROWS[win] ? DECK_ROWS[win] : WIN[S.winSize][win][0]; return { rows, step: Math.round(STEPS[win] * (STEP_K[S.noteSize] || 1) * 10) / 10 }; }
 /* share the screen among the open windows: melody weighs most; half windows count half; closed ones show a bar */
 function allocate() {
-  if (deckMode()) {                                                                       // the deck: the one part in view fills the stage, the screen's height less the rows above and below it
-    const active = deckActive(), h = id => ($(id) ? $(id).offsetHeight : 0);
+  if (deckMode()) {                                                                       // the deck: the one part in view fills the stage exactly — flush on the strips, or on the tool bar when they are hidden
+    const active = deckActive(), h = id => ($(id) ? $(id).offsetHeight : 0), shown = S.stripsShown !== false;
+    const br = $("beatRow"); if (br && br.offsetHeight > 0) DECK_TOP = br.offsetHeight + (parseFloat(getComputedStyle(br).marginBottom) || 0); const topExtra = DECK_TOP;   // the beat labels ride above the stave inside its window (measured when visible, else as last seen)
     for (const w of ["mel", "acc", "bass"]) {
-      const [rows, lo, hi0] = WIN[S.winSize][w], hi = Math.max(hi0, WIN[S.winSize].mel[2]);
-      if (w !== active) { STEPS[w] = lo; continue; }
-      const avail = window.innerHeight - h("head") - h("nav") - h("rollBar") - h("rhyStrip") - h("lyrStrip") - Math.max(h("palette"), h("quick"), 30) - 6 * 8 - 12 - 16;
-      STEPS[w] = clamp(Math.floor((avail - 12) / rows * (S.zoomWin[w] || 1) * 10) / 10, lo, hi);
+      const [rows0, lo, hi0] = WIN[S.winSize][w], hi = Math.max(hi0, WIN[S.winSize].mel[2]);
+      if (w !== active) { STEPS[w] = lo; DECK_ROWS[w] = 0; continue; }
+      let target = window.innerHeight - 12 - h("head") - h("nav") - h("rollBar") - 18 - (shown ? h("rhyStrip") + h("lyrStrip") + 6 : 0) - Math.max(h("palette"), h("quick"), 30) - topExtra - 16;
+      { const side = $(w + "Win").querySelector(".side"); if (side && side.offsetHeight > 0) { const kids = [...side.children].filter(k => k.offsetHeight > 0), cs = getComputedStyle(side); const need = kids.reduce((a, k) => a + k.offsetHeight, 0) + Math.max(0, kids.length - 1) * (parseFloat(cs.rowGap) || 0) + (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0); target = Math.max(target, need - 16); } }   // never shorter than the buttons beside it need: they would hold the stave's row open and leave a gap   // the stave's drawing height: the screen less the rows above and below, the three 6px margins, the tool bar's 6px when the strips show, the frame's borders and pads
+      const k = STEP_K[S.noteSize] || 1, rows = clamp(Math.floor(target / (hi * k)), rows0, 48);   // at the stave's full scale, as many rows as fill the height — never fewer than usual
+      DECK_ROWS[w] = rows; STEPS[w] = Math.max(lo, target / rows / k);                      // and the rows share that height exactly
     }
     return;
   }
@@ -10984,6 +10992,7 @@ async function boot() {
   midiInit();
   $("overlay").addEventListener("click", e => { if (e.target === $("overlay")) closeModal(); });
   initPointer(); initWindowChrome(); initWordEdit(); initWake(); initQuick();
+  setTimeout(() => { if (S.song && deckMode()) renderAll(); }, 80);                       // the deck once more after the first paint, when every row has its true height
   window.addEventListener("keydown", e => {
     const tag = (document.activeElement && document.activeElement.tagName) || "";
     if (["INPUT", "TEXTAREA", "SELECT"].includes(tag) || $("overlay").classList.contains("on")) return;
