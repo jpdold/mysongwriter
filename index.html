@@ -9405,10 +9405,18 @@ function sameBeatRoom(bar, bi) {
   const need = Math.max(...["I", ".", "a", "A"].map(t => chipW({ text: t })));
   return { from, ok: (beatEnd - from) * g.beatPx >= need - 1e-6 };
 }
+/* the box to a beat line of the bar — or the start of the next bar — and words set there */
+function weGoLine(bi, t, words) {
+  const inp = weInput(), B = barBeats(bi); inp.value = ""; WE.dirty = false;
+  if (t < B - 1e-6) openWordEdit(bi, t);
+  else if (bi + 1 < S.song.bars.length) { S.bi = bi + 1; renderAll(); openWordEdit(bi + 1, 0); toast(`Bar ${barNo(bi + 1)}`); }
+  else { if (words) { inp.value = words; WE.dirty = true; sizeInline(); } toast("No free beat left"); return; }
+  if (words) { inp.value = words; WE.dirty = true; commitWordEdit(true); }
+}
 /* NEW CHIP – CURRENT BEAT: the words become a chip in the beat the last chip starts in — the beat you are working in, even when that
    chip runs a little past its line — that beat's chips squeezing (down to where they still read) to make the room. When even that
    cannot fit them the user is asked: NEW CHIP ANY SPACE, modify the previous entry (the words wait and come back to the box after),
-   proceed (the words go to the next beat line), or cancel (everything back as before the tap). */
+   next available space (the chip flush after the last one), proceed (the words go to the beat line beyond), or cancel. */
 function weNewCurrentBeat() {
   if (!WE.on) return;
   const inp = weInput(), bi = WE.bi, bar = S.song.bars[bi], B = barBeats(bi), g = stripGeo(), typed = inp.value.trim();
@@ -9425,10 +9433,12 @@ function weNewCurrentBeat() {
   if (from + letter <= L + 1e-6) { commitWordEdit(true, false, true); return; }           // it starts in this beat: the chip goes in, the box waits just after it
   bar.chips = JSON.parse(JSON.stringify(snap.chips)); refitChips(bar); WE.t = snap.t; renderAll(); placeInline(); weCaret();   // the squeeze could not make the room: undone
   const prev = last || [...bar.chips].sort((a, b) => a.t - b.t).pop();
-  const proceed = () => { closeModal(); commitWordEdit(true, false, true); };            // the words go just after the last chip, in the next beat
-  openModal("No room in this beat", p(`“${typed}” cannot start in this beat, even with its chips squeezed as far as they read. NEW CHIP ANY SPACE places a chip wherever there is room; Modify previous entry opens that chip (your words come back to the box after); Proceed sets the words just after the last chip, in the next beat.`), [
+  const nextSpace = () => { closeModal(); commitWordEdit(true, false, true); };          // the chip flush after the last one
+  const proceed = () => { closeModal(); weGoLine(bi, Math.ceil(chipsEdge(bar, g) - 1e-6), typed); };   // the words go to the beat line beyond the chips
+  openModal("No room in this beat", p(`“${typed}” cannot start in this beat, even with its chips squeezed as far as they read. NEW CHIP ANY SPACE places a chip wherever there is room; Modify previous entry opens that chip (your words come back to the box after); Next available space sets the chip flush after the last one; Proceed sets the words at the beat line beyond it.`), [
     button("NEW CHIP ANY SPACE ↔", () => { restore(); weNewGapChip(); }),
     button("Modify previous entry", () => { restore(); if (prev) { WE.carry = inp.value; inp.value = ""; WE.dirty = false; openWordEdit(bi, prev.t, prev); } }),
+    button("Next available space", nextSpace),
     button("Proceed", proceed, "acc"),
     button("Cancel", restore)]);
 }
@@ -9436,8 +9446,8 @@ function weNewCurrentBeat() {
 function weUncarry() { if (!WE.carry || !WE.on) return; const inp = weInput(); inp.value = WE.carry; WE.carry = ""; WE.dirty = true; sizeInline(); toast("Your words are back in the box"); }
 /* NEW CHIP → NEXT BEAT. The words in the box are set here when they fit; then the box goes to the next beat line — the line after
    the beat the last chip starts in, the chips of that beat squeezing (down to where they still read) so that nothing runs past
-   it. When they cannot clear that line the user is asked: NEW CHIP ANY SPACE, modify the previous entry, proceed to the line
-   beyond, or cancel (everything back as it was before the tap). Words that had no room in this beat are set on the line reached. */
+   it. When they cannot clear that line the user is asked: NEW CHIP ANY SPACE, modify the previous entry, next available space
+   (flush after the last chip), proceed to the line beyond, or cancel (everything back as it was before the tap). Words that had no room in this beat are set on the line reached. */
 function weNewNextBeat() {
   if (!WE.on) return;
   const inp = weInput(), bi = WE.bi, bar = S.song.bars[bi], B = barBeats(bi), g = stripGeo(), typed = inp.value.trim();
@@ -9449,13 +9459,8 @@ function weNewNextBeat() {
   if (WE.chipId) commitWordEdit(true);
   else if (typed) { if (sameBeatRoom(bar, bi).ok) commitWordEdit(true); else { pending = typed; inp.value = ""; WE.dirty = false; } }
   if (!WE.on || WE.bi !== bi) return;                                                     // setting the words carried the box into the next bar: that is a beat line
-  const toLine = t => {                                                                   // the box to a beat line of this bar, or the start of the next bar; pending words are set there
-    closeModal();
-    if (t < B - 1e-6) openWordEdit(bi, t);
-    else if (bi + 1 < S.song.bars.length) { S.bi = bi + 1; renderAll(); openWordEdit(bi + 1, 0); toast(`Bar ${barNo(bi + 1)}`); }
-    else { if (pending) { inp.value = pending; WE.dirty = true; sizeInline(); } toast("No free beat left"); return; }
-    if (pending) { inp.value = pending; WE.dirty = true; commitWordEdit(true); }
-  };
+  const toLine = t => { closeModal(); weGoLine(bi, t, pending); };                       // the box to a beat line (or the next bar); pending words are set there
+  const nextSpace = () => { closeModal(); if (pending) { inp.value = pending; WE.dirty = true; commitWordEdit(true, false, true); } else toast("The box is right after the last chip"); };   // flush after the last chip
   const last = bar.chips.filter(c => !c.full && Math.abs(c.t + chipFull(c, g) - WE.t) < 1 / 64 + 1e-6).sort((a, b) => b.t - a.t)[0];   // the chip the box sits flush after
   const anchor = last ? last.t : WE.t, L = Math.floor(anchor + 1e-6) + 1;                 // the next beat line: after the beat that chip starts in
   const unsqueezed = JSON.stringify(bar.chips), tBefore = WE.t;
@@ -9466,9 +9471,10 @@ function weNewNextBeat() {
   }
   bar.chips = JSON.parse(unsqueezed); refitChips(bar); WE.t = tBefore; renderAll(); placeInline(); weCaret();   // the squeeze did not clear the line: undone
   const beyond = Math.ceil(chipsEdge(bar, g) - 1e-6), prev = last || [...bar.chips].sort((a, b) => a.t - b.t).pop();
-  openModal("The next beat line is taken", p(`The chip before runs past the next beat line, and squeezing this beat's chips cannot clear it for a new chip to start there. NEW CHIP ANY SPACE places a chip wherever there is room; Modify previous entry opens that chip (your words come back to the box after); Proceed goes on to the line beyond it.`), [
+  openModal("The next beat line is taken", p(`The chip before runs past the next beat line, and squeezing this beat's chips cannot clear it for a new chip to start there. NEW CHIP ANY SPACE places a chip wherever there is room; Modify previous entry opens that chip (your words come back to the box after); Next available space starts the chip flush after it; Proceed goes on to the line beyond it.`), [
     button("NEW CHIP ANY SPACE ↔", () => { restore(); weNewGapChip(); }),
     button("Modify previous entry", () => { restore(); if (prev) { WE.carry = inp.value; inp.value = ""; WE.dirty = false; openWordEdit(bi, prev.t, prev); } }),
+    button("Next available space", nextSpace),
     button("Proceed", () => toLine(beyond), "acc"),
     button("Cancel", restore)]);
 }
