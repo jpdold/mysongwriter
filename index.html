@@ -9294,7 +9294,7 @@ function initWindowChrome() {
   document.querySelectorAll(".win .focus").forEach(b => b.addEventListener("click", () => setFocus(b.dataset.win)));
 }
 /* in-place word entry on the lyric strip */
-const WE = { on: false, bi: 0, t: 0, wid: null, dirty: false, picking: false, picks: [] };   // picking: SELECT CHIP(S) is on; picks: the chips tapped since
+const WE = { on: false, bi: 0, t: 0, wid: null, dirty: false, picking: false, picks: [], carry: "" };   // picking: SELECT CHIP(S) is on; picks: the chips tapped since
 const weInput = () => $("lyrInline");
 function openWordEdit(bi, t, chip) {
   /* the keyboard: a fresh word starts at the first free spot from t (the left edge, or after the last word);
@@ -9405,6 +9405,35 @@ function sameBeatRoom(bar, bi) {
   const need = Math.max(...["I", ".", "a", "A"].map(t => chipW({ text: t })));
   return { from, ok: (beatEnd - from) * g.beatPx >= need - 1e-6 };
 }
+/* NEW CHIP – CURRENT BEAT: the words become a chip in the beat the last chip starts in — the beat you are working in, even when that
+   chip runs a little past its line — that beat's chips squeezing (down to where they still read) to make the room. When even that
+   cannot fit them the user is asked: NEW CHIP ANY SPACE, modify the previous entry (the words wait and come back to the box after),
+   proceed (the words go to the next beat line), or cancel (everything back as before the tap). */
+function weNewCurrentBeat() {
+  if (!WE.on) return;
+  const inp = weInput(), bi = WE.bi, bar = S.song.bars[bi], B = barBeats(bi), g = stripGeo(), typed = inp.value.trim();
+  if (S.chipMode === "single" || WE.chipId || !typed) { commitWordEdit(true, false, true); return; }
+  const snap = { t: WE.t, text: inp.value, chips: JSON.parse(JSON.stringify(bar.chips)) };
+  const restore = () => { closeModal(); bar.chips = JSON.parse(JSON.stringify(snap.chips)); refitChips(bar); WE.bi = bi; WE.t = snap.t; WE.chipId = null; inp.value = snap.text; WE.dirty = true; S.selChip = null; renderAll(); placeInline(); weCaret(); };
+  const p = t => el("p", { style: "font-size:16px;margin:6px 0 4px" }, t), button = (label, fn, cls) => el("button", { class: "btn " + (cls || ""), onclick: fn }, label);
+  const last = bar.chips.filter(c => !c.full && Math.abs(c.t + chipFull(c, g) - WE.t) < 1 / 64 + 1e-6).sort((a, b) => b.t - a.t)[0];   // the chip the box sits flush after
+  const anchor = last ? last.t : WE.t, L = Math.min(B, Math.floor(anchor + 1e-6) + 1);   // the beat you are working in ends at this line
+  const need = typed.split(/\s+/).filter(Boolean).reduce((a, w) => a + chipW({ text: w }), 0) / g.beatPx;   // the words, as chips side by side
+  const letter = Math.max(...["I", ".", "a", "A"].map(t => chipW({ text: t }))) / g.beatPx;   // a chip may run past the line, but it must start in the beat with room for a letter
+  fitBeat(bar, bi, null, anchor, L, Math.max(need, letter) * g.beatPx);                   // that beat's chips squeeze to make the room; the box follows flush
+  const from = Math.max(WE.t, chipsEdge(bar, g));
+  if (from + letter <= L + 1e-6) { commitWordEdit(true, false, true); return; }           // it starts in this beat: the chip goes in, the box waits just after it
+  bar.chips = JSON.parse(JSON.stringify(snap.chips)); refitChips(bar); WE.t = snap.t; renderAll(); placeInline(); weCaret();   // the squeeze could not make the room: undone
+  const prev = last || [...bar.chips].sort((a, b) => a.t - b.t).pop();
+  const proceed = () => { closeModal(); commitWordEdit(true, false, true); };            // the words go just after the last chip, in the next beat
+  openModal("No room in this beat", p(`“${typed}” cannot start in this beat, even with its chips squeezed as far as they read. NEW CHIP ANY SPACE places a chip wherever there is room; Modify previous entry opens that chip (your words come back to the box after); Proceed sets the words just after the last chip, in the next beat.`), [
+    button("NEW CHIP ANY SPACE ↔", () => { restore(); weNewGapChip(); }),
+    button("Modify previous entry", () => { restore(); if (prev) { WE.carry = inp.value; inp.value = ""; WE.dirty = false; openWordEdit(bi, prev.t, prev); } }),
+    button("Proceed", proceed, "acc"),
+    button("Cancel", restore)]);
+}
+/* words set aside while another chip is modified come back to the box once it is set */
+function weUncarry() { if (!WE.carry || !WE.on) return; const inp = weInput(); inp.value = WE.carry; WE.carry = ""; WE.dirty = true; sizeInline(); toast("Your words are back in the box"); }
 /* NEW CHIP → NEXT BEAT. The words in the box are set here when they fit; then the box goes to the next beat line — the line after
    the beat the last chip starts in, the chips of that beat squeezing (down to where they still read) so that nothing runs past
    it. When they cannot clear that line the user is asked: NEW CHIP ANY SPACE, modify the previous entry, proceed to the line
@@ -9437,9 +9466,9 @@ function weNewNextBeat() {
   }
   bar.chips = JSON.parse(unsqueezed); refitChips(bar); WE.t = tBefore; renderAll(); placeInline(); weCaret();   // the squeeze did not clear the line: undone
   const beyond = Math.ceil(chipsEdge(bar, g) - 1e-6), prev = last || [...bar.chips].sort((a, b) => a.t - b.t).pop();
-  openModal("The next beat line is taken", p(`The chip before runs past the next beat line, and squeezing this beat's chips cannot clear it for a new chip to start there. NEW CHIP ANY SPACE places a chip wherever there is room; Modify previous entry opens that chip; Proceed goes on to the line beyond it.`), [
+  openModal("The next beat line is taken", p(`The chip before runs past the next beat line, and squeezing this beat's chips cannot clear it for a new chip to start there. NEW CHIP ANY SPACE places a chip wherever there is room; Modify previous entry opens that chip (your words come back to the box after); Proceed goes on to the line beyond it.`), [
     button("NEW CHIP ANY SPACE ↔", () => { restore(); weNewGapChip(); }),
-    button("Modify previous entry", () => { restore(); if (prev) openWordEdit(bi, prev.t, prev); }),
+    button("Modify previous entry", () => { restore(); if (prev) { WE.carry = inp.value; inp.value = ""; WE.dirty = false; openWordEdit(bi, prev.t, prev); } }),
     button("Proceed", () => toLine(beyond), "acc"),
     button("Cancel", restore)]);
 }
@@ -9571,7 +9600,7 @@ function renderWeKeys() {
     key([el("span", {}, "Single chip"), modeIco(1)], () => weSetMode("single"), "modek" + (S.chipMode === "single" ? " on" : ""), "everything you type becomes one chip across the bar"),
     key([arrow(-1), cap("NUDGE LEFT")], () => weNudge(-1), "nudge", "nudge the chip a sixteenth of a beat earlier"),
     key([arrow(1), cap("NUDGE RIGHT")], () => weNudge(1), "nudge", "nudge the chip a sixteenth of a beat later"),
-    key([ln("NEW CHIP –"), ln("CURRENT BEAT")], () => commitWordEdit(true, false, true), "go", "make the chip; the box stays in this beat, just after it"),
+    key([ln("NEW CHIP –"), ln("CURRENT BEAT")], weNewCurrentBeat, "go", "make the chip; the box stays in this beat, just after it"),
     key([splitIcon(), cap("SPLIT")], weSplit, "splitk", "split this chip in two at the cursor"),
     key([sizeIco(false), cap("SHORTEN")], () => weSizeChip(-1), "sizek", "shorten the chip: back to its word's own width, then to the least it can be"),
     key([sizeIco(true), cap("WIDEN")], () => weSizeChip(1), "sizek", "widen the chip to fill the room beside it, up to the next chip or the bar line"),
@@ -9654,7 +9683,7 @@ function fitBeat(bar, bi, me, t0, tEnd, mineW) {
   const others = bar.chips.filter(c => c !== me && !c.full && !c.gap && c.t >= b0 - 1e-6 && c.t < tEnd - 1e-6);
   const all0 = [...bar.chips].sort((a, b) => a.t - b.t), flush = new Map();
   all0.forEach((c, i) => { if (i) flush.set(c.id, c.t <= all0[i - 1].t + chipFull(all0[i - 1], g) + 1 / 64); });
-  const boxFlush = !me && WE.on && Math.abs(t0 - chipsEdge(bar, g)) < 1 / 64 + 1e-6;
+  const boxFlush = !me && WE.on && !WE.chipId && Math.abs(WE.t - chipsEdge(bar, g)) < 1 / 64 + 1e-6;   // the entry box sits flush after the last chip: it follows
   const before = JSON.stringify(bar.chips.map(c => [c.t, c.wf || 1]));
   others.forEach(c => { if (c.auto) { delete c.wf; delete c.auto; } });                  // given back first
   const typed = !me && WE.on ? weInput().value.trim() : "", mine = me ? chipW(me) : mineW != null ? mineW : typed ? chipW({ text: typed }) : 0;
@@ -9668,7 +9697,7 @@ function fitBeat(bar, bi, me, t0, tEnd, mineW) {
   }
   const all = [...bar.chips].sort((a, b) => a.t - b.t);                                  // flush chips stay flush; anything overlapped is pushed along
   for (let i = 1; i < all.length; i++) { const p = all[i - 1], c = all[i], edge = r3(p.t + chipFull(p, g)); if (flush.get(c.id) || c.t < edge - 1e-6) c.t = r3(Math.min(edge, Math.max(0, B - 0.125))); }
-  if (boxFlush && WE.on && !WE.chipId) { const e = r3(chipsEdge(bar, g)); WE.t = Math.abs(t0 - Math.round(t0)) < 1e-6 && e <= t0 + 1e-6 ? t0 : e; }   // the box keeps flush with the last chip — but one sitting on a beat line stays on it
+  if (boxFlush) { const e = r3(chipsEdge(bar, g)), tb = WE.t; WE.t = Math.abs(tb - Math.round(tb)) < 1e-6 && e <= tb + 1e-6 ? tb : e; }   // the box keeps flush with the last chip — but one sitting on a beat line stays on it
   refitChips(bar);
   return before !== JSON.stringify(bar.chips.map(c => [c.t, c.wf || 1]));
 }
@@ -9722,7 +9751,7 @@ function weSizeChip(d) {
 function weBlink() { const box = $("wordEdit"); box.classList.remove("blink"); void box.offsetWidth; box.classList.add("blink"); setTimeout(() => box.classList.remove("blink"), 950); }
 function closeWordEdit() {
   if (WE.on && WE.dirty) { commitWordEdit(false, true); return; }
-  const was = WE.on; WE.on = false; WE.wid = null; WE.chipId = null; WE.picking = false; WE.picks = []; $("wordEdit").classList.remove("on"); weInput().classList.remove("on"); weCaret(); document.body.classList.remove("kbOpen");
+  const was = WE.on; WE.on = false; WE.wid = null; WE.chipId = null; WE.picking = false; WE.picks = []; WE.carry = ""; $("wordEdit").classList.remove("on"); weInput().classList.remove("on"); weCaret(); document.body.classList.remove("kbOpen");
   const f = WE.firstChip; WE.firstChip = null;
   if (was && f && S.song.bars[f.bi] && S.song.bars[f.bi].chips.some(c => c.id === f.id)) { S.selChip = { bi: f.bi, id: f.id }; S.bi = f.bi; renderAll(); }   // the first word you typed is ready to move or stretch
 }
@@ -9731,7 +9760,7 @@ function commitWordEdit(advance, quiet, sameBeat) {
   if (!WE.on) return;
   const inp = weInput(), raw = inp.value.replace(/^\s+|\s+$/g, ""), bi = WE.bi, bar = S.song.bars[bi];
   WE.dirty = false;
-  const finish = () => { WE.on = false; WE.wid = null; WE.chipId = null; WE.picking = false; WE.picks = []; inp.disabled = false; $("wordEdit").classList.remove("on"); inp.classList.remove("on"); document.body.classList.remove("kbOpen"); const f = WE.firstChip; WE.firstChip = null; if (f && S.song.bars[f.bi] && S.song.bars[f.bi].chips.some(c => c.id === f.id)) { S.selChip = { bi: f.bi, id: f.id }; S.bi = f.bi; } weCaret(); renderAll(); };
+  const finish = () => { WE.on = false; WE.wid = null; WE.chipId = null; WE.picking = false; WE.picks = []; WE.carry = ""; inp.disabled = false; $("wordEdit").classList.remove("on"); inp.classList.remove("on"); document.body.classList.remove("kbOpen"); const f = WE.firstChip; WE.firstChip = null; if (f && S.song.bars[f.bi] && S.song.bars[f.bi].chips.some(c => c.id === f.id)) { S.selChip = { bi: f.bi, id: f.id }; S.bi = f.bi; } weCaret(); renderAll(); };
   let nextT = WE.t;
   if (WE.chipId) {
     const c = bar.chips.find(x => x.id === WE.chipId);
@@ -9752,8 +9781,8 @@ function commitWordEdit(advance, quiet, sameBeat) {
   bar.lyric = lyricFromChips(bar); inp.value = ""; inp.disabled = false;
   if (quiet) { finish(); return; }
   renderAll();
-  if (nextT >= barBeats(bi) - 1e-6 && bi + 1 < S.song.bars.length) { S.bi = bi + 1; openWordEdit(bi + 1, 0); toast(`Bar ${barNo(bi + 1)}`); return; }   // the bar is full: on to the next
-  openWordEdit(bi, nextT);
+  if (nextT >= barBeats(bi) - 1e-6 && bi + 1 < S.song.bars.length) { S.bi = bi + 1; openWordEdit(bi + 1, 0); toast(`Bar ${barNo(bi + 1)}`); weUncarry(); return; }   // the bar is full: on to the next
+  openWordEdit(bi, nextT); weUncarry();
 }
 /* a new chip lands at the first spot from `from` (default the left edge) wide enough for it; null when nothing fits */
 function addLyricChip(bar, bi, text, from = 0) {
