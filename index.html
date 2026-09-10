@@ -9771,7 +9771,6 @@ function commitWordEdit(advance, quiet, sameBeat) {
   } else if (raw) {
     const words = S.chipMode === "single" ? [raw] : raw.split(/\s+/).filter(Boolean);   // Multi-chip: a chip per word, flush one after another; Single chip: one chip across the whole bar
     const room = sameBeatRoom(bar, bi);
-    if (sameBeat && S.chipMode !== "single" && !room.ok) { WE.dirty = true; noticeModal("Not enough room here — please enter NEW CHIP NEXT BEAT"); return; }
     let from = room.from, made = 0;                                                        // never before the right-most chip's edge
     for (const w of words) { const c = addLyricChip(bar, bi, w, from); if (!c) break; if (S.chipMode === "single") { c.full = true; from = barBeats(bi); } else from = c.t + chipFull(c, stripGeo()); if (!WE.firstChip) WE.firstChip = { bi, id: c.id }; WE.lastChip = c.id; made++; }
     if (!made) { toast("No room for that here — NEW CHIP NEXT BEAT, or the next bar"); if (quiet) finish(); return; }
