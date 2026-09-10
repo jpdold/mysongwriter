@@ -288,11 +288,10 @@ svg text { pointer-events: none; }
 /* the tool bar: a static left half (arrows, UNDO / REDO, MOVE / DELETE, PLAY BAR, PLAY SELECT, CHORD) and a right half that flips
    between four palettes — notes (the quick palette), rests, dynamics, marks — with the flip button at its far corner */
 #toolbar { display: none; }
-#app.deck #toolbar { grid-area: t; display: flex; gap: 8px; align-items: center; margin-top: 6px; min-width: 0; padding: 3px 6px; background: linear-gradient(#f2f3f5, #d2d5da); border: 1px solid #8a8d92; border-radius: 4px; box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(0,0,0,.25); }
+#app.deck #toolbar { grid-area: t; display: flex; gap: 8px; align-items: center; margin-top: 0; min-width: 0; padding: 3px 6px; background: linear-gradient(#f2f3f5, #d2d5da); border: 1px solid #8a8d92; border-radius: 4px; box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(0,0,0,.25); }
 #app.deck #toolL { gap: 2px; }
 #app.deck #toolL button.tplay { height: 26px; font-size: 8px; padding: 0 6px; box-shadow: none; margin-left: 4px; }
 #app.deck #toolL button.tplay + button.tplay { margin-left: 2px; }
-#app.deck.nostrips #toolbar { margin-top: 0; }                                              /* the strips away: the tool bar flush on the stave */
 #toolL { flex: 0 0 auto; display: flex; gap: 6px; align-items: center; }                     /* the static half: its own width */
 #toolR { flex: 1 1 0; min-width: 120px; display: flex; gap: 6px; align-items: center; overflow: hidden; }   /* the flipping half: what is left, and no more */
 #toolScroll { flex: 1 1 0; min-width: 0; display: flex; gap: 6px; align-items: center; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -webkit-overflow-scrolling: touch; touch-action: pan-x; }   /* the palettes scroll sideways: items vanish at its edge and return as it scrolls back */
@@ -319,10 +318,15 @@ body.kbOpen #app.deck { padding-bottom: 6px; }
 #app.deck #melWin, #app.deck #accWin, #app.deck #bassWin { grid-area: stage; margin-top: 6px !important; }
 #app.deck #nav, #app.deck #rollBar { margin-top: 6px; }
 #app.deck .win:not(.deckOn) { display: none !important; }
-#app.deck .win .sizer, #app.deck .win .focus, #app.deck .win .winHead, #app.deck .win .side, #app.deck .win .rArr { display: none !important; }   /* the side buttons and pitch arrows live in the column beside the stave */
-#app.deck .win { grid-template-columns: 34px 1fr; gap: 0 2px; }
+#app.deck .win .sizer, #app.deck .win .focus, #app.deck .win .winHead, #app.deck .win .side { display: none !important; }   /* the side buttons live in the column beside the stave */
+#app.deck .win { grid-template-columns: 48px 1fr; gap: 0 2px; }                             /* the gutter: the pitch labels, then the skinny ↑ ↓ */
 #app.deck .win .gutter svg { width: 34px; }
-#app.deck .strip { grid-template-columns: 34px 1fr; gap: 0 2px; position: relative; }   /* the strips line up with the stave */
+#app.deck .win .rArr { display: block; position: absolute; left: 36px; width: 12px; height: 46px; padding: 0; margin: 0; border-radius: 3px; font-size: 0; }   /* skinny, tucked in beside the range markers, centred on the stave */
+#app.deck .win .rArr::before { display: none; }
+#app.deck .win .rArr::after { font-size: 13px; font-weight: 700; color: #111; line-height: 1; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+#app.deck .win .rArr.up { top: calc(50% - 47px); bottom: auto; } #app.deck .win .rArr.up::after { content: "↑"; }
+#app.deck .win .rArr.dn { top: calc(50% + 1px); bottom: auto; } #app.deck .win .rArr.dn::after { content: "↓"; }
+#app.deck .strip { grid-template-columns: 48px 1fr; gap: 0 2px; position: relative; }   /* the strips line up with the stave */
 #app.deck #lyrEdit { position: absolute; right: 3px; top: 50%; transform: translateY(-50%); z-index: 3; }                                          /* the stave reaches the column beside it */
 #app.deck #rhyStrip { margin-top: 0 !important; }                                          /* flush on the stave */
 #app.deck #deckNav { display: flex; }
@@ -335,13 +339,10 @@ body.kbOpen #app.deck { padding-bottom: 6px; }
 #deckNav button.part { height: 44px; }
 #deckNav button.part .big { font-size: 16px; line-height: 1; }
 #deckNav button.part .name { white-space: nowrap; }
-#deckNav .pitchGrp { display: flex; flex-direction: column; gap: 2px; position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); }   /* centred on the stave's height */
-#deckNav button.pitch { height: 52px; font-size: 28px; font-weight: 400; line-height: 1; background: linear-gradient(#fff, #cfcfcf); color: #111; border: 1.5px solid #141414; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
-#deckNav button.pitch:active { background: linear-gradient(#ffd27a, #f5a623); }
 #deckNav .spacer { flex: 1 1 0; }
 #deckNav button:disabled { opacity: .35; }
 #deckNav button.part:active { filter: brightness(1.3); }
-@media (max-height: 520px) { #deckNav button.gearBtn { height: 20px; } #deckNav button.part { height: 28px; } #deckNav button.part .big { font-size: 12px; } #deckNav button.pitch { height: 34px; font-size: 20px; } #app.deck #stripsBtn { height: 22px; } }   /* a short screen: the column's buttons compact */
+@media (max-height: 520px) { #deckNav button.gearBtn { height: 20px; } #deckNav button.part { height: 28px; } #deckNav button.part .big { font-size: 12px; } #app.deck #stripsBtn { height: 22px; } }   /* a short screen: the column's buttons compact */
 .rollItem label { flex: 1; display: flex; align-items: center; gap: 7px; cursor: pointer; min-width: 0; }
 .rollItem input[type=checkbox] { width: 16px; height: 16px; margin: 0; accent-color: var(--tag); flex: 0 0 auto; }
 #rollBar .addView { flex: 0 0 auto; height: 22px; padding: 0 12px; border: 1px solid #3a8a1e; border-radius: 4px; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); font-size: 10px; font-weight: 800; letter-spacing: .04em; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
@@ -8066,7 +8067,7 @@ const snapT = t => Math.round(t / gridStep()) * gridStep();
 const curBar = () => S.song.bars[S.bi];
 function viewOf(win) { const v = S.song.view; if (v.bassLo == null) v.bassLo = 36; return v[WIN_LO[win]]; }
 const DECK_ROWS = { mel: 0, acc: 0, bass: 0 }; let DECK_TOP = 17;                        // the beat labels' height above the stave, as last seen                                          // on the deck the stave shows as many rows as fill the screen (computed by allocate)
-function rowsOf(win) { const rows = deckMode() && DECK_ROWS[win] ? DECK_ROWS[win] : WIN[S.winSize][win][0]; return { rows, step: Math.round(STEPS[win] * (STEP_K[S.noteSize] || 1) * 10) / 10 }; }
+function rowsOf(win) { const deck = deckMode() && DECK_ROWS[win]; const rows = deck ? DECK_ROWS[win] : WIN[S.winSize][win][0]; return { rows, step: deck ? STEPS[win] * (STEP_K[S.noteSize] || 1) : Math.round(STEPS[win] * (STEP_K[S.noteSize] || 1) * 10) / 10 }; }
 /* share the screen among the open windows: melody weighs most; half windows count half; closed ones show a bar */
 function allocate() {
   if (deckMode()) {                                                                       // the deck: the one part in view fills the stage exactly — flush on the strips, or on the tool bar when they are hidden
@@ -8075,10 +8076,11 @@ function allocate() {
     for (const w of ["mel", "acc", "bass"]) {
       const [rows0, lo, hi0] = WIN[S.winSize][w], hi = Math.max(hi0, WIN[S.winSize].mel[2]);
       if (w !== active) { STEPS[w] = lo; DECK_ROWS[w] = 0; continue; }
-      let target = window.innerHeight - 12 - h("head") - h("nav") - h("rollBar") - 12 - (h("rollBar") ? 6 : 0) - (shown ? h("rhyStrip") + h("lyrStrip") + 6 : 0) - Math.max(h("toolbar"), 30) - topExtra - 16;
+      let target = window.innerHeight - 12 - h("head") - h("nav") - h("rollBar") - 12 - (h("rollBar") ? 6 : 0) - (shown ? h("rhyStrip") + h("lyrStrip") : 0) - Math.max(h("toolbar"), 30) - topExtra - 16;   // the strips, when shown, sit flush between the stave and the tool bar
       { const side = $(w + "Win").querySelector(".side"); if (side && side.offsetHeight > 0) { const kids = [...side.children].filter(k => k.offsetHeight > 0), cs = getComputedStyle(side); const need = kids.reduce((a, k) => a + k.offsetHeight, 0) + Math.max(0, kids.length - 1) * (parseFloat(cs.rowGap) || 0) + (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0); target = Math.max(target, need - 16); } }   // never shorter than the buttons beside it need: they would hold the stave's row open and leave a gap   // the stave's drawing height: the screen less the rows above and below, the three 6px margins, the tool bar's 6px when the strips show, the frame's borders and pads
-      const k = STEP_K[S.noteSize] || 1, rows = clamp(Math.floor(target / (hi * k)), rows0, 48);   // at the stave's full scale, as many rows as fill the height — never fewer than usual
+      const k = STEP_K[S.noteSize] || 1, rows = clamp(Math.floor(target / (hi * k)), rows0, 88);   // at the stave's full scale, as many rows as fill the height — never fewer than usual, up to the whole piano
       DECK_ROWS[w] = rows; STEPS[w] = Math.max(lo, target / rows / k);                      // and the rows share that height exactly
+      { const key = WIN_LO[w], v = S.song && S.song.view ? viewOf(w) : null; if (v != null && v + rows - 1 > 108) S.song.view[key] = Math.max(21, 109 - rows); }   // more rows than fit above: the range reaches lower instead
     }
     return;
   }
@@ -8499,13 +8501,7 @@ function renderRollBar() {
     const SHORT = { mel: "MELODY", acc: "ACCOMP", bass: "BASS" };
     const arrow = (dir, w) => { const b = el("button", { class: "part", title: w ? (dir < 0 ? "Up to " : "Down to ") + DECK_NAME[w] : "Nothing " + (dir < 0 ? "above" : "below"), onclick: () => { if (w) deckShow(w); } }, el("span", { class: "big" }, dir < 0 ? "▲" : "▼"), el("span", { class: "name" }, w ? SHORT[w] : "")); if (!w) b.disabled = true; return b; };
     const gear = el("button", { class: "gearBtn", title: DECK_NAME[active].charAt(0) + DECK_NAME[active].slice(1).toLowerCase() + " settings", onclick: () => openWinSettings(active) }, svgEl("svg", { class: "ico" }, svgEl("use", { href: "#icoGear" })));
-    const pitch = dir => { const b = el("button", { class: "pitch", title: dir > 0 ? "Higher (hold: an octave)" : "Lower (hold: an octave)" }, dir > 0 ? "↑" : "↓"); let t = null, held = false;
-      b.addEventListener("pointerdown", () => { held = false; t = setTimeout(() => { held = true; t = null; shiftView(active, dir * 12); }, 450); });
-      const clear = () => { if (t) { clearTimeout(t); t = null; } };
-      b.addEventListener("pointerup", clear); b.addEventListener("pointerleave", clear); b.addEventListener("pointercancel", clear);
-      b.addEventListener("click", () => { if (!held) shiftView(active, dir * (active === "mel" ? 1 : 12)); held = false; }); return b; };
-    const pg = el("div", { class: "pitchGrp" }, pitch(1), pitch(-1));
-    nav.append(gear, arrow(-1, up), arrow(1, dn), el("div", { class: "spacer" }), pg, el("div", { class: "spacer" }), sb);
+    nav.append(gear, arrow(-1, up), arrow(1, dn), el("div", { class: "spacer" }), sb);      // the ↑ ↓ pitch arrows sit in the stave's own gutter
     /* the tool bar: the static left half, and the right half that flips */
     const tl = $("toolL"), tr = $("toolR");
     tl.append($("arrows"), $("undoRow"), $("mvRow"));
