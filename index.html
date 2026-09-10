@@ -234,15 +234,43 @@ svg text { pointer-events: none; }
 /* ── the widescreen deck: one part in view at a time, its up / down part buttons a quarter beat wide beside it, the tools in a
    column on the right; the whole screen, nothing scrolls ── */
 #app.deck { max-width: none !important; height: 100vh; height: 100dvh; box-sizing: border-box; overflow: hidden; padding: 6px 12px; gap: 6px 10px;
-  grid-template-columns: 16fr 1fr 330px !important; grid-template-rows: auto auto auto auto auto auto auto auto minmax(0, 1fr);
-  grid-template-areas: "head head head" "nav nav nav" "rollbar rollbar rollbar" "stage deck arrows" "stage deck undo" "stage deck pal" "rhy deck pal" "lyr deck pal" ". deck pal" !important; }
+  grid-template-columns: 118px 108px 108px minmax(330px, 1fr) minmax(0, 1fr) var(--deckW, 44px) !important; grid-template-rows: auto auto auto auto auto auto minmax(0, 1fr) auto;
+  grid-template-areas: "head head head head head head" "nav nav nav nav nav nav" "rollbar rollbar rollbar rollbar rollbar rollbar" "stage stage stage stage stage deck" "rhy rhy rhy rhy rhy deck" "lyr lyr lyr lyr lyr deck" ". . . . . deck" "t1 t2 t3 t4 t5 t5" !important; }
+/* the head: a small title at the top left; the play buttons move to the left of the bar bracket */
+#app.deck #head { grid-template-columns: 44px auto 1fr 44px; grid-template-rows: auto; }
+#app.deck #menuBtn { grid-column: 1; } #app.deck #gearBtn { grid-column: 4; }
+#app.deck #songTitle { grid-column: 2; grid-row: 1; justify-self: start; width: 220px; font-size: 13px; line-height: 1.2; padding: 3px 8px; text-align: left; }
+#app.deck #nav { grid-template-columns: auto 30px 1fr 30px; }
+#app.deck #topTransport { justify-self: start; }
+#app.deck #topTransport button { width: 32px; height: 30px; font-size: 15px; }
+#app.deck #tempo, #app.deck #topTransport #tempo button { height: 30px; }
+/* the tools: one bar, a button high, across the foot of the screen */
+#app.deck #arrows { grid-area: t1; width: auto; justify-self: stretch; align-self: center; }
+#app.deck #undoRow { grid-area: t2; width: auto; justify-self: stretch; align-self: center; margin-top: 0; }
+#app.deck #mvRow { grid-area: t3; width: auto; justify-self: stretch; align-self: center; margin-top: 0; }
+#app.deck #arrows button, #app.deck #undoRow button, #app.deck #mvRow button { height: 30px; border-top: 1.5px solid #141414; border-radius: 0; }
+#app.deck #arrows button:first-child, #app.deck #undoRow button:first-child, #app.deck #mvRow button:first-child { border-radius: 4px 0 0 4px; }
+#app.deck #arrows button:last-child, #app.deck #undoRow button:last-child, #app.deck #mvRow button:last-child { border-radius: 0 4px 4px 0; }
+#app.deck #quick { grid-area: t4; width: auto; justify-self: stretch; align-self: center; grid-template-columns: 24px repeat(12, 1fr); grid-template-rows: 30px; }
+#app.deck #quick .qctl { grid-row: 1 / 2; flex-direction: row; }
+#app.deck #quick .qctl button { width: 12px; }
+#app.deck #quick .cell:nth-child(n+7) button { border-top: none; }
+#app.deck #quick.float { width: 420px; grid-template-rows: 24px 30px; }
+#app.deck #quick.float .qctl { grid-row: 2 / 3; }
+#app.deck #palette { grid-area: t5; flex-direction: row; align-items: center; gap: 6px; padding: 2px 6px; align-self: center; }
+#app.deck #palette .prow { height: 30px; }
+/* each part's stave wears its colour, with its name centred on the top and bottom edges */
+#app.deck .win .frame { border-width: 3px; }
+#app.deck #melWin .frame { border-color: #2ee62e; } #app.deck #accWin .frame { border-color: #ffcc00; } #app.deck #bassWin .frame { border-color: #e02020; }
+.deckLbl { position: absolute; transform: translate(-50%, -50%); z-index: 3; padding: 1px 14px; border-radius: 3px; font-size: 11px; font-weight: 900; letter-spacing: .12em; color: #000; pointer-events: none; display: none; white-space: nowrap; }
+#app.deck .deckLbl { display: block; }
+#melWin .deckLbl { background: #2ee62e; } #accWin .deckLbl { background: #ffcc00; } #bassWin .deckLbl { background: #e02020; }
 body.kbOpen #app.deck { padding-bottom: 6px; }
 #app.deck #rollBar { display: flex; align-items: center; }
 #app.deck #melWin, #app.deck #accWin, #app.deck #bassWin { grid-area: stage; margin-top: 0 !important; min-height: 0; }
 #app.deck .win:not(.deckOn) { display: none !important; }
 #app.deck .win .sizer, #app.deck .win .focus, #app.deck .win .winHead { display: none !important; }
 #app.deck #rhyStrip { margin-top: 0 !important; }
-#app.deck #palette { align-self: start; }
 #app.deck #deckNav { display: flex; }
 #deckNav { grid-area: deck; display: none; flex-direction: column; gap: 6px; align-self: start; min-width: 0; }
 #deckNav button { width: 100%; min-height: 96px; padding: 6px 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; background: #111; color: #fff; border: 1px solid #000; border-radius: 6px; font-size: 9.5px; font-weight: 800; letter-spacing: .06em; box-shadow: 0 1px 2px rgba(0,0,0,.35); }
@@ -7975,7 +8003,7 @@ function allocate() {
     for (const w of ["mel", "acc", "bass"]) {
       const [rows, lo, hi0] = WIN[S.winSize][w], hi = Math.max(hi0, WIN[S.winSize].mel[2]);
       if (w !== active) { STEPS[w] = lo; continue; }
-      const avail = window.innerHeight - h("head") - h("nav") - h("rollBar") - h("rhyStrip") - h("lyrStrip") - 6 * 7 - 12 - 16;
+      const avail = window.innerHeight - h("head") - h("nav") - h("rollBar") - h("rhyStrip") - h("lyrStrip") - Math.max(h("palette"), h("quick"), 30) - 6 * 8 - 12 - 16;
       STEPS[w] = clamp(Math.floor((avail - 12) / rows * (S.zoomWin[w] || 1) * 10) / 10, lo, hi);
     }
     return;
@@ -8319,10 +8347,24 @@ const ARTIC = { staccato: { glyph: "•", label: "staccato" }, tenuto: { glyph: 
 const deckMode = () => window.matchMedia("(min-width: 860px) and (min-aspect-ratio: 5/4), (max-height: 520px) and (min-aspect-ratio: 5/4)").matches;
 const DECK_NAME = { mel: "MELODY", acc: "ACCOMPANIMENT", bass: "BASS" };
 function deckActive() { const open = ["mel", "acc", "bass"].find(w => S.winState[w] !== "closed"); return S.deck.includes(open) ? open : S.deck[0]; }
+/* MELODY / ACCOMPANIMENT / BASS, centred on the top and bottom edges of the stave in view */
+function placeDeckLabels() {
+  for (const w of ["mel", "acc", "bass"]) {
+    const win = $(w + "Win"), frame = win.querySelector(".frame");
+    let top = win.querySelector(".deckLbl.top"), bot = win.querySelector(".deckLbl.bot");
+    if (!top) { top = el("div", { class: "deckLbl top" }, DECK_NAME[w]); bot = el("div", { class: "deckLbl bot" }, DECK_NAME[w]); win.append(top, bot); }
+    if (!deckMode() || !win.classList.contains("deckOn")) continue;
+    const x = frame.offsetLeft + frame.offsetWidth / 2;
+    top.style.left = x + "px"; top.style.top = frame.offsetTop + "px";
+    bot.style.left = x + "px"; bot.style.top = (frame.offsetTop + frame.offsetHeight) + "px";
+  }
+}
 function deckShow(w) { S.focus = null; ["mel", "acc", "bass"].forEach(x => { S.winState[x] = x === w ? "open" : "closed"; }); savePrefs(); renderAll(); }
 function renderRollBar() {
   const bar = $("rollBar"); bar.replaceChildren(); const nav = $("deckNav"); nav.replaceChildren();
   const deck = deckMode(), app = $("app"); app.classList.toggle("deck", deck);
+  { const tr = $("topTransport"); if (deck) { if (tr.parentNode !== $("nav")) $("nav").prepend(tr); } else if (tr.parentNode !== $("head")) $("head").insertBefore(tr, $("gearBtn")); }   // the play buttons: left of the bar bracket on the deck, in the head otherwise
+  if (deck) app.style.setProperty("--deckW", Math.max(28, Math.round((app.clientWidth - 24 - 10 - 80) / 17)) + "px");   // the part buttons' column: exactly a quarter of a beat of the stave beside it
   app.classList.toggle("rolled", S.layout === "rolled" && !deck);
   ["mel", "acc", "bass"].forEach(w => { app.classList.toggle("open-" + w, S.layout === "rolled" && !deck && S.winState[w] !== "closed"); $(w + "Win").classList.remove("deckOn"); });
   if (deck) {
@@ -8364,7 +8406,7 @@ function renderAll() {
   S.bi = clamp(S.bi, 0, S.song.bars.length - 1);
   if (S.si !== S.siLast && S.si !== sectionOfBar(S.bi) && S.song.sections[S.si]) S.bi = sectionRange(S.si).start;   // a section op moved us
   S.si = sectionOfBar(S.bi); S.siLast = S.si;
-  renderHeader(); renderNav(); renderRollBar(); renderPalette(); allocate(); renderWindows(); renderStrips(); renderBeatRow();
+  renderHeader(); renderNav(); renderRollBar(); renderPalette(); allocate(); renderWindows(); renderStrips(); renderBeatRow(); placeDeckLabels();
   saveSoon();
 }
 function renderLights() { renderNav(); }
