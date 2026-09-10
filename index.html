@@ -9408,7 +9408,12 @@ function sameBeatRoom(bar, bi) {
 function weNewNextBeat() {
   if (!WE.on) return;
   const typed = weInput().value.trim();
-  if (typed && !WE.chipId && S.chipMode !== "single" && !sameBeatRoom(S.song.bars[WE.bi], WE.bi).ok) { const inp = weInput(); inp.value = ""; WE.dirty = false; weTab(); inp.value = typed; WE.dirty = true; commitWordEdit(true); return; }   // no room in this beat: the words travel with the box to the next beat and go in there
+  if (typed && !WE.chipId && S.chipMode !== "single" && !sameBeatRoom(S.song.bars[WE.bi], WE.bi).ok) {   // no room in this beat: the words would leave it for the next beat — the user is asked first
+    const go = () => { closeModal(); const inp = weInput(); inp.value = ""; WE.dirty = false; weTab(); inp.value = typed; WE.dirty = true; commitWordEdit(true); };
+    openModal("No room in this beat", el("p", { style: "font-size:16px;margin:6px 0 4px" }, `“${typed}” will be cleared from this beat and set as a new chip at the start of the next beat.`),
+              [el("button", { class: "btn acc", onclick: go }, "Proceed"), el("button", { class: "btn", onclick: closeModal }, "Cancel")]);
+    return;
+  }
   if (typed || WE.chipId) commitWordEdit(true);
   weTab();
 }
