@@ -9273,11 +9273,11 @@ function initPointer() {
     S.sel = null;
     if (WE.on) {                                                                       // the keyboard stays open: a chip comes into the box to edit (what was typed becomes its chip first); empty space is where the next chip starts
       if (d.chip) { if (d.chip.text.trim() && !chipHasRoom(S.song.bars[d.bi], d.bi, d.chip)) { toast("This chip has no more space"); return; } wePanelHidden = false; openWordEdit(d.bi, d.chip.t, d.chip); }
-      else { S.selChip = null; openWordEdit(at.bi, at.t); }
+      else { S.selChip = null; openWordEdit(at.bi, Math.floor(at.t + 1e-6)); }        // empty space: the box goes as far left in the tapped beat as the chips allow
       return;
     }
     if (d.chip) { if (d.chip.text.trim() && !chipHasRoom(S.song.bars[d.bi], d.bi, d.chip)) { toast("This chip has no more space"); return; } wePanelHidden = false; openWordEdit(d.bi, d.chip.t, d.chip); }   // one tap on a chip: the keyboard opens, panel and all, with the chip in the box — unless the chip has no more space
-    else { S.selChip = null; S.bi = at.bi; openWordEdit(at.bi, 0); }
+    else { S.selChip = null; S.bi = at.bi; openWordEdit(at.bi, Math.floor(at.t + 1e-6)); }   // empty space: the box goes as far left in the tapped beat as the chips allow
   });
   lyr.addEventListener("pointercancel", () => { ld = null; });
   window.addEventListener("resize", () => { if (S.song) renderAll(); });
