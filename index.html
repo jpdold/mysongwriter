@@ -238,13 +238,13 @@ svg text { pointer-events: none; }
 /* ── the widescreen deck: one part in view at a time, its up / down part buttons a quarter beat wide beside it, the tools in a
    column on the right; the whole screen, nothing scrolls ── */
 #app.deck { max-width: none !important; height: 100vh; height: 100dvh; box-sizing: border-box; overflow: hidden; padding: 6px 18px 6px 4px; gap: 0 8px;   /* no row gaps: the spacing is explicit, so the stave can be sized to sit flush */
-  grid-template-columns: 118px 108px 108px minmax(330px, 1fr) minmax(0, 1fr) var(--deckW, 44px) !important; grid-template-rows: auto auto auto auto auto auto auto minmax(0, 1fr) auto;
-  grid-template-areas: "head head head head head head" "nav nav nav nav nav nav" "rollbar rollbar rollbar rollbar rollbar rollbar" "stage stage stage stage stage deck" "dyn dyn dyn dyn dyn deck" "rhy rhy rhy rhy rhy deck" "lyr lyr lyr lyr lyr deck" ". . . . . deck" "t t t t t t" !important; }
+  grid-template-columns: 118px 108px 108px minmax(330px, 1fr) minmax(0, 1fr) var(--deckW, 44px) !important; grid-template-rows: auto auto auto auto auto auto minmax(0, 1fr) auto;
+  grid-template-areas: "head head head head head head" "rollbar rollbar rollbar rollbar rollbar rollbar" "stage stage stage stage stage deck" "dyn dyn dyn dyn dyn deck" "rhy rhy rhy rhy rhy deck" "lyr lyr lyr lyr lyr deck" ". . . . . deck" "t t t t t t" !important; }
 /* the head: a small title at the top left; the play buttons move to the left of the bar bracket */
 #app.deck #head { grid-template-columns: 44px 1fr 44px; grid-template-rows: auto; }
 #app.deck #menuBtn { grid-column: 1; } #app.deck #gearBtn { grid-column: 3; }
 #app.deck #songTitle { display: none; }                                                    /* the title is set in Song setup; no box on the deck */
-#app.deck #nav { grid-template-columns: 30px minmax(160px, 340px) 30px auto 1fr; justify-content: start; }   /* ← a narrower bracket → and the parts button beside it; the play buttons live in the tool bar */
+#app.deck #nav { grid-column: 2; grid-row: 1; justify-self: center; width: auto; margin-top: 0 !important; grid-template-columns: 30px minmax(160px, 340px) 30px auto; justify-content: center; }   /* in the head row, centred over the stave: ← a narrower bracket → and the parts button beside it */
 #navRight { display: none; }
 #app.deck #navRight { display: none; }
 #app.deck #navRight button { width: 32px; height: 30px; font-size: 15px; }
@@ -308,6 +308,7 @@ svg text { pointer-events: none; }
 #toolR { flex: 1 1 0; min-width: 120px; display: flex; gap: 2px; align-items: center; overflow: hidden; }   /* the flipping half: what is left, and no more */
 #toolScroll { flex: 1 1 0; min-width: 0; display: flex; gap: 4px; align-items: center; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -webkit-overflow-scrolling: touch; touch-action: pan-x; }   /* the palettes scroll sideways: items vanish at its edge and return as it scrolls back */
 #toolScroll::-webkit-scrollbar { display: none; }
+#app.deck #quick, #app.deck #quick .cell button, #app.deck #palette, #app.deck #flipPal, #app.deck #flipPal button, #app.deck #topTransport, #app.deck #toolMScroll button { touch-action: pan-x; }   /* a swipe over the keys pans the scroller */
 #toolScroll > * { flex: 0 0 auto; }
 #toolL button.tplay { height: 30px; padding: 0 7px; flex: 0 0 auto; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); color: #111; font-size: 8.5px; font-weight: 800; letter-spacing: .04em; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
 #toolL button.tplay.on { background: #2f7fd6; color: #fff; }
@@ -8099,7 +8100,7 @@ function allocate() {
     for (const w of ["mel", "acc", "bass"]) {
       const [rows0, lo, hi0] = WIN[S.winSize][w], hi = Math.max(hi0, WIN[S.winSize].mel[2]);
       if (w !== active) { STEPS[w] = lo; DECK_ROWS[w] = 0; continue; }
-      let target = window.innerHeight - 12 - h("head") - h("nav") - h("rollBar") - 12 - (h("rollBar") ? 6 : 0) - (shown ? h("rhyStrip") + h("lyrStrip") + h("dynStrip") : 0) - Math.max(h("toolbar"), 30) - topExtra - 16;   // the strips, when shown, sit flush between the stave and the tool bar
+      let target = window.innerHeight - 12 - h("head") - h("rollBar") - 6 - (h("rollBar") ? 6 : 0) - (shown ? h("rhyStrip") + h("lyrStrip") + h("dynStrip") : 0) - Math.max(h("toolbar"), 30) - topExtra - 16;   // the strips, when shown, sit flush between the stave and the tool bar
       { const side = $(w + "Win").querySelector(".side"); if (side && side.offsetHeight > 0) { const kids = [...side.children].filter(k => k.offsetHeight > 0), cs = getComputedStyle(side); const need = kids.reduce((a, k) => a + k.offsetHeight, 0) + Math.max(0, kids.length - 1) * (parseFloat(cs.rowGap) || 0) + (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0); target = Math.max(target, need - 16); } }   // never shorter than the buttons beside it need: they would hold the stave's row open and leave a gap   // the stave's drawing height: the screen less the rows above and below, the three 6px margins, the tool bar's 6px when the strips show, the frame's borders and pads
       const k = STEP_K[S.noteSize] || 1, rows = clamp(Math.floor(target / (hi * k)), rows0, 88);   // at the stave's full scale, as many rows as fill the height — never fewer than usual, up to the whole piano
       DECK_ROWS[w] = rows; STEPS[w] = Math.max(lo, target / rows / k);                      // and the rows share that height exactly
@@ -8451,6 +8452,17 @@ function dynAt(bar, t) { let d = null; for (const e of bar.ev.melody) if (e.dyn 
 const deckMode = () => window.matchMedia("(min-width: 860px) and (min-aspect-ratio: 5/4), (max-height: 520px) and (min-aspect-ratio: 5/4)").matches;
 const DECK_NAME = { mel: "MELODY", acc: "ACCOMPANIMENT", bass: "BASS" };
 function deckActive() { const open = ["mel", "acc", "bass"].find(w => S.winState[w] !== "closed"); return S.deck.includes(open) ? open : S.deck[0]; }
+/* a flipping third of the tool bar scrolls sideways: touch pans it natively (the keys let a swipe through), a mouse wheel scrolls
+   it, and a mouse drag from anywhere in it — keys included — scrolls it too, the drag swallowing the click it would otherwise make */
+function wireScroller(sc) {
+  if (!sc || sc.dataset.wired) return; sc.dataset.wired = "1";
+  sc.addEventListener("wheel", e => { const d = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX; if (d) { sc.scrollLeft += d; e.preventDefault(); } }, { passive: false });
+  let drag = null, dragged = false;
+  sc.addEventListener("pointerdown", e => { if (e.pointerType === "touch") return; drag = { id: e.pointerId, x: e.clientX, left: sc.scrollLeft }; dragged = false; });
+  window.addEventListener("pointermove", e => { if (!drag || e.pointerId !== drag.id) return; const dx = e.clientX - drag.x; if (!dragged && Math.abs(dx) < 6) return; dragged = true; sc.scrollLeft = drag.left - dx; });
+  const done = () => { drag = null; }; window.addEventListener("pointerup", done); window.addEventListener("pointercancel", done);
+  sc.addEventListener("click", e => { if (dragged) { e.stopPropagation(); e.preventDefault(); dragged = false; } }, true);
+}
 /* the Dynamics strip: the part in view's dynamics and hairpins along the beats, on the same silver as the Rhythm strip */
 function renderDynStrip(g, bars, dividers) {
   const svg = $("dynSvg"); if (!svg || !deckMode() || !S.dynShown) return;
@@ -8545,6 +8557,7 @@ function renderRollBar() {
   { const tr = $("topTransport"); if ($("tempo").parentNode !== tr) tr.append($("tempo"), $("saveBtn"));          // tempo and save travel with the play buttons
     if (deck) { if (tr.parentNode !== $("toolMScroll")) $("toolMScroll").prepend(tr); } else if (tr.parentNode !== $("head")) $("head").insertBefore(tr, $("gearBtn")); }   // on the deck the play buttons live in the middle third of the tool bar
   { const pb = $("partsBtn"); if (deck) { if (pb.parentNode !== $("nav")) $("nav").append(pb); } else if (pb.parentNode !== $("head")) $("head").insertBefore(pb, $("topTransport")); }   // the parts button: beside the bar bracket on the deck
+  { const nv = $("nav"); if (deck) { if (nv.parentNode !== $("head")) $("head").insertBefore(nv, $("gearBtn")); } else if (nv.parentNode === $("head")) $("head").after(nv); }   // the bar bracket: up in the head row on the deck
   if (deck) app.style.setProperty("--deckW", Math.max(28, Math.round((app.clientWidth - 24 - 10 - 80) / 17)) + "px");   // the part buttons' column: exactly a quarter of a beat of the stave beside it
   app.classList.toggle("rolled", S.layout === "rolled" && !deck);
   ["mel", "acc", "bass"].forEach(w => { app.classList.toggle("open-" + w, S.layout === "rolled" && !deck && S.winState[w] !== "closed"); $(w + "Win").classList.remove("deckOn"); });
@@ -8586,14 +8599,7 @@ function renderRollBar() {
       const fb = $("flipMBtn"); fb.replaceChildren(el("span", { class: "big" }, "⟳"), el("span", { class: "cap" }, fm === 0 ? "PLAYBACK" : "THIS PART")); fb.onclick = () => { S.deckFlipM = ((S.deckFlipM || 0) + 1) % 2; renderAll(); }; }
     if (S.quick) { S.quick.float = false; S.quick.locked = true; }                       // on the deck the quick palette is part of the bar: fixed, never floating
     const sc = $("toolScroll"); sc.prepend($("quick"), $("palette"));
-    if (!sc.dataset.wired) {                                                                // a mouse wheel or a drag on the bar's background scrolls the palettes sideways; touch pans natively
-      sc.dataset.wired = "1";
-      sc.addEventListener("wheel", e => { const d = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX; if (d) { sc.scrollLeft += d; e.preventDefault(); } }, { passive: false });
-      let drag = null;
-      sc.addEventListener("pointerdown", e => { if (e.pointerType === "touch" || e.target.closest("button")) return; drag = { id: e.pointerId, x: e.clientX, left: sc.scrollLeft }; });
-      sc.addEventListener("pointermove", e => { if (drag && e.pointerId === drag.id) sc.scrollLeft = drag.left - (e.clientX - drag.x); });
-      const done = () => { drag = null; }; sc.addEventListener("pointerup", done); sc.addEventListener("pointercancel", done); sc.addEventListener("pointerleave", done);
-    }
+    wireScroller(sc); wireScroller($("toolMScroll"));
     const flip = S.deckFlip || 0, FLIP_NAME = ["NOTES", "RESTS", "DYNAMICS", "MARKS"];
     $("quick").hidden = flip !== 0; $("palette").hidden = flip !== 0; $("flipPal").hidden = flip === 0;
     const fb = $("flipBtn"); fb.replaceChildren(el("span", { class: "big" }, "⟳"), el("span", { class: "cap" }, FLIP_NAME[flip])); fb.onclick = () => { S.deckFlip = ((S.deckFlip || 0) + 1) % 4; renderAll(); };
