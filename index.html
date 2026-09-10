@@ -9728,8 +9728,8 @@ function fitBeat(bar, bi, me, t0, tEnd, mineW) {
   all0.forEach((c, i) => { if (i) flush.set(c.id, c.t <= all0[i - 1].t + chipFull(all0[i - 1], g) + 1 / 64); });
   const boxFlush = !me && WE.on && !WE.chipId && Math.abs(WE.t - chipsEdge(bar, g)) < 1 / 64 + 1e-6;   // the entry box sits flush after the last chip: it follows
   const before = JSON.stringify(bar.chips.map(c => [c.t, c.wf || 1]));
-  others.forEach(c => { if (c.auto) { delete c.wf; delete c.auto; } });                  // given back first
   const typed = !me && WE.on ? weInput().value.trim() : "", mine = me ? chipW(me) : mineW != null ? mineW : typed ? chipW({ text: typed }) : 0;
+  if (mine > 0) others.forEach(c => { if (c.auto) { delete c.wf; delete c.auto; } });    // given back first — but an empty box leaves the chips as they are, so the spot it was given stays the left-most free one
   if (others.length) {
     const startT = Math.min(t0, ...others.map(c => c.t)), avail = (tEnd - startT) * g.beatPx;
     const deficit = others.reduce((a, c) => a + chipW(c), 0) + mine - avail;
