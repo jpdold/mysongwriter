@@ -233,7 +233,7 @@ svg text { pointer-events: none; }
 #app.rolled.open-bass #bassWin.lead { margin-top: -14px; }
 /* ── the widescreen deck: one part in view at a time, its up / down part buttons a quarter beat wide beside it, the tools in a
    column on the right; the whole screen, nothing scrolls ── */
-#app.deck { max-width: none !important; height: 100vh; height: 100dvh; box-sizing: border-box; overflow: hidden; padding: 6px 12px; gap: 0 10px;   /* no row gaps: the spacing is explicit, so the stave can be sized to sit flush */
+#app.deck { max-width: none !important; height: 100vh; height: 100dvh; box-sizing: border-box; overflow: hidden; padding: 6px 18px 6px 4px; gap: 0 8px;   /* no row gaps: the spacing is explicit, so the stave can be sized to sit flush */
   grid-template-columns: 118px 108px 108px minmax(330px, 1fr) minmax(0, 1fr) var(--deckW, 44px) !important; grid-template-rows: auto auto auto auto auto auto minmax(0, 1fr) auto;
   grid-template-areas: "head head head head head head" "nav nav nav nav nav nav" "rollbar rollbar rollbar rollbar rollbar rollbar" "stage stage stage stage stage deck" "rhy rhy rhy rhy rhy deck" "lyr lyr lyr lyr lyr deck" ". . . . . deck" "t t t t t t" !important; }
 /* the head: a small title at the top left; the play buttons move to the left of the bar bracket */
@@ -245,19 +245,18 @@ svg text { pointer-events: none; }
 #app.deck #topTransport button { width: 32px; height: 30px; font-size: 15px; }
 #app.deck #tempo, #app.deck #topTransport #tempo button { height: 30px; }
 /* the tools: one bar, a button high, across the foot of the screen */
-#app.deck #arrows { width: 118px; flex: 0 0 auto; }
-#app.deck #undoRow { width: 108px; flex: 0 0 auto; margin-top: 0; }
-#app.deck #mvRow { width: 108px; flex: 0 0 auto; margin-top: 0; }
-#app.deck #arrows button, #app.deck #undoRow button, #app.deck #mvRow button { height: 30px; border-top: 1.5px solid #141414; border-radius: 0; }
+#app.deck #arrows { width: 92px; flex: 0 0 auto; }
+#app.deck #undoRow { width: 78px; flex: 0 0 auto; margin-top: 0; }
+#app.deck #mvRow { width: 82px; flex: 0 0 auto; margin-top: 0; }
+#app.deck #arrows button, #app.deck #undoRow button, #app.deck #mvRow button { height: 26px; border-top: 1.5px solid #141414; border-radius: 0; font-size: 8.5px; box-shadow: none; }
+#app.deck #arrows .aico { width: 12px; height: 12px; }
 #app.deck #arrows button:first-child, #app.deck #undoRow button:first-child, #app.deck #mvRow button:first-child { border-radius: 4px 0 0 4px; }
 #app.deck #arrows button:last-child, #app.deck #undoRow button:last-child, #app.deck #mvRow button:last-child { border-radius: 0 4px 4px 0; }
-#app.deck #quick { width: auto; flex: 1 1 340px; min-width: 0; grid-template-columns: 24px repeat(12, 1fr); grid-template-rows: 30px; }
-#app.deck #quick .qctl { grid-row: 1 / 2; flex-direction: row; }
-#app.deck #quick .qctl button { width: 12px; }
+#app.deck #quick { width: auto; flex: 1 1 320px; min-width: 0; grid-template-columns: repeat(12, 1fr); grid-template-rows: 28px; position: static; }
+#app.deck #quick .qctl, #app.deck #quick .qgrip { display: none; }                         /* part of the bar: nothing to lock or float */
 #app.deck #quick .cell:nth-child(n+7) button { border-top: none; }
-#app.deck #quick.float { width: 420px; grid-template-rows: 24px 30px; }
-#app.deck #quick.float .qctl { grid-row: 2 / 3; }
-#app.deck #palette { flex: 1 1 0; min-width: 0; flex-direction: row; align-items: center; gap: 6px; padding: 2px 6px; }
+#app.deck #quick .cell:first-of-type { border-left: none; }
+#app.deck #palette { flex: 1 1 0; min-width: 0; flex-direction: row; align-items: center; gap: 6px; padding: 0; background: none; border: none; box-shadow: none; }
 #app.deck #palette .prow { height: 30px; }
 /* each part's stave wears its colour, with its name centred on the top and bottom edges */
 #app.deck .win .frame { border-width: 3px; }
@@ -276,7 +275,10 @@ svg text { pointer-events: none; }
 /* the tool bar: a static left half (arrows, UNDO / REDO, MOVE / DELETE, PLAY BAR, PLAY SELECT, CHORD) and a right half that flips
    between four palettes — notes (the quick palette), rests, dynamics, marks — with the flip button at its far corner */
 #toolbar { display: none; }
-#app.deck #toolbar { grid-area: t; display: flex; gap: 10px; align-items: center; margin-top: 6px; min-width: 0; }
+#app.deck #toolbar { grid-area: t; display: flex; gap: 8px; align-items: center; margin-top: 6px; min-width: 0; padding: 3px 6px; background: linear-gradient(#f2f3f5, #d2d5da); border: 1px solid #8a8d92; border-radius: 4px; box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(0,0,0,.25); }
+#app.deck #toolL { gap: 2px; }
+#app.deck #toolL button.tplay { height: 26px; font-size: 8px; padding: 0 6px; box-shadow: none; margin-left: 4px; }
+#app.deck #toolL button.tplay + button.tplay { margin-left: 2px; }
 #app.deck.nostrips #toolbar { margin-top: 0; }                                              /* the strips away: the tool bar flush on the stave */
 #toolL, #toolR { flex: 1 1 0; min-width: 0; display: flex; gap: 6px; align-items: center; }
 #toolL button.tplay { height: 30px; padding: 0 7px; flex: 0 0 auto; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); color: #111; font-size: 8.5px; font-weight: 800; letter-spacing: .04em; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
@@ -300,7 +302,10 @@ body.kbOpen #app.deck { padding-bottom: 6px; }
 #app.deck #nav, #app.deck #rollBar { margin-top: 6px; }
 #app.deck .win:not(.deckOn) { display: none !important; }
 #app.deck .win .sizer, #app.deck .win .focus, #app.deck .win .winHead, #app.deck .win .side, #app.deck .win .rArr { display: none !important; }   /* the side buttons and pitch arrows live in the column beside the stave */
-#app.deck .win { grid-template-columns: 42px 1fr; }                                          /* the stave reaches the column beside it */
+#app.deck .win { grid-template-columns: 34px 1fr; gap: 0 2px; }
+#app.deck .win .gutter svg { width: 34px; }
+#app.deck .strip { grid-template-columns: 34px 1fr; gap: 0 2px; position: relative; }   /* the strips line up with the stave */
+#app.deck #lyrEdit { position: absolute; right: 3px; top: 50%; transform: translateY(-50%); z-index: 3; }                                          /* the stave reaches the column beside it */
 #app.deck #rhyStrip { margin-top: 0 !important; }                                          /* flush on the stave */
 #app.deck #deckNav { display: flex; }
 /* the column beside the stave, as tall as the stave: the part's gear, ▲ ▼ to the parts above and below, then centred the tall
@@ -8485,6 +8490,7 @@ function renderRollBar() {
       el("button", { class: "tplay", id: "tPlaySel", title: "Play Select — choose the notes to hear", onclick: e => togglePlaySelect(deckActive(), e.currentTarget) }, "PLAY SELECT"),
       el("button", { class: "tplay", id: "tChord", title: "Chord mode: every tap stacks a note on the chord being built", onclick: () => toggleChordMode(deckActive()) }, "CHORD"));
     $("tPlaySel").classList.toggle("on", !!(typeof PSEL !== "undefined" && PSEL.on)); $("tChord").classList.toggle("on", !!(S.chordWin && S.chordWin[active]));
+    if (S.quick) { S.quick.float = false; S.quick.locked = true; }                       // on the deck the quick palette is part of the bar: fixed, never floating
     tr.prepend($("quick"), $("palette"));
     const flip = S.deckFlip || 0, FLIP_NAME = ["NOTES", "RESTS", "DYNAMICS", "MARKS"];
     $("quick").hidden = flip !== 0; $("palette").hidden = flip !== 0; $("flipPal").hidden = flip === 0;
