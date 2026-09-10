@@ -9272,11 +9272,11 @@ function initPointer() {
     const p = svgPoint(lyr, e), at = stripGeo().at(p.x);
     S.sel = null;
     if (WE.on) {                                                                       // the keyboard stays open: a chip comes into the box to edit (what was typed becomes its chip first); empty space is where the next chip starts
-      if (d.chip) openWordEdit(d.bi, d.chip.t, d.chip);
+      if (d.chip) { wePanelHidden = false; openWordEdit(d.bi, d.chip.t, d.chip); }
       else { S.selChip = null; openWordEdit(at.bi, at.t); }
       return;
     }
-    if (d.chip) { if (S.selChip && S.selChip.id === d.chip.id) openWordEdit(d.bi, d.chip.t, d.chip); else { S.selChip = { bi: d.bi, id: d.chip.id }; S.bi = d.bi; renderAll(); } }
+    if (d.chip) { wePanelHidden = false; openWordEdit(d.bi, d.chip.t, d.chip); }   // one tap on a chip: the keyboard opens, panel and all, with the chip in the box
     else { S.selChip = null; S.bi = at.bi; openWordEdit(at.bi, 0); }
   });
   lyr.addEventListener("pointercancel", () => { ld = null; });
@@ -9501,6 +9501,7 @@ let wePage = "abc", weShift = false, weCaps = false, weShiftAt = -1e9;
 function renderWeKeys() {
   const k = $("weKeys"), box = $("wordEdit"), inp = weInput(); k.replaceChildren();
   box.classList.toggle("native", !S.softKb); box.querySelector("button.kb").classList.toggle("on", !S.softKb);
+  { const pk = box.querySelector(".weRow button.panelk"); if (pk) pk.textContent = wePanelHidden ? "SHOW PANEL" : "HIDE PANEL"; }
   inp.setAttribute("inputmode", S.softKb ? "none" : "text");
   if (!S.softKb) return;
   const caret = () => [inp.selectionStart == null ? inp.value.length : inp.selectionStart, inp.selectionEnd == null ? inp.value.length : inp.selectionEnd];
