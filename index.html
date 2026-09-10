@@ -265,6 +265,14 @@ svg text { pointer-events: none; }
 .deckLbl { position: absolute; transform: translate(-50%, -50%); z-index: 3; padding: 1px 14px; border-radius: 3px; font-size: 11px; font-weight: 900; letter-spacing: .12em; color: #000; pointer-events: none; display: none; white-space: nowrap; }
 #app.deck .deckLbl { display: block; }
 #melWin .deckLbl { background: #2ee62e; } #accWin .deckLbl { background: #ffcc00; } #bassWin .deckLbl { background: #e02020; }
+#app.deck .deckLbl.bot { display: none; }                                                   /* the name on the top edge only */
+/* the Rhythm and Lyrics strips: shown or hidden by one button where their labels were; shown, they sit flush, the rhythm strip on the lyrics strip */
+#stripsBtn { display: none; }
+#app.deck #stripsBtn { display: flex; grid-row: rhy-start / lyr-end; grid-column: 1; width: 42px; min-height: 24px; justify-self: start; align-self: stretch; z-index: 2; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 0; font-size: 7.5px; font-weight: 800; letter-spacing: .04em; line-height: 1.1; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); border: 1px solid #3a8a1e; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
+#app.deck #stripsBtn:active { filter: brightness(1.1); }
+#app.deck #rhyStrip .tag, #app.deck #lyrStrip .tag { visibility: hidden; }
+#app.deck #lyrStrip { margin-top: -6px; }
+#app.deck.nostrips #rhyStrip, #app.deck.nostrips #lyrStrip { display: none; }
 body.kbOpen #app.deck { padding-bottom: 6px; }
 #app.deck #rollBar { display: flex; align-items: center; }
 #app.deck #melWin, #app.deck #accWin, #app.deck #bassWin { grid-area: stage; margin-top: 0 !important; min-height: 0; }
@@ -655,6 +663,7 @@ body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the s
 
   <div id="rollBar"></div>
   <div id="deckNav"></div>
+  <button id="stripsBtn" title="Show or hide the Rhythm and Lyrics strips"></button>
   <div id="beatRow"></div>
 
   <section class="win" id="melWin">
@@ -7962,7 +7971,7 @@ const WIN_LO = { mel: "melLo", acc: "accLo", bass: "bassLo" };
 const NOTE_SCALE = { s: 0.55, m: 0.72, l: 0.92 }; const NS = () => NOTE_SCALE[S.noteSize] || 1;   // note size: heads, stems and flags; the stave never changes
 const HK = () => S.halfLines ? 1.55 : 1;         // lines-and-spaces: heads grow to fill a space (two rows)
 const STEP_K = { s: 0.94, m: 1, l: 1.06 };       // row height nudges a little with the note size
-Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", noteSize: "m", chordMode: false, chordWin: { mel: false, acc: false, bass: false }, chordColor: "#ffffff", justEntered: null, activePart: "melody", lastEntered: null, ftp: null, mv: null, selAuto: false, halfLines: true, winSize: "m", chordsDisp: "names", metro: "off", winState: { mel: "open", acc: "closed", bass: "closed" }, zoomWin: { mel: 1, acc: 1, bass: 1 }, lyricFont: "sans", viewSpan: 1, layout: "rolled", selChip: null, deck: ["mel", "acc", "bass"], deckSel: null, ghost: null, restNext: false, restLen: null, ghostNext: false, artic: null, slurFrom: null, active: null, softKb: ("ontouchstart" in window), popPos: null, mode: "melody" });
+Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", noteSize: "m", chordMode: false, chordWin: { mel: false, acc: false, bass: false }, chordColor: "#ffffff", justEntered: null, activePart: "melody", lastEntered: null, ftp: null, mv: null, selAuto: false, halfLines: true, winSize: "m", chordsDisp: "names", metro: "off", winState: { mel: "open", acc: "closed", bass: "closed" }, zoomWin: { mel: 1, acc: 1, bass: 1 }, lyricFont: "sans", viewSpan: 1, layout: "rolled", selChip: null, deck: ["mel", "acc", "bass"], deckSel: null, stripsShown: true, ghost: null, restNext: false, restLen: null, ghostNext: false, artic: null, slurFrom: null, active: null, softKb: ("ontouchstart" in window), popPos: null, mode: "melody" });
 const UNDO = { stack: [], redo: [], last: null, max: 60 };
 const setMode = () => {};                          // engine shims (the old mode sheets are gone)
 const renderPanel = () => renderAll();
@@ -7970,11 +7979,12 @@ function loadPrefs() {
   const p = readJSON(STORE.prefs, {});
   S.theme = p.theme || "auto"; S.followWords = false; S.noteStyle = p.noteStyle || "trad"; S.noteSize = NOTE_SCALE[p.noteSize] ? p.noteSize : "m"; S.chordColor = p.chordColor || "#ffffff"; S.halfLines = p.halfLines == null ? true : !!p.halfLines; S.ftp = Object.assign({}, FTP_DEFAULT, p.ftp || {});
   S.winSize = WIN[p.winSize] ? p.winSize : "m"; S.chordsDisp = p.chordsDisp || "names"; S.metro = p.metro || "off"; S.custom = p.custom || null; S.len = p.len || 1;
+  S.stripsShown = p.stripsShown !== false;
   S.deck = Array.isArray(p.deck) && p.deck.length ? p.deck.filter(w => ["mel", "acc", "bass"].includes(w)) : ["mel", "acc", "bass"]; if (!S.deck.length) S.deck = ["mel"];
   S.lyricFont = p.lyricFont || "sans"; S.chipMode = "multi"; S.keepAwake = p.keepAwake !== false; S.paper = Object.assign({ mel: "default", acc: "default", bass: "default" }, p.paper || {}); S.quick = Object.assign({ cells: QUICK_DEFAULT.slice(), locked: true, float: false, x: null, y: null }, p.quick || {}); if (!Array.isArray(S.quick.cells) || S.quick.cells.join() === QUICK_OLD.join()) S.quick.cells = QUICK_DEFAULT.slice(); if (S.quick.cells.length === 8) S.quick.cells.push("sl", "ti", "gh", "dt"); if (S.quick.cells.length !== 12) S.quick.cells = QUICK_DEFAULT.slice();   // a third row joined: slur, tie, ghost note, dot S.winState = Object.assign({ mel: "open", acc: "closed", bass: "closed" }, p.winState || {}); S.zoomWin = Object.assign({ mel: 1, acc: 1, bass: 1 }, p.zoomWin || {}); S.midi = p.midi || {}; S.viewSpan = [1, 2, 3, 4].includes(p.viewSpan) ? p.viewSpan : 1; if (p.softKb != null) S.softKb = p.softKb2 == null ? true : !!p.softKb2; S.kbPos = p.kbPos || null;   // the app keyboard, on unless switched off S.layout = p.layout === "stack" ? "stack" : "rolled";
   applyTheme();
 }
-function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, deck: S.deck, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, keepAwake: S.keepAwake, paper: S.paper, quick: S.quick, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout }); }
+function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, deck: S.deck, stripsShown: S.stripsShown, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, keepAwake: S.keepAwake, paper: S.paper, quick: S.quick, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout }); }
 function applyTheme() {
   const r = document.documentElement;
   if (S.theme === "dark") r.setAttribute("data-theme", "dark"); else r.removeAttribute("data-theme");
@@ -8372,6 +8382,8 @@ function renderRollBar() {
     const active = deckActive(); S.focus = null; app.classList.remove("focused", "focus-mel", "focus-acc", "focus-bass");
     ["mel", "acc", "bass"].forEach(x => { S.winState[x] = x === active ? "open" : "closed"; });
     $(active + "Win").classList.add("deckOn");
+    app.classList.toggle("nostrips", S.stripsShown === false);                              // the strips: shown, they push the stave up; hidden, it takes the room
+    { const sb = $("stripsBtn"); sb.replaceChildren(el("span", {}, S.stripsShown === false ? "SHOW" : "HIDE"), el("span", {}, "STRIPS")); sb.onclick = () => { S.stripsShown = S.stripsShown === false; savePrefs(); renderAll(); }; }
     if (!S.deckSel) S.deckSel = [...S.deck];
     for (const w of ["mel", "acc", "bass"]) {                                            // the part selection: a check box each
       const cb = el("input", { type: "checkbox", title: "Check the parts to have in view, then ADD to VIEW" }); cb.checked = S.deckSel.includes(w);
