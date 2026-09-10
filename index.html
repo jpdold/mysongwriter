@@ -302,6 +302,7 @@ svg text { pointer-events: none; }
 #flipBtn:active { background: linear-gradient(#ffd27a, #f5a623); }
 #flipPal { display: flex; gap: 4px; align-items: center; flex: 1 1 0; min-width: 0; overflow: hidden; }
 #flipPal[hidden] { display: none; }
+#app.deck #quick[hidden], #app.deck #palette[hidden] { display: none !important; }        /* flipped away: their own display rules must not keep them on top */
 #flipPal .grp { display: flex; gap: 3px; flex: 0 0 auto; } #flipPal .sep { width: 10px; flex: 0 0 10px; }
 #flipPal button { height: 30px; min-width: 30px; padding: 0 5px; flex: 0 0 auto; border: 1px solid #222; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); color: #111; font-size: 15px; display: inline-flex; align-items: center; justify-content: center; }
 #flipPal button.on { background: linear-gradient(#6fb3ff, #2f7fd6); color: #fff; border-color: #1b4f8a; }
