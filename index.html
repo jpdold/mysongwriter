@@ -239,7 +239,7 @@ svg text { pointer-events: none; }
    column on the right; the whole screen, nothing scrolls ── */
 #app.deck { max-width: none !important; height: 100vh; height: 100dvh; box-sizing: border-box; overflow: hidden; padding: 6px 18px 6px 4px; gap: 0 8px;   /* no row gaps: the spacing is explicit, so the stave can be sized to sit flush */
   grid-template-columns: 118px 108px 108px minmax(330px, 1fr) minmax(0, 1fr) var(--deckW, 44px) !important; grid-template-rows: auto auto auto auto auto auto minmax(0, 1fr) auto;
-  grid-template-areas: "head head head head head head" "rollbar rollbar rollbar rollbar rollbar rollbar" "stage stage stage stage stage deck" "dyn dyn dyn dyn dyn deck" "rhy rhy rhy rhy rhy deck" "lyr lyr lyr lyr lyr deck" ". . . . . deck" "t t t t t t" !important; }
+  grid-template-areas: "head head head head head head" "rollbar rollbar rollbar rollbar rollbar addv" "stage stage stage stage stage deck" "dyn dyn dyn dyn dyn deck" "rhy rhy rhy rhy rhy deck" "lyr lyr lyr lyr lyr deck" ". . . . . deck" "t t t t t t" !important; }
 /* the head: a small title at the top left; the play buttons move to the left of the bar bracket */
 #app.deck #head { grid-template-columns: 44px 1fr 44px; grid-template-rows: auto; }
 #app.deck #menuBtn { grid-column: 1; } #app.deck #gearBtn { grid-column: 3; }
@@ -255,8 +255,10 @@ svg text { pointer-events: none; }
 #app.deck #partsBtn { display: inline-flex; grid-column: 4; grid-row: 1; justify-self: start; align-items: center; height: 26px; padding: 0 10px; margin-left: 8px; border: 1px solid #3a8a1e; border-radius: 4px; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); font-size: 9px; font-weight: 800; letter-spacing: .04em; white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
 #app.deck #partsBtn:active { filter: brightness(1.1); }
 #app.deck.noparts #rollBar { display: none; }
-#app.deck #rollBar .rollItem { flex: 1 1 0; min-width: 0; }
-#app.deck #rollBar .addView { flex: 0 0 auto; width: 96px; padding: 0; margin-left: 8px; }
+#app.deck #rollBar .rollItem { flex: 0 0 150px; min-width: 0; }
+#addView { display: none; }
+#app.deck #addView { display: flex; grid-area: addv; align-self: center; justify-self: stretch; height: 22px; margin-top: 6px; padding: 0 2px; align-items: center; justify-content: center; text-align: center; border: 1px solid #3a8a1e; border-radius: 4px; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); font-size: 7px; font-weight: 800; letter-spacing: .02em; line-height: 1.05; white-space: normal; box-shadow: 0 1px 2px rgba(0,0,0,.3); }   /* ADD to VIEW: in the column beside the stave, so the selectors centre freely */
+#app.deck.noparts #addView { display: none; }
 #app.deck #beatRow { display: none !important; }                                            /* no beat labels on the deck: the stave takes the room */
 #app.deck #topTransport { justify-self: start; flex: 0 0 auto; gap: 2px; }
 #app.deck #topTransport button { width: 30px; height: 26px; font-size: 14px; box-shadow: none; }
@@ -327,7 +329,7 @@ svg text { pointer-events: none; }
 #flipPal button.mark { font-size: 17px; font-weight: 700; }
 #flipPal button svg { display: block; }
 body.kbOpen #app.deck { padding-bottom: 6px; }
-#app.deck #rollBar { display: flex; align-items: center; }
+#app.deck #rollBar { display: flex; align-items: center; justify-content: center; position: relative; }   /* the selectors centred over the stave (nudged onto its frame by script) */
 #app.deck #melWin, #app.deck #accWin, #app.deck #bassWin { grid-area: stage; margin-top: 6px !important; }
 #app.deck #nav, #app.deck #rollBar { margin-top: 6px; }
 #app.deck .win:not(.deckOn) { display: none !important; }
@@ -352,6 +354,7 @@ body.kbOpen #app.deck { padding-bottom: 6px; }
 #deckNav button.gearBtn { height: 26px; background: none; border: none; box-shadow: none; color: var(--on-ground); }
 #deckNav button.gearBtn .ico { width: 17px; height: 17px; }
 #deckNav button.part { height: 44px; }
+#deckNav button.part + button.part { margin-top: -2px; }                                   /* ▼ almost flush below ▲ */
 #deckNav button.part .big { font-size: 16px; line-height: 1; }
 #deckNav button.part .name { white-space: nowrap; }
 #deckNav .spacer { flex: 1 1 0; }
@@ -612,6 +615,9 @@ textarea.lyricArea { width: 100%; min-height: 90px; border: 1px solid #999; bord
 #wordEdit { position: fixed; z-index: 70; display: none; flex-direction: column; gap: 4px; background: #fff; border: 2px solid var(--tag); border-radius: 8px 8px 0 0; padding: 4px 6px calc(6px + env(safe-area-inset-bottom)); box-shadow: 0 -4px 16px rgba(0,0,0,.4); color: #111; left: 0 !important; right: 0; bottom: 0; top: auto; margin: 0 auto; max-width: 560px; }
 #wordEdit.on { display: flex; }
 body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the strip up above the docked keyboard */
+#wordEdit .weGrip, #wordEdit .weRow { display: none !important; }                             /* nothing above the letters */
+#wordEdit > button.close { position: absolute; top: -24px; right: 10px; width: 40px; height: 26px; padding: 0; border: 2px solid var(--tag); border-bottom: none; border-radius: 8px 8px 0 0; background: #fff; color: #111; font-size: 15px; font-weight: 700; line-height: 1; box-shadow: 0 -3px 8px rgba(0,0,0,.25); }   /* the close: a box peninsula on the keyboard's top edge */
+#wordEdit .weKeys button.smallk { font-size: 8px; font-weight: 800; letter-spacing: .03em; white-space: normal; line-height: 1.05; padding: 0 3px; flex: 1.1 1 0; }
 #wordEdit .weGrip { height: 26px; margin: -2px -4px 0; display: grid; place-items: center; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
 #wordEdit .weGrip:active { cursor: grabbing; }
 #wordEdit .weGrip span { width: 64px; height: 7px; border-radius: 4px; background: #b5b5b5; box-shadow: inset 0 1px 0 #fff, 0 1px 0 #888; }
@@ -625,7 +631,7 @@ body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the s
 @keyframes weBlink { 0%, 100% { border-color: var(--tag); box-shadow: 0 -4px 16px rgba(0,0,0,.4); } 25%, 75% { border-color: #ff3b30; box-shadow: 0 0 0 4px rgba(255,59,48,.55), 0 -4px 16px rgba(0,0,0,.4); } 50% { border-color: var(--tag); box-shadow: 0 -4px 16px rgba(0,0,0,.4); } }
 @keyframes weFlash { 0%, 100% { background: transparent; color: inherit; } 25%, 75% { background: #ff3b30; color: #fff; } 50% { background: transparent; } }
 #wordEdit.blink { animation: weBlink .9s ease-in-out 1; }
-#wordEdit.blink .weRow button.close { animation: weFlash .9s ease-in-out 1; }
+#wordEdit.blink > button.close { animation: weFlash .9s ease-in-out 1; }
 #lyrInline { position: absolute; top: 3px; height: 30px; display: none; border: none; outline: none; background: rgba(255,255,255,.18); border-radius: 4px; padding: 0 3px;
   font-family: var(--sans); font-weight: 700; font-size: 16px; color: #fff; caret-color: transparent; min-width: 10px; }   /* the empty box may be as narrow as what is left of its beat */
 #weCaret { position: absolute; top: 8px; width: 2px; height: 20px; background: #fff; border-radius: 1px; display: none; pointer-events: none; z-index: 3; }
@@ -769,7 +775,8 @@ body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the s
     <button class="edit" id="lyrEdit" title="Open the keyboard">EDIT</button>
     <div id="wordEdit">
       <div class="weGrip" title="Drag to move the keyboard; drop it near the bottom to dock it"><span></span></div>
-      <div class="weRow"><span class="lbl2"></span><span class="flex"></span><button class="panelk" title="Hide or show the tool panel">HIDE PANEL</button><button class="kb" title="Switch between the app keyboard and the phone's keyboard">⌨</button><button class="close" title="Done (Esc)">✕</button></div>
+      <button class="close" title="Done (Esc)">✕</button>
+      <div class="weRow"><span class="lbl2"></span><span class="flex"></span><button class="panelk" title="Hide or show the tool panel">HIDE PANEL</button><button class="kb" title="Switch between the app keyboard and the phone's keyboard">⌨</button></div>
       <div class="weKeys" id="weKeys"></div>
     </div>
   </div>
@@ -8545,6 +8552,7 @@ function placeDeckLabels() {
     if (!top) { top = el("div", { class: "deckLbl top" }, DECK_NAME[w]); bot = el("div", { class: "deckLbl bot" }, DECK_NAME[w]); win.append(top, bot); }
     if (!deckMode() || !win.classList.contains("deckOn")) continue;
     const x = frame.offsetLeft + frame.offsetWidth / 2;
+    for (const id of ["nav", "rollBar"]) { const e = $(id); if (!e) continue; e.style.position = "relative"; const cur = parseFloat(e.style.left) || 0, fr = frame.getBoundingClientRect(), eb = e.getBoundingClientRect(); const mid = (fr.left + fr.right) / 2; let eMid = (eb.left + eb.right) / 2; if (id === "rollBar") { const items = e.querySelectorAll(".rollItem"); if (items.length) eMid = (items[0].getBoundingClientRect().left + items[items.length - 1].getBoundingClientRect().right) / 2; } e.style.left = Math.round(cur + mid - eMid) + "px"; }   // the bracket and the selectors centred on the stave's frame
     { const nav = $("deckNav"), rowTop = nav.getBoundingClientRect().top - (parseFloat(nav.style.marginTop) || 0); nav.style.marginTop = Math.max(0, frame.getBoundingClientRect().top - rowTop) + "px"; nav.style.height = frame.offsetHeight + "px"; }   // the column beside the stave: level with the frame, exactly as tall
     top.style.left = x + "px"; top.style.top = frame.offsetTop + "px";
     bot.style.left = x + "px"; bot.style.top = (frame.offsetTop + frame.offsetHeight) + "px";
@@ -8576,17 +8584,18 @@ function renderRollBar() {
       cb.addEventListener("change", () => { S.deckSel = ["mel", "acc", "bass"].filter(x => x === w ? cb.checked : S.deckSel.includes(x)); });
       bar.append(el("div", { class: "rollItem" + (S.deck.includes(w) ? " open" : "") }, el("label", {}, cb, el("span", { class: "lbl" }, w === "mel" ? "Melody" : w === "acc" ? "Accompaniment" : "Bass"))));
     }
-    bar.append(el("button", { class: "addView", title: "The checked parts make up the view; the up / down buttons beside the stave move between them", onclick: () => {
+    { const old = $("addView"); if (old) old.remove(); }
+    app.append(el("button", { id: "addView", title: "The checked parts make up the view; the up / down buttons beside the stave move between them", onclick: () => {
       const sel = ["mel", "acc", "bass"].filter(w => S.deckSel.includes(w)); if (!sel.length) { toast("Check at least one part"); return; }
       S.deck = sel; const a = deckActive(); ["mel", "acc", "bass"].forEach(x => { S.winState[x] = x === a ? "open" : "closed"; }); savePrefs(); renderAll(); toast(sel.map(w => DECK_NAME[w]).join(" · ") + " in view");
-    } }, "ADD to VIEW"));
+    } }, "ADD to", el("br"), "VIEW"));
     const i = S.deck.indexOf(active), up = i > 0 ? S.deck[i - 1] : null, dn = i >= 0 && i < S.deck.length - 1 ? S.deck[i + 1] : null;
     const SHORT = { mel: "MELODY", acc: "ACCOMP", bass: "BASS" };
     const arrow = (dir, w) => { const b = el("button", { class: "part", title: w ? (dir < 0 ? "Up to " : "Down to ") + DECK_NAME[w] : "Nothing " + (dir < 0 ? "above" : "below"), onclick: () => { if (w) deckShow(w); } }, el("span", { class: "big" }, dir < 0 ? "▲" : "▼"), el("span", { class: "name" }, w ? SHORT[w] : "")); if (!w) b.disabled = true; return b; };
     const gear = el("button", { class: "gearBtn", title: DECK_NAME[active].charAt(0) + DECK_NAME[active].slice(1).toLowerCase() + " settings", onclick: () => openWinSettings(active) }, svgEl("svg", { class: "ico" }, svgEl("use", { href: "#icoGear" })));
     app.classList.toggle("dynOn", !!S.dynShown);
     const db = el("button", { id: "dynBtn", title: "Show or hide the Dynamics strip", onclick: () => { S.dynShown = !S.dynShown; savePrefs(); renderAll(); } }, el("span", {}, S.dynShown ? "HIDE" : "SHOW"), el("span", {}, "DYN"));
-    nav.append(gear, arrow(-1, up), arrow(1, dn), el("div", { class: "spacer" }), db, sb);   // the ↑ ↓ pitch arrows sit in the stave's own gutter
+    nav.append(arrow(-1, up), arrow(1, dn), el("div", { class: "spacer" }), gear, db, sb);   // ▲ flush with the stave's top; the gear and the strip buttons at the foot
     /* the tool bar: the static left half, and the right half that flips */
     const tl = $("toolL"), tr = $("toolR"), tm = $("toolMScroll");
     tl.append($("arrows"), $("undoRow"), $("mvRow"));
@@ -8605,7 +8614,7 @@ function renderRollBar() {
     const fb = $("flipBtn"); fb.replaceChildren(el("span", { class: "big" }, "⟳"), el("span", { class: "cap" }, FLIP_NAME[flip])); fb.onclick = () => { S.deckFlip = ((S.deckFlip || 0) + 1) % 4; renderAll(); };
     return;
   }
-  S.deckSel = null;
+  S.deckSel = null; { const old = $("addView"); if (old) old.remove(); }
   for (const id of ["arrows", "undoRow", "mvRow", "quick", "palette"]) { const e = $(id); if (e && e.parentNode !== app) { app.append(e); e.hidden = false; } }   // the tools back on the page
   $("topTransport").hidden = false;
   if (S.layout !== "rolled") return;
@@ -8672,15 +8681,15 @@ function drawStaff(svg, g, key) {
   if (g.totalBeats < g.B - 1e-6) { const bx = Math.round(g.x(g.bars[g.bars.length - 1], barBeats(g.bars[g.bars.length - 1]))); svg.append(svgEl("line", { class: "stl", x1: bx, x2: bx, y1: 0, y2: g.H, stroke: css("--beat"), "stroke-width": 2 })); svg.append(svgEl("rect", { x: bx + 1, y: 0, width: g.W - bx, height: g.H, fill: css("--ground"), opacity: 0.12, "pointer-events": "none" })); }
 }
 function drawGutter(win, g, key) {
-  const gut = $(win + "Gut"); gut.replaceChildren(); gut.setAttribute("height", g.H); gut.setAttribute("viewBox", `0 0 42 ${g.H}`);
+  const gut = $(win + "Gut"); gut.replaceChildren(); gut.setAttribute("height", g.H); const GW = Math.max(20, Math.round(gut.getBoundingClientRect().width) || 42); gut.setAttribute("viewBox", `0 0 ${GW} ${g.H}`);   // drawn at the gutter's own width, so nothing scales and every label sits on its line or space
   const ink = css("--on-ground");
   for (let m = g.lo; m <= g.hi; m++) {
     const y = g.y(m), pc = ((m % 12) + 12) % 12;
     if (g.step < 7 && pc !== 0 && pc !== 7) continue;                     // compact: C and G only
-    if (!isBlack(m)) gut.append(svgEl("text", { x: 38, y: Math.round(y + (g.step >= 10 ? 4 : 3)), "text-anchor": "end", "font-size": g.step >= 10 ? 12 : g.step >= 7 ? 9 : 7.5, "font-weight": pc === 0 ? 800 : 700, fill: "#fff", "font-family": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif" }, pc === 0 ? noteName(m, key) : pcName(m, key)));
-    else if (g.step >= 12) gut.append(svgEl("text", { x: 38, y: Math.round(y + 3), "text-anchor": "end", "font-size": 8, "font-weight": 600, fill: css("--on-ground2"), "font-family": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif" }, "#/♭"));
+    if (!isBlack(m)) gut.append(svgEl("text", { x: GW - 4, y: Math.round(y + (g.step >= 10 ? 4 : 3)), "text-anchor": "end", "font-size": g.step >= 10 ? 12 : g.step >= 7 ? 9 : 7.5, "font-weight": pc === 0 ? 800 : 700, fill: "#fff", "font-family": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif" }, pc === 0 ? noteName(m, key) : pcName(m, key)));
+    else if (g.step >= 12) gut.append(svgEl("text", { x: GW - 4, y: Math.round(y + 3), "text-anchor": "end", "font-size": 8, "font-weight": 600, fill: css("--on-ground2"), "font-family": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif" }, "#/♭"));
   }
-  gut.append(svgEl("line", { x1: 41, x2: 41, y1: 0, y2: g.H, stroke: css("--on-ground2"), "stroke-width": 0.5, opacity: 0.5 }));
+  gut.append(svgEl("line", { x1: GW - 1, x2: GW - 1, y1: 0, y2: g.H, stroke: css("--on-ground2"), "stroke-width": 0.5, opacity: 0.5 }));
 }
 /* the second and later notes at one time and pitch: a unison, marked in red */
 function unisonIds(evs) { const seen = new Set(), out = new Set(); for (const e of [...evs].sort((a, b) => a.t - b.t || (a.m || 0) - (b.m || 0))) { if (e.rest || e.m == null) continue; const k = r3(e.t) + ":" + e.m; if (seen.has(k)) out.add(e.id); else seen.add(k); } return out; }
@@ -9981,6 +9990,8 @@ function renderWeKeys() {
   bottom.append(key(wePage === "abc" ? "?!’" : "abc", () => { wePage = wePage === "abc" ? "sym" : "abc"; renderWeKeys(); }, "wide", "symbols"));
   bottom.append(key(wePage === "acc" ? "abc" : "àéñ", () => { wePage = wePage === "acc" ? "abc" : "acc"; renderWeKeys(); }, "wide", "accents"));
   bottom.append(key("space", () => { if (!inp.value && !WE.chipId) { weSpaceChip(); return; } insert(" "); }, "space"));
+  bottom.append(key("⌨", () => box.querySelector("button.kb").click(), "wide", "Switch between the app keyboard and the phone's keyboard"));
+  bottom.append(key(wePanelHidden ? "SHOW PANEL" : "HIDE PANEL", () => box.querySelector(".weRow button.panelk").click(), "smallk", "Hide or show the tool panel"));
   k.append(bottom);
   if (wePanelHidden) return;
   /* the tool panel: four columns — the modes, SPLIT and UNDO on the left; DELETE / SELECT, the nudges, SHORTEN / WIDEN and REDO in the middle; the NEW CHIP keys and SET CHIP on the right */
