@@ -243,6 +243,8 @@ svg text { pointer-events: none; }
 .strip .tag { justify-self: stretch; height: 24px; display: grid; place-items: center; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); border: 1px solid #3a8a1e; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,.3);
   font-size: 10px; font-weight: 700; letter-spacing: 0; text-transform: none; padding: 0 2px; white-space: nowrap; overflow: hidden; }
 .strip .tag:active { filter: brightness(1.1); }
+.strip .edit { width: 30px; height: 24px; padding: 0; border: 1px solid #3a8a1e; border-radius: 4px; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); font-size: 8px; font-weight: 800; letter-spacing: .02em; box-shadow: 0 1px 2px rgba(0,0,0,.3); }   /* EDIT beside the Lyrics strip: opens the keyboard */
+.strip .edit:active { filter: brightness(1.1); }
 .strip .body { border: 1.5px solid #141414; border-radius: 4px; overflow-x: auto; overflow-y: hidden; position: relative; scrollbar-width: none; box-shadow: 0 2px 5px rgba(0,0,0,.25); }
 .strip .body::-webkit-scrollbar { display: none; }
 .strip .body svg { display: block; touch-action: none; }
@@ -618,6 +620,7 @@ body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the s
   <div class="strip" id="lyrStrip">
     <span class="tag" id="lyrTag">Lyrics</span>
     <div class="body"><svg id="lyrSvg"></svg><input id="lyrInline" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"><div id="weCaret"></div></div>
+    <button class="edit" id="lyrEdit" title="Open the keyboard">EDIT</button>
     <div id="wordEdit">
       <div class="weGrip" title="Drag to move the keyboard; drop it near the bottom to dock it"><span></span></div>
       <div class="weRow"><span class="lbl2"></span><span class="flex"></span><button class="panelk" title="Hide or show the tool panel">HIDE PANEL</button><button class="kb" title="Switch between the app keyboard and the phone's keyboard">⌨</button><button class="close" title="Done (Esc)">✕</button></div>
@@ -9272,11 +9275,11 @@ function initPointer() {
     const p = svgPoint(lyr, e), at = stripGeo().at(p.x);
     S.sel = null;
     if (WE.on) {                                                                       // the keyboard stays open: a chip comes into the box to edit (what was typed becomes its chip first); empty space is where the next chip starts
-      if (d.chip) { if (d.chip.text.trim() && !chipHasRoom(S.song.bars[d.bi], d.bi, d.chip)) { toast("This chip has no more space"); return; } wePanelHidden = false; openWordEdit(d.bi, d.chip.t, d.chip); }
+      if (d.chip) { if (d.chip.text.trim() && !chipHasRoom(S.song.bars[d.bi], d.bi, d.chip)) { toast("This chip has no more space"); if (!WE.on) { wePanelHidden = false; openWordEdit(d.bi, chipsEdge(S.song.bars[d.bi], stripGeo())); } S.selChip = { bi: d.bi, id: d.chip.id }; renderStrips(); renderPalette(); return; } wePanelHidden = false; openWordEdit(d.bi, d.chip.t, d.chip); }
       else { S.selChip = null; openWordEdit(at.bi, Math.floor(at.t + 1e-6)); }        // empty space: the box goes as far left in the tapped beat as the chips allow
       return;
     }
-    if (d.chip) { if (d.chip.text.trim() && !chipHasRoom(S.song.bars[d.bi], d.bi, d.chip)) { toast("This chip has no more space"); return; } wePanelHidden = false; openWordEdit(d.bi, d.chip.t, d.chip); }   // one tap on a chip: the keyboard opens, panel and all, with the chip in the box — unless the chip has no more space
+    if (d.chip) { if (d.chip.text.trim() && !chipHasRoom(S.song.bars[d.bi], d.bi, d.chip)) { toast("This chip has no more space"); if (!WE.on) { wePanelHidden = false; openWordEdit(d.bi, chipsEdge(S.song.bars[d.bi], stripGeo())); } S.selChip = { bi: d.bi, id: d.chip.id }; renderStrips(); renderPalette(); return; } wePanelHidden = false; openWordEdit(d.bi, d.chip.t, d.chip); }   // one tap on a chip: the keyboard opens, panel and all, with the chip in the box — unless the chip has no more space
     else { S.selChip = null; S.bi = at.bi; openWordEdit(at.bi, Math.floor(at.t + 1e-6)); }   // empty space: the box goes as far left in the tapped beat as the chips allow
   });
   lyr.addEventListener("pointercancel", () => { ld = null; });
@@ -9578,6 +9581,7 @@ function weMoveCaret(d) { const inp = weInput(); if (inp.disabled) return; const
 function placeInline() {
   const inp = weInput(); if (!WE.on) return; const g = stripGeo();
   const pad = chipPad(); inp.style.padding = "0 " + pad + "px";                          // half a space each side, like a chip
+  if (!WE.chipId && WE.t >= barBeats(WE.bi) - 1e-6) { inp.style.width = "0px"; inp.style.left = (g.W - 1) + "px"; return; }   // the bar is full: the box waits, out of the way, at its end
   if (S.chipMode === "single" && !WE.chipId) { const x0 = g.x(WE.bi, 0), x1 = g.x(WE.bi, barBeats(WE.bi)); inp.style.left = (x0 + 1) + "px"; inp.style.width = Math.max(44, x1 - x0 - 2 - 2 * pad) + "px"; return; }
   const roomPx = Math.max(12, (Math.floor(WE.t + 1e-6) + 1 - WE.t) * g.beatPx);
   if (!_caretCtx) _caretCtx = document.createElement("canvas").getContext("2d"); _caretCtx.font = getComputedStyle(inp).font;
@@ -9864,8 +9868,17 @@ function normalizeLyrics(bar) {
   bar.chips = (bar.chips || []).filter(c => !c.rest && c.text != null);
   bar.chips.forEach(c => { delete c.placing; delete c.pos; delete c.kind; delete c.wid; delete c.span; delete c.d; delete c.locked; if (c.text === " ") c.text = " "; });
 }
+/* EDIT beside the strip: the keyboard opens — on the selected chip when it has room, else at the left-most free spot of the bar */
+function weOpenFromButton() {
+  const bi = S.selChip ? S.selChip.bi : S.bi, bar = S.song.bars[bi]; if (!bar) return;
+  const sc = selChipObj(); wePanelHidden = false;
+  if (sc && sc.chip.text.trim() && chipHasRoom(bar, bi, sc.chip)) { openWordEdit(bi, sc.chip.t, sc.chip); return; }
+  if (sc && sc.chip.text.trim()) toast("This chip has no more space");
+  S.bi = bi; openWordEdit(bi, chipsEdge(bar, stripGeo())); if (sc) { S.selChip = { bi, id: sc.chip.id }; renderStrips(); renderPalette(); }
+}
 function initWordEdit() {
   const box = $("wordEdit"), inp = weInput(), close = box.querySelector("button.close");
+  $("lyrEdit").addEventListener("click", weOpenFromButton);
   box.querySelector("button.kb").addEventListener("click", () => { S.softKb = !S.softKb; savePrefs(); renderWeKeys(); if (!S.softKb) { inp.blur(); setTimeout(() => inp.focus(), 30); } });
   inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); commitWordEdit(true, false, true); } else if (e.key === "Tab") { e.preventDefault(); weNewNextBeat(); } else if (e.key === "Backspace" && !inp.value && !WE.chipId) { e.preventDefault(); weBackChip(); } else if (e.key === " " && !inp.value && !WE.chipId) { e.preventDefault(); weSpaceChip(); } else if (e.key === "Escape") { e.preventDefault(); WE.dirty = false; closeWordEdit(); } });
   inp.addEventListener("input", () => { weTypingStarts(); { const bar = S.song.bars[WE.bi], p = bar && !WE.chipId && bar.chips.find(c => c.placing); if (p) { const v = inp.value; if (placeGapChip(bar, WE.bi, p)) { openWordEdit(WE.bi, p.t, p); inp.value = v; } else inp.value = ""; } } WE.dirty = true; sizeInline(); });   // typing with a ↔ chip in hand sets it and the words go into it
