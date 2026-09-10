@@ -526,7 +526,9 @@ body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the s
 #wordEdit .weKeys .panel button.go3 { background: #fff; gap: 1px; }
 #wordEdit .weKeys .panel button.go3 .l { font-size: 7.2px; letter-spacing: .01em; white-space: nowrap; }
 #wordEdit .weKeys .panel button.go3 .big { font-size: 13px; line-height: 1; font-weight: 800; }
-#wordEdit .weKeys .panel button.setk { font-size: 10px; }
+#wordEdit .weKeys .panel button.setk { font-size: 10px; gap: 0; }
+#wordEdit .weKeys .panel button.setk .big { font-size: 15px; line-height: 1; }
+#wordEdit .weKeys .panel button.setk .cap { font-size: 8.5px; }
 #wordEdit .weKeys .panel button.urk { flex-direction: row; gap: 4px; }
 #wordEdit .weKeys .panel button.urk .cap { font-size: 9px; }
 #wordEdit .weKeys .panel button.restk .rest { font-size: 15px; line-height: 1; font-family: var(--serif); }
@@ -7849,7 +7851,18 @@ function perfFollow() {
 
 /* ── small helpers the new screen needs from the old one ── */
 const _chipW = new Map(); let _measureCtx = null, _measureText = null;
-/* a chip's width: the words measured in the strip's own font (a hidden text in the strip, so serif and small caps count), plus 4px each side */
+const _padW = new Map();
+/* a chip's side margin: half the width of a space, in the strip's own font */
+function chipPad() {
+  const key = S.lyricFont || "sans"; let p = _padW.get(key);
+  if (p == null) {
+    if (_measureText) { _measureText.textContent = "\u00a0"; p = _measureText.getComputedTextLength() / 2; }
+    else { if (!_measureCtx) { _measureCtx = document.createElement("canvas").getContext("2d"); _measureCtx.font = "700 16px -apple-system, 'Segoe UI', Roboto, Arial, sans-serif"; } p = _measureCtx.measureText(" ").width / 2; }
+    p = Math.max(1.5, Math.round(p * 10) / 10); _padW.set(key, p);
+  }
+  return p;
+}
+/* a chip's width: the words measured in the strip's own font (a hidden text in the strip, so serif and small caps count), plus half a space each side */
 function chipW(c) {
   if (c.rest) return 22;
   if (c.wpx) return Math.round(c.wpx * (c.wf || 1));                          // a spacer chip: the width it was given when placed
@@ -7857,8 +7870,8 @@ function chipW(c) {
   let w = _chipW.get(key);
   if (w == null) {
     if (!_measureText) { const host = document.querySelector("#lyrStrip .body"); if (host) { const svg = svgEl("svg", { width: 0, height: 0, style: "position:absolute;left:0;top:0;width:0;height:0;overflow:hidden;visibility:hidden", "aria-hidden": "true" }); _measureText = svgEl("text", { x: 0, y: 24, "font-size": 16, "font-weight": 700, "font-family": "system-ui, sans-serif", "xml:space": "preserve", style: "white-space:pre" }); svg.append(_measureText); host.append(svg); } }
-    if (_measureText) { _measureText.textContent = c.text; w = Math.ceil(_measureText.getComputedTextLength()) + 8; }
-    else { if (!_measureCtx) { _measureCtx = document.createElement("canvas").getContext("2d"); _measureCtx.font = "700 16px -apple-system, 'Segoe UI', Roboto, Arial, sans-serif"; } w = Math.ceil(_measureCtx.measureText(c.text).width) + 8; }
+    if (_measureText) { _measureText.textContent = c.text; w = Math.ceil(_measureText.getComputedTextLength() + 2 * chipPad()); }
+    else { if (!_measureCtx) { _measureCtx = document.createElement("canvas").getContext("2d"); _measureCtx.font = "700 16px -apple-system, 'Segoe UI', Roboto, Arial, sans-serif"; } w = Math.ceil(_measureCtx.measureText(c.text).width + 2 * chipPad()); }
     _chipW.set(key, w);
   }
   return Math.round(w * (c.wf || 1));                                       // wf: the chip's own width factor, set with Narrow / Widen
@@ -8626,7 +8639,7 @@ function renderStrips() {
       bar.chips.forEach(c => {
         any = true;
         /* a chip is free text: a pill hugging the words, with the spaces you typed kept */
-        const L = laid.get(c.id), natW = chipW(c), isSel = c.id === selId, px = L.x, x = px + 4, pw = L.w;
+        const L = laid.get(c.id), natW = chipW(c), isSel = c.id === selId, px = L.x, x = px + chipPad(), pw = L.w;
         const pickFrame = () => { if (WE.on && WE.picks.some(p => p.id === c.id && p.bi === bi)) svg.append(svgEl("rect", { x: px - 2, y: 1, width: pw + 4, height: H - 2, rx: 7, fill: "none", stroke: "#7ed957", "stroke-width": 2.4, "pointer-events": "none" })); };   // picked with SELECT CHIP(S)
         if (c.gap) {                                                                    // a spacer chip: solid white, a thin dashed black edge, ↔ in the middle (it drags into place, then fills its gap)
           svg.append(svgEl("rect", { class: "chip", x: px, y: 3, width: pw, height: H - 6, rx: 6, fill: "#fff", stroke: "#111", "stroke-width": 1, "stroke-dasharray": "3 2", "data-chip": c.id, "data-bi": bi }),
@@ -8636,8 +8649,8 @@ function renderStrips() {
         }
         svg.append(svgEl("rect", { class: "chip", x: px, y: 3, width: pw, height: H - 6, rx: 6, fill: "#fff", "fill-opacity": isSel ? 0.42 : 0.2, stroke: "#fff", "stroke-width": isSel ? 1.5 : 0.8, "stroke-opacity": isSel ? 1 : 0.5, "data-chip": c.id, "data-bi": bi }));
         const editing = WE.on && WE.bi === bi && WE.chipId === c.id;
-        const baseW = Math.round(natW / (c.wf || 1)), fit = pw < baseW - 0.5 ? { textLength: Math.max(8, pw - 8), lengthAdjust: "spacingAndGlyphs" } : pw > baseW + 1.5 && c.text.trim().length > 1 ? { textLength: Math.max(8, pw - 8), lengthAdjust: "spacing" } : {};   // condensed when squeezed or narrowed, letter-spaced when widened
-        if (!editing && c.full && c.words) c.words.forEach(w => svg.append(svgEl("text", { x: g.x(bi, w.t) + 4, y: 24, "font-size": 16, fill: "#fff", "font-weight": 700, "font-family": "system-ui, sans-serif", "xml:space": "preserve", style: "white-space:pre", "pointer-events": "none" }, w.text)));   // combined: each word where it was
+        const baseW = Math.round(natW / (c.wf || 1)), fit = pw < baseW - 0.5 ? { textLength: Math.max(8, pw - 2 * chipPad()), lengthAdjust: "spacingAndGlyphs" } : pw > baseW + 1.5 && c.text.trim().length > 1 ? { textLength: Math.max(8, pw - 2 * chipPad()), lengthAdjust: "spacing" } : {};   // condensed when squeezed or narrowed, letter-spaced when widened
+        if (!editing && c.full && c.words) c.words.forEach(w => svg.append(svgEl("text", { x: g.x(bi, w.t) + chipPad(), y: 24, "font-size": 16, fill: "#fff", "font-weight": 700, "font-family": "system-ui, sans-serif", "xml:space": "preserve", style: "white-space:pre", "pointer-events": "none" }, w.text)));   // combined: each word where it was
         else if (!editing) svg.append(svgEl("text", Object.assign({ x: c.full && pw > baseW ? px + pw / 2 : x, y: 24, "font-size": 16, fill: "#fff", "font-weight": 700, "font-family": "system-ui, sans-serif", "xml:space": "preserve", style: "white-space:pre", "pointer-events": "none" }, c.full && pw > baseW ? { "text-anchor": "middle" } : fit), c.text));
         pickFrame();
       });
@@ -9459,9 +9472,11 @@ function weMoveCaret(d) { const inp = weInput(); if (inp.disabled) return; const
 /* the entry box on the strip: at its spot, as wide as its word — or, under Single chip, the whole bar, end to end */
 function placeInline() {
   const inp = weInput(); if (!WE.on) return; const g = stripGeo();
-  if (S.chipMode === "single" && !WE.chipId) { const x0 = g.x(WE.bi, 0), x1 = g.x(WE.bi, barBeats(WE.bi)); inp.style.left = (x0 + 1) + "px"; inp.style.width = Math.max(44, x1 - x0 - 2) + "px"; return; }
+  const pad = chipPad(); inp.style.padding = "0 " + pad + "px";                          // half a space each side, like a chip
+  if (S.chipMode === "single" && !WE.chipId) { const x0 = g.x(WE.bi, 0), x1 = g.x(WE.bi, barBeats(WE.bi)); inp.style.left = (x0 + 1) + "px"; inp.style.width = Math.max(44, x1 - x0 - 2 - 2 * pad) + "px"; return; }
   const roomPx = Math.max(12, (Math.floor(WE.t + 1e-6) + 1 - WE.t) * g.beatPx);
-  inp.style.width = (inp.value ? chipW({ text: inp.value }) + 8 : Math.min(44, roomPx)) + "px";   // empty: only what is left of the beat; typed: the word's width
+  if (!_caretCtx) _caretCtx = document.createElement("canvas").getContext("2d"); _caretCtx.font = getComputedStyle(inp).font;
+  inp.style.width = (inp.value ? Math.ceil(_caretCtx.measureText(inp.value).width) : Math.max(8, Math.min(44, roomPx) - 2 * pad)) + "px";   // typed: just the letters, the box ending at the last one; empty: only what is left of the beat
   const x = g.x(WE.bi, WE.t); inp.style.left = clamp(x + 1, 0, Math.max(0, g.W - inp.offsetWidth - 2)) + "px";
 }
 function sizeInline() { placeInline(); repositionEntry(); weCaret(); }
@@ -9473,7 +9488,7 @@ function weCaret() {
   if (!_caretCtx) _caretCtx = document.createElement("canvas").getContext("2d");
   _caretCtx.font = getComputedStyle(inp).font;
   const s = inp.selectionStart == null ? inp.value.length : inp.selectionStart, w = _caretCtx.measureText(inp.value.slice(0, s)).width;
-  car.style.left = Math.round(inp.offsetLeft + 3 + w - inp.scrollLeft) + "px"; car.classList.add("on");
+  car.style.left = Math.round(inp.offsetLeft + chipPad() + w - inp.scrollLeft) + "px"; car.classList.add("on");
 }   // grows with what you type — beats don't box it in
 /* the app's own keyboard: QWERTY, a symbols page for lyricists' marks, an accents page. The phone's keyboard is a toggle (⌨). */
 const WE_PAGES = {
@@ -9531,7 +9546,7 @@ function renderWeKeys() {
     key([curl(-1), cap("UNDO")], undo, "urk", "undo"),
     key([curl(1), cap("REDO")], redo, "urk", "redo"),
     key([el("span", { class: "rest" }, "𝄽"), cap("REST CHIP")], weRestChip, "restk", "a rest chip — nothing sung here"),
-    key("SET CHIP", () => { if (!weSetChip()) toast("Nothing in hand to set"); }, "setk", "set the chip in place as it is"));
+    key([el("span", { class: "big" }, "↵"), cap("SET CHIP")], () => { if (!weSetChip()) toast("Nothing in hand to set"); }, "setk", "set the chip in place as it is"));
   k.append(panel);
 }
 /* SET: the chip in hand is set in place as it is — a spacer still being placed settles where it sits, typed words become their chip at the box */
