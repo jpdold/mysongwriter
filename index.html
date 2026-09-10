@@ -512,6 +512,8 @@ body.kbOpen #app.deck { padding-bottom: 6px; }
 #undoRow button, #mvRow button { font-family: var(--sans); font-size: 10px; letter-spacing: .05em; }
 #mvRow #delBtn { color: var(--danger); }
 #mvRow button.on { background: linear-gradient(#6fb3ff, #2f7fd6); color: #fff; }
+@keyframes delBlink { 0%, 100% { background: linear-gradient(#fff, #d9d9d9); color: var(--danger); } 50% { background: #e5322d; color: #fff; } }
+#mvRow #delBtn.ready { animation: delBlink 1s ease-in-out infinite; }                    /* something is selected: DELETE is ready and blinks red */
 #arrows button:active, #undoRow button:active, #mvRow button:active { background: linear-gradient(#ffd27a, #f5a623); }
 #undoRow button:disabled { opacity: .45; }
 #transport { display: flex; gap: 6px; }
@@ -10595,6 +10597,14 @@ function wireTempo() {
    ═══════════════════════════════════════════════════════════════════════ */
 const barAbs = bi => { let a = 0; for (let k = 0; k < bi; k++) a += barBeats(k); return a; };
 function absToBar(abs) { let a = 0; for (let bi = 0; bi < S.song.bars.length; bi++) { const B = barBeats(bi); if (abs < a + B - 1e-6) return { bi, t: r3(abs - a) }; a += B; } return null; }
+/* DELETE: with something selected — picked chips, a chip, a note — it deletes that; with nothing selected it starts a delete run */
+function delReady() { return !!((typeof WE !== "undefined" && WE.on && WE.picks.length) || selChipObj() || (selEv() && !S.selAuto)); }
+function delAction() {
+  if (typeof WE !== "undefined" && WE.on && WE.picks.length) { weDeleteChips(); return; }
+  const sc = selChipObj(); if (sc) { deleteChip(sc.bar, sc.chip); return; }
+  if (selEv() && !S.selAuto) { deleteSel(); return; }
+  mvStart("delete");
+}
 function mvStart(mode = "move") {
   if (S.mv && S.mv.mode === mode) { mvCancel(); return; }
   S.mv = { mode, part: S.activePart || "melody", start: null, end: null, moved: false, allParts: false, sub: null };
@@ -10606,7 +10616,7 @@ function renderRow3(r3) {
   const b = (t, fn, opts = {}) => r3.append(el("button", { onclick: fn, class: (opts.cls || "") + (opts.on ? " on" : "") + (opts.warn ? " warn" : ""), title: opts.title, disabled: opts.disabled }, t));
   const ev = selChipObj() ? null : selEv(), own = ev && !S.selAuto;                       // dot, rest and ＋ live here, under the lengths
   $("undoBtn").disabled = !UNDO.stack.length; $("redoBtn").disabled = !UNDO.redo.length;       // the UNDO / REDO row above the tools
-  $("moveBtn").classList.toggle("on", !!(S.mv && S.mv.mode === "move")); $("delBtn").classList.toggle("on", !!(S.mv && S.mv.mode === "delete"));   // MOVE / DELETE live under UNDO / REDO
+  $("moveBtn").classList.toggle("on", !!(S.mv && S.mv.mode === "move")); $("delBtn").classList.toggle("on", !!(S.mv && S.mv.mode === "delete")); $("delBtn").classList.toggle("ready", delReady());   // MOVE / DELETE live under UNDO / REDO; DELETE blinks red with something selected
   r3.hidden = !r3.querySelector("button");                                                 // nothing left on this row: it folds away
 }
 /* delete what the picker points at */
@@ -11123,7 +11133,7 @@ async function boot() {
   $("arrUp").addEventListener("click", () => arrowUD(1)); $("arrDn").addEventListener("click", () => arrowUD(-1));
   $("arrL").addEventListener("click", () => arrowLR(-1)); $("arrR").addEventListener("click", () => arrowLR(1));
   $("undoBtn").addEventListener("click", undo); $("redoBtn").addEventListener("click", redo);
-  $("moveBtn").addEventListener("click", () => mvStart("move")); $("delBtn").addEventListener("click", () => mvStart("delete"));
+  $("moveBtn").addEventListener("click", () => mvStart("move")); $("delBtn").addEventListener("click", delAction);
   $("playAllBtn").addEventListener("click", playAll);
   $("rangeBtn").addEventListener("click", openPlayRange);
   $("stopBtn").addEventListener("click", stopAll);
