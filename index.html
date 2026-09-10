@@ -9327,7 +9327,7 @@ function entrySpot(bar, bi, from, w, tight = false) {
     start = oEnd;                                                        // else skip past it
   }
   start = r3(start);                                                                     // flush: no rounding up to a grid
-  const next = sorted.find(o => o.t + room(o, g) > start + 1e-6);
+  const next = sorted.find(o => o.t + room(o, g) > start + 1 / 4096);                    // (a chip ending a hair past the rounded start was passed, not ahead)
   if (start + w > B + 1e-6 || (next && start + w > next.t + 1e-6)) return null;
   return r3(start);
 }
@@ -9405,17 +9405,43 @@ function sameBeatRoom(bar, bi) {
   const need = Math.max(...["I", ".", "a", "A"].map(t => chipW({ text: t })));
   return { from, ok: (beatEnd - from) * g.beatPx >= need - 1e-6 };
 }
+/* NEW CHIP → NEXT BEAT. The words in the box are set here when they fit; then the box goes to the next beat line — the line after
+   the beat the last chip starts in, the chips of that beat squeezing (down to where they still read) so that nothing runs past
+   it. When they cannot clear that line the user is asked: NEW CHIP ANY SPACE, modify the previous entry, proceed to the line
+   beyond, or cancel (everything back as it was before the tap). Words that had no room in this beat are set on the line reached. */
 function weNewNextBeat() {
   if (!WE.on) return;
-  const typed = weInput().value.trim();
-  if (typed && !WE.chipId && S.chipMode !== "single" && !sameBeatRoom(S.song.bars[WE.bi], WE.bi).ok) {   // no room in this beat: the words would leave it for the next beat — the user is asked first
-    const go = () => { closeModal(); const inp = weInput(); inp.value = ""; WE.dirty = false; weTab(); inp.value = typed; WE.dirty = true; commitWordEdit(true); };
-    openModal("No room in this beat", el("p", { style: "font-size:16px;margin:6px 0 4px" }, `“${typed}” will be cleared from this beat and set as a new chip at the start of the next beat.`),
-              [el("button", { class: "btn acc", onclick: go }, "Proceed"), el("button", { class: "btn", onclick: closeModal }, "Cancel")]);
-    return;
+  const inp = weInput(), bi = WE.bi, bar = S.song.bars[bi], B = barBeats(bi), g = stripGeo(), typed = inp.value.trim();
+  if (S.chipMode === "single") { if (typed || WE.chipId) commitWordEdit(true); weTab(); return; }
+  const snap = { t: WE.t, text: inp.value, chipId: WE.chipId, chips: JSON.parse(JSON.stringify(bar.chips)) };
+  const restore = () => { closeModal(); bar.chips = JSON.parse(JSON.stringify(snap.chips)); refitChips(bar); WE.bi = bi; WE.t = snap.t; WE.chipId = snap.chipId; inp.value = snap.text; WE.dirty = !!snap.text; S.selChip = null; renderAll(); placeInline(); weCaret(); };
+  const p = t => el("p", { style: "font-size:16px;margin:6px 0 4px" }, t), button = (label, fn, cls) => el("button", { class: "btn " + (cls || ""), onclick: fn }, label);
+  let pending = "";                                                                       // words with no room in this beat: they go on the line reached
+  if (WE.chipId) commitWordEdit(true);
+  else if (typed) { if (sameBeatRoom(bar, bi).ok) commitWordEdit(true); else { pending = typed; inp.value = ""; WE.dirty = false; } }
+  if (!WE.on || WE.bi !== bi) return;                                                     // setting the words carried the box into the next bar: that is a beat line
+  const toLine = t => {                                                                   // the box to a beat line of this bar, or the start of the next bar; pending words are set there
+    closeModal();
+    if (t < B - 1e-6) openWordEdit(bi, t);
+    else if (bi + 1 < S.song.bars.length) { S.bi = bi + 1; renderAll(); openWordEdit(bi + 1, 0); toast(`Bar ${barNo(bi + 1)}`); }
+    else { if (pending) { inp.value = pending; WE.dirty = true; sizeInline(); } toast("No free beat left"); return; }
+    if (pending) { inp.value = pending; WE.dirty = true; commitWordEdit(true); }
+  };
+  const last = bar.chips.filter(c => !c.full && Math.abs(c.t + chipFull(c, g) - WE.t) < 1 / 64 + 1e-6).sort((a, b) => b.t - a.t)[0];   // the chip the box sits flush after
+  const anchor = last ? last.t : WE.t, L = Math.floor(anchor + 1e-6) + 1;                 // the next beat line: after the beat that chip starts in
+  const unsqueezed = JSON.stringify(bar.chips), tBefore = WE.t;
+  fitBeat(bar, bi, null, anchor, L, 0);                                                   // that beat's chips squeeze to clear the line
+  if (chipsEdge(bar, g) <= L + 1e-6) {
+    if (pending) { openModal("No room in this beat", p(`“${pending}” will be cleared from this beat and set as a new chip at the start of the next beat.`), [button("Proceed", () => toLine(L), "acc"), button("Cancel", restore)]); return; }
+    toLine(L); return;
   }
-  if (typed || WE.chipId) commitWordEdit(true);
-  weTab();
+  bar.chips = JSON.parse(unsqueezed); refitChips(bar); WE.t = tBefore; renderAll(); placeInline(); weCaret();   // the squeeze did not clear the line: undone
+  const beyond = Math.ceil(chipsEdge(bar, g) - 1e-6), prev = last || [...bar.chips].sort((a, b) => a.t - b.t).pop();
+  openModal("The next beat line is taken", p(`The chip before runs past the next beat line, and squeezing this beat's chips cannot clear it for a new chip to start there. NEW CHIP ANY SPACE places a chip wherever there is room; Modify previous entry opens that chip; Proceed goes on to the line beyond it.`), [
+    button("NEW CHIP ANY SPACE ↔", () => { restore(); weNewGapChip(); }),
+    button("Modify previous entry", () => { restore(); if (prev) openWordEdit(bi, prev.t, prev); }),
+    button("Proceed", () => toLine(beyond), "acc"),
+    button("Cancel", restore)]);
 }
 /* ⇥: the entry box jumps to the next beat line that is free */
 function weTab() {
@@ -9623,7 +9649,7 @@ function weDeleteChips() {
    when null), squeeze alike so that `me` fits — each down to about three quarters of its own width, where it still reads — and
    stay flush; what they gave before is given back first, so the squeeze follows the text both ways. Past that limit the text
    simply runs on into the next beat. Returns whether anything moved. */
-function fitBeat(bar, bi, me, t0, tEnd) {
+function fitBeat(bar, bi, me, t0, tEnd, mineW) {
   const g = stripGeo(), B = barBeats(bi), b0 = Math.floor(t0 + 1e-6); tEnd = Math.min(tEnd, B);
   const others = bar.chips.filter(c => c !== me && !c.full && !c.gap && c.t >= b0 - 1e-6 && c.t < tEnd - 1e-6);
   const all0 = [...bar.chips].sort((a, b) => a.t - b.t), flush = new Map();
@@ -9631,7 +9657,7 @@ function fitBeat(bar, bi, me, t0, tEnd) {
   const boxFlush = !me && WE.on && Math.abs(t0 - chipsEdge(bar, g)) < 1 / 64 + 1e-6;
   const before = JSON.stringify(bar.chips.map(c => [c.t, c.wf || 1]));
   others.forEach(c => { if (c.auto) { delete c.wf; delete c.auto; } });                  // given back first
-  const typed = !me && WE.on ? weInput().value.trim() : "", mine = me ? chipW(me) : typed ? chipW({ text: typed }) : 0;
+  const typed = !me && WE.on ? weInput().value.trim() : "", mine = me ? chipW(me) : mineW != null ? mineW : typed ? chipW({ text: typed }) : 0;
   if (others.length) {
     const startT = Math.min(t0, ...others.map(c => c.t)), avail = (tEnd - startT) * g.beatPx;
     const deficit = others.reduce((a, c) => a + chipW(c), 0) + mine - avail;
@@ -9642,7 +9668,7 @@ function fitBeat(bar, bi, me, t0, tEnd) {
   }
   const all = [...bar.chips].sort((a, b) => a.t - b.t);                                  // flush chips stay flush; anything overlapped is pushed along
   for (let i = 1; i < all.length; i++) { const p = all[i - 1], c = all[i], edge = r3(p.t + chipFull(p, g)); if (flush.get(c.id) || c.t < edge - 1e-6) c.t = r3(Math.min(edge, Math.max(0, B - 0.125))); }
-  if (boxFlush && WE.on && !WE.chipId) WE.t = r3(chipsEdge(bar, g));                     // the box keeps flush with the last chip
+  if (boxFlush && WE.on && !WE.chipId) { const e = r3(chipsEdge(bar, g)); WE.t = Math.abs(t0 - Math.round(t0)) < 1e-6 && e <= t0 + 1e-6 ? t0 : e; }   // the box keeps flush with the last chip — but one sitting on a beat line stays on it
   refitChips(bar);
   return before !== JSON.stringify(bar.chips.map(c => [c.t, c.wf || 1]));
 }
