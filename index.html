@@ -7866,6 +7866,7 @@ function chipPad() {
 function chipW(c) {
   if (c.rest) return 22;
   if (c.wpx) return Math.round(c.wpx * (c.wf || 1));                          // a spacer chip: the width it was given when placed
+  if (typeof WE !== "undefined" && WE.on && WE.chipId === c.id) { const v = weInput().value.trim(); if (v && v !== c.text) return chipW({ text: v }); }   // the chip in the entry box: as wide as what is typed there
   const key = (S.lyricFont || "sans") + "|" + c.text;
   let w = _chipW.get(key);
   if (w == null) {
@@ -8061,7 +8062,8 @@ function distributeChips(bar) {
   bar.chips.forEach((c, i) => { c.d = r3((i < n - 1 ? bar.chips[i + 1].t : B) - c.t); if (c.d <= 0) c.d = 0.25; });
   syncNotesToChips(bar);
 }
-const chipMinW = c => Math.ceil(chipW(c) * 0.72);                                    // how narrow a chip may be squeezed and still read
+const chipNatW = c => c.wpx ? c.wpx : c.rest ? 22 : chipW({ text: c.text });               // a chip's own width, before any SHORTEN / WIDEN
+const chipMinW = c => Math.min(chipW(c), Math.ceil(chipNatW(c) * 0.72));            // how narrow a chip may be squeezed and still read
 const chipBeats = (c, g) => chipMinW(c) / g.beatPx;                                  // the least room a chip needs, in beats (squeezed); chips sit edge to edge
 const chipFull = (c, g) => c.full ? 1e6 : chipW(c) / g.beatPx;                 // the room a chip takes at its full width: the next chip lines up flush after it (a bar-filling chip leaves none)
 function setChipTime(bar, chip, t) {
@@ -9477,7 +9479,7 @@ function placeInline() {
   inp.style.width = (inp.value ? Math.ceil(_caretCtx.measureText(inp.value).width) : Math.max(8, Math.min(44, roomPx) - 2 * pad)) + "px";   // typed: just the letters, the box ending at the last one; empty: only what is left of the beat
   const x = g.x(WE.bi, WE.t); inp.style.left = clamp(x, 0, Math.max(0, g.W - inp.offsetWidth - 2)) + "px";
 }
-function sizeInline() { placeInline(); repositionEntry(); weCaret(); }
+function sizeInline() { weFitBeat(); placeInline(); repositionEntry(); weCaret(); }
 /* a still caret drawn where the insertion point is (the field's own blinking caret is hidden) */
 let _caretCtx = null;
 function weCaret() {
@@ -9611,25 +9613,59 @@ function weDeleteChips() {
   if (WE.chipId === tg.chip.id) { WE.chipId = null; weInput().value = ""; WE.dirty = false; }
   deleteChip(tg.bar, tg.chip); placeInline(); weCaret();
 }
-/* WIDEN / SHORTEN one chip: wider to fill the room beside it, up to the next chip or the bar line; shorter back to the
-   word's own width, then down to the least it can be while it still reads. Returns why it could not, or nothing when it did. */
+/* the beat makes room. The set chips that start in the stretch from the beat of t0 to tEnd, beside `me` (a chip — or the entry box
+   when null), squeeze alike so that `me` fits — each down to about three quarters of its own width, where it still reads — and
+   stay flush; what they gave before is given back first, so the squeeze follows the text both ways. Past that limit the text
+   simply runs on into the next beat. Returns whether anything moved. */
+function fitBeat(bar, bi, me, t0, tEnd) {
+  const g = stripGeo(), B = barBeats(bi), b0 = Math.floor(t0 + 1e-6); tEnd = Math.min(tEnd, B);
+  const others = bar.chips.filter(c => c !== me && !c.full && !c.gap && c.t >= b0 - 1e-6 && c.t < tEnd - 1e-6);
+  const all0 = [...bar.chips].sort((a, b) => a.t - b.t), flush = new Map();
+  all0.forEach((c, i) => { if (i) flush.set(c.id, c.t <= all0[i - 1].t + chipFull(all0[i - 1], g) + 1 / 64); });
+  const boxFlush = !me && WE.on && Math.abs(t0 - chipsEdge(bar, g)) < 1 / 64 + 1e-6;
+  const before = JSON.stringify(bar.chips.map(c => [c.t, c.wf || 1]));
+  others.forEach(c => { if (c.auto) { delete c.wf; delete c.auto; } });                  // given back first
+  const typed = !me && WE.on ? weInput().value.trim() : "", mine = me ? chipW(me) : typed ? chipW({ text: typed }) : 0;
+  if (others.length) {
+    const startT = Math.min(t0, ...others.map(c => c.t)), avail = (tEnd - startT) * g.beatPx;
+    const deficit = others.reduce((a, c) => a + chipW(c), 0) + mine - avail;
+    if (deficit > 0) {
+      const gives = others.map(c => Math.max(0, chipW(c) - chipMinW(c))), total = gives.reduce((a, b) => a + b, 0), k = total > 0 ? Math.min(1, deficit / total) : 0;
+      others.forEach((c, i) => { if (!(gives[i] > 0 && k > 0)) return; c.wf = Math.round((chipW(c) - gives[i] * k) / chipNatW(c) * 100) / 100; c.auto = true; if (Math.abs(c.wf - 1) < 1e-6) { delete c.wf; delete c.auto; } });
+    }
+  }
+  const all = [...bar.chips].sort((a, b) => a.t - b.t);                                  // flush chips stay flush; anything overlapped is pushed along
+  for (let i = 1; i < all.length; i++) { const p = all[i - 1], c = all[i], edge = r3(p.t + chipFull(p, g)); if (flush.get(c.id) || c.t < edge - 1e-6) c.t = r3(Math.min(edge, Math.max(0, B - 0.125))); }
+  if (boxFlush && WE.on && !WE.chipId) WE.t = r3(chipsEdge(bar, g));                     // the box keeps flush with the last chip
+  refitChips(bar);
+  return before !== JSON.stringify(bar.chips.map(c => [c.t, c.wf || 1]));
+}
+/* as you type: the beat of the text makes room for it */
+function weFitBeat() {
+  if (!WE.on || S.chipMode === "single") return;
+  const bar = S.song.bars[WE.bi], me = WE.chipId ? bar.chips.find(c => c.id === WE.chipId) : null, t0 = me ? me.t : WE.t;
+  if (fitBeat(bar, WE.bi, me, t0, Math.floor(t0 + 1e-6) + 1)) renderStrips();
+}
+/* WIDEN one chip: out to the next beat line beyond its edge, the chips before that line squeezing to make way (down to where they
+   still read). SHORTEN: back to the word's own width, then down to the least it can be. Returns why it could not, or nothing when it did. */
 function sizeChipRoom(bar, chip, d) {
   if (chip.full) return "full";
-  const bi = S.song.bars.indexOf(bar), g = stripGeo(), base = chipW(chip) / (chip.wf || 1), cur = chip.wf || 1;
-  let want;
+  const bi = S.song.bars.indexOf(bar), g = stripGeo(), B = barBeats(bi), base = chipNatW(chip), cur = chipW(chip) / base;
+  let want, line = B;
   if (d > 0) {
-    const next = bar.chips.filter(o => o !== chip && o.t > chip.t + 1e-6).map(o => o.t).sort((a, b) => a - b)[0];
-    const room = (Math.min(barBeats(bi), next != null ? next : barBeats(bi)) - chip.t) * g.beatPx;
-    want = Math.max(0.5, Math.floor(room / base * 100) / 100);
+    const end = chip.t + chipW(chip) / g.beatPx; line = Math.min(B, Math.floor(end + 1e-6) + 1);
+    const later = bar.chips.filter(o => o !== chip && !o.full && o.t > chip.t + 1e-6 && o.t < line - 1e-6);
+    const room = (line - chip.t) * g.beatPx - later.reduce((a, o) => a + chipMinW(o), 0);
+    want = Math.floor(room / base * 100) / 100;
     if (want <= cur + 1e-6) return "noroom";
   } else {
     want = cur > 1 + 1e-6 ? 1 : 0.72;
     if (want >= cur - 1e-6) return "short";
   }
-  chip.wf = want; if (Math.abs(chip.wf - 1) < 1e-6) delete chip.wf;
-  resolveChipOverlaps(bar); return null;
+  chip.wf = want; delete chip.auto; if (Math.abs(chip.wf - 1) < 1e-6) delete chip.wf;
+  fitBeat(bar, bi, chip, chip.t, line); return null;
 }
-const SIZE_WHY = { full: "A single chip already fills its bar", noroom: "No more room beside it — move the next chip, or nudge this one", short: "That is as short as it goes" };
+const SIZE_WHY = { full: "A single chip already fills its bar", noroom: "No more room in this beat — the chips beside it are as narrow as they read", short: "That is as short as it goes" };
 /* the chip in the entry box is set first, so sizing shows on the chip itself (its text condensed or spread) and never on the box alone */
 function weSetInHand() {
   if (!WE.on || !WE.chipId) return;
@@ -9667,7 +9703,7 @@ function commitWordEdit(advance, quiet, sameBeat) {
   let nextT = WE.t;
   if (WE.chipId) {
     const c = bar.chips.find(x => x.id === WE.chipId);
-    if (c) { if (!raw) bar.chips = bar.chips.filter(x => x !== c); else { if (raw !== c.text) delete c.words; c.text = raw; delete c.gap; resolveChipOverlaps(bar); } }
+    if (c) { if (!raw) bar.chips = bar.chips.filter(x => x !== c); else { if (raw !== c.text) { delete c.words; if (c.auto) { delete c.wf; delete c.auto; } } c.text = raw; delete c.gap; resolveChipOverlaps(bar); } }
     if (c && !WE.firstChip) WE.firstChip = { bi, id: c.id };
     if (c) { nextT = c.t + chipFull(c, stripGeo()); WE.lastChip = c.id; }
     WE.chipId = null;
