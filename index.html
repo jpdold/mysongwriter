@@ -235,7 +235,7 @@ svg text { pointer-events: none; }
    column on the right; the whole screen, nothing scrolls ── */
 #app.deck { max-width: none !important; height: 100vh; height: 100dvh; box-sizing: border-box; overflow: hidden; padding: 6px 12px; gap: 0 10px;   /* no row gaps: the spacing is explicit, so the stave can be sized to sit flush */
   grid-template-columns: 118px 108px 108px minmax(330px, 1fr) minmax(0, 1fr) var(--deckW, 44px) !important; grid-template-rows: auto auto auto auto auto auto minmax(0, 1fr) auto;
-  grid-template-areas: "head head head head head head" "nav nav nav nav nav nav" "rollbar rollbar rollbar rollbar rollbar rollbar" "stage stage stage stage stage deck" "rhy rhy rhy rhy rhy deck" "lyr lyr lyr lyr lyr deck" ". . . . . deck" "t1 t2 t3 t4 t5 t5" !important; }
+  grid-template-areas: "head head head head head head" "nav nav nav nav nav nav" "rollbar rollbar rollbar rollbar rollbar rollbar" "stage stage stage stage stage deck" "rhy rhy rhy rhy rhy deck" "lyr lyr lyr lyr lyr deck" ". . . . . deck" "t t t t t t" !important; }
 /* the head: a small title at the top left; the play buttons move to the left of the bar bracket */
 #app.deck #head { grid-template-columns: 44px auto 1fr 44px; grid-template-rows: auto; }
 #app.deck #menuBtn { grid-column: 1; } #app.deck #gearBtn { grid-column: 4; }
@@ -245,19 +245,19 @@ svg text { pointer-events: none; }
 #app.deck #topTransport button { width: 32px; height: 30px; font-size: 15px; }
 #app.deck #tempo, #app.deck #topTransport #tempo button { height: 30px; }
 /* the tools: one bar, a button high, across the foot of the screen */
-#app.deck #arrows { grid-area: t1; width: auto; justify-self: stretch; align-self: center; }
-#app.deck #undoRow { grid-area: t2; width: auto; justify-self: stretch; align-self: center; margin-top: 0; }
-#app.deck #mvRow { grid-area: t3; width: auto; justify-self: stretch; align-self: center; margin-top: 0; }
+#app.deck #arrows { width: 118px; flex: 0 0 auto; }
+#app.deck #undoRow { width: 108px; flex: 0 0 auto; margin-top: 0; }
+#app.deck #mvRow { width: 108px; flex: 0 0 auto; margin-top: 0; }
 #app.deck #arrows button, #app.deck #undoRow button, #app.deck #mvRow button { height: 30px; border-top: 1.5px solid #141414; border-radius: 0; }
 #app.deck #arrows button:first-child, #app.deck #undoRow button:first-child, #app.deck #mvRow button:first-child { border-radius: 4px 0 0 4px; }
 #app.deck #arrows button:last-child, #app.deck #undoRow button:last-child, #app.deck #mvRow button:last-child { border-radius: 0 4px 4px 0; }
-#app.deck #quick { grid-area: t4; width: auto; justify-self: stretch; align-self: center; grid-template-columns: 24px repeat(12, 1fr); grid-template-rows: 30px; }
+#app.deck #quick { width: auto; flex: 1 1 340px; min-width: 0; grid-template-columns: 24px repeat(12, 1fr); grid-template-rows: 30px; }
 #app.deck #quick .qctl { grid-row: 1 / 2; flex-direction: row; }
 #app.deck #quick .qctl button { width: 12px; }
 #app.deck #quick .cell:nth-child(n+7) button { border-top: none; }
 #app.deck #quick.float { width: 420px; grid-template-rows: 24px 30px; }
 #app.deck #quick.float .qctl { grid-row: 2 / 3; }
-#app.deck #palette { grid-area: t5; flex-direction: row; align-items: center; gap: 6px; padding: 2px 6px; align-self: center; }
+#app.deck #palette { flex: 1 1 0; min-width: 0; flex-direction: row; align-items: center; gap: 6px; padding: 2px 6px; }
 #app.deck #palette .prow { height: 30px; }
 /* each part's stave wears its colour, with its name centred on the top and bottom edges */
 #app.deck .win .frame { border-width: 3px; }
@@ -268,28 +268,57 @@ svg text { pointer-events: none; }
 #app.deck .deckLbl.bot { display: none; }                                                   /* the name on the top edge only */
 /* the Rhythm and Lyrics strips: shown or hidden by one button where their labels were; shown, they sit flush, the rhythm strip on the lyrics strip */
 #stripsBtn { display: none; }
-#app.deck #stripsBtn { display: flex; grid-row: rhy-start / lyr-end; grid-column: 1; width: 42px; min-height: 24px; justify-self: start; align-self: stretch; z-index: 2; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 0; font-size: 7.5px; font-weight: 800; letter-spacing: .04em; line-height: 1.1; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); border: 1px solid #3a8a1e; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
+#app.deck #stripsBtn { display: flex; width: 100%; height: 28px; flex: 0 0 auto; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 0; font-size: 7px; font-weight: 800; letter-spacing: .04em; line-height: 1.1; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); border: 1px solid #3a8a1e; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,.3); }   /* at the foot of the column beside the stave, below the ↓ */
 #app.deck #stripsBtn:active { filter: brightness(1.1); }
 #app.deck #rhyStrip .tag, #app.deck #lyrStrip .tag { visibility: hidden; }
 #app.deck #lyrStrip { margin-top: 0; }                                                       /* flush on the rhythm strip */
 #app.deck.nostrips #rhyStrip, #app.deck.nostrips #lyrStrip { display: none; }
-#app.deck.nostrips #stripsBtn { grid-row: stage; align-self: end; margin-bottom: 26px; height: 24px; min-height: 0; z-index: 4; }   /* the strips away: the button rests at the stave's foot, in its gutter, so the tool bar can sit flush on the stave */
-#app.deck #arrows, #app.deck #undoRow, #app.deck #mvRow, #app.deck #quick, #app.deck #palette { margin-top: 6px; }
-#app.deck.nostrips #arrows, #app.deck.nostrips #undoRow, #app.deck.nostrips #mvRow, #app.deck.nostrips #quick, #app.deck.nostrips #palette { margin-top: 0; }   /* the strips away: the tool bar flush on the stave */
+/* the tool bar: a static left half (arrows, UNDO / REDO, MOVE / DELETE, PLAY BAR, PLAY SELECT, CHORD) and a right half that flips
+   between four palettes — notes (the quick palette), rests, dynamics, marks — with the flip button at its far corner */
+#toolbar { display: none; }
+#app.deck #toolbar { grid-area: t; display: flex; gap: 10px; align-items: center; margin-top: 6px; min-width: 0; }
+#app.deck.nostrips #toolbar { margin-top: 0; }                                              /* the strips away: the tool bar flush on the stave */
+#toolL, #toolR { flex: 1 1 0; min-width: 0; display: flex; gap: 6px; align-items: center; }
+#toolL button.tplay { height: 30px; padding: 0 7px; flex: 0 0 auto; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); color: #111; font-size: 8.5px; font-weight: 800; letter-spacing: .04em; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
+#toolL button.tplay.on { background: #2f7fd6; color: #fff; }
+#toolL button.tplay.playing, #toolL button.tplay:active { background: linear-gradient(#ffd27a, #f5a623); color: #111; }
+#flipBtn { margin-left: auto; flex: 0 0 auto; width: 38px; height: 30px; padding: 0; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); color: #111; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
+#flipBtn .big { font-size: 15px; line-height: 1; } #flipBtn .cap { font-size: 6.5px; font-weight: 800; letter-spacing: .04em; line-height: 1; }
+#flipBtn:active { background: linear-gradient(#ffd27a, #f5a623); }
+#flipPal { display: flex; gap: 4px; align-items: center; flex: 1 1 0; min-width: 0; overflow: hidden; }
+#flipPal[hidden] { display: none; }
+#flipPal .grp { display: flex; gap: 3px; flex: 0 0 auto; } #flipPal .sep { width: 10px; flex: 0 0 10px; }
+#flipPal button { height: 30px; min-width: 30px; padding: 0 5px; flex: 0 0 auto; border: 1px solid #222; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); color: #111; font-size: 15px; display: inline-flex; align-items: center; justify-content: center; }
+#flipPal button.on { background: linear-gradient(#6fb3ff, #2f7fd6); color: #fff; border-color: #1b4f8a; }
+#flipPal button.armed { background: linear-gradient(#ffd27a, #f5a623); border-color: #a86d10; }
+#flipPal button.dyn { font-family: var(--serif); font-style: italic; font-weight: 700; font-size: 14px; letter-spacing: -.02em; }
+#flipPal button.mark { font-size: 17px; font-weight: 700; }
+#flipPal button svg { display: block; }
 body.kbOpen #app.deck { padding-bottom: 6px; }
 #app.deck #rollBar { display: flex; align-items: center; }
 #app.deck #melWin, #app.deck #accWin, #app.deck #bassWin { grid-area: stage; margin-top: 6px !important; }
 #app.deck #nav, #app.deck #rollBar { margin-top: 6px; }
 #app.deck .win:not(.deckOn) { display: none !important; }
-#app.deck .win .sizer, #app.deck .win .focus, #app.deck .win .winHead { display: none !important; }
+#app.deck .win .sizer, #app.deck .win .focus, #app.deck .win .winHead, #app.deck .win .side, #app.deck .win .rArr { display: none !important; }   /* the side buttons and pitch arrows live in the column beside the stave */
+#app.deck .win { grid-template-columns: 42px 1fr; }                                          /* the stave reaches the column beside it */
 #app.deck #rhyStrip { margin-top: 0 !important; }                                          /* flush on the stave */
 #app.deck #deckNav { display: flex; }
-#deckNav { grid-area: deck; display: none; flex-direction: column; gap: 6px; align-self: start; min-width: 0; height: 0; overflow: visible; }   /* its buttons hang down without stretching the stave's rows */
-#deckNav button { width: 100%; min-height: 96px; padding: 6px 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; background: #111; color: #fff; border: 1px solid #000; border-radius: 6px; font-size: 9.5px; font-weight: 800; letter-spacing: .06em; box-shadow: 0 1px 2px rgba(0,0,0,.35); }
-#deckNav button .big { font-size: 26px; line-height: 1; }
-#deckNav button .name { writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); white-space: nowrap; }
+/* the column beside the stave, as tall as the stave: the part's gear, ▲ ▼ to the parts above and below, then centred the tall
+   ↑ ↓ pitch-range arrows almost touching, and at the foot the strips button */
+#deckNav { grid-area: deck; display: none; flex-direction: column; gap: 4px; align-self: start; min-width: 0; height: 0; overflow: visible; position: relative; }
+#deckNav button { width: 100%; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; background: #111; color: #fff; border: 1px solid #000; border-radius: 6px; font-size: 7px; font-weight: 800; letter-spacing: .04em; box-shadow: 0 1px 2px rgba(0,0,0,.35); flex: 0 0 auto; }
+#deckNav button.gearBtn { height: 26px; background: none; border: none; box-shadow: none; color: var(--on-ground); }
+#deckNav button.gearBtn .ico { width: 17px; height: 17px; }
+#deckNav button.part { height: 44px; }
+#deckNav button.part .big { font-size: 16px; line-height: 1; }
+#deckNav button.part .name { white-space: nowrap; }
+#deckNav .pitchGrp { display: flex; flex-direction: column; gap: 2px; position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); }   /* centred on the stave's height */
+#deckNav button.pitch { height: 52px; font-size: 28px; font-weight: 400; line-height: 1; background: linear-gradient(#fff, #cfcfcf); color: #111; border: 1.5px solid #141414; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
+#deckNav button.pitch:active { background: linear-gradient(#ffd27a, #f5a623); }
+#deckNav .spacer { flex: 1 1 0; }
 #deckNav button:disabled { opacity: .35; }
-#deckNav button:active { filter: brightness(1.3); }
+#deckNav button.part:active { filter: brightness(1.3); }
+@media (max-height: 520px) { #deckNav button.gearBtn { height: 20px; } #deckNav button.part { height: 28px; } #deckNav button.part .big { font-size: 12px; } #deckNav button.pitch { height: 34px; font-size: 20px; } #app.deck #stripsBtn { height: 22px; } }   /* a short screen: the column's buttons compact */
 .rollItem label { flex: 1; display: flex; align-items: center; gap: 7px; cursor: pointer; min-width: 0; }
 .rollItem input[type=checkbox] { width: 16px; height: 16px; margin: 0; accent-color: var(--tag); flex: 0 0 auto; }
 #rollBar .addView { flex: 0 0 auto; height: 22px; padding: 0 12px; border: 1px solid #3a8a1e; border-radius: 4px; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); font-size: 10px; font-weight: 800; letter-spacing: .04em; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
@@ -667,7 +696,7 @@ body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the s
 
   <div id="rollBar"></div>
   <div id="deckNav"></div>
-  <button id="stripsBtn" title="Show or hide the Rhythm and Lyrics strips"></button>
+  <div id="toolbar"><div id="toolL"></div><div id="toolR"><div id="flipPal"></div><button id="flipBtn" title="Flip the palette: notes · rests · dynamics · marks"></button></div></div>
   <div id="beatRow"></div>
 
   <section class="win" id="melWin">
@@ -8019,7 +8048,7 @@ function allocate() {
     for (const w of ["mel", "acc", "bass"]) {
       const [rows0, lo, hi0] = WIN[S.winSize][w], hi = Math.max(hi0, WIN[S.winSize].mel[2]);
       if (w !== active) { STEPS[w] = lo; DECK_ROWS[w] = 0; continue; }
-      let target = window.innerHeight - 12 - h("head") - h("nav") - h("rollBar") - 18 - (shown ? h("rhyStrip") + h("lyrStrip") + 6 : 0) - Math.max(h("palette"), h("quick"), 30) - topExtra - 16;
+      let target = window.innerHeight - 12 - h("head") - h("nav") - h("rollBar") - 18 - (shown ? h("rhyStrip") + h("lyrStrip") + 6 : 0) - Math.max(h("toolbar"), 30) - topExtra - 16;
       { const side = $(w + "Win").querySelector(".side"); if (side && side.offsetHeight > 0) { const kids = [...side.children].filter(k => k.offsetHeight > 0), cs = getComputedStyle(side); const need = kids.reduce((a, k) => a + k.offsetHeight, 0) + Math.max(0, kids.length - 1) * (parseFloat(cs.rowGap) || 0) + (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0); target = Math.max(target, need - 16); } }   // never shorter than the buttons beside it need: they would hold the stave's row open and leave a gap   // the stave's drawing height: the screen less the rows above and below, the three 6px margins, the tool bar's 6px when the strips show, the frame's borders and pads
       const k = STEP_K[S.noteSize] || 1, rows = clamp(Math.floor(target / (hi * k)), rows0, 48);   // at the stave's full scale, as many rows as fill the height — never fewer than usual
       DECK_ROWS[w] = rows; STEPS[w] = Math.max(lo, target / rows / k);                      // and the rows share that height exactly
@@ -8186,7 +8215,7 @@ function melodyPlayEvents(bi) {
     if (c.rest || c.head.m == null || tiedFromPrev(bi, c)) continue;
     let d = c.d, k = bi;
     if (c.tieOut) { let cc = c; while (cc.tieOut && S.song.bars[k + 1]) { const nc = chains(S.song.bars[k + 1])[0]; if (!nc || nc.t > 1e-6 || nc.rest) break; d = r3(d + nc.d); cc = nc; k++; } }
-    out.push({ t: c.t, d, ms: [c.head.m], vel: c.head.ghost ? 0.28 : c.head.artic === "staccato" ? 0.95 : 0.9, sus: d * articFactor(c.head, 0.95, underSlur(bar, c.head)) * (c.head.ghost ? 0.5 : 1), src: c.head });
+    out.push({ t: c.t, d, ms: [c.head.m], vel: (c.head.ghost ? 0.28 : c.head.artic === "accent" || c.head.artic === "marcato" ? 1 : c.head.artic === "staccato" ? 0.95 : 0.9) * (c.head.ghost ? 1 : dynAt(bar, c.t)), sus: d * articFactor(c.head, 0.95, underSlur(bar, c.head)) * (c.head.ghost ? 0.5 : 1), src: c.head });
   }
   return out;
 }
@@ -8352,10 +8381,15 @@ function freeSpotInBeat(bar, bi, beat, part = "melody") {
   return null;
 }
 /* articulation → how much of the written length sounds */
-function articFactor(e, base, slurred) { return e.artic === "staccato" ? 0.45 : e.artic === "tenuto" ? 1.0 : slurred ? 1.02 : base; }
+function articFactor(e, base, slurred) { return e.artic === "staccato" ? 0.45 : e.artic === "staccatissimo" ? 0.3 : e.artic === "marcato" ? 0.6 : e.artic === "tenuto" ? 1.0 : slurred ? 1.02 : base; }
 /* is this note inside a slur (from a slur's start up to, not including, its end)? */
 function underSlur(bar, e) { return bar.ev.melody.some(s => s.slur && s.t <= e.t + 1e-6 && (() => { const end = bar.ev.melody.find(x => x.id === s.slur); return end && e.t < end.t - 1e-6; })()); }
-const ARTIC = { staccato: { glyph: "•", label: "staccato" }, tenuto: { glyph: "‒", label: "tenuto" }, slur: { glyph: "◠", label: "slur" } };
+const ARTIC = { staccato: { glyph: "•", label: "staccato" }, tenuto: { glyph: "‒", label: "tenuto" }, slur: { glyph: "◠", label: "slur" },
+                accent: { glyph: ">", label: "accent" }, marcato: { glyph: "^", label: "marcato" }, staccatissimo: { glyph: "▾", label: "staccatissimo" } };
+/* dynamics: a level on a note carries on from there; a hairpin runs from its note to the next dynamic or the bar line */
+const DYN = ["mf", "sf", "f", "ff", "fff", "ffff", "mp", "p", "pp", "ppp", "pppp"], HAIR = { cresc: "cresc.", decresc: "decresc.", dim: "dim." };
+const DYN_VEL = { pppp: 0.25, ppp: 0.32, pp: 0.42, p: 0.55, mp: 0.68, mf: 0.8, sf: 1, f: 0.9, ff: 1, fff: 1, ffff: 1 };
+function dynAt(bar, t) { let d = null; for (const e of bar.ev.melody) if (e.dyn && e.t <= t + 1e-6 && (!d || e.t >= d.t)) d = e; return d ? DYN_VEL[d.dyn] || 1 : 1; }
 
 /* ═══════════════════════════════════════════════════════════════════════
    SECTION 10 · RENDERING
@@ -8365,6 +8399,34 @@ const ARTIC = { staccato: { glyph: "•", label: "staccato" }, tenuto: { glyph: 
 const deckMode = () => window.matchMedia("(min-width: 860px) and (min-aspect-ratio: 5/4), (max-height: 520px) and (min-aspect-ratio: 5/4)").matches;
 const DECK_NAME = { mel: "MELODY", acc: "ACCOMPANIMENT", bass: "BASS" };
 function deckActive() { const open = ["mel", "acc", "bass"].find(w => S.winState[w] !== "closed"); return S.deck.includes(open) ? open : S.deck[0]; }
+/* the flipping right half of the tool bar: rests · dynamics · marks (the notes are the quick palette itself) */
+function tapDyn(kind) {
+  const ev = selEv(); if (!ev || ev.rest || ev.m == null) { toast("Tap a note first, then the dynamic"); return; }
+  if (DYN.includes(kind)) { ev.dyn = ev.dyn === kind ? undefined : kind; if (!ev.dyn) delete ev.dyn; }
+  else { ev.hair = ev.hair === kind ? undefined : kind; if (!ev.hair) delete ev.hair; }
+  renderAll();
+}
+function renderFlipPal() {
+  const box = $("flipPal"); if (!box) return; box.replaceChildren();
+  const flip = S.deckFlip || 0, ev = selEv(), own = ev && !S.selAuto && !selChipObj();
+  const b = (label, fn, cls, title, on, armed) => el("button", { class: cls + (on ? " on" : "") + (armed ? " armed" : ""), title, onclick: fn }, label);
+  if (flip === 1) {                                                                        // rests: whole to thirty-second
+    const g = el("div", { class: "grp" });
+    [4, 2, 1, 0.5, 0.25, 0.125].forEach(v => g.append(b(restIcon(v), () => tapRestLen(v), "gn", own ? `Make it a ${REST_NAME[v]} rest` : `${REST_NAME[v]} rest`, own ? ev.rest && Math.abs(baseLen(ev.d) - v) < 1e-9 : S.restNext && (S.restLen || S.len) === v)));
+    box.append(g);
+  } else if (flip === 2) {                                                                 // dynamics: hairpins, then loud to soft
+    const hp = el("div", { class: "grp" });
+    hp.append(b("<", () => tapDyn("cresc"), "mark", "crescendo — from this note", own && ev.hair === "cresc"), b(">", () => tapDyn("decresc"), "mark", "decrescendo — from this note", own && ev.hair === "decresc"), b("dim.", () => tapDyn("dim"), "dyn", "diminuendo — from this note", own && ev.hair === "dim"));
+    const loud = el("div", { class: "grp" }), soft = el("div", { class: "grp" });
+    ["mf", "sf", "f", "ff", "fff", "ffff"].forEach(k => loud.append(b(k, () => tapDyn(k), "dyn", k + " on this note", own && ev.dyn === k)));
+    ["mp", "p", "pp", "ppp", "pppp"].forEach(k => soft.append(b(k, () => tapDyn(k), "dyn", k + " on this note", own && ev.dyn === k)));
+    box.append(hp, el("span", { class: "sep" }), loud, el("span", { class: "sep" }), soft);
+  } else if (flip === 3) {                                                                 // marks: above or below the head, by the stem
+    const g = el("div", { class: "grp" });
+    ["accent", "marcato", "staccato", "staccatissimo", "tenuto"].forEach(k => g.append(b(ARTIC[k].glyph, () => tapArtic(k), "mark", ARTIC[k].label + (S.artic === k ? " — tap again to finish" : ": a selected note takes it; otherwise arm it and tap notes"), own && ev.artic === k, S.artic === k)));
+    box.append(g);
+  }
+}
 /* MELODY / ACCOMPANIMENT / BASS, centred on the top and bottom edges of the stave in view */
 function placeDeckLabels() {
   for (const w of ["mel", "acc", "bass"]) {
@@ -8373,6 +8435,7 @@ function placeDeckLabels() {
     if (!top) { top = el("div", { class: "deckLbl top" }, DECK_NAME[w]); bot = el("div", { class: "deckLbl bot" }, DECK_NAME[w]); win.append(top, bot); }
     if (!deckMode() || !win.classList.contains("deckOn")) continue;
     const x = frame.offsetLeft + frame.offsetWidth / 2;
+    { const nav = $("deckNav"), rowTop = nav.getBoundingClientRect().top - (parseFloat(nav.style.marginTop) || 0); nav.style.marginTop = Math.max(0, frame.getBoundingClientRect().top - rowTop) + "px"; nav.style.height = frame.offsetHeight + "px"; }   // the column beside the stave: level with the frame, exactly as tall
     top.style.left = x + "px"; top.style.top = frame.offsetTop + "px";
     bot.style.left = x + "px"; bot.style.top = (frame.offsetTop + frame.offsetHeight) + "px";
   }
@@ -8391,7 +8454,7 @@ function renderRollBar() {
     ["mel", "acc", "bass"].forEach(x => { S.winState[x] = x === active ? "open" : "closed"; });
     $(active + "Win").classList.add("deckOn");
     app.classList.toggle("nostrips", S.stripsShown === false);                              // the strips: shown, they push the stave up; hidden, it takes the room
-    { const sb = $("stripsBtn"); sb.replaceChildren(el("span", {}, S.stripsShown === false ? "SHOW" : "HIDE"), el("span", {}, "STRIPS")); sb.onclick = () => { S.stripsShown = S.stripsShown === false; savePrefs(); renderAll(); }; }
+    const sb = el("button", { id: "stripsBtn", title: "Show or hide the Rhythm and Lyrics strips", onclick: () => { S.stripsShown = S.stripsShown === false; savePrefs(); renderAll(); } }, el("span", {}, S.stripsShown === false ? "SHOW" : "HIDE"), el("span", {}, "STRIPS"));   // built afresh each render, at the foot of the column beside the stave
     if (!S.deckSel) S.deckSel = [...S.deck];
     for (const w of ["mel", "acc", "bass"]) {                                            // the part selection: a check box each
       const cb = el("input", { type: "checkbox", title: "Check the parts to have in view, then ADD to VIEW" }); cb.checked = S.deckSel.includes(w);
@@ -8403,11 +8466,33 @@ function renderRollBar() {
       S.deck = sel; const a = deckActive(); ["mel", "acc", "bass"].forEach(x => { S.winState[x] = x === a ? "open" : "closed"; }); savePrefs(); renderAll(); toast(sel.map(w => DECK_NAME[w]).join(" · ") + " in view");
     } }, "ADD to VIEW"));
     const i = S.deck.indexOf(active), up = i > 0 ? S.deck[i - 1] : null, dn = i >= 0 && i < S.deck.length - 1 ? S.deck[i + 1] : null;
-    const arrow = (dir, w) => { const b = el("button", { title: w ? (dir < 0 ? "Up to " : "Down to ") + DECK_NAME[w] : "Nothing " + (dir < 0 ? "above" : "below"), onclick: () => { if (w) deckShow(w); } }, el("span", { class: "big" }, dir < 0 ? "▲" : "▼"), el("span", { class: "name" }, w ? DECK_NAME[w] : "")); if (!w) b.disabled = true; return b; };
-    nav.append(arrow(-1, up), arrow(1, dn));
+    const SHORT = { mel: "MELODY", acc: "ACCOMP", bass: "BASS" };
+    const arrow = (dir, w) => { const b = el("button", { class: "part", title: w ? (dir < 0 ? "Up to " : "Down to ") + DECK_NAME[w] : "Nothing " + (dir < 0 ? "above" : "below"), onclick: () => { if (w) deckShow(w); } }, el("span", { class: "big" }, dir < 0 ? "▲" : "▼"), el("span", { class: "name" }, w ? SHORT[w] : "")); if (!w) b.disabled = true; return b; };
+    const gear = el("button", { class: "gearBtn", title: DECK_NAME[active].charAt(0) + DECK_NAME[active].slice(1).toLowerCase() + " settings", onclick: () => openWinSettings(active) }, svgEl("svg", { class: "ico" }, svgEl("use", { href: "#icoGear" })));
+    const pitch = dir => { const b = el("button", { class: "pitch", title: dir > 0 ? "Higher (hold: an octave)" : "Lower (hold: an octave)" }, dir > 0 ? "↑" : "↓"); let t = null, held = false;
+      b.addEventListener("pointerdown", () => { held = false; t = setTimeout(() => { held = true; t = null; shiftView(active, dir * 12); }, 450); });
+      const clear = () => { if (t) { clearTimeout(t); t = null; } };
+      b.addEventListener("pointerup", clear); b.addEventListener("pointerleave", clear); b.addEventListener("pointercancel", clear);
+      b.addEventListener("click", () => { if (!held) shiftView(active, dir * (active === "mel" ? 1 : 12)); held = false; }); return b; };
+    const pg = el("div", { class: "pitchGrp" }, pitch(1), pitch(-1));
+    nav.append(gear, arrow(-1, up), arrow(1, dn), el("div", { class: "spacer" }), pg, el("div", { class: "spacer" }), sb);
+    /* the tool bar: the static left half, and the right half that flips */
+    const tl = $("toolL"), tr = $("toolR");
+    tl.append($("arrows"), $("undoRow"), $("mvRow"));
+    if (tl.querySelector(".tplay")) tl.append(...tl.querySelectorAll(".tplay"));            // the play buttons stay after the arrow groups
+    if (!tl.querySelector(".tplay")) tl.append(
+      el("button", { class: "tplay", id: "tPlayBar", title: "Play Bar — this part alone, this bar", onclick: e => playSolo(deckActive(), e.currentTarget) }, "PLAY BAR"),
+      el("button", { class: "tplay", id: "tPlaySel", title: "Play Select — choose the notes to hear", onclick: e => togglePlaySelect(deckActive(), e.currentTarget) }, "PLAY SELECT"),
+      el("button", { class: "tplay", id: "tChord", title: "Chord mode: every tap stacks a note on the chord being built", onclick: () => toggleChordMode(deckActive()) }, "CHORD"));
+    $("tPlaySel").classList.toggle("on", !!(typeof PSEL !== "undefined" && PSEL.on)); $("tChord").classList.toggle("on", !!(S.chordWin && S.chordWin[active]));
+    tr.prepend($("quick"), $("palette"));
+    const flip = S.deckFlip || 0, FLIP_NAME = ["NOTES", "RESTS", "DYNAMICS", "MARKS"];
+    $("quick").hidden = flip !== 0; $("palette").hidden = flip !== 0; $("flipPal").hidden = flip === 0;
+    const fb = $("flipBtn"); fb.replaceChildren(el("span", { class: "big" }, "⟳"), el("span", { class: "cap" }, FLIP_NAME[flip])); fb.onclick = () => { S.deckFlip = ((S.deckFlip || 0) + 1) % 4; renderAll(); };
     return;
   }
   S.deckSel = null;
+  for (const id of ["arrows", "undoRow", "mvRow", "quick", "palette"]) { const e = $(id); if (e && e.parentNode !== app) { app.append(e); e.hidden = false; } }   // the tools back on the page
   if (S.layout !== "rolled") return;
   for (const w of ["mel", "acc", "bass"]) {
     const part = WIN_PART[w], open = S.winState[w] !== "closed";
@@ -8565,8 +8650,25 @@ function stemUp(g, m, groups, e) {
 }
 function drawArtic(svg, g, x, m, artic, color, up) {
   const st = g.step, rx = headGeom(g).rx, hx = x + rx + 1, y = g.y(m), ay = up ? y + st * 0.8 : y - st * 0.8;   // stem up → mark below; stem down → mark above
+  const h = Math.max(3, st * 0.45), w = Math.max(3, rx), sw = Math.max(1.4, st * 0.11);
   if (artic === "staccato") svg.append(svgEl("circle", { cx: hx, cy: ay, r: Math.max(1.6, st * 0.14), fill: color, "pointer-events": "none" }));
   else if (artic === "tenuto") svg.append(svgEl("line", { x1: hx - rx, x2: hx + rx, y1: ay, y2: ay, stroke: color, "stroke-width": 1.8, "stroke-linecap": "round", "pointer-events": "none" }));
+  else if (artic === "accent") svg.append(svgEl("path", { d: `M ${hx - w} ${ay - h / 2} L ${hx + w} ${ay} L ${hx - w} ${ay + h / 2}`, fill: "none", stroke: color, "stroke-width": sw, "stroke-linejoin": "round", "stroke-linecap": "round", "pointer-events": "none" }));   // >
+  else if (artic === "marcato") { const s = up ? 1 : -1; svg.append(svgEl("path", { d: `M ${hx - w} ${ay - s * h / 2} L ${hx} ${ay + s * h / 2} L ${hx + w} ${ay - s * h / 2}`, fill: "none", stroke: color, "stroke-width": sw * 1.3, "stroke-linejoin": "round", "stroke-linecap": "round", "pointer-events": "none" })); }   // ^ (pointing away from the head)
+  else if (artic === "staccatissimo") { const s = up ? 1 : -1, ww = Math.max(2, rx * 0.5); svg.append(svgEl("path", { d: `M ${hx - ww} ${ay + s * h / 2} L ${hx + ww} ${ay + s * h / 2} L ${hx} ${ay - s * h / 2} Z`, fill: color, "pointer-events": "none" })); }   // a wedge, its point toward the head
+}
+/* a dynamic under the stave at its note; a hairpin from its note to the next dynamic or the bar line */
+function drawDyn(svg, g, bi, e, color) {
+  const x = g.x(bi, e.t) + 2, fs = Math.max(10, Math.min(14, g.step * 0.9));
+  svg.append(svgEl("text", { x, y: g.H - 2, "font-size": fs, "font-family": "Georgia, 'Times New Roman', serif", "font-style": "italic", "font-weight": 700, fill: color, "paint-order": "stroke", stroke: "rgba(255,255,255,.75)", "stroke-width": 3, "pointer-events": "none" }, e.dyn));
+}
+function drawHair(svg, g, bi, e, evs, color) {
+  const x1 = g.x(bi, e.t) + 2, next = evs.filter(o => o !== e && (o.dyn || o.hair) && o.t > e.t + 1e-6).sort((a, b) => a.t - b.t)[0];
+  const x2 = (next ? g.x(bi, next.t) - 4 : g.x(bi, barBeats(bi)) - 6), y = g.H - 6, h = Math.max(3.5, g.step * 0.35);
+  if (e.hair === "dim") { drawDyn(svg, g, bi, { t: e.t, dyn: "dim." }, color); return; }
+  if (x2 - x1 < 6) return;
+  const d = e.hair === "cresc" ? `M ${x2} ${y - h} L ${x1} ${y} L ${x2} ${y + h}` : `M ${x1} ${y - h} L ${x2} ${y} L ${x1} ${y + h}`;
+  svg.append(svgEl("path", { d, fill: "none", stroke: color, "stroke-width": 1.4, "stroke-linejoin": "round", "stroke-linecap": "round", "pointer-events": "none" }));
 }
 function drawSlur(svg, g, x1, m1, x2, m2, color, up) {
   const st = g.step, rx = headGeom(g).rx;                                                   // stems up → slur under the heads; stems down → over
@@ -8650,6 +8752,7 @@ function renderWindows() {
       if (e.rest || e.m == null || e.m < g.lo || e.m > g.hi) continue;
       const up = stemUp(g, e.m, groups, e);
       if (e.artic) drawArtic(svg, g, g.x(bi, e.t) + 2, e.m, e.artic, ink, up);
+      if (e.dyn) drawDyn(svg, g, bi, e, ink); if (e.hair) drawHair(svg, g, bi, e, bar.ev.melody, ink);
       if (e.slur) { const end = bar.ev.melody.find(x => x.id === e.slur); if (end && end.m != null) drawSlur(svg, g, g.x(bi, e.t) + 2, e.m, g.x(bi, end.t) + 2, clamp(end.m, g.lo, g.hi), ink, up); }
     }
     if (S.slurFrom && S.slurFrom.bi === bi && S.slurFrom.part === "melody") { const f = bar.ev.melody.find(x => x.id === S.slurFrom.id); if (f && f.m != null) svg.append(svgEl("circle", { cx: g.x(bi, f.t) + 2 + headGeom(g).rx + 1, cy: g.y(clamp(f.m, g.lo, g.hi)), r: g.step * 0.9, fill: "none", stroke: css("--box"), "stroke-width": 2, "stroke-dasharray": "3 2", "pointer-events": "none" })); }
@@ -8696,6 +8799,7 @@ function renderWindows() {
         if (e.rest || e.m < g.lo || e.m > g.hi) continue;
         const up = stemUp(g, e.m, groups, e);
         if (e.artic) drawArtic(svg, g, g.x(bi, e.t) + 2, e.m, e.artic, color, up);
+        if (e.dyn) drawDyn(svg, g, bi, e, color); if (e.hair) drawHair(svg, g, bi, e, bar.ev[part], color);
         if (e.slur) { const end = bar.ev[part].find(x => x.id === e.slur); if (end) drawSlur(svg, g, g.x(bi, e.t) + 2, e.m, g.x(bi, end.t) + 2, clamp(end.m, g.lo, g.hi), color, up); }
       }
       for (const e of [...bar.ev[part]].sort((a, b) => a.t - b.t)) {
@@ -8821,11 +8925,11 @@ function renderBeatRow() {
   }
 }
 function renderPalette() {
-  renderFtp(); renderTempo(); renderQuick();
+  renderFtp(); renderTempo(); renderQuick(); if (deckMode()) renderFlipPal();
   const r1 = $("palRow1"), r2 = $("palRow2"), r3 = $("palRow3"), r4 = $("palRow4"); r1.replaceChildren(); r2.replaceChildren(); r3.replaceChildren(); r4.replaceChildren();
   renderRow3(r4); r2.hidden = true;                                                     // the second row is empty now
   { const evR = selChipObj() ? null : selEv(), ownR = evR && !S.selAuto;                  // the top row's upper left: whole, half, eighth, 16th and 32nd rests (the quarter rest lives on the quick palette)
-    [4, 2, 0.5, 0.25, 0.125].forEach(v => r1.append(el("button", { onclick: () => tapRestLen(v), class: "gn" + ((ownR ? evR.rest && Math.abs(baseLen(evR.d) - v) < 1e-9 : S.restNext && (S.restLen || S.len) === v) ? " on" : ""), title: ownR ? `Make it a ${REST_NAME[v]} rest` : `${REST_NAME[v]} rest: goes in at the next free spot, or arms one for your next tap` }, restIcon(v)))); }
+    if (!deckMode()) [4, 2, 0.5, 0.25, 0.125].forEach(v => r1.append(el("button", { onclick: () => tapRestLen(v), class: "gn" + ((ownR ? evR.rest && Math.abs(baseLen(evR.d) - v) < 1e-9 : S.restNext && (S.restLen || S.len) === v) ? " on" : ""), title: ownR ? `Make it a ${REST_NAME[v]} rest` : `${REST_NAME[v]} rest: goes in at the next free spot, or arms one for your next tap` }, restIcon(v)))); }
   let p = r1;
   const ev = selEv(), bar = curBar();
   const b = (t, fn, opts = {}) => p.append(el("button", Object.assign({ onclick: fn }, opts.attrs || {}, { class: (opts.cls || "") + (opts.on ? " on" : "") + (opts.warn ? " warn" : ""), title: opts.title, disabled: opts.disabled }), t));
