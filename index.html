@@ -342,7 +342,8 @@ svg text { pointer-events: none; }
 body.kbOpen #app.deck { padding-bottom: 6px; }
 #app.deck #rollBar { display: flex; align-items: center; justify-content: center; position: relative; }   /* the selectors centred over the stave (nudged onto its frame by script) */
 #app.deck #melWin, #app.deck #accWin, #app.deck #bassWin { grid-area: stage; margin-top: 6px !important; }
-#app.deck #nav, #app.deck #rollBar { margin-top: 6px; }
+#app.deck #nav { margin-top: 6px; }
+#app.deck #rollBar { margin-top: 1px; }                                                    /* the selectors close under the bracket row (its own padding keeps them clear); the room goes to the Dynamics strip */
 #app.deck .win:not(.deckOn) { display: none !important; }
 #app.deck .win .sizer, #app.deck .win .focus, #app.deck .win .winHead, #app.deck .win .side { display: none !important; }   /* the side buttons live in the column beside the stave */
 #app.deck .win { grid-template-columns: 48px 1fr; gap: 0 2px; }                             /* the gutter: the pitch labels, then the skinny ↑ ↓ */
@@ -8133,7 +8134,7 @@ function allocate() {
     for (const w of ["mel", "acc", "bass"]) {
       const [rows0, lo, hi0] = WIN[S.winSize][w], hi = Math.max(hi0, WIN[S.winSize].mel[2]);
       if (w !== active) { STEPS[w] = lo; DECK_ROWS[w] = 0; continue; }
-      let target = window.innerHeight - 12 - h("head") - h("rollBar") - 6 - (h("rollBar") ? 6 : 0) - (shown ? h("rhyStrip") + h("lyrStrip") : 0) - (S.dynShown && !app.classList.contains("kbUp") ? (h("dynStrip") || 24) : 0) - Math.max(h("toolbar"), 30) - topExtra - 16;   // the strips, when shown, sit flush between the stave and the tool bar
+      let target = window.innerHeight - 12 - h("head") - h("rollBar") - 6 - (h("rollBar") ? 1 : 0) - (shown ? h("rhyStrip") + h("lyrStrip") : 0) - (S.dynShown && !app.classList.contains("kbUp") ? (h("dynStrip") || 32) : 0) - Math.max(h("toolbar"), 30) - topExtra - 16;   // the strips, when shown, sit flush between the stave and the tool bar
       { const side = $(w + "Win").querySelector(".side"); if (side && side.offsetHeight > 0) { const kids = [...side.children].filter(k => k.offsetHeight > 0), cs = getComputedStyle(side); const need = kids.reduce((a, k) => a + k.offsetHeight, 0) + Math.max(0, kids.length - 1) * (parseFloat(cs.rowGap) || 0) + (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0); target = Math.max(target, need - 16); } }   // never shorter than the buttons beside it need: they would hold the stave's row open and leave a gap   // the stave's drawing height: the screen less the rows above and below, the three 6px margins, the tool bar's 6px when the strips show, the frame's borders and pads
       const k = STEP_K[S.noteSize] || 1, rows = clamp(Math.floor(target / (hi * k)), rows0, 88);   // at the stave's full scale, as many rows as fill the height — never fewer than usual, up to the whole piano
       DECK_ROWS[w] = rows; STEPS[w] = Math.max(lo, target / rows / k);                      // and the rows share that height exactly
@@ -8503,7 +8504,7 @@ function wireScroller(sc) {
 /* the Dynamics strip: the part in view's dynamics and hairpins along the beats, on the same silver as the Rhythm strip */
 function renderDynStrip(g, bars, dividers) {
   const svg = $("dynSvg"); if (!svg || !deckMode() || !S.dynShown) return;
-  const HD = 19, part = WIN_PART[deckActive()]; svg.replaceChildren(); svg.setAttribute("height", HD); svg.setAttribute("viewBox", `0 0 ${g.W} ${HD}`); svg.setAttribute("width", g.W); svg.style.width = g.W + "px";
+  const HD = 30, part = WIN_PART[deckActive()]; /* about a third taller than the Rhythm strip */ svg.replaceChildren(); svg.setAttribute("height", HD); svg.setAttribute("viewBox", `0 0 ${g.W} ${HD}`); svg.setAttribute("width", g.W); svg.style.width = g.W + "px";
   svg.append(svgEl("rect", { class: "hit", x: 0, y: 0, width: g.W, height: HD, fill: "transparent", "data-lane": "dyn" }));
   dividers(svg, "#2b2e33", 0.55, HD);
   const font = { "font-family": "Georgia, 'Times New Roman', serif", "font-style": "italic", "font-weight": 700, fill: "#fff", "pointer-events": "none" };
@@ -8512,10 +8513,10 @@ function renderDynStrip(g, bars, dividers) {
     for (const e of evs) {
       if (!e.dyn && !e.hair) continue;
       const x = g.x(bi, e.t) + 2;
-      if (e.dyn) svg.append(svgEl("text", Object.assign({ x, y: 14, "font-size": 12 }, font), e.dyn));
+      if (e.dyn) svg.append(svgEl("text", Object.assign({ x, y: 20, "font-size": 14 }, font), e.dyn));
       if (e.hair) {
-        const next = evs.filter(o => o !== e && (o.dyn || o.hair) && o.t > e.t + 1e-6).sort((a, b) => a.t - b.t)[0], x1 = x + (e.dyn ? 22 : 0), x2 = next ? g.x(bi, next.t) - 4 : g.x(bi, barBeats(bi)) - 6, y = 10, h = 5;
-        if (e.hair === "dim") svg.append(svgEl("text", Object.assign({ x: x1, y: 14, "font-size": 11 }, font), "dim."));
+        const next = evs.filter(o => o !== e && (o.dyn || o.hair) && o.t > e.t + 1e-6).sort((a, b) => a.t - b.t)[0], x1 = x + (e.dyn ? 22 : 0), x2 = next ? g.x(bi, next.t) - 4 : g.x(bi, barBeats(bi)) - 6, y = 15, h = 7;
+        if (e.hair === "dim") svg.append(svgEl("text", Object.assign({ x: x1, y: 20, "font-size": 13 }, font), "dim."));
         else if (x2 - x1 > 6) svg.append(svgEl("path", { d: e.hair === "cresc" ? `M ${x2} ${y - h} L ${x1} ${y} L ${x2} ${y + h}` : `M ${x1} ${y - h} L ${x2} ${y} L ${x1} ${y + h}`, fill: "none", stroke: "#fff", "stroke-width": 1.5, "stroke-linejoin": "round", "stroke-linecap": "round", "pointer-events": "none" }));
       }
     }
