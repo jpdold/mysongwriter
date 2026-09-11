@@ -8781,7 +8781,7 @@ function drawSoundHaze(svg, g) {
   const [lo, hi] = soundRange(g.win);
   const band = (a, b) => { if (b < a) return; const y0 = g.y(b) - g.step / 2, y1 = g.y(a) + g.step / 2, hh = y1 - y0;
     svg.append(svgEl("rect", { class: "haze", x: 0, y: y0, width: g.W, height: hh, fill: "#ff3b30", opacity: 0.32, "pointer-events": "none" }));
-    if (hh >= 22) svg.append(svgEl("text", { class: "hazeLbl", x: g.W / 2, y: y0 + hh / 2 + 6, "text-anchor": "middle", "font-size": Math.min(18, Math.max(13, hh * 0.6)), "font-weight": 800, "font-variant": "small-caps", "letter-spacing": ".04em", fill: "#fff", "paint-order": "stroke", stroke: "rgba(160,20,10,.55)", "stroke-width": 2, "pointer-events": "none" }, "Outside this sound's range — not audible")); };   // the notice, in bold white small caps, centred on the band
+    if (hh >= 22) svg.append(svgEl("text", { class: "hazeLbl", x: g.W / 2, y: y0 + hh / 2 + 6, "text-anchor": "middle", "font-size": Math.min(18, Math.max(9, hh * 0.6), (g.W - 16) / 21),   /* never wider than the stave: the notice is about 21 em long */ "font-weight": 800, "font-variant": "small-caps", "letter-spacing": ".04em", fill: "#fff", "paint-order": "stroke", stroke: "rgba(160,20,10,.55)", "stroke-width": 2, "pointer-events": "none" }, "Outside this sound's range — not audible")); };   // the notice, in bold white small caps, centred on the band
   band(g.lo, Math.min(lo - 1, g.hi)); band(Math.max(hi + 1, g.lo), g.hi);                  // the rows below the sound's reach, and those above it
 }
 function drawStaff(svg, g, key) {
@@ -8814,10 +8814,10 @@ function drawGutter(win, g, key) {
   const gut = $(win + "Gut"); gut.replaceChildren(); gut.setAttribute("height", g.H); const GW = Math.max(20, Math.round(gut.getBoundingClientRect().width) || 42); gut.setAttribute("viewBox", `0 0 ${GW} ${g.H}`);   // drawn at the gutter's own width, so nothing scales and every label sits on its line or space
   const ink = css("--on-ground");
   for (let m = g.lo; m <= g.hi; m++) {
-    const y = g.y(m), pc = ((m % 12) + 12) % 12;
+    const y = g.y(m), pc = ((m % 12) + 12) % 12;                                        // y: the exact centre of the row; the labels are centred on it (dominant-baseline), so they sit on their line or space at any size
     if (g.step < 7 && pc !== 0 && pc !== 7) continue;                     // compact: C and G only
-    if (!isBlack(m)) gut.append(svgEl("text", { x: GW - 4, y: Math.round(y + (g.step >= 10 ? 4 : 3)), "text-anchor": "end", "font-size": g.step >= 10 ? 12 : g.step >= 7 ? 9 : 7.5, "font-weight": pc === 0 ? 800 : 700, fill: "#fff", "font-family": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif" }, pc === 0 ? noteName(m, key) : pcName(m, key)));
-    else if (g.step >= 12) gut.append(svgEl("text", { x: GW - 4, y: Math.round(y + 3), "text-anchor": "end", "font-size": 8, "font-weight": 600, fill: css("--on-ground2"), "font-family": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif" }, "#/♭"));
+    if (!isBlack(m)) gut.append(svgEl("text", { x: GW - 4, y, "dominant-baseline": "central", "text-anchor": "end", "font-size": g.step >= 10 ? 12 : g.step >= 7 ? 9 : 7.5, "font-weight": pc === 0 ? 800 : 700, fill: "#fff", "font-family": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif" }, pc === 0 ? noteName(m, key) : pcName(m, key)));
+    else if (g.step >= 12) gut.append(svgEl("text", { x: GW - 4, y, "dominant-baseline": "central", "text-anchor": "end", "font-size": 8, "font-weight": 600, fill: css("--on-ground2"), "font-family": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif" }, "#/♭"));
   }
   gut.append(svgEl("line", { x1: GW - 1, x2: GW - 1, y1: 0, y2: g.H, stroke: css("--on-ground2"), "stroke-width": 0.5, opacity: 0.5 }));
 }
