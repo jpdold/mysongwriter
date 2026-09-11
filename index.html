@@ -355,6 +355,7 @@ body.kbOpen #app.deck { padding-bottom: 6px; }
 #app.deck .strip { grid-template-columns: 48px 1fr; gap: 0 2px; position: relative; }   /* the strips line up with the stave */
 #app.deck .strip .body { border-left-width: 3px; border-right-width: 3px; }                /* the same side borders as the stave frame, so every beat divider lines up to the pixel */
 #app.deck #lyrStrip .body { border-radius: 0; }                                             /* square corners like the strips above it: its edges flush with theirs */
+#app.deck #rhyStrip .body, #app.deck #dynStrip .body { border-right-color: #4a4e54; border-left-color: #35383d; }   /* dark side edges like the Lyrics strip's, so the three edges read as one line */
 #app.deck #wordEdit { transform: scale(.8); transform-origin: 50% 100%; overflow: visible; }   /* the keyboard on the deck: a fifth smaller, docked on the tool bar (its bottom set by script) */
 #app.deck #wordEdit > button.close { right: auto; left: 50%; transform: translateX(-50%); }   /* the ✕ at the top centre: the corners carry the grips */
 #wordEdit .kbSplit { display: flex; gap: 6px; position: relative; justify-content: center; }
@@ -8265,7 +8266,7 @@ const chipMinW = c => Math.min(chipW(c), Math.ceil(chipNatW(c) * 0.72));        
 const chipBeats = (c, g) => chipMinW(c) / g.beatPx;                                  // the least room a chip needs, in beats (squeezed); chips sit edge to edge
 const chipFull = (c, g) => c.full ? 1e6 : chipW(c) / g.beatPx;                 // the room a chip takes at its full width: the next chip lines up flush after it (a bar-filling chip leaves none)
 function setChipTime(bar, chip, t) {
-  const i = bar.chips.indexOf(chip), bi = S.song.bars.indexOf(bar), B = barBeats(bi), g = GEO.mel || geo("mel"), gap = 0.0625;
+  const i = bar.chips.indexOf(chip), bi = S.song.bars.indexOf(bar), B = barBeats(bi), g = typeof stripGeo === "function" ? stripGeo() : (GEO.mel || geo("mel")), gap = 0.0625;
   const lo = i > 0 ? bar.chips[i - 1].t + Math.max(gap, chipBeats(bar.chips[i - 1], g)) : 0;
   const hi = i < bar.chips.length - 1 ? bar.chips[i + 1].t - Math.max(gap, chipBeats(chip, g)) : B - gap;
   chip.t = r3(clamp(t, Math.ceil(lo * 16 - 1e-6) / 16, Math.floor(hi * 16 + 1e-6) / 16));   // the room, on a sixteenth grid
@@ -8274,7 +8275,7 @@ function setChipTime(bar, chip, t) {
 }
 /* after words are placed: shove any chip that would sit on top of the one before it */
 function resolveChipOverlaps(bar) {
-  const bi = S.song.bars.indexOf(bar), B = barBeats(bi), g = GEO.mel || geo("mel");
+  const bi = S.song.bars.indexOf(bar), B = barBeats(bi), g = typeof stripGeo === "function" ? stripGeo() : (GEO.mel || geo("mel"));
   bar.chips.sort((a, b) => a.t - b.t);
   for (let i = 1; i < bar.chips.length; i++) {
     const p = bar.chips[i - 1], c = bar.chips[i], min = r3(p.t + chipBeats(p, g));
@@ -8434,7 +8435,11 @@ function refitGhost() {
 }
 /* the window whose stave is showing: it owns the beat labels and the strips' geometry */
 const leadWin = () => S.focus || ["mel", "acc", "bass"].find(w => S.winState[w] !== "closed") || "mel";
-function stripGeo() { const w = leadWin(); return GEO[w] || geo(w); }
+function stripGeoRaw() { const w = leadWin(); return GEO[w] || geo(w); }
+/* the Lyrics strip's scale on the deck: its beats as wide, against its words, as on a phone (a 68px beat), so its entry and spacing
+   rules read the same; the strip's drawing, box and caret grow by k, and all chip arithmetic works in the strip's own units */
+function lyrK() { if (typeof deckMode !== "function" || !deckMode()) return 1; const g = stripGeoRaw(); return Math.round(clamp(g.beatPx / 68, 1, 1.75) * 100) / 100; }
+function stripGeo() { const g = stripGeoRaw(), k = lyrK(); if (k === 1) return g; return Object.assign({}, g, { k, W: g.W / k, W1: g.W1 / k, beatPx: g.beatPx / k, x: (bi, t) => g.x(bi, t) / k, at: px => g.at(px * k) }); }
 /* where the next melody note goes in the active beat, and how long it may be (words lead when Follow words is on) */
 function melodySpot(bar, bi) {
   const cur = S.followWords && S.cursor && S.cursor.bi === bi ? bar.chips.find(c => c.id === S.cursor.chipId) : null;
@@ -8979,8 +8984,8 @@ function renderWindows() {
   document.querySelectorAll(".win .pselClose").forEach(b => { b.hidden = !PSEL.on; });
 }
 function renderStrips() {
-  const song = S.song, key = keyObj(song.key), g = stripGeo(), B = g.B, H = 36, bars = viewBars();
-  const dividers = (svg, color, op, HH = H) => { const nd = Math.max(1, Math.round((HH + 4) / 9)), dash = (HH - (nd - 1) * 4) / nd; for (const bi of bars) { for (let b = 1; b < barBeats(bi); b++) { const bx = Math.round(g.x(bi, b)); svg.append(svgEl("line", { x1: bx, x2: bx, y1: 0, y2: HH, stroke: color, "stroke-width": 2, "stroke-dasharray": `${dash.toFixed(2)} 4`, opacity: op * (g.n > 1 ? 0.7 : 1), "shape-rendering": "crispEdges" })); } if (bi > g.first) svg.append(svgEl("line", { x1: Math.round(g.x(bi, 0)), x2: Math.round(g.x(bi, 0)), y1: 0, y2: HH, stroke: color, "stroke-width": 2, opacity: op, "shape-rendering": "crispEdges" })); } if (g.totalBeats < g.B - 1e-6) { const ex = g.x(bars[bars.length - 1], barBeats(bars[bars.length - 1])); svg.append(svgEl("line", { x1: ex, x2: ex, y1: 0, y2: H, stroke: color, "stroke-width": 2, opacity: op })); } };
+  const song = S.song, key = keyObj(song.key), g = stripGeoRaw(), B = g.B, H = 36, bars = viewBars();
+  const dividers = (svg, color, op, HH = H, gg = g) => { const nd = Math.max(1, Math.round((HH + 4) / 9)), dash = (HH - (nd - 1) * 4) / nd; for (const bi of bars) { for (let b = 1; b < barBeats(bi); b++) { const bx = Math.round(gg.x(bi, b)); svg.append(svgEl("line", { x1: bx, x2: bx, y1: 0, y2: HH, stroke: color, "stroke-width": 2, "stroke-dasharray": `${dash.toFixed(2)} 4`, opacity: op * (g.n > 1 ? 0.7 : 1), "shape-rendering": "crispEdges" })); } if (bi > g.first) svg.append(svgEl("line", { x1: Math.round(g.x(bi, 0)), x2: Math.round(g.x(bi, 0)), y1: 0, y2: HH, stroke: color, "stroke-width": 2, opacity: op, "shape-rendering": "crispEdges" })); } if (g.totalBeats < g.B - 1e-6) { const ex = g.x(bars[bars.length - 1], barBeats(bars[bars.length - 1])); svg.append(svgEl("line", { x1: ex, x2: ex, y1: 0, y2: H, stroke: color, "stroke-width": 2, opacity: op })); } };
   /* rhythm strip: the slots as small glyphs, the ▶ marks where the next tap lands */
   {
     const svg = $("rhySvg"), HR = 19; svg.replaceChildren(); svg.setAttribute("height", HR); svg.setAttribute("viewBox", `0 0 ${g.W} ${HR}`); svg.setAttribute("width", g.W); svg.style.width = g.W + "px"; svg.style.touchAction = g.n > 1 ? "pan-x" : "none";
@@ -9017,16 +9022,17 @@ function renderStrips() {
   }
   /* lyrics strip: syllables, or free letters / spaces / symbols the user has split apart */
   {
-    const svg = $("lyrSvg"); svg.replaceChildren(); svg.setAttribute("height", H); svg.setAttribute("viewBox", `0 0 ${g.W} ${H}`); svg.setAttribute("width", g.W); svg.style.width = g.W + "px"; svg.style.touchAction = g.n > 1 ? "pan-x" : "none";
+    const gl = stripGeo(), k = gl.k || 1;                                                  // the strip at its own scale
+    const svg = $("lyrSvg"); svg.replaceChildren(); svg.setAttribute("height", H * k); svg.setAttribute("viewBox", `0 0 ${gl.W} ${H}`); svg.setAttribute("width", gl.W * k); svg.style.width = (gl.W * k) + "px"; svg.style.height = (H * k) + "px"; svg.style.touchAction = g.n > 1 ? "pan-x" : "none";
     $("lyrStrip").classList.toggle("serif", S.lyricFont === "serif"); $("lyrStrip").classList.toggle("smallcaps", S.lyricFont === "smallcaps");
     $("wordEdit").classList.toggle("serif", S.lyricFont === "serif"); $("wordEdit").classList.toggle("smallcaps", S.lyricFont === "smallcaps");
-    svg.append(svgEl("rect", { class: "hit", x: 0, y: 0, width: g.W, height: H, fill: "transparent", "data-lane": "lyr" }));
-    dividers(svg, "#fff", 0.45);
+    svg.append(svgEl("rect", { class: "hit", x: 0, y: 0, width: gl.W, height: H, fill: "transparent", "data-lane": "lyr" }));
+    dividers(svg, "#fff", 0.45, H, gl);
     let any = false;
     for (const bi of bars) {
       const bar = song.bars[bi], cursorId = S.cursor && S.cursor.bi === bi ? S.cursor.chipId : null, selId = S.selChip && S.selChip.bi === bi ? S.selChip.id : null;
       normalizeLyrics(bar);
-      const laid = layoutChips(bar, bi, g);
+      const laid = layoutChips(bar, bi, gl);
       bar.chips.forEach(c => {
         any = true;
         /* a chip is free text: a pill hugging the words, with the spaces you typed kept */
@@ -9041,12 +9047,12 @@ function renderStrips() {
         svg.append(svgEl("rect", { class: "chip", x: px, y: 3, width: pw, height: H - 6, rx: 6, fill: "#fff", "fill-opacity": isSel ? 0.42 : 0.2, stroke: "#fff", "stroke-width": isSel ? 1.5 : 0.8, "stroke-opacity": isSel ? 1 : 0.5, "data-chip": c.id, "data-bi": bi }));
         const editing = WE.on && WE.bi === bi && WE.chipId === c.id;
         const baseW = Math.round(natW / (c.wf || 1)), fit = pw < baseW - 0.5 ? { textLength: Math.max(8, pw - 2 * chipPad()), lengthAdjust: "spacingAndGlyphs" } : pw > baseW + 1.5 && c.text.trim().length > 1 ? { textLength: Math.max(8, pw - 2 * chipPad()), lengthAdjust: "spacing" } : {};   // condensed when squeezed or narrowed, letter-spaced when widened
-        if (!editing && c.full && c.words) c.words.forEach(w => svg.append(svgEl("text", { x: g.x(bi, w.t) + chipPad(), y: 24, "font-size": 16, fill: "#fff", "font-weight": 700, "font-family": "system-ui, sans-serif", "xml:space": "preserve", style: "white-space:pre", "pointer-events": "none" }, w.text)));   // combined: each word where it was
+        if (!editing && c.full && c.words) c.words.forEach(w => svg.append(svgEl("text", { x: gl.x(bi, w.t) + chipPad(), y: 24, "font-size": 16, fill: "#fff", "font-weight": 700, "font-family": "system-ui, sans-serif", "xml:space": "preserve", style: "white-space:pre", "pointer-events": "none" }, w.text)));   // combined: each word where it was
         else if (!editing) svg.append(svgEl("text", Object.assign({ x: c.full && pw > baseW ? px + pw / 2 : x, y: 24, "font-size": 16, fill: "#fff", "font-weight": 700, "font-family": "system-ui, sans-serif", "xml:space": "preserve", style: "white-space:pre", "pointer-events": "none" }, c.full && pw > baseW ? { "text-anchor": "middle" } : fit), c.text));
         pickFrame();
       });
     }
-    if (!any && !WE.on) svg.append(svgEl("text", { x: g.W1 / 2, y: 23, "text-anchor": "middle", "font-size": 11, fill: "rgba(255,255,255,.75)", "font-weight": 700, "letter-spacing": ".06em" }, "TAP HERE TO TYPE LYRICS/WORDS"));
+    if (!any && !WE.on) svg.append(svgEl("text", { x: gl.W1 / 2, y: 23, "text-anchor": "middle", "font-size": 11, fill: "rgba(255,255,255,.75)", "font-weight": 700, "letter-spacing": ".06em" }, "TAP HERE TO TYPE LYRICS/WORDS"));
   }
   const ph = $("lyrSvg"); ph.append(svgEl("line", { id: "lyrHead", x1: -5, x2: -5, y1: 0, y2: H, stroke: "#fff", "stroke-width": 2, "pointer-events": "none" }));
   if (WE.on) { const inp = weInput(); if (viewBars().includes(WE.bi)) { inp.classList.add("on"); placeInline(); } else inp.classList.remove("on"); }
@@ -9703,7 +9709,7 @@ function openWordEdit(bi, t, chip) {
   inp.value = chip ? chip.text : ""; inp.disabled = false; S.bi = bi; S.selChip = chip ? { bi, id: chip.id } : null;
   lbl.textContent = chip ? "Editing · NEW CHIP – CURRENT BEAT keeps it · SPLIT at the cursor" : `Bar ${barNo(bi)} · beat ${beatLabel(WE.t)} · NEW CHIP – CURRENT BEAT makes the chip · NEW CHIP → NEXT BEAT moves on`;
   box.classList.add("on"); renderWeKeys(); applyKbPos(); renderStrips(); if (typeof deckMode === "function" && deckMode()) { if (!wasOpen0) renderAll(); else placeDeckLabels(); }   // on the deck: the keyboard docks, the strips ride up onto it and the stave takes their rows
-  const bodyEl = $("lyrStrip").querySelector(".body"), x = g.x(bi, WE.t);
+  const bodyEl = $("lyrStrip").querySelector(".body"), x = g.x(bi, WE.t) * (g.k || 1);
   inp.classList.add("on"); sizeInline(); placeInline();
   if (x < bodyEl.scrollLeft || x > bodyEl.scrollLeft + bodyEl.clientWidth - 60) bodyEl.scrollLeft = Math.max(0, x - 40);
   setTimeout(() => { if (!inp.disabled) { inp.focus(); const n = inp.value.length; try { inp.setSelectionRange(n, n); } catch (e) {} } weCaret(); }, 20);
@@ -9729,7 +9735,7 @@ function repositionEntry() {
   if (!WE.on || WE.chipId || S.chipMode === "single") return;                            // a bar-wide box stays where it is
   const inp = weInput(), bar = S.song.bars[WE.bi], g = stripGeo(), w = Math.max(ENTRY_MIN, (chipW({ text: inp.value || "w" }) + 3) / g.beatPx);
   const t = entrySpot(bar, WE.bi, WE.t, w); if (t == null || Math.abs(t - WE.t) < 1e-6) return;
-  WE.t = t; const x = g.x(WE.bi, t); inp.style.left = clamp(x, 0, Math.max(0, g.W - inp.offsetWidth - 2)) + "px"; weCaret();
+  WE.t = t; const k = g.k || 1, x = g.x(WE.bi, t); inp.style.left = Math.round(clamp(x, 0, Math.max(0, g.W - inp.offsetWidth / k - 2)) * k) + "px"; weCaret();
 }
 /* the entry box moves to a spot of its own choosing (⌫ and space on an empty box) */
 function weEntryTo(bi, t) {
@@ -9969,16 +9975,19 @@ function weNudge(d) {
 function weMoveCaret(d) { const inp = weInput(); if (inp.disabled) return; const s = inp.selectionStart == null ? inp.value.length : inp.selectionStart; const n = clamp(s + d, 0, inp.value.length); inp.focus(); try { inp.setSelectionRange(n, n); } catch (e) {} weCaret(); }
 /* the entry box on the strip: at its spot, as wide as its word — or, under Single chip, the whole bar, end to end */
 function placeInline() {
-  const inp = weInput(); if (!WE.on) return; const g = stripGeo();
-  const pad = chipPad(); inp.style.padding = "0 " + pad + "px";                          // half a space each side, like a chip
-  if (!WE.chipId && WE.t >= barBeats(WE.bi) - 1e-6) { inp.style.width = "0px"; inp.style.left = (g.W - 1) + "px"; return; }   // the bar is full: the box waits, out of the way, at its end
-  if (S.chipMode === "single" && !WE.chipId) { const x0 = g.x(WE.bi, 0), x1 = g.x(WE.bi, barBeats(WE.bi)); inp.style.left = (x0 + 1) + "px"; inp.style.width = Math.max(44, x1 - x0 - 2 - 2 * pad) + "px"; return; }
+  const inp = weInput(); if (!WE.on) return; const g = stripGeo(), k = g.k || 1;
+  const pad = chipPad(); inp.style.padding = "0 " + (pad * k) + "px";                    // half a space each side, like a chip
+  if (k !== 1) { inp.style.fontSize = (16 * k) + "px"; inp.style.height = (30 * k) + "px"; inp.style.top = (3 * k) + "px"; } else { inp.style.fontSize = ""; inp.style.height = ""; inp.style.top = ""; }
+  const put = (leftU, widthU) => { inp.style.left = Math.round(leftU * k) + "px"; if (widthU != null) inp.style.width = Math.round(widthU * k) + "px"; };   // strip units → css pixels
+  if (!WE.chipId && WE.t >= barBeats(WE.bi) - 1e-6) { inp.style.width = "0px"; put(g.W - 1); return; }   // the bar is full: the box waits, out of the way, at its end
+  if (S.chipMode === "single" && !WE.chipId) { const x0 = g.x(WE.bi, 0), x1 = g.x(WE.bi, barBeats(WE.bi)); put(x0 + 1, Math.max(44, x1 - x0 - 2 - 2 * pad)); return; }
   const roomPx = Math.max(12, (Math.floor(WE.t + 1e-6) + 1 - WE.t) * g.beatPx);
   if (!_caretCtx) _caretCtx = document.createElement("canvas").getContext("2d"); _caretCtx.font = getComputedStyle(inp).font;
   const SLACK = 4;                                                                        // a few pixels past the last letter: the field never scrolls to fit its caret, and no glyph overhang is clipped
-  inp.style.width = (inp.value ? Math.ceil(_caretCtx.measureText(inp.value).width) + SLACK : Math.max(8, Math.min(44, roomPx) - 2 * pad)) + "px"; inp.scrollLeft = 0;   // typed: the letters plus that slack; empty: only what is left of the beat
-  if (WE.chipId) { const bar = S.song.bars[WE.bi], c = bar.chips.find(x => x.id === WE.chipId); if (c && !c.gap && c.text.trim()) inp.style.width = Math.max(parseFloat(inp.style.width), chipEditRoom(bar, WE.bi, c, g) - 2 * pad) + "px"; }   // a chip being edited takes all the remaining space, to the next chip or the bar line
-  const x = g.x(WE.bi, WE.t); inp.style.left = clamp(x, 0, Math.max(0, g.W - inp.offsetWidth - 2)) + "px";
+  let wU = inp.value ? Math.ceil(_caretCtx.measureText(inp.value).width) / k + SLACK : Math.max(8, Math.min(44, roomPx) - 2 * pad);   // typed: the letters (measured in the box's own font, brought back to strip units) plus that slack; empty: only what is left of the beat
+  if (WE.chipId) { const bar = S.song.bars[WE.bi], c = bar.chips.find(x => x.id === WE.chipId); if (c && !c.gap && c.text.trim()) wU = Math.max(wU, chipEditRoom(bar, WE.bi, c, g) - 2 * pad); }   // a chip being edited takes all the remaining space, to the next chip or the bar line
+  inp.scrollLeft = 0;
+  const x = g.x(WE.bi, WE.t); put(clamp(x, 0, Math.max(0, g.W - wU - 2 * pad - 2)), wU);
 }
 function sizeInline() { weFitBeat(); placeInline(); repositionEntry(); weCaret(); }
 /* a still caret drawn where the insertion point is (the field's own blinking caret is hidden) */
@@ -9989,7 +9998,8 @@ function weCaret() {
   if (!_caretCtx) _caretCtx = document.createElement("canvas").getContext("2d");
   _caretCtx.font = getComputedStyle(inp).font;
   const s = inp.selectionStart == null ? inp.value.length : inp.selectionStart, w = _caretCtx.measureText(inp.value.slice(0, s)).width;
-  car.style.left = Math.round(inp.offsetLeft + chipPad() + w - inp.scrollLeft) + "px"; car.classList.add("on");
+  const k = stripGeo().k || 1; car.style.top = (8 * k) + "px"; car.style.height = (20 * k) + "px";
+  car.style.left = Math.round(inp.offsetLeft + chipPad() * k + w - inp.scrollLeft) + "px"; car.classList.add("on");
 }   // grows with what you type — beats don't box it in
 /* the app's own keyboard: QWERTY, a symbols page for lyricists' marks, an accents page. The phone's keyboard is a toggle (⌨). */
 const WE_PAGES = {
