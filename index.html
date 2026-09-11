@@ -252,9 +252,9 @@ svg text { pointer-events: none; }
 #app.deck #navRight #tempo button#tempoLbl { width: auto; }
 /* the part selectors: shown or hidden from the head; ADD to VIEW keeps its place at the row's right */
 #partsBtn { display: none; }
-#app.deck #partsBtn { display: inline-flex; grid-column: 4; grid-row: 1; justify-self: start; align-items: center; height: 26px; padding: 0 10px; margin-left: 8px; border: 1px solid #3a8a1e; border-radius: 4px; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); font-size: 9px; font-weight: 800; letter-spacing: .04em; white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
+#app.deck #partsBtn { display: inline-flex; position: static; flex: 0 0 auto; margin-left: 10px; align-items: center; height: 26px; padding: 0 10px; margin-left: 8px; border: 1px solid #3a8a1e; border-radius: 4px; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); font-size: 9px; font-weight: 800; letter-spacing: .04em; white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
 #app.deck #partsBtn:active { filter: brightness(1.1); }
-#app.deck.noparts #rollBar { display: none; }
+#app.deck.noparts #rollBar .rollItem { display: none; }                                     /* parts hidden: only the SHOW PARTS button stays on the row */
 #app.deck #rollBar .rollItem { flex: 0 0 150px; min-width: 0; }
 #addView { display: none; }
 #app.deck #addView { display: flex; grid-area: addv; align-self: center; justify-self: stretch; height: 22px; margin-top: 6px; padding: 0 2px; align-items: center; justify-content: center; text-align: center; border: 1px solid #3a8a1e; border-radius: 4px; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); font-size: 7px; font-weight: 800; letter-spacing: .02em; line-height: 1.05; white-space: normal; box-shadow: 0 1px 2px rgba(0,0,0,.3); }   /* ADD to VIEW: in the column beside the stave, so the selectors centre freely */
@@ -266,7 +266,8 @@ svg text { pointer-events: none; }
 #app.deck #topTransport #tempo { box-shadow: none; margin-left: 1px; }
 #app.deck #topTransport #tempo button { width: 20px; }
 #app.deck #topTransport #tempo button#tempoLbl { min-width: 38px; font-size: 9.5px; }
-#app.deck #saveBtn { position: absolute; top: 50%; transform: translateY(-50%); width: 30px; height: 28px; z-index: 2; }   /* up in the head, evenly between the parts button and the gear */
+#app.deck #saveBtn { position: absolute; top: 50%; transform: translateY(-50%); width: 30px; height: 28px; z-index: 2; padding: 0; border: 1.5px solid #6e1712; border-radius: 4px; background: linear-gradient(#ff5a4e, #e5322d); color: #fff; display: grid; place-items: center; box-shadow: 0 2px 4px rgba(0,0,0,.4); }   /* up in the head, evenly between the parts button and the gear: the floppy, whole */
+#app.deck #saveBtn .ico { width: 19px; height: 19px; display: block; }
 #app.deck #head { position: relative; }
 #app.deck #topTransport #saveBtn .ico { width: 17px; height: 17px; }
 /* the tools: one bar, a button high, across the foot of the screen */
@@ -8572,7 +8573,7 @@ function placeDeckLabels() {
     if (!top) { top = el("div", { class: "deckLbl top" }, DECK_NAME[w]); bot = el("div", { class: "deckLbl bot" }, DECK_NAME[w]); win.append(top, bot); }
     if (!deckMode() || !win.classList.contains("deckOn")) continue;
     const x = frame.offsetLeft + frame.offsetWidth / 2;
-    for (const id of ["nav", "rollBar"]) { const e = $(id); if (!e) continue; e.style.position = "relative"; const cur = parseFloat(e.style.left) || 0, fr = frame.getBoundingClientRect(), eb = e.getBoundingClientRect(); const mid = (fr.left + fr.right) / 2; let eMid = (eb.left + eb.right) / 2; if (id === "rollBar") { const items = e.querySelectorAll(".rollItem"); if (items.length) eMid = (items[0].getBoundingClientRect().left + items[items.length - 1].getBoundingClientRect().right) / 2; } else { const a = $("prevBar"), b = $("nextBar"); if (a && b) eMid = (a.getBoundingClientRect().left + b.getBoundingClientRect().right) / 2; } /* the bracket itself (← to →) over the part label, the parts button riding beside it */ e.style.left = Math.round(cur + mid - eMid) + "px"; }   // the bracket and the selectors centred on the stave's frame
+    for (const id of ["nav", "rollBar"]) { const e = $(id); if (!e) continue; e.style.position = "relative"; const cur = parseFloat(e.style.left) || 0, fr = frame.getBoundingClientRect(), eb = e.getBoundingClientRect(); const mid = (fr.left + fr.right) / 2; let eMid = (eb.left + eb.right) / 2; if (id === "rollBar") { const items = e.querySelectorAll(".rollItem"); if (items.length && items[0].offsetWidth > 0) eMid = (items[0].getBoundingClientRect().left + items[items.length - 1].getBoundingClientRect().right) / 2; } else { const a = $("prevBar"), b = $("nextBar"); if (a && b) eMid = (a.getBoundingClientRect().left + b.getBoundingClientRect().right) / 2; } /* the bracket itself (← to →) over the part label, the parts button riding beside it */ e.style.left = Math.round(cur + mid - eMid) + "px"; }   // the bracket and the selectors centred on the stave's frame
     { const sv = $("saveBtn"), pb = $("partsBtn"), gb = $("gearBtn"); if (sv && sv.parentNode === $("head")) { const a = pb.getBoundingClientRect().right, b = gb.getBoundingClientRect().left, h = $("head").getBoundingClientRect().left; sv.style.left = Math.round((a + b) / 2 - sv.offsetWidth / 2 - h) + "px"; } }   // the save button evenly between the parts button and the gear
     { const nav = $("deckNav"), rowTop = nav.getBoundingClientRect().top - (parseFloat(nav.style.marginTop) || 0); nav.style.marginTop = Math.max(0, frame.getBoundingClientRect().top - rowTop) + "px"; nav.style.height = frame.offsetHeight + "px"; }   // the column beside the stave: level with the frame, exactly as tall
     top.style.left = x + "px"; top.style.top = frame.offsetTop + "px";
@@ -8580,12 +8581,14 @@ function placeDeckLabels() {
   }
 }
 function deckShow(w) { S.focus = null; ["mel", "acc", "bass"].forEach(x => { S.winState[x] = x === w ? "open" : "closed"; }); savePrefs(); renderAll(); }
+let PARTS_BTN = null;
 function renderRollBar() {
+  const pb = PARTS_BTN || (PARTS_BTN = $("partsBtn"));                                      // held: the row it lives in is rebuilt each render
   const bar = $("rollBar"); bar.replaceChildren(); const nav = $("deckNav"); nav.replaceChildren();
   const deck = deckMode(), app = $("app"); app.classList.toggle("deck", deck);
   { const tr = $("topTransport"); if ($("tempo").parentNode !== tr) tr.append($("tempo")); if (deck) { if ($("saveBtn").parentNode !== $("head")) $("head").append($("saveBtn")); } else if ($("saveBtn").parentNode !== tr) tr.append($("saveBtn"));   // the tempo travels with the play buttons; on the deck the save button rides in the head
     if (deck) { if (tr.parentNode !== $("toolMScroll")) $("toolMScroll").prepend(tr); } else if (tr.parentNode !== $("head")) $("head").insertBefore(tr, $("gearBtn")); }   // on the deck the play buttons live in the middle third of the tool bar
-  { const pb = $("partsBtn"); if (deck) { if (pb.parentNode !== $("nav")) $("nav").append(pb); } else if (pb.parentNode !== $("head")) $("head").insertBefore(pb, $("topTransport")); }   // the parts button: beside the bar bracket on the deck
+  if (!deck && pb.parentNode !== $("head")) $("head").insertBefore(pb, $("topTransport"));   // off the deck the parts button waits, hidden, in the head
   { const nv = $("nav"); if (deck) { if (nv.parentNode !== $("head")) $("head").insertBefore(nv, $("gearBtn")); } else if (nv.parentNode === $("head")) $("head").after(nv); }   // the bar bracket: up in the head row on the deck
   if (deck) app.style.setProperty("--deckW", Math.max(28, Math.round((app.clientWidth - 24 - 10 - 80) / 17)) + "px");   // the part buttons' column: exactly a quarter of a beat of the stave beside it
   app.classList.toggle("rolled", S.layout === "rolled" && !deck);
@@ -8597,7 +8600,7 @@ function renderRollBar() {
     $(active + "Win").classList.add("deckOn");
     app.classList.toggle("nostrips", S.stripsShown === false);                              // the strips: shown, they push the stave up; hidden, it takes the room
     app.classList.toggle("noparts", S.partsShown === false);                                // the part selectors likewise
-    { const pb = $("partsBtn"); pb.textContent = S.partsShown === false ? "SHOW PARTS" : "HIDE PARTS"; pb.onclick = () => { S.partsShown = S.partsShown === false; savePrefs(); renderAll(); }; }
+    pb.textContent = S.partsShown === false ? "SHOW PARTS" : "HIDE PARTS"; pb.onclick = () => { S.partsShown = S.partsShown === false; savePrefs(); renderAll(); };
     const sb = el("button", { id: "stripsBtn", title: "Show or hide the Rhythm and Lyrics strips", onclick: () => { S.stripsShown = S.stripsShown === false; savePrefs(); renderAll(); } }, el("span", {}, S.stripsShown === false ? "SHOW" : "HIDE"), el("span", {}, "STRIPS"));   // built afresh each render, at the foot of the column beside the stave
     if (!S.deckSel) S.deckSel = [...S.deck];
     for (const w of ["mel", "acc", "bass"]) {                                            // the part selection: a check box each
@@ -8605,6 +8608,7 @@ function renderRollBar() {
       cb.addEventListener("change", () => { S.deckSel = ["mel", "acc", "bass"].filter(x => x === w ? cb.checked : S.deckSel.includes(x)); });
       bar.append(el("div", { class: "rollItem" + (S.deck.includes(w) ? " open" : "") }, el("label", {}, cb, el("span", { class: "lbl" }, w === "mel" ? "Melody" : w === "acc" ? "Accompaniment" : "Bass"))));
     }
+    bar.append(pb);                                                                        // HIDE / SHOW PARTS after the Bass selector
     { const old = $("addView"); if (old) old.remove(); }
     app.append(el("button", { id: "addView", title: "The checked parts make up the view; the up / down buttons beside the stave move between them", onclick: () => {
       const sel = ["mel", "acc", "bass"].filter(w => S.deckSel.includes(w)); if (!sel.length) { toast("Check at least one part"); return; }
@@ -10737,8 +10741,9 @@ function wireTempo() {
 const barAbs = bi => { let a = 0; for (let k = 0; k < bi; k++) a += barBeats(k); return a; };
 function absToBar(abs) { let a = 0; for (let bi = 0; bi < S.song.bars.length; bi++) { const B = barBeats(bi); if (abs < a + B - 1e-6) return { bi, t: r3(abs - a) }; a += B; } return null; }
 /* DELETE: with something selected — picked chips, a chip, a note — it deletes that; with nothing selected it starts a delete run */
-function delReady() { return !!((typeof WE !== "undefined" && WE.on && WE.picks.length) || selChipObj() || (selEv() && !S.selAuto)); }
+function delReady() { return !!((S.mv && S.mv.mode === "delete" && S.mv.start != null) || (typeof WE !== "undefined" && WE.on && WE.picks.length) || selChipObj() || (selEv() && !S.selAuto)); }
 function delAction() {
+  if (S.mv && S.mv.mode === "delete" && S.mv.start != null) { delRun("run"); return; }     // a run of beats picked: DELETE deletes it
   if (typeof WE !== "undefined" && WE.on && WE.picks.length) { weDeleteChips(); return; }
   const sc = selChipObj(); if (sc) { deleteChip(sc.bar, sc.chip); return; }
   if (selEv() && !S.selAuto) { deleteSel(); return; }
