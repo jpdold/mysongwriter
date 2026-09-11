@@ -303,7 +303,8 @@ svg text { pointer-events: none; }
 #app.deck .sideBtn { position: absolute; left: 0; right: 0; display: flex; width: auto; height: 28px; flex: 0 0 auto; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 0; font-size: 7px; font-weight: 800; letter-spacing: .04em; line-height: 1.1; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); border: 1px solid #3a8a1e; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,.3); }   /* at the foot of the column beside the stave, below the ↓ */
 #app.deck .sideBtn:active { filter: brightness(1.1); }
 #kbClose { display: none !important; }
-#app.deck.kbUp #kbClose { display: flex !important; background: #fff; color: #111; }   /* the keyboard's CLOSE, in the column above the strip buttons while it is open */
+#app.deck.kbUp #kbClose { display: flex !important; background: #fff; color: #111; }
+#app.deck.kbUp #dynBtn, #app.deck.kbUp #lyrBtn, #app.deck.kbUp.norhy #rhyBtn { display: none !important; }   /* while the keyboard is open the column keeps clear of the part buttons */   /* the keyboard's CLOSE, in the column above the strip buttons while it is open */
 #app.deck.kbUp #kbClose .big { font-size: 13px; line-height: 1; }
 #kbClose.blink { animation: weFlash .9s ease-in-out 1; }
 #app.deck.kbUp #head, #app.deck.kbUp #rollBar, #app.deck.kbUp #addView { display: none !important; }   /* the keyboard open: the stave reaches up over the part selectors, the bracket and the save button */
@@ -8646,9 +8647,10 @@ function placeDeckLabels() {
     for (const id of ["nav", "rollBar"]) { const e = $(id); if (!e || !e.offsetWidth) continue; e.style.position = "relative"; const cur = parseFloat(e.style.left) || 0, fr = frame.getBoundingClientRect(), eb = e.getBoundingClientRect(); const mid = (fr.left + fr.right) / 2; let eMid = (eb.left + eb.right) / 2; if (id === "rollBar") { const items = e.querySelectorAll(".rollItem"); if (items.length && items[0].offsetWidth > 0) eMid = (items[0].getBoundingClientRect().left + items[items.length - 1].getBoundingClientRect().right) / 2; } else { const a = $("prevBar"), b = $("nextBar"); if (a && b) eMid = (a.getBoundingClientRect().left + b.getBoundingClientRect().right) / 2; } /* the bracket itself (← to →) over the part label, the parts button riding beside it */ e.style.left = Math.round(cur + mid - eMid) + "px"; }   // the bracket and the selectors centred on the stave's frame
     { const nav = $("deckNav"), rowTop = nav.getBoundingClientRect().top - (parseFloat(nav.style.marginTop) || 0); nav.style.marginTop = Math.max(0, frame.getBoundingClientRect().top - rowTop) + "px"; nav.style.height = frame.offsetHeight + "px"; }   // the column beside the stave: level with the frame, exactly as tall
     { const nav = $("deckNav"), navTop = nav.getBoundingClientRect().top, tbTop = $("toolbar").getBoundingClientRect().top, H = 28, GAP = 2; let cursor = tbTop - GAP, stackTop = null;
-      const pairs = [["lyrBtn", $("lyrStrip")], ["rhyBtn", $("rhyStrip")], ["dynBtn", $("dynStrip")]], stack = [];
-      for (const [id, strip] of pairs) { const b = $(id); if (!b) continue; if (strip.offsetHeight > 0) { const r = strip.getBoundingClientRect(); b.style.top = Math.round(r.top + r.height / 2 - H / 2 - navTop) + "px"; cursor = Math.min(cursor, r.top - GAP); } else stack.push(b); }   // beside its strip
-      if ($("app").classList.contains("kbUp") && $("kbClose")) stack.push($("kbClose"));
+      const kbUp = $("app").classList.contains("kbUp");
+      /* the keyboard open: only CLOSE (level with the Lyrics strip) and the Rhythm strip's button show, so nothing climbs into the ▲ ▼ part buttons on a short screen */
+      const pairs = kbUp ? [["kbClose", $("lyrStrip")], ["rhyBtn", $("rhyStrip")]] : [["lyrBtn", $("lyrStrip")], ["rhyBtn", $("rhyStrip")], ["dynBtn", $("dynStrip")]], stack = [];
+      for (const [id, strip] of pairs) { const b = $(id); if (!b) continue; if (strip.offsetHeight > 0) { const r = strip.getBoundingClientRect(); b.style.top = Math.round(r.top + r.height / 2 - H / 2 - navTop) + "px"; cursor = Math.min(cursor, r.top - GAP); } else if (!kbUp) stack.push(b); }   // beside its strip
       for (const b of stack) { const t = cursor - H; b.style.top = Math.round(t - navTop) + "px"; cursor = t - GAP; stackTop = t; }   // no strip to sit beside: stacked above every strip that shows, CLOSE on top
       const fb = frame.getBoundingClientRect().bottom; nav.style.paddingBottom = stackTop != null && stackTop < fb ? Math.round(fb - stackTop) + "px" : "0px"; }   // the gear keeps clear of the stack
     top.style.left = x + "px"; top.style.top = frame.offsetTop + "px";
