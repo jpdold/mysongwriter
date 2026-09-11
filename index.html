@@ -8684,7 +8684,16 @@ function renderNav() {
   const song = S.song, sec = curSection(), r = curRange();
   const vb = viewBars(), inSec = vb.filter(b => b >= r.start && b < r.end);
   const rep = sec.repeat > 1 ? ` ×${sec.repeat}` : "", nBars = sec.bars - (sectionHasPickup(S.si) ? 1 : 0);
-  $("barLabel").textContent = curBar().pickup ? `${sec.name}${rep} · pickup` : S.viewSpan > 1 && inSec.length > 1 ? `${sec.name}${rep} · bars ${barNo(inSec[0])}–${barNo(inSec[inSec.length - 1])} of ${nBars}` : `${sec.name}${rep} · bar ${barNo(S.bi)} of ${nBars}`;
+  const focusBeat = (() => {                                                               // the beat in hand: a selected note, a selected chip, the active (tapped) beat, or the start of a picked run
+    const ev = selEv(); if (ev && S.sel.bi === S.bi) return beatOf(S.bi, ev.t);
+    const sc = selChipObj(); if (sc && S.song.bars.indexOf(sc.bar) === S.bi) return beatOf(S.bi, sc.chip.t);
+    if (WE.on && WE.bi === S.bi && WE.t < barBeats(S.bi) - 1e-6) return beatOf(S.bi, WE.t);   /* the beat the lyrics box is typing into */
+    if (S.active && S.active.bi === S.bi) return S.active.beat;
+    if (S.mv && S.mv.start != null) { const a = absToBar(S.mv.start); if (a && a.bi === S.bi) return beatOf(S.bi, a.t); }
+    return null;
+  })();
+  const beatTag = focusBeat != null && !(S.viewSpan > 1 && inSec.length > 1) ? ` · beat ${focusBeat + 1}` : "";
+  $("barLabel").textContent = curBar().pickup ? `${sec.name}${rep} · pickup${beatTag}` : S.viewSpan > 1 && inSec.length > 1 ? `${sec.name}${rep} · bars ${barNo(inSec[0])}–${barNo(inSec[inSec.length - 1])} of ${nBars}` : `${sec.name}${rep} · bar ${barNo(S.bi)} of ${nBars}${beatTag}`;
   $("prevBar").disabled = S.bi <= 0; $("nextBar").disabled = vb[vb.length - 1] >= song.bars.length - 1;
   const dots = $("barDots"); dots.replaceChildren();
   for (let bi = r.start; bi < r.end; bi++) {
@@ -9658,7 +9667,7 @@ function initPointer() {
     if (!ld || !ld.chip || e.pointerId !== ld.id) return;
     const dx = e.clientX - ld.x0; if (!ld.moved && Math.abs(dx) < 6) return; ld.moved = true;
     const g = stripGeo(), r = lyr.getBoundingClientRect(), raw = ld.t0 + dx * (g.W / r.width) / g.beatPx, bar = S.song.bars[ld.bi];
-    if (ld.chip.placing) { const t = gapSnap(bar, ld.bi, ld.chip, raw, g); if (gapFree(bar, ld.bi, ld.chip, t)) { ld.chip.t = t; bar.chips.sort((a, b) => a.t - b.t); } S.selChip = { bi: ld.bi, id: ld.chip.id }; renderStrips(); return; }   // a spacer on its way: it clicks onto chip edges and beat lines, never over a chip
+    if (ld.chip.placing) { const t = gapSnap(bar, ld.bi, ld.chip, raw, g); if (gapFree(bar, ld.bi, ld.chip, t)) { ld.chip.t = t; bar.chips.sort((a, b) => a.t - b.t); } S.selChip = { bi: ld.bi, id: ld.chip.id }; renderStrips(); renderNav(); return; }   // a spacer on its way: it clicks onto chip edges and beat lines, never over a chip
     const beat = Math.round(raw), snap = Math.abs(raw - beat) < 0.08 ? beat : Math.round(raw * 16) / 16;   // slides freely; clicks onto a beat line when close
     setChipTime(bar, ld.chip, snap);
     S.selChip = { bi: ld.bi, id: ld.chip.id };
@@ -9666,17 +9675,17 @@ function initPointer() {
   });
   lyr.addEventListener("pointerup", e => {
     if (!ld || e.pointerId !== ld.id) return; const d = ld; ld = null;
-    if (d.chip && d.chip.placing) { S.selChip = { bi: d.bi, id: d.chip.id }; renderStrips(); return; }   // a spacer let go stays in hand: SET CHIP (or typing) sets it
+    if (d.chip && d.chip.placing) { S.selChip = { bi: d.bi, id: d.chip.id }; renderStrips(); renderNav(); return; }   // a spacer let go stays in hand: SET CHIP (or typing) sets it
     if (d.moved) { S.selChip = null; renderAll(); return; }                 // the bar goes with the release; tap again to bring it back
     if (WE.on && WE.picking && d.chip) { const i = WE.picks.findIndex(p => p.id === d.chip.id); if (i >= 0) WE.picks.splice(i, 1); else WE.picks.push({ bi: d.bi, id: d.chip.id }); renderStrips(); return; }   // SELECT CHIP(S) is on: the tap picks the chip, or unpicks it
     const p = svgPoint(lyr, e), at = stripGeo().at(p.x);
     S.sel = null;
     if (WE.on) {                                                                       // the keyboard stays open: a chip comes into the box to edit (what was typed becomes its chip first); empty space is where the next chip starts
-      if (d.chip) { if (d.chip.text.trim() && !chipHasRoom(S.song.bars[d.bi], d.bi, d.chip)) { toast("This chip has no more space"); if (!WE.on) { wePanelHidden = false; openWordEdit(d.bi, chipsEdge(S.song.bars[d.bi], stripGeo())); } S.selChip = { bi: d.bi, id: d.chip.id }; renderStrips(); renderPalette(); return; } wePanelHidden = false; openWordEdit(d.bi, d.chip.t, d.chip); }
+      if (d.chip) { if (d.chip.text.trim() && !chipHasRoom(S.song.bars[d.bi], d.bi, d.chip)) { toast("This chip has no more space"); if (!WE.on) { wePanelHidden = false; openWordEdit(d.bi, chipsEdge(S.song.bars[d.bi], stripGeo())); } S.selChip = { bi: d.bi, id: d.chip.id }; renderStrips(); renderPalette(); renderNav(); renderNav(); renderNav(); return; } wePanelHidden = false; openWordEdit(d.bi, d.chip.t, d.chip); }
       else { S.selChip = null; openWordEdit(at.bi, Math.floor(at.t + 1e-6)); }        // empty space: the box goes as far left in the tapped beat as the chips allow
       return;
     }
-    if (d.chip) { if (d.chip.text.trim() && !chipHasRoom(S.song.bars[d.bi], d.bi, d.chip)) { toast("This chip has no more space"); if (!WE.on) { wePanelHidden = false; openWordEdit(d.bi, chipsEdge(S.song.bars[d.bi], stripGeo())); } S.selChip = { bi: d.bi, id: d.chip.id }; renderStrips(); renderPalette(); return; } wePanelHidden = false; openWordEdit(d.bi, d.chip.t, d.chip); }   // one tap on a chip: the keyboard opens, panel and all, with the chip in the box — unless the chip has no more space
+    if (d.chip) { if (d.chip.text.trim() && !chipHasRoom(S.song.bars[d.bi], d.bi, d.chip)) { toast("This chip has no more space"); if (!WE.on) { wePanelHidden = false; openWordEdit(d.bi, chipsEdge(S.song.bars[d.bi], stripGeo())); } S.selChip = { bi: d.bi, id: d.chip.id }; renderStrips(); renderPalette(); renderNav(); renderNav(); renderNav(); return; } wePanelHidden = false; openWordEdit(d.bi, d.chip.t, d.chip); }   // one tap on a chip: the keyboard opens, panel and all, with the chip in the box — unless the chip has no more space
     else { S.selChip = null; S.bi = at.bi; openWordEdit(at.bi, Math.floor(at.t + 1e-6)); }   // empty space: the box goes as far left in the tapped beat as the chips allow
   });
   lyr.addEventListener("pointercancel", () => { ld = null; });
@@ -9710,7 +9719,7 @@ function openWordEdit(bi, t, chip) {
   WE.t = chip ? chip.t : (entrySpot(bar, bi, Math.max(t || 0, afterLast), ENTRY_MIN) ?? Math.min(Math.max(t || 0, afterLast), barBeats(bi)));   // exactly at the last chip's edge; never back at the bar's start
   inp.value = chip ? chip.text : ""; inp.disabled = false; S.bi = bi; S.selChip = chip ? { bi, id: chip.id } : null;
   lbl.textContent = chip ? "Editing · NEW CHIP – CURRENT BEAT keeps it · SPLIT at the cursor" : `Bar ${barNo(bi)} · beat ${beatLabel(WE.t)} · NEW CHIP – CURRENT BEAT makes the chip · NEW CHIP → NEXT BEAT moves on`;
-  box.classList.add("on"); renderWeKeys(); applyKbPos(); renderStrips(); if (typeof deckMode === "function" && deckMode()) { if (!wasOpen0) renderAll(); else placeDeckLabels(); }   // on the deck: the keyboard docks, the strips ride up onto it and the stave takes their rows
+  box.classList.add("on"); renderWeKeys(); applyKbPos(); renderStrips(); if (typeof deckMode === "function" && deckMode()) { if (!wasOpen0) renderAll(); else placeDeckLabels(); } else renderNav();   // on the deck: the keyboard docks, the strips ride up onto it and the stave takes their rows
   const bodyEl = $("lyrStrip").querySelector(".body"), x = g.x(bi, WE.t) * (g.k || 1);
   inp.classList.add("on"); sizeInline(); placeInline();
   if (x < bodyEl.scrollLeft || x > bodyEl.scrollLeft + bodyEl.clientWidth - 60) bodyEl.scrollLeft = Math.max(0, x - 40);
@@ -9880,8 +9889,8 @@ function weNewCurrentBeat() {
     button("Cancel", restore)]);
 }
 /* a chip just set is selected — the panel's tools act on it — until typing begins, when the words go into the box as usual */
-function weSelectLast(bi) { const id = WE.lastChip; if (WE.on && id && S.song.bars[bi] && S.song.bars[bi].chips.some(c => c.id === id)) { S.selChip = { bi, id }; renderStrips(); renderPalette(); } }
-function weTypingStarts() { if (S.selChip && !WE.chipId) { S.selChip = null; renderStrips(); renderPalette(); } }
+function weSelectLast(bi) { const id = WE.lastChip; if (WE.on && id && S.song.bars[bi] && S.song.bars[bi].chips.some(c => c.id === id)) { S.selChip = { bi, id }; renderStrips(); renderPalette(); renderNav(); renderNav(); renderNav(); } }
+function weTypingStarts() { if (S.selChip && !WE.chipId) { S.selChip = null; renderStrips(); renderPalette(); renderNav(); renderNav(); renderNav(); } }
 /* words set aside while another chip is modified come back to the box once it is set */
 function weUncarry() { if (!WE.carry || !WE.on) return; const inp = weInput(); inp.value = WE.carry; WE.carry = ""; WE.dirty = true; sizeInline(); toast("Your words are back in the box"); }
 /* NEW CHIP → NEXT BEAT. The words in the box are set here when they fit; then the box goes to the next beat line — the line after
@@ -9939,7 +9948,7 @@ function weSplit() {
   if (t == null) { c.text = keep; toast("No room for the second part in this bar"); return; }
   const n = { id: uid(), text: right, t }; bar.chips.push(n); bar.chips.sort((a, b) => a.t - b.t); bar.lyric = lyricFromChips(bar);
   WE.chipId = null; WE.dirty = false; inp.value = ""; renderAll();
-  openWordEdit(WE.bi, n.t + chipFull(n, g)); S.selChip = { bi: WE.bi, id: n.id }; renderStrips(); renderPalette();
+  openWordEdit(WE.bi, n.t + chipFull(n, g)); S.selChip = { bi: WE.bi, id: n.id }; renderStrips(); renderPalette(); renderNav(); renderNav(); renderNav();
 }
 /* 𝄽 on the keyboard: a rest chip at the entry spot (or the rest sign typed into the chip being edited) */
 function weRestChip() {
@@ -10212,7 +10221,7 @@ function weSetInHand() {
   if (!WE.on || !WE.chipId) return;
   const id = WE.chipId, bi = WE.bi;
   commitWordEdit(true, false, true);
-  if (S.song.bars[bi] && S.song.bars[bi].chips.some(c => c.id === id)) S.selChip = { bi, id };
+  if (S.song.bars[bi] && S.song.bars[bi].chips.some(c => c.id === id)) { S.selChip = { bi, id }; renderNav(); }
 }
 /* WIDEN / SHORTEN on the panel: every picked chip (the right-most first, so each fills the room up to the next), else the chip in hand */
 function weSizeChip(d) {
@@ -10304,7 +10313,7 @@ function weOpenFromButton() {
   const sc = selChipObj(); wePanelHidden = false;
   if (sc && sc.chip.text.trim() && chipHasRoom(bar, bi, sc.chip)) { openWordEdit(bi, sc.chip.t, sc.chip); return; }
   if (sc && sc.chip.text.trim()) toast("This chip has no more space");
-  S.bi = bi; openWordEdit(bi, chipsEdge(bar, stripGeo())); if (sc) { S.selChip = { bi, id: sc.chip.id }; renderStrips(); renderPalette(); }
+  S.bi = bi; openWordEdit(bi, chipsEdge(bar, stripGeo())); if (sc) { S.selChip = { bi, id: sc.chip.id }; renderStrips(); renderPalette(); renderNav(); renderNav(); renderNav(); }
 }
 function initWordEdit() {
   const box = $("wordEdit"), inp = weInput(), close = box.querySelector("button.close");
