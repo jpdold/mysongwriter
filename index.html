@@ -8765,6 +8765,20 @@ function renderNav() {
 }
 function css(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
 /* staff background: naturals on lines, accidentals in the spaces (or every half step lined) */
+/* the range each built-in sound can be heard in (MIDI), modelled on the instrument it imitates; a sample bank sounds a fifth beyond
+   its recorded notes either way. Outside it the stave wears a light red haze: a note there is entered and played, but the sound is poor or gone */
+const SOUND_RANGE = { piano: [21, 108], s808: [24, 72], bass: [28, 67], tuba: [26, 65], guitar12: [40, 88], guitarDrive: [40, 88], guitarClean: [40, 88], guitar: [40, 88], strings: [28, 103], horns: [34, 77], clarinet: [50, 94], trumpet: [52, 86], oohs: [40, 84], voice: [41, 84] };
+function soundRange(win) {
+  const P = S.song && S.song.parts ? S.song.parts[WIN_PART[win]] : null; if (!P) return [21, 108];
+  const bank = P.bank && typeof SAMPLES !== "undefined" && SAMPLES.meta.has(P.bank) ? SAMPLES.meta.get(P.bank) : null;
+  if (bank && bank.hi >= bank.lo) return [bank.lo - 7, bank.hi + 7];
+  return SOUND_RANGE[TIMBRE(P.inst)] || [21, 108];
+}
+function drawSoundHaze(svg, g) {
+  const [lo, hi] = soundRange(g.win);
+  const band = (a, b) => { if (b < a) return; const y0 = g.y(b) - g.step / 2, y1 = g.y(a) + g.step / 2; svg.append(svgEl("rect", { class: "haze", x: 0, y: y0, width: g.W, height: y1 - y0, fill: "#ff3b30", opacity: 0.12, "pointer-events": "none" })); };
+  band(g.lo, Math.min(lo - 1, g.hi)); band(Math.max(hi + 1, g.lo), g.hi);                  // the rows below the sound's reach, and those above it
+}
 function drawStaff(svg, g, key) {
   const scale = scaleOf(key);
   svg.replaceChildren(); svg.setAttribute("height", g.H); svg.setAttribute("viewBox", `0 0 ${g.W} ${g.H}`);
@@ -8951,7 +8965,7 @@ function renderWindows() {
   document.querySelector('.winHead[data-win="mel"]') || $("melWin").prepend(el("button", { class: "winHead", "data-win": "mel", onclick: () => openWinSettings("mel") }, "Melody"));
   /* ── melody window ── */
   if (S.winState.mel !== "closed") {
-    const g = geo("mel"), svg = $("melSvg"); drawStaff(svg, g, key); drawGutter("mel", g, key);
+    const g = geo("mel"), svg = $("melSvg"); drawStaff(svg, g, key); drawSoundHaze(svg, g); drawGutter("mel", g, key);
     const box = css("--box"), ink = css("--melody");
     svg.append(svgEl("rect", { class: "hit", x: 0, y: 0, width: g.W, height: g.H, fill: "transparent", "data-lane": "mel" }));
     for (const bi of viewBars()) {
@@ -9003,7 +9017,7 @@ function renderWindows() {
     const head0 = document.querySelector(`.winHead[data-win="${win}"]`);
     if (S.winState[win] === "closed") { head0.textContent = `${part === "accomp" ? "Accompaniment" : "Bass"} – ${P.on ? P.inst : "off"}`; continue; }
     const g = geo(win), svg = $(win + "Svg");
-    drawStaff(svg, g, key); drawGutter(win, g, key);
+    drawStaff(svg, g, key); drawSoundHaze(svg, g); drawGutter(win, g, key);
     const color = css("--" + part);
     svg.append(svgEl("rect", { class: "hit", x: 0, y: 0, width: g.W, height: g.H, fill: "transparent", "data-lane": win }));
     $(win + "Win").classList.toggle("compact", g.step < 7);
@@ -9650,7 +9664,7 @@ function initPointer() {
       let ev = evId ? S.song.bars[ebi].ev[part].find(x => x.id === evId) : null;
       const p0 = svgPoint(svg, e), at0 = GEO[win].at(p0.x), locked = !(ev ? inActive(ebi, ev.t) : inActive(at0.bi, at0.t));
       if (locked && !(ev && (S.artic || PSEL.on))) ev = null;                     // a note in a locked beat is just part of the background (unless choosing notes to play)
-      const ftpOn = !!(S.ftp && S.ftp.on); if (ftpOn) ev = null;                  // floating palette out: the stave only swipes
+      const ftpOn = !!(S.ftp && S.ftp.on) || !!(typeof WE !== "undefined" && WE.on); if (ftpOn) ev = null;   // floating palette out, or the lyrics keyboard open: the stave only swipes
       dragCtx = { win, svg, x0: e.clientX, y0: e.clientY, moved: false, ev, part, bi: ebi, t0: ev ? ev.t : 0, m0: ev ? ev.m : null, id: e.pointerId, lo0: viewOf(win), swipe: null, locked, ftpOn };
       try { svg.setPointerCapture(e.pointerId); } catch (err) {}
     });
@@ -9687,8 +9701,8 @@ function initPointer() {
     const up = e => {
       if (!dragCtx || dragCtx.svg !== svg || e.pointerId !== dragCtx.id) return;
       const d = dragCtx; dragCtx = null;
-      if (d.ftpOn && !d.moved) return;                                          // floating palette out: a tap on the stave does nothing
-      if (d.moved) { if (d.locked && d.ev) return; if (!d.ev && d.swipe === "h") { const dx = e.clientX - d.x0; if (Math.abs(dx) > 50) { S.bi = clamp(S.bi + (dx < 0 ? 1 : -1), 0, S.song.bars.length - 1); S.sel = null; S.ghost = null; } } renderAll(); return; }   // a swipe ends as a swipe: no tap, no entry
+      if (d.ftpOn && !d.moved) { if (typeof WE !== "undefined" && WE.on) { if (!weSetChip()) weBlink(); } return; }   // a tap on the stave: nothing — with the keyboard open it sets the chip in hand, else the keyboard blinks
+      if (d.moved) { if (d.locked && d.ev) return; if (!d.ev && d.swipe === "h" && !(typeof WE !== "undefined" && WE.on)) { const dx = e.clientX - d.x0; if (Math.abs(dx) > 50) { S.bi = clamp(S.bi + (dx < 0 ? 1 : -1), 0, S.song.bars.length - 1); S.sel = null; S.ghost = null; } } renderAll(); return; }   // a swipe ends as a swipe: no tap, no entry
       const p = svgPoint(svg, e), g = GEO[win], at = g.at(p.x);
       S.selChip = null;
       if (PSEL.on) { if (d.ev && !d.ev.rest && d.ev.m != null) { const key = d.part + ":" + d.ev.id; if (PSEL.ids.has(key)) PSEL.ids.delete(key); else PSEL.ids.add(key); renderWindows(); } return; }   // Play Select: taps only choose notes
@@ -10389,7 +10403,7 @@ function initWordEdit() {
   /* while the keyboard is open, a tap on the Lyrics strip works as usual; a tap anywhere else is held off — the keyboard blinks twice and its ✕ flashes to say so */
   document.addEventListener("pointerdown", e => {
     if (!WE.on || !e.target.closest) return;
-    if (e.target.closest("#wordEdit, #lyrStrip, #overlay, .toast")) return;
+    if (e.target.closest("#wordEdit, #lyrStrip, #overlay, .toast, #melSvg, #accSvg, #bassSvg")) return;   // the staves take the pointer themselves: they swipe, and a tap on them is handled there
     e.preventDefault(); e.stopPropagation();
     if (!weSetChip()) weBlink();                                                          // something in hand is set by the tap; otherwise the keyboard says it is still open
   }, true);
