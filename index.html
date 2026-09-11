@@ -366,11 +366,6 @@ body.kbOpen #app.deck { padding-bottom: 6px; }
 #wordEdit .half .krow button { flex: 1 1 0; }
 #wordEdit .half .grip { position: absolute; top: -28px; width: 32px; height: 28px; border: 2px solid var(--tag); border-bottom: none; border-radius: 8px 8px 0 0; background-color: #e9e9e9; background-image: radial-gradient(circle, #666 1.5px, transparent 1.8px); background-size: 8px 8px; background-position: 6px 5px; cursor: ew-resize; touch-action: none; user-select: none; -webkit-user-select: none; }   /* the square grippy thumb handles: pull a half apart, drop it where you like */
 #wordEdit .half.l .grip { left: 0; } #wordEdit .half.r .grip { right: 0; }
-#wePanel { position: absolute; z-index: 3; background: #fff; border: 2px solid var(--tag); border-radius: 8px; padding: 0 4px 4px; box-shadow: 0 6px 20px rgba(0,0,0,.45); width: 440px; box-sizing: border-box; }   /* the chip tool panel: its own box, dragged anywhere by its bar */
-#wePanel[hidden] { display: none !important; }
-#wePanel .pgrip { height: 18px; margin: 0 -4px 4px; border-radius: 6px 6px 0 0; background: #333; cursor: move; touch-action: none; position: relative; user-select: none; -webkit-user-select: none; }
-#wePanel .pgrip::after { content: ""; position: absolute; left: 50%; top: 3px; width: 27px; height: 12px; margin-left: -13px; background-image: radial-gradient(circle, #bbb 1.5px, transparent 1.8px); background-size: 9px 6px; }
-#wePanel .panel { margin: 0; }
 #app.deck.kbUp #rhyStrip, #app.deck.kbUp #lyrStrip { z-index: 71; }                         /* while the keyboard is open the strips ride on top of it (placed by script); closed, they return to their rows */
 #app.deck #lyrEdit { position: absolute; left: calc(100% + 8px); right: auto; width: var(--deckW, 44px); top: 50%; transform: translateY(-50%); z-index: 3; }   /* in the right margin, beside the strip, clear of the last beat's chips */                                          /* the stave reaches the column beside it */
 #app.deck #rhyStrip { margin-top: 0 !important; }                                          /* flush on the stave */
@@ -8091,7 +8086,7 @@ const WIN_LO = { mel: "melLo", acc: "accLo", bass: "bassLo" };
 const NOTE_SCALE = { s: 0.55, m: 0.72, l: 0.92 }; const NS = () => NOTE_SCALE[S.noteSize] || 1;   // note size: heads, stems and flags; the stave never changes
 const HK = () => S.halfLines ? 1.55 : 1;         // lines-and-spaces: heads grow to fill a space (two rows)
 const STEP_K = { s: 0.94, m: 1, l: 1.06 };       // row height nudges a little with the note size
-Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", noteSize: "m", chordMode: false, chordWin: { mel: false, acc: false, bass: false }, chordColor: "#ffffff", justEntered: null, activePart: "melody", lastEntered: null, ftp: null, mv: null, selAuto: false, halfLines: true, winSize: "m", chordsDisp: "names", metro: "off", winState: { mel: "open", acc: "closed", bass: "closed" }, zoomWin: { mel: 1, acc: 1, bass: 1 }, lyricFont: "sans", viewSpan: 1, layout: "rolled", selChip: null, deck: ["mel", "acc", "bass"], deckSel: null, stripsShown: true, partsShown: true, dynShown: false, dynArm: null, panelPos: null, panelPos: null, ghost: null, restNext: false, restLen: null, ghostNext: false, artic: null, slurFrom: null, active: null, softKb: ("ontouchstart" in window), popPos: null, mode: "melody" });
+Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", noteSize: "m", chordMode: false, chordWin: { mel: false, acc: false, bass: false }, chordColor: "#ffffff", justEntered: null, activePart: "melody", lastEntered: null, ftp: null, mv: null, selAuto: false, halfLines: true, winSize: "m", chordsDisp: "names", metro: "off", winState: { mel: "open", acc: "closed", bass: "closed" }, zoomWin: { mel: 1, acc: 1, bass: 1 }, lyricFont: "sans", viewSpan: 1, layout: "rolled", selChip: null, deck: ["mel", "acc", "bass"], deckSel: null, stripsShown: true, partsShown: true, dynShown: false, dynArm: null, ghost: null, restNext: false, restLen: null, ghostNext: false, artic: null, slurFrom: null, active: null, softKb: ("ontouchstart" in window), popPos: null, mode: "melody" });
 const UNDO = { stack: [], redo: [], last: null, max: 60 };
 const setMode = () => {};                          // engine shims (the old mode sheets are gone)
 const renderPanel = () => renderAll();
@@ -8099,12 +8094,12 @@ function loadPrefs() {
   const p = readJSON(STORE.prefs, {});
   S.theme = p.theme || "auto"; S.followWords = false; S.noteStyle = p.noteStyle || "trad"; S.noteSize = NOTE_SCALE[p.noteSize] ? p.noteSize : "m"; S.chordColor = p.chordColor || "#ffffff"; S.halfLines = p.halfLines == null ? true : !!p.halfLines; S.ftp = Object.assign({}, FTP_DEFAULT, p.ftp || {});
   S.winSize = WIN[p.winSize] ? p.winSize : "m"; S.chordsDisp = p.chordsDisp || "names"; S.metro = p.metro || "off"; S.custom = p.custom || null; S.len = p.len || 1;
-  S.stripsShown = p.stripsShown !== false; S.partsShown = p.partsShown !== false; S.dynShown = !!p.dynShown; S.panelPos = p.panelPos && typeof p.panelPos.x === "number" ? p.panelPos : null;
+  S.stripsShown = p.stripsShown !== false; S.partsShown = p.partsShown !== false; S.dynShown = !!p.dynShown; 
   S.deck = Array.isArray(p.deck) && p.deck.length ? p.deck.filter(w => ["mel", "acc", "bass"].includes(w)) : ["mel", "acc", "bass"]; if (!S.deck.length) S.deck = ["mel"];
   S.lyricFont = p.lyricFont || "sans"; S.chipMode = "multi"; S.keepAwake = p.keepAwake !== false; S.paper = Object.assign({ mel: "default", acc: "default", bass: "default" }, p.paper || {}); S.quick = Object.assign({ cells: QUICK_DEFAULT.slice(), locked: true, float: false, x: null, y: null }, p.quick || {}); if (!Array.isArray(S.quick.cells) || S.quick.cells.join() === QUICK_OLD.join()) S.quick.cells = QUICK_DEFAULT.slice(); if (S.quick.cells.length === 8) S.quick.cells.push("sl", "ti", "gh", "dt"); if (S.quick.cells.length !== 12) S.quick.cells = QUICK_DEFAULT.slice();   // a third row joined: slur, tie, ghost note, dot S.winState = Object.assign({ mel: "open", acc: "closed", bass: "closed" }, p.winState || {}); S.zoomWin = Object.assign({ mel: 1, acc: 1, bass: 1 }, p.zoomWin || {}); S.midi = p.midi || {}; S.viewSpan = [1, 2, 3, 4].includes(p.viewSpan) ? p.viewSpan : 1; if (p.softKb != null) S.softKb = p.softKb2 == null ? true : !!p.softKb2; S.kbPos = p.kbPos || null;   // the app keyboard, on unless switched off S.layout = p.layout === "stack" ? "stack" : "rolled";
   applyTheme();
 }
-function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, deck: S.deck, stripsShown: S.stripsShown, partsShown: S.partsShown, dynShown: S.dynShown, panelPos: S.panelPos, panelPos: S.panelPos, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, keepAwake: S.keepAwake, paper: S.paper, quick: S.quick, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout }); }
+function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, deck: S.deck, stripsShown: S.stripsShown, partsShown: S.partsShown, dynShown: S.dynShown, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, keepAwake: S.keepAwake, paper: S.paper, quick: S.quick, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout }); }
 function applyTheme() {
   const r = document.documentElement;
   if (S.theme === "dark") r.setAttribute("data-theme", "dark"); else r.removeAttribute("data-theme");
@@ -10059,7 +10054,7 @@ function renderWeKeys() {
     L.prepend(gripFor("l", L)); R.prepend(gripFor("r", R));
     const split = el("div", { class: "kbSplit" }); split.append(L, R); k.append(split); weApplySplit(L, R);
   }
-  if (wePanelHidden) { const wp = $("wePanel"); if (wp) wp.hidden = true; return; }
+  if (wePanelHidden) return;
   /* the tool panel: four columns — the modes, SPLIT and UNDO on the left; DELETE / SELECT, the nudges, SHORTEN / WIDEN and REDO in the middle; the NEW CHIP keys and SET CHIP on the right */
   const arrow = dir => { const s = svgEl("svg", { class: "narr", viewBox: "0 0 24 12", "aria-hidden": "true" }); s.append(svgEl("path", { d: dir < 0 ? "M 21 6 H 4 M 9 1.5 L 4 6 L 9 10.5" : "M 3 6 H 20 M 15 1.5 L 20 6 L 15 10.5", fill: "none", stroke: "currentColor", "stroke-width": 2.2, "stroke-linecap": "round", "stroke-linejoin": "round" })); return s; };   // drawn, so both arrows are one size and sit centred
   const curl = dir => { const s = svgEl("svg", { class: "curl", viewBox: "0 0 20 14", "aria-hidden": "true" }); s.append(svgEl("path", { d: dir < 0 ? "M 17 12.5 A 6.5 6.5 0 0 0 4.5 6 M 8.5 2.5 L 4.5 6.2 L 8.5 9.8" : "M 3 12.5 A 6.5 6.5 0 0 1 15.5 6 M 11.5 2.5 L 15.5 6.2 L 11.5 9.8", fill: "none", stroke: "currentColor", "stroke-width": 2, "stroke-linecap": "round", "stroke-linejoin": "round" })); return s; };   // UNDO ↶ / REDO ↷
@@ -10083,17 +10078,7 @@ function renderWeKeys() {
     key([curl(1), cap("REDO")], redo, "urk", "redo"),
     key([el("span", { class: "rest" }, "𝄽"), cap("REST CHIP")], weRestChip, "restk", "a rest chip — nothing sung here"),
     key([el("span", { class: "big" }, "↵"), cap("SET CHIP")], () => { if (!weSetChip()) toast("Nothing in hand to set"); }, "setk", "set the chip in place as it is"));
-  if (!deck) { k.append(panel); return; }
-  /* the deck: the panel in its own box, dragged anywhere by its bar, above the keyboard until moved */
-  let wp = $("wePanel");
-  if (!wp) { wp = el("div", { id: "wePanel", class: "weKeys" }); const pg = el("div", { class: "pgrip", title: "Drag the tool panel wherever you like" }); wp.append(pg); box.append(wp);
-    let st = null;
-    pg.addEventListener("pointerdown", e => { e.preventDefault(); st = { id: e.pointerId, x: e.clientX, y: e.clientY, left: wp.offsetLeft, top: wp.offsetTop }; try { pg.setPointerCapture(e.pointerId); } catch (x) {} });
-    pg.addEventListener("pointermove", e => { if (!st || e.pointerId !== st.id) return; const scale = box.getBoundingClientRect().width / box.offsetWidth || 1; S.panelPos = { x: Math.round(st.left + (e.clientX - st.x) / scale), y: Math.round(st.top + (e.clientY - st.y) / scale) }; wp.style.left = S.panelPos.x + "px"; wp.style.top = S.panelPos.y + "px"; });
-    const done = () => { if (st) savePrefs(); st = null; }; pg.addEventListener("pointerup", done); pg.addEventListener("pointercancel", done); }
-  wp.hidden = false; const oldPanel = wp.querySelector(".panel"); if (oldPanel) oldPanel.remove(); wp.append(panel);
-  if (S.panelPos) { wp.style.left = S.panelPos.x + "px"; wp.style.top = S.panelPos.y + "px"; }
-  else { wp.style.left = Math.round((box.clientWidth - wp.offsetWidth) / 2) + "px"; wp.style.top = -(wp.offsetHeight + 36) + "px"; }   // starts above the keyboard, centred
+  k.append(panel);                                                                        // under the letters, on the deck too
 }
 /* the two halves of the deck keyboard, parted by what the grips were pulled to */
 function weApplySplit(L, R) {
@@ -10326,7 +10311,7 @@ function initWordEdit() {
   inp.addEventListener("blur", () => { /* the keyboard stays open until its ✕ (or NEW CHIP NEXT BEAT at the song's end) closes it */ });
   inp.addEventListener("pointerdown", e => e.stopPropagation());
   close.addEventListener("click", () => { if (WE.dirty) commitWordEdit(false, true); else closeWordEdit(); });
-  { const pk = box.querySelector(".weRow button.panelk"); pk.addEventListener("pointerdown", e => e.preventDefault()); pk.addEventListener("click", e => { e.preventDefault(); wePanelHidden = !wePanelHidden; pk.textContent = wePanelHidden ? "SHOW PANEL" : "HIDE PANEL"; renderWeKeys(); }); }   // HIDE PANEL / SHOW PANEL: the tool panel folds away below the letters and comes back
+  { const pk = box.querySelector(".weRow button.panelk"); pk.addEventListener("pointerdown", e => e.preventDefault()); pk.addEventListener("click", e => { e.preventDefault(); wePanelHidden = !wePanelHidden; pk.textContent = wePanelHidden ? "SHOW PANEL" : "HIDE PANEL"; renderWeKeys(); if (deckMode()) placeDeckLabels(); }); }   // HIDE PANEL / SHOW PANEL: the tool panel folds away below the letters and comes back
   /* while the keyboard is open, a tap on the Lyrics strip works as usual; a tap anywhere else is held off — the keyboard blinks twice and its ✕ flashes to say so */
   document.addEventListener("pointerdown", e => {
     if (!WE.on || !e.target.closest) return;
