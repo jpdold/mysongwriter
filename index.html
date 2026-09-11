@@ -8142,7 +8142,7 @@ const setMode = () => {};                          // engine shims (the old mode
 const renderPanel = () => renderAll();
 function loadPrefs() {
   const p = readJSON(STORE.prefs, {});
-  S.theme = p.theme || "auto"; S.followWords = false; S.noteStyle = p.noteStyle || "trad"; S.noteSize = NOTE_SCALE[p.noteSize] ? p.noteSize : "m"; S.chordColor = p.chordColor || "#ffffff"; S.halfLines = p.halfLines == null ? true : !!p.halfLines; S.ftp = Object.assign({}, FTP_DEFAULT, p.ftp || {});
+  S.theme = p.theme || "auto"; S.followWords = false; S.noteStyle = p.noteStyle || "trad"; S.noteSize = NOTE_SCALE[p.noteSize] ? p.noteSize : "m"; S.chordColor = p.chordColor || "#ffffff"; S.halfLines = p.halfLines == null ? true : !!p.halfLines; S.ftp = Object.assign({}, FTP_DEFAULT, p.ftp || {}); if (!FTP_ENABLED) S.ftp.on = false;
   S.winSize = WIN[p.winSize] ? p.winSize : "m"; S.chordsDisp = p.chordsDisp || "names"; S.metro = p.metro || "off"; S.custom = p.custom || null; S.len = p.len || 1;
   S.stripsShown = p.stripsShown !== false; S.partsShown = p.partsShown !== false; S.dynShown = !!p.dynShown; 
   S.deck = Array.isArray(p.deck) && p.deck.length ? p.deck.filter(w => ["mel", "acc", "bass"].includes(w)) : ["mel", "acc", "bass"]; if (!S.deck.length) S.deck = ["mel"];
@@ -9186,7 +9186,7 @@ function renderPalette() {
     p.append(el("span", { class: "who" }, (ev.rest ? "rest" : ev.m == null ? "slot" : noteName(ev.m, keyObj(S.song.key))) + " " + durGlyph(ev.d)));
   }
   p.append(el("span", { class: "flexgap" }));
-  b("⧉", () => openFtp(), { cls: "txt pop", title: "Pop the tools out into a floating palette" });
+  if (FTP_ENABLED) b("⧉", () => openFtp(), { cls: "txt pop", title: "Pop the tools out into a floating palette" });
 }
 function updatePlayhead() {
   const pp = S.playPos;
@@ -10578,6 +10578,9 @@ function openMenu() {
    ═══════════════════════════════════════════════════════════════════════ */
 const PART_WIN = { melody: "mel", accomp: "acc", bass: "bass" };
 const FTP_DEFAULT = { on: false, size: "m", side: "right", x: null, y: null, nav: "beat", m: 60, t: 0, mode: "pitch" };
+/* the floating tap pad — the small blue palette that pops the tools out (M / A / B, ◀ beat ▶, the note lengths, PITCH ▲ ▼) — is put away:
+   its code stays whole, but nothing opens it and its ⧉ key is not drawn. Set FTP_ENABLED to true to bring it back. */
+const FTP_ENABLED = false;
 /* where the arrows stop in a bar: every beat start and every note start for the part */
 function ftpStops(bi, part) {
   const B = barBeats(bi), set = new Set(), step = Math.max(0.125, Math.min(1, S.len || 1));
@@ -10613,6 +10616,7 @@ function lastNoteInSong() {
   return null;
 }
 function openFtp(silent) {
+  if (!FTP_ENABLED) return;                                                                 // the pad is put away
   S.ftp.on = true; $("app").classList.add("ftp"); buildFtp();
   const le = S.lastEntered && S.song.bars[S.lastEntered.bi] && (S.song.bars[S.lastEntered.bi].ev[S.lastEntered.part] || []).some(e => e.id === S.lastEntered.id) ? S.lastEntered : lastNoteInSong();
   if (le) {
@@ -11199,7 +11203,7 @@ function openHelp() {
   const h = (t, d) => el("div", { style: "margin:8px 0" }, el("b", {}, t), el("div", { class: "tiny", style: "font-size:13px;color:#444" }, d));
   openModal("How it works", [
     h("Pickup & repeats", "Setup → Pickup adds a short bar (½, 1 or 2 beats) before beat 1. Tap the bar name → Repeat this section to play a section several times."),
-    h("Moving the keyboard", "Drag the grey bar at the top of the keyboard to put it anywhere; drop it near the bottom of the screen to dock it there again. It remembers where you left it. The floating palette moves by its bar in the same way."),
+    h("Moving the keyboard", "Drag the grey bar at the top of the keyboard to put it anywhere; drop it near the bottom of the screen to dock it there again. It remembers where you left it."),
     h("Typing words", "Tap the Lyrics strip: the keyboard opens with the entry box at the left edge of the strip. Type a word and press ↵ — it becomes a chip at the first free spot, and the keyboard stays open for the next word. Close it with ✕ and the first word you typed is already selected."),
     h("Keyboard keys", "The tool panel under the letters (HIDE PANEL / SHOW PANEL folds it away; on a wide screen it is the bottom tool bar while the keyboard is open, one row from Multi-chip to NEW CHIP ANY SPACE): Multi-chip / Single chip choose whether what you type becomes one chip per word, or one chip in all. NEW CHIP – CURRENT BEAT makes the chip and keeps the box in this beat, just after it; NEW CHIP → NEXT BEAT makes it and moves to the next free beat; NEW CHIP ANY SPACE ↔ makes a blank spacer chip to drag into place. Under Single chip the chip fills the whole bar and the box moves on to the next bar. REST CHIP drops a rest chip — a chip like any other, for a beat with nothing sung. NUDGE LEFT / NUDGE RIGHT move the chip in hand (or the entry box for a new word) a sixteenth of a beat. SHORTEN and WIDEN size it — wider up to the room beside it. SPLIT breaks the chip in two at the cursor. SELECT CHIP(S) then taps on the strip pick chips, and the tools act on all of them; DELETE CHIP(S) removes them. SET CHIP sets whatever is in hand. The entry box only ever sits on free space, so nothing can be typed over a chip."),
     h("Placing words", "Words have no bearing on the notes; you line them up by eye. Drag a chip anywhere along the strip — it clicks onto a beat line when close, and never overlaps another chip. To spread a word so its syllables sit under their notes, edit it and put spaces inside it (the space bar, as many as you like); it stays one chip."),

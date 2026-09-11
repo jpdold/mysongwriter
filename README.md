@@ -39,9 +39,9 @@ Top row: **|▶ Play All** plays the whole song from the start, **▶… Play Ra
 
 ☰ → Time signature calculator. Tap note and rest values (whole down to 128th, with dots, double dots and ties) onto a free strip one at a time, hear it tapped out at the song's tempo, then press Calculate: every plausible signature is scored on how the rhythm falls into bars — bar lines landing between entries on struck notes, complete last bars, onsets on the beat, and a preference for regular metres — and the best fits are listed with the rhythm sectioned bar by bar for each.
 
-## Floating tool palette
+## Floating tool palette (put away)
 
-⧉ at the end of the tools pops them out into a small draggable palette. The stave keeps its size and stops taking taps; you step through beats (or bars) with ◀ ▶, set the pitch with ▲ ▼, and tap a note length to enter the note at the dashed box, or to change a selected note's length. M / A / B pick the window, ⚙ sets the palette's size and which side the pitch arrows sit, ⤶ pops it back in.
+The floating tap pad is switched off in the app — nothing opens it and its ⧉ key is not drawn — but its code is kept whole; `FTP_ENABLED` at the top of its section in `index.html` brings it back. When it is on: ⧉ at the end of the tools pops them out into a small draggable palette. The stave keeps its size and stops taking taps; you step through beats (or bars) with ◀ ▶, set the pitch with ▲ ▼, and tap a note length to enter the note at the dashed box, or to change a selected note's length. M / A / B pick the window, ⚙ sets the palette's size and which side the pitch arrows sit, ⤶ pops it back in.
 
 ## Running without the browser bars
 
