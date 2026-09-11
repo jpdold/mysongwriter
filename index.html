@@ -260,10 +260,11 @@ svg text { pointer-events: none; }
 #app.deck #addView { display: flex; grid-area: addv; align-self: center; justify-self: stretch; height: 22px; margin-top: 6px; padding: 0 2px; align-items: center; justify-content: center; text-align: center; border: 1px solid #3a8a1e; border-radius: 4px; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); font-size: 7px; font-weight: 800; letter-spacing: .02em; line-height: 1.05; white-space: normal; box-shadow: 0 1px 2px rgba(0,0,0,.3); }   /* ADD to VIEW: in the column beside the stave, so the selectors centre freely */
 #app.deck.noparts #addView { display: none; }
 #app.deck #beatRow { display: none !important; }                                            /* no beat labels on the deck: the stave takes the room */
-#app.deck #topTransport { justify-self: start; flex: 0 0 auto; gap: 1px; }
+#app.deck #topTransport { justify-self: start; flex: 1 1 0; min-width: 0; gap: 1px; }
+#app.deck #topTransport #tempo { margin-left: auto; margin-right: 2px; }                /* the tempo at the far end, almost flush with the flip button */
 #app.deck #topTransport button { width: 28px; height: 26px; font-size: 13px; box-shadow: none; }
 #app.deck #tempo, #app.deck #topTransport #tempo button { height: 26px; }
-#app.deck #topTransport #tempo { box-shadow: none; margin-left: 1px; }
+#app.deck #topTransport #tempo { box-shadow: none; }
 #app.deck #topTransport #tempo button { width: 20px; }
 #app.deck #topTransport #tempo button#tempoLbl { min-width: 38px; font-size: 9.5px; }
 #app.deck #saveBtn { position: absolute; top: 50%; right: 58px; transform: translateY(-50%); width: 30px; height: 28px; z-index: 2; padding: 0; border: 1.5px solid #6e1712; border-radius: 4px; background: linear-gradient(#ff5a4e, #e5322d); color: #fff; display: grid; place-items: center; box-shadow: 0 2px 4px rgba(0,0,0,.4); }   /* up in the head, evenly between the parts button and the gear: the floppy, whole */
@@ -278,10 +279,11 @@ svg text { pointer-events: none; }
 #app.deck #arrows .aico { width: 12px; height: 12px; }
 #app.deck #arrows button:first-child, #app.deck #undoRow button:first-child, #app.deck #mvRow button:first-child { border-radius: 4px 0 0 4px; }
 #app.deck #arrows button:last-child, #app.deck #undoRow button:last-child, #app.deck #mvRow button:last-child { border-radius: 0 4px 4px 0; }
-#app.deck #quick { width: 312px; flex: 0 0 312px; grid-template-columns: repeat(12, 1fr); grid-template-rows: 28px; position: static; }
+#app.deck #quick { width: auto; flex: 0 0 auto; display: flex; gap: 3px; align-items: center; position: static; border: none; background: none; box-shadow: none; padding: 0; }   /* the notes: keys like the other palettes on the flip bar */
 #app.deck #quick .qctl, #app.deck #quick .qgrip { display: none; }                         /* part of the bar: nothing to lock or float */
-#app.deck #quick .cell:nth-child(n+7) button { border-top: none; }
-#app.deck #quick .cell:first-of-type { border-left: none; }
+#app.deck #quick .cell { border: none; flex: 0 0 auto; }
+#app.deck #quick .cell button { width: 30px; min-width: 30px; height: 30px; border: 1px solid #222; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); }
+#app.deck #quick .cell button.on { background: linear-gradient(#6fb3ff, #2f7fd6); color: #fff; border-color: #1b4f8a; }
 #app.deck #palette { flex: 0 0 auto; width: auto; overflow: visible; flex-direction: row; align-items: center; gap: 6px; padding: 0; background: none; border: none; box-shadow: none; }
 #app.deck #palette .prow { height: 30px; }
 /* each part's stave wears its colour, with its name centred on the top and bottom edges */
