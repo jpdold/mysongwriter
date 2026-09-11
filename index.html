@@ -8810,14 +8810,30 @@ function drawStaff(svg, g, key) {
              svgEl("rect", { x: 0, y: g.H - 5, width: g.W, height: 5, fill: `url(#${g.win}InB)`, transform: `translate(0 ${2 * g.H - 5}) scale(1 -1)`, "pointer-events": "none" }));
   if (g.totalBeats < g.B - 1e-6) { const bx = Math.round(g.x(g.bars[g.bars.length - 1], barBeats(g.bars[g.bars.length - 1]))); svg.append(svgEl("line", { class: "stl", x1: bx, x2: bx, y1: 0, y2: g.H, stroke: css("--beat"), "stroke-width": 2 })); svg.append(svgEl("rect", { x: bx + 1, y: 0, width: g.W - bx, height: g.H, fill: css("--ground"), opacity: 0.12, "pointer-events": "none" })); }
 }
+const GUT_FONT = "system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
+/* where a label's baseline goes so that its ink — the letter shapes themselves, not the font's box — is centred on a row: measured
+   on a canvas in the same font, so it holds at any size and with whatever font the device has */
+let _inkCtx = null; const _inkLift = new Map();
+function inkLift(text, weight, size) {
+  const k = text + "|" + weight + "|" + size; let v = _inkLift.get(k);
+  if (v == null) {
+    if (!_inkCtx) _inkCtx = document.createElement("canvas").getContext("2d");
+    _inkCtx.font = `${weight} ${size * 10}px ${GUT_FONT}`; const mt = _inkCtx.measureText(text);   // measured ten times the size: the browser rounds these metrics to whole pixels
+    const asc = mt.actualBoundingBoxAscent / 10, desc = mt.actualBoundingBoxDescent / 10;
+    v = isFinite(asc) && isFinite(desc) ? (asc - desc) / 2 : size * 0.36;                  // the ink's middle above the baseline (a plain guess where the browser cannot measure)
+    _inkLift.set(k, v);
+  }
+  return v;
+}
 function drawGutter(win, g, key) {
   const gut = $(win + "Gut"); gut.replaceChildren(); gut.setAttribute("height", g.H); const GW = Math.max(20, Math.round(gut.getBoundingClientRect().width) || 42); gut.setAttribute("viewBox", `0 0 ${GW} ${g.H}`);   // drawn at the gutter's own width, so nothing scales and every label sits on its line or space
   const ink = css("--on-ground");
   for (let m = g.lo; m <= g.hi; m++) {
-    const y = g.y(m), pc = ((m % 12) + 12) % 12;                                        // y: the exact centre of the row; the labels are centred on it (dominant-baseline), so they sit on their line or space at any size
+    const y = g.y(m), pc = ((m % 12) + 12) % 12;                                        // y: the exact centre of the row; each label's ink is centred on it, so it sits on its line or space at any size
     if (g.step < 7 && pc !== 0 && pc !== 7) continue;                     // compact: C and G only
-    if (!isBlack(m)) gut.append(svgEl("text", { x: GW - 4, y, "dominant-baseline": "central", "text-anchor": "end", "font-size": g.step >= 10 ? 12 : g.step >= 7 ? 9 : 7.5, "font-weight": pc === 0 ? 800 : 700, fill: "#fff", "font-family": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif" }, pc === 0 ? noteName(m, key) : pcName(m, key)));
-    else if (g.step >= 12) gut.append(svgEl("text", { x: GW - 4, y, "dominant-baseline": "central", "text-anchor": "end", "font-size": 8, "font-weight": 600, fill: css("--on-ground2"), "font-family": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif" }, "#/♭"));
+    if (!isBlack(m)) { const fs = g.step >= 10 ? 12 : g.step >= 7 ? 9 : 7.5, fw = pc === 0 ? 800 : 700, txt = pc === 0 ? noteName(m, key) : pcName(m, key);
+      gut.append(svgEl("text", { x: GW - 4, y: y + inkLift(txt, fw, fs), "text-anchor": "end", "font-size": fs, "font-weight": fw, fill: "#fff", "font-family": GUT_FONT }, txt)); }
+    else if (g.step >= 12) gut.append(svgEl("text", { x: GW - 4, y: y + inkLift("#/♭", 600, 8), "text-anchor": "end", "font-size": 8, "font-weight": 600, fill: css("--on-ground2"), "font-family": GUT_FONT }, "#/♭"));
   }
   gut.append(svgEl("line", { x1: GW - 1, x2: GW - 1, y1: 0, y2: g.H, stroke: css("--on-ground2"), "stroke-width": 0.5, opacity: 0.5 }));
 }
