@@ -10221,8 +10221,12 @@ function wePicked() {
 /* SELECT CHIP(S): on, taps on the strip pick chips (a second tap unpicks); off again, the picks are let go */
 function weTogglePick() {
   if (!WE.on) return;
-  WE.picking = !WE.picking; if (!WE.picking) WE.picks = [];
-  renderWeKeys(); renderStrips(); toast(WE.picking ? "Tap chips on the strip to select them — the tools then act on all of them" : "Selection cleared");
+  if (WE.picking) { WE.picking = false; WE.picks = []; renderWeKeys(); renderStrips(); toast("Selection cleared"); return; }
+  /* the chip in progress comes into the selection first: the one under the cursor is set as it stands, words still in the box become their chip, a ↔ chip settles — and the chip so set is picked */
+  if (WE.chipId) weSetInHand(); else if (weInput().value.trim() || S.song.bars[WE.bi].chips.some(c => c.placing)) weSetChip();
+  WE.picking = true;
+  const sc = S.selChip; if (sc && S.song.bars[sc.bi] && S.song.bars[sc.bi].chips.some(c => c.id === sc.id) && !WE.picks.some(p => p.id === sc.id)) WE.picks.push({ bi: sc.bi, id: sc.id });
+  renderWeKeys(); renderStrips(); toast(WE.picks.length ? "Selected — tap more chips on the strip to add them; the tools then act on all of them" : "Tap chips on the strip to select them — the tools then act on all of them");
 }
 /* DELETE CHIP(S): the picked chips go, else the chip in hand; with neither, it starts picking and the next press deletes the picks */
 function weDeleteChips() {
