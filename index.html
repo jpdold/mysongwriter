@@ -10405,7 +10405,7 @@ function initWordEdit() {
   /* while the keyboard is open, a tap on the Lyrics strip works as usual; a tap anywhere else is held off — the keyboard blinks twice and its ✕ flashes to say so */
   document.addEventListener("pointerdown", e => {
     if (!WE.on || !e.target.closest) return;
-    if (e.target.closest("#wordEdit, #lyrStrip, #overlay, .toast, #melSvg, #accSvg, #bassSvg")) return;   // the staves take the pointer themselves: they swipe, and a tap on them is handled there
+    if (e.target.closest("#wordEdit, #lyrStrip, #overlay, .toast, #melSvg, #accSvg, #bassSvg, #toolbar, #deckNav")) return;   // the tool bar (the chip tools, on the deck) and the column beside the stave (CLOSE, the strip buttons) take their taps   // the staves take the pointer themselves: they swipe, and a tap on them is handled there
     e.preventDefault(); e.stopPropagation();
     if (!weSetChip()) weBlink();                                                          // something in hand is set by the tap; otherwise the keyboard says it is still open
   }, true);
