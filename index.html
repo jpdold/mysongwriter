@@ -254,7 +254,7 @@ svg text { pointer-events: none; }
 #partsBtn { display: none; }
 #app.deck #partsBtn { display: inline-flex; position: static; flex: 0 0 auto; margin-left: 10px; align-items: center; height: 26px; padding: 0 10px; margin-left: 8px; border: 1px solid #3a8a1e; border-radius: 4px; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); font-size: 9px; font-weight: 800; letter-spacing: .04em; white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
 #app.deck #partsBtn:active { filter: brightness(1.1); }
-#app.deck.noparts #rollBar .rollItem { display: none; }                                     /* parts hidden: only the SHOW PARTS button stays on the row */
+#app.deck.noparts #rollBar .rollItem { visibility: hidden; }                                /* parts hidden: the selectors vanish but keep their room, so the SHOW PARTS button stays put */
 #app.deck #rollBar .rollItem { flex: 0 0 150px; min-width: 0; }
 #addView { display: none; }
 #app.deck #addView { display: flex; grid-area: addv; align-self: center; justify-self: stretch; height: 22px; margin-top: 6px; padding: 0 2px; align-items: center; justify-content: center; text-align: center; border: 1px solid #3a8a1e; border-radius: 4px; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); font-size: 7px; font-weight: 800; letter-spacing: .02em; line-height: 1.05; white-space: normal; box-shadow: 0 1px 2px rgba(0,0,0,.3); }   /* ADD to VIEW: in the column beside the stave, so the selectors centre freely */
