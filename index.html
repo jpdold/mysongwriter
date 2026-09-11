@@ -266,7 +266,7 @@ svg text { pointer-events: none; }
 #app.deck #topTransport #tempo { box-shadow: none; margin-left: 1px; }
 #app.deck #topTransport #tempo button { width: 20px; }
 #app.deck #topTransport #tempo button#tempoLbl { min-width: 38px; font-size: 9.5px; }
-#app.deck #saveBtn { position: absolute; top: 50%; transform: translateY(-50%); width: 30px; height: 28px; z-index: 2; padding: 0; border: 1.5px solid #6e1712; border-radius: 4px; background: linear-gradient(#ff5a4e, #e5322d); color: #fff; display: grid; place-items: center; box-shadow: 0 2px 4px rgba(0,0,0,.4); }   /* up in the head, evenly between the parts button and the gear: the floppy, whole */
+#app.deck #saveBtn { position: absolute; top: 50%; right: 58px; transform: translateY(-50%); width: 30px; height: 28px; z-index: 2; padding: 0; border: 1.5px solid #6e1712; border-radius: 4px; background: linear-gradient(#ff5a4e, #e5322d); color: #fff; display: grid; place-items: center; box-shadow: 0 2px 4px rgba(0,0,0,.4); }   /* up in the head, evenly between the parts button and the gear: the floppy, whole */
 #app.deck #saveBtn .ico { width: 19px; height: 19px; display: block; }
 #app.deck #head { position: relative; }
 #app.deck #topTransport #saveBtn .ico { width: 17px; height: 17px; }
@@ -8574,7 +8574,6 @@ function placeDeckLabels() {
     if (!deckMode() || !win.classList.contains("deckOn")) continue;
     const x = frame.offsetLeft + frame.offsetWidth / 2;
     for (const id of ["nav", "rollBar"]) { const e = $(id); if (!e) continue; e.style.position = "relative"; const cur = parseFloat(e.style.left) || 0, fr = frame.getBoundingClientRect(), eb = e.getBoundingClientRect(); const mid = (fr.left + fr.right) / 2; let eMid = (eb.left + eb.right) / 2; if (id === "rollBar") { const items = e.querySelectorAll(".rollItem"); if (items.length && items[0].offsetWidth > 0) eMid = (items[0].getBoundingClientRect().left + items[items.length - 1].getBoundingClientRect().right) / 2; } else { const a = $("prevBar"), b = $("nextBar"); if (a && b) eMid = (a.getBoundingClientRect().left + b.getBoundingClientRect().right) / 2; } /* the bracket itself (← to →) over the part label, the parts button riding beside it */ e.style.left = Math.round(cur + mid - eMid) + "px"; }   // the bracket and the selectors centred on the stave's frame
-    { const sv = $("saveBtn"), pb = $("partsBtn"), gb = $("gearBtn"); if (sv && sv.parentNode === $("head")) { const a = pb.getBoundingClientRect().right, b = gb.getBoundingClientRect().left, h = $("head").getBoundingClientRect().left; sv.style.left = Math.round((a + b) / 2 - sv.offsetWidth / 2 - h) + "px"; } }   // the save button evenly between the parts button and the gear
     { const nav = $("deckNav"), rowTop = nav.getBoundingClientRect().top - (parseFloat(nav.style.marginTop) || 0); nav.style.marginTop = Math.max(0, frame.getBoundingClientRect().top - rowTop) + "px"; nav.style.height = frame.offsetHeight + "px"; }   // the column beside the stave: level with the frame, exactly as tall
     top.style.left = x + "px"; top.style.top = frame.offsetTop + "px";
     bot.style.left = x + "px"; bot.style.top = (frame.offsetTop + frame.offsetHeight) + "px";
