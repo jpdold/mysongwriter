@@ -10285,9 +10285,9 @@ function weDeleteChips() {
     renderWeKeys(); renderAll(); placeInline(); weCaret();
     const n = picks.length; toast(`${n} chip${n > 1 ? "s" : ""} deleted`); return;
   }
-  const tg = weTarget(); if (!tg) { WE.picking = true; renderWeKeys(); renderStrips(); toast("Tap the chip — or chips — to delete, then DELETE CHIP(S) again"); return; }
-  if (WE.chipId === tg.chip.id) { WE.chipId = null; weInput().value = ""; WE.dirty = false; }
-  deleteChip(tg.bar, tg.chip); placeInline(); weCaret();
+  /* nothing picked: DELETE never removes a chip on its own — it only starts SELECT CHIP(S)'s picking, so a chip is deleted
+     only once it has actually been selected (the chip in hand or in the cursor is not enough by itself) */
+  WE.picking = true; renderWeKeys(); renderStrips(); toast("Tap the chip — or chips — to delete, then DELETE CHIP(S) again");
 }
 /* the beat makes room. The set chips that start in the stretch from the beat of t0 to tEnd, beside `me` (a chip — or the entry box
    when null), squeeze alike so that `me` fits — each down to about three quarters of its own width, where it still reads — and
@@ -10898,11 +10898,10 @@ function wireTempo() {
 const barAbs = bi => { let a = 0; for (let k = 0; k < bi; k++) a += barBeats(k); return a; };
 function absToBar(abs) { let a = 0; for (let bi = 0; bi < S.song.bars.length; bi++) { const B = barBeats(bi); if (abs < a + B - 1e-6) return { bi, t: r3(abs - a) }; a += B; } return null; }
 /* DELETE: with something selected — picked chips, a chip, a note — it deletes that; with nothing selected it starts a delete run */
-function delReady() { return !!((S.mv && S.mv.mode === "delete" && S.mv.start != null) || (typeof WE !== "undefined" && WE.on && WE.picks.length) || selChipObj() || (selEv() && !S.selAuto)); }
+function delReady() { return !!((S.mv && S.mv.mode === "delete" && S.mv.start != null) || (typeof WE !== "undefined" && WE.on && WE.picks.length) || (selEv() && !S.selAuto)); }   // a lyrics chip alone selected (not yet picked with SELECT CHIP(S)) does not ready DELETE
 function delAction() {
   if (S.mv && S.mv.mode === "delete" && S.mv.start != null) { delRun("run"); return; }     // a run of beats picked: DELETE deletes it
-  if (typeof WE !== "undefined" && WE.on && WE.picks.length) { weDeleteChips(); return; }
-  const sc = selChipObj(); if (sc) { deleteChip(sc.bar, sc.chip); return; }
+  if (typeof WE !== "undefined" && WE.on && WE.picks.length) { weDeleteChips(); return; }   // a lyrics chip is deleted only once SELECT CHIP(S) has picked it — never from a bare selection
   if (selEv() && !S.selAuto) { deleteSel(); return; }
   mvStart("delete");
 }
