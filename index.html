@@ -361,7 +361,7 @@ body.kbOpen #app.deck { padding-bottom: 6px; }
 #wePanel .pgrip::after { content: ""; position: absolute; left: 50%; top: 3px; width: 27px; height: 12px; margin-left: -13px; background-image: radial-gradient(circle, #bbb 1.5px, transparent 1.8px); background-size: 9px 6px; }
 #wePanel .panel { margin: 0; }
 #app.deck.kbUp #rhyStrip, #app.deck.kbUp #lyrStrip { z-index: 71; }                         /* while the keyboard is open the strips ride on top of it (placed by script); closed, they return to their rows */
-#app.deck #lyrEdit { position: absolute; right: 3px; top: 50%; transform: translateY(-50%); z-index: 3; }                                          /* the stave reaches the column beside it */
+#app.deck #lyrEdit { position: absolute; left: calc(100% + 8px); right: auto; width: var(--deckW, 44px); top: 50%; transform: translateY(-50%); z-index: 3; }   /* in the right margin, beside the strip, clear of the last beat's chips */                                          /* the stave reaches the column beside it */
 #app.deck #rhyStrip { margin-top: 0 !important; }                                          /* flush on the stave */
 #app.deck #deckNav { display: flex; }
 /* the column beside the stave, as tall as the stave: the part's gear, ▲ ▼ to the parts above and below, then centred the tall
