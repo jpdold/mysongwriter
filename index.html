@@ -9093,7 +9093,29 @@ function renderWindows() {
   document.querySelectorAll(".win .chordBtn").forEach(b => b.classList.toggle("on", !!S.chordWin[b.dataset.win]));
   document.querySelectorAll(".win .pselClose").forEach(b => { b.hidden = !PSEL.on; });
 }
+/* the strip's beats changed width — the phone turned, the window resized, a song from another screen opened: the automatic squeezes
+   are solved again for this width, beat by beat, exactly as they are while typing. Every chip keeps its place in the bar (its beat
+   time never moves): on a wider screen squeezed chips relax to their words, on a narrower one they squeeze to fit their beat, and
+   what still cannot fit is drawn pushed along, so turning back restores the layout to the pixel */
+function refitBarForWidth(bar, bi, g) {
+  const B = barBeats(bi);
+  bar.chips.forEach(c => { if (c.auto) { delete c.wf; delete c.auto; } });
+  for (let b = 0; b < B; b++) {
+    const others = bar.chips.filter(c => !c.full && !c.gap && c.text.trim() && c.t >= b - 1e-6 && c.t < b + 1 - 1e-6).sort((p, q) => p.t - q.t);
+    if (!others.length) continue;
+    const avail = (b + 1 - others[0].t) * g.beatPx, deficit = others.reduce((a, c) => a + chipW(c), 0) - avail;
+    if (deficit <= 0) continue;
+    const gives = others.map(c => Math.max(0, chipW(c) - chipMinW(c))), total = gives.reduce((a, x) => a + x, 0), k = total > 0 ? Math.min(1, deficit / total) : 0;
+    others.forEach((c, i) => { if (!(gives[i] > 0 && k > 0)) return; c.wf = Math.round((chipW(c) - gives[i] * k) / chipNatW(c) * 100) / 100; c.auto = true; if (Math.abs(c.wf - 1) < 1e-6) { delete c.wf; delete c.auto; } });
+  }
+}
+function refitForWidth() {
+  const g = stripGeo(), key = Math.round(g.beatPx) + "|" + lyrF();
+  if (S._fitKey === key) return; S._fitKey = key;
+  S.song.bars.forEach((bar, bi) => refitBarForWidth(bar, bi, g));
+}
 function renderStrips() {
+  refitForWidth();
   const song = S.song, key = keyObj(song.key), g = stripGeoRaw(), B = g.B, H = 36, bars = viewBars();
   const dividers = (svg, color, op, HH = H, gg = g) => { const nd = Math.max(1, Math.round((HH + 4) / 9)), dash = (HH - (nd - 1) * 4) / nd; for (const bi of bars) { for (let b = 1; b < barBeats(bi); b++) { const bx = Math.round(gg.x(bi, b)); svg.append(svgEl("line", { x1: bx, x2: bx, y1: 0, y2: HH, stroke: color, "stroke-width": 2, "stroke-dasharray": `${dash.toFixed(2)} 4`, opacity: op * (g.n > 1 ? 0.7 : 1), "shape-rendering": "crispEdges" })); } if (bi > g.first) svg.append(svgEl("line", { x1: Math.round(g.x(bi, 0)), x2: Math.round(g.x(bi, 0)), y1: 0, y2: HH, stroke: color, "stroke-width": 2, opacity: op, "shape-rendering": "crispEdges" })); } if (g.totalBeats < g.B - 1e-6) { const ex = g.x(bars[bars.length - 1], barBeats(bars[bars.length - 1])); svg.append(svgEl("line", { x1: ex, x2: ex, y1: 0, y2: H, stroke: color, "stroke-width": 2, opacity: op })); } };
   /* rhythm strip: the slots as small glyphs, the ▶ marks where the next tap lands */
