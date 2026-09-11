@@ -364,7 +364,7 @@ body.kbOpen #app.deck { padding-bottom: 6px; }
 #wordEdit .half { display: flex; flex-direction: column; gap: 3px; flex: 1 1 0; min-width: 0; position: relative; }
 #wordEdit .half .krow { justify-content: flex-end; } #wordEdit .half.r .krow { justify-content: flex-start; }
 #wordEdit .half .krow button { flex: 1 1 0; }
-#wordEdit .half .grip { position: absolute; top: -28px; width: 32px; height: 28px; border: 2px solid var(--tag); border-bottom: none; border-radius: 8px 8px 0 0; background-color: #e9e9e9; background-image: radial-gradient(circle, #666 1.5px, transparent 1.8px); background-size: 8px 8px; background-position: 6px 5px; cursor: ew-resize; touch-action: none; user-select: none; -webkit-user-select: none; }   /* the square grippy thumb handles: pull a half apart, drop it where you like */
+#wordEdit .half .grip { position: absolute; top: -30px; width: 40px; height: 30px; border: 2px solid var(--tag); border-bottom: none; border-radius: 8px 8px 0 0; background-color: #e9e9e9; background-image: radial-gradient(circle, #666 1.5px, transparent 1.8px); background-size: 8px 8px; background-position: 6px 5px; cursor: ew-resize; touch-action: none; user-select: none; -webkit-user-select: none; }   /* the square grippy thumb handles: pull a half apart, drop it where you like */
 #wordEdit .half.l .grip { left: 0; } #wordEdit .half.r .grip { right: 0; }
 #app.deck.kbUp #rhyStrip, #app.deck.kbUp #lyrStrip { z-index: 71; }                         /* while the keyboard is open the strips ride on top of it (placed by script); closed, they return to their rows */
 #app.deck #lyrEdit { position: absolute; left: calc(100% + 8px); right: auto; width: var(--deckW, 44px); top: 50%; transform: translateY(-50%); z-index: 3; }   /* in the right margin, beside the strip, clear of the last beat's chips */                                          /* the stave reaches the column beside it */
@@ -713,9 +713,58 @@ body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the s
 #wordEdit .weKeys button.backk { flex: 2.3 1 0; display: flex; align-items: center; justify-content: center; gap: 1px; padding: 0; }   /* a small arrow tight against the B */
 #wordEdit .weKeys button.backk .cap { letter-spacing: .01em; }
 #wordEdit .weKeys button .sarr { font-size: 11px; line-height: 1; font-weight: 700; }
+/* the deck's chip tool bar: the same keys as the phone's panel, drawn alike, in one fixed row across the tool bar while the keyboard is open */
+#chipBar button.smallk { font-size: 8px; font-weight: 800; letter-spacing: .03em; white-space: normal; line-height: 1.05; padding: 0 3px; flex: 1.1 1 0; }
+#chipBar button { flex: 1 1 0; min-width: 0; height: 38px; padding: 0; font-size: 17px; font-family: var(--sans); background: #f4f4f4; border: 1px solid #bbb; border-radius: 6px; color: #111; box-shadow: 0 1px 0 #999; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
+#chipBar button:active { background: #cfe3fb; transform: translateY(1px); }
+#chipBar button.sym { font-family: var(--serif); }
+#chipBar button.wide { flex: 1.6 1 0; font-size: 12px; font-weight: 600; }
+#chipBar button.space { flex: 2.4 1 0; }
+#chipBar button.on { background: #cfe3fb; border-color: #7fa6d6; }
+#chipBar button.go { background: var(--accent); color: #fff; border-color: var(--accent); }
+#chipBar button.go, #chipBar button.go2 { font-size: 9.5px; font-weight: 800; letter-spacing: .02em; line-height: 1.1; white-space: normal; padding: 0; }
+#chipBar button.space { flex: 2.4 1 0; }
+#chipBar button.setk { background: var(--lyric); border-color: #2a6aa0; color: #fff; font-size: 12px; font-weight: 800; letter-spacing: .06em; box-shadow: inset 0 0 0 4px rgba(255,255,255,.22), inset 0 0 0 5px rgba(255,255,255,.55); }
+#chipBar { display: grid; grid-template-columns: 1.1fr 1fr 1fr 1.3fr; grid-auto-rows: 31px; gap: 4px; padding: 5px; border: 1px solid #93a9c2; border-radius: 10px; background: #edf1f6; }
+#chipBar button { height: 31px; width: 100%; font-size: 8.5px; font-weight: 800; letter-spacing: .03em; line-height: 1.15; white-space: normal; padding: 0 2px; border: 1px solid #93a9c2; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; box-shadow: 0 1px 0 #a9b9cc; }
+#chipBar button .l { display: block; }
+#chipBar button .cap { font-size: 7.5px; }
+#chipBar button.modek { flex-direction: row; gap: 3px; font-size: 9px; font-weight: 700; white-space: nowrap; }
+#chipBar button.modek .mico2 { width: 24px; height: 9px; display: block; flex: 0 0 auto; }
+#chipBar button.modek.on { background: #cfe3fb; border-color: #7fa6d6; }
+#chipBar button.delk { background: #ff3b30; border-color: #b8211a; color: #fff; }
+#chipBar button.pickk { background: #92d050; border-color: #5f9a2a; color: #0f2a05; }
+#chipBar button.pickk.on { background: #3f9a2e; border-color: #2c6e1f; color: #fff; box-shadow: inset 0 0 0 2px rgba(255,255,255,.8); }
+#chipBar button.go, #chipBar button.go2 { font-size: 8.5px; }
+#chipBar button.go3 { background: #fff; gap: 1px; }
+#chipBar button.go3 .l { font-size: 7.2px; letter-spacing: .01em; white-space: nowrap; }
+#chipBar button.go3 .big { font-size: 13px; line-height: 1; font-weight: 800; }
+#chipBar button.setk { font-size: 10px; gap: 0; }
+#chipBar button.setk .big { font-size: 15px; line-height: 1; }
+#chipBar button.setk .cap { font-size: 8.5px; }
+#chipBar button.urk { flex-direction: row; gap: 4px; }
+#chipBar button.urk .cap { font-size: 9px; }
+#chipBar button.restk .rest { font-size: 15px; line-height: 1; font-family: var(--serif); }
+#chipBar .curl { width: 16px; height: 13px; display: block; }
+#chipBar .sico2 { width: 40px; height: 13px; display: block; }
+#chipBar .narr { margin: 0; }
+#chipBar .sico { width: 44px; }
+#chipBar button.go2 { background: #e8f1fc; border-color: #7fa6d6; color: #123d6e; }
+#chipBar button.nudge, #chipBar button.splitk { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 0; }
+#chipBar button .big { font-size: 22px; line-height: 1; font-weight: 700; }
+#chipBar button .cap { font-size: 7.5px; font-weight: 800; letter-spacing: .04em; line-height: 1; }
+#chipBar button.backk { flex: 2.3 1 0; display: flex; align-items: center; justify-content: center; gap: 1px; padding: 0; }
+#chipBar button.backk .cap { letter-spacing: .01em; }
+#chipBar button .sarr { font-size: 11px; line-height: 1; font-weight: 700; }
+#chipBar { display: none; }
+#app.deck.kbUp #chipBar { display: flex; flex: 1 1 auto; min-width: 0; gap: 3px; align-self: stretch; padding: 0; border: none; border-radius: 0; background: transparent; }   /* on the tool bar's own silver, as tall as the thirds it replaces */
+#app.deck.kbUp #toolL, #app.deck.kbUp #toolM, #app.deck.kbUp #toolR { display: none; }         /* the three thirds step aside for it */
+#chipBar button { flex: 1 1 0; width: auto; min-width: 0; height: 30px; font-size: 7.5px; padding: 0 1px; }
+#chipBar button.go, #chipBar button.go2 { font-size: 7.5px; }
+#chipBar button .cap { font-size: 7px; } #chipBar button.modek { font-size: 8px; gap: 2px; } #chipBar button.modek .mico2 { width: 20px; }
+#chipBar button.go3 .l { font-size: 6.5px; white-space: normal; } #chipBar button.urk .cap { font-size: 8px; } #chipBar button.setk { font-size: 9px; } #chipBar button.setk .cap { font-size: 7.5px; } #chipBar .sico2 { width: 30px; }
 #lyrInline:disabled { opacity: .7; }
 #wordEdit.native .weKeys { display: none; }
-#wordEdit button.kb.on { background: #cfe3fb; }
 #wordEdit { width: 100%; }
 #wordEdit .lbl2 { font-size: 10px; color: #555; white-space: nowrap; }
 #wordEdit input { width: 130px; border: none; background: none; font-family: var(--serif); font-size: 16px; font-weight: 700; padding: 3px 2px; outline: none; color: #111; }
@@ -799,7 +848,7 @@ body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the s
     <div id="wordEdit">
       <div class="weGrip" title="Drag to move the keyboard; drop it near the bottom to dock it"><span></span></div>
       <button class="close" title="Done (Esc)">✕</button>
-      <div class="weRow"><span class="lbl2"></span><span class="flex"></span><button class="panelk" title="Hide or show the tool panel">HIDE PANEL</button><button class="kb" title="Switch between the app keyboard and the phone's keyboard">⌨</button></div>
+      <div class="weRow"><span class="lbl2"></span><span class="flex"></span><button class="panelk" title="Hide or show the tool panel">HIDE PANEL</button></div>
       <div class="weKeys" id="weKeys"></div>
     </div>
   </div>
@@ -10007,7 +10056,7 @@ function weCaret() {
   const k = stripGeo().k || 1; car.style.top = (8 * k) + "px"; car.style.height = (20 * k) + "px";
   car.style.left = Math.round(inp.offsetLeft + chipPad() * k + w - inp.scrollLeft) + "px"; car.classList.add("on");
 }   // grows with what you type — beats don't box it in
-/* the app's own keyboard: QWERTY, a symbols page for lyricists' marks, an accents page. The phone's keyboard is a toggle (⌨). */
+/* the app's own keyboard: QWERTY, a symbols page for lyricists' marks, an accents page. The phone's keyboard is chosen in Settings. */
 const WE_PAGES = {
   abc: ["q w e r t y u i o p", "a s d f g h j k l", "⇧ z x c v b n m ⌫"],
   sym: ["’ ‘ “ ” ' \" ‿ _ 𝄽 …", "- – — , . ; : ! ?", "( ) & + / ¡ ¿ * ⌫"],
@@ -10017,10 +10066,9 @@ const WE_TITLES = { "‿": "elision — sing two words as one", "_": "rest", "�
 let wePage = "abc", weShift = false, weCaps = false, weShiftAt = -1e9;
 function renderWeKeys() {
   const k = $("weKeys"), box = $("wordEdit"), inp = weInput(); k.replaceChildren();
-  box.classList.toggle("native", !S.softKb); box.querySelector("button.kb").classList.toggle("on", !S.softKb);
+  box.classList.toggle("native", !S.softKb);
   { const pk = box.querySelector(".weRow button.panelk"); if (pk) pk.textContent = wePanelHidden ? "SHOW PANEL" : "HIDE PANEL"; }
-  inp.setAttribute("inputmode", S.softKb ? "none" : "text");
-  if (!S.softKb) return;
+  inp.setAttribute("inputmode", S.softKb ? "none" : "text");                             // the phone's keyboard (chosen in Settings): the letters fold away, the chip tools stay
   const caret = () => [inp.selectionStart == null ? inp.value.length : inp.selectionStart, inp.selectionEnd == null ? inp.value.length : inp.selectionEnd];
   const insert = ch => { if (!weAdoptSpacer()) return; weTypingStarts(); const [s, e2] = caret(); inp.value = inp.value.slice(0, s) + ch + inp.value.slice(e2); WE.dirty = true; sizeInline(); inp.focus(); inp.setSelectionRange(s + ch.length, s + ch.length); if (weShift && !weCaps) { weShift = false; renderWeKeys(); } };
   const back = () => { if (inp.disabled) return; if (!inp.value && !WE.chipId) { weBackChip(); return; } let [s, e2] = caret(); if (s === e2 && s > 0) s = s - 1; inp.value = inp.value.slice(0, s) + inp.value.slice(e2); WE.dirty = true; sizeInline(); inp.focus(); inp.setSelectionRange(s, s); };
@@ -10032,53 +10080,62 @@ function renderWeKeys() {
     return key(wePage === "abc" && weShift ? ch.toUpperCase() : ch, () => insert(wePage === "abc" && weShift ? ch.toUpperCase() : ch), wePage === "abc" ? "" : "sym", WE_TITLES[ch] || "");
   }));
   const cap = t => el("span", { class: "cap" }, t), ln = t => el("span", { class: "l" }, t);
-  const symKey = () => key(wePage === "abc" ? "?!’" : "abc", () => { wePage = wePage === "abc" ? "sym" : "abc"; renderWeKeys(); }, "wide", "symbols");
+  const symKey = () => key(wePage === "sym" ? "abc" : "?!’", () => { wePage = wePage === "sym" ? "abc" : "sym"; renderWeKeys(); }, "wide", "symbols");
   const accKey = () => key(wePage === "acc" ? "abc" : "àéñ", () => { wePage = wePage === "acc" ? "abc" : "acc"; renderWeKeys(); }, "wide", "accents");
   const spaceKey = () => key("space", () => { if (!inp.value && !WE.chipId) { weSpaceChip(); return; } insert(" "); }, "space");
-  const kbKey = () => key("⌨", () => box.querySelector("button.kb").click(), "wide", "Switch between the app keyboard and the phone's keyboard");
   const panelKey = () => key(wePanelHidden ? "SHOW PANEL" : "HIDE PANEL", () => box.querySelector(".weRow button.panelk").click(), "smallk", "Hide or show the tool panel");
   const deck = deckMode();
   if (!deck) {                                                                              // one piece: the rows, then the bottom row
     rows.forEach(r => { const d = el("div", { class: "krow" }); d.append(...r); k.append(d); });
-    const bottom = el("div", { class: "krow" }); bottom.append(symKey(), accKey(), spaceKey(), kbKey(), panelKey()); k.append(bottom);
+    const bottom = el("div", { class: "krow" }); bottom.append(symKey(), accKey(), spaceKey(), panelKey()); k.append(bottom);
   } else {                                                                                  // two halves, parted between t | y, g | h, v | b and the space bar, each with a grip at its outer top corner
     const L = el("div", { class: "half l" }), R = el("div", { class: "half r" });
     rows.forEach(r => { const a = el("div", { class: "krow" }), b = el("div", { class: "krow" }); a.append(...r.slice(0, 5)); b.append(...r.slice(5)); L.append(a); R.append(b); });
-    const bl = el("div", { class: "krow" }), br = el("div", { class: "krow" }); bl.append(symKey(), accKey(), spaceKey()); br.append(spaceKey(), kbKey(), panelKey()); L.append(bl); R.append(br);
-    const gripFor = (side, half) => { const gp = el("div", { class: "grip", title: "Pull this half of the keyboard apart, and drop it where you like" }); let st = null;
-      gp.addEventListener("pointerdown", e => { e.preventDefault(); st = { id: e.pointerId, x: e.clientX, from: WE.split[side] }; try { gp.setPointerCapture(e.pointerId); } catch (x) {} });
-      gp.addEventListener("pointermove", e => { if (!st || e.pointerId !== st.id) return; const scale = box.getBoundingClientRect().width / box.offsetWidth || 1; const dx = (e.clientX - st.x) / scale; const limit = Math.max(0, (window.innerWidth / scale - box.offsetWidth) / 2 + 4);   /* as far as the screen's edge */
-        WE.split[side] = clamp(st.from + (side === "l" ? -dx : dx), 0, limit); weApplySplit(); });
-      const done = () => { st = null; }; gp.addEventListener("pointerup", done); gp.addEventListener("pointercancel", done);
+    const bl = el("div", { class: "krow" }), br = el("div", { class: "krow" }); bl.append(symKey(), accKey(), spaceKey()); br.append(spaceKey()); L.append(bl); R.append(br);   // the right half's bottom row is all space bar: the chip tools are the tool bar
+    const gripFor = side => { const gp = el("div", { class: "grip", title: "Pull this half of the keyboard apart, and drop it where you like" });
+      gp.addEventListener("pointerdown", e => {                                            // the drag follows the pointer anywhere on the screen, and a re-drawn keyboard does not end it
+        e.preventDefault(); e.stopPropagation(); const st = { id: e.pointerId, x: e.clientX, from: WE.split[side] };
+        const move = ev => { if (ev.pointerId !== st.id) return; const scale = box.getBoundingClientRect().width / box.offsetWidth || 1; const dx = (ev.clientX - st.x) / scale; const limit = Math.max(0, (window.innerWidth / scale - box.offsetWidth) / 2 + 4);   /* as far as the screen's edge */
+          WE.split[side] = clamp(st.from + (side === "l" ? -dx : dx), 0, limit); weApplySplit(); ev.preventDefault(); };
+        const done = ev => { if (ev.pointerId !== st.id) return; window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", done); window.removeEventListener("pointercancel", done); };
+        window.addEventListener("pointermove", move); window.addEventListener("pointerup", done); window.addEventListener("pointercancel", done);
+        try { gp.setPointerCapture(e.pointerId); } catch (x) {} });
       return gp; };
-    L.prepend(gripFor("l", L)); R.prepend(gripFor("r", R));
+    L.prepend(gripFor("l")); R.prepend(gripFor("r"));
     const split = el("div", { class: "kbSplit" }); split.append(L, R); k.append(split); weApplySplit(L, R);
   }
-  if (wePanelHidden) return;
+  if (wePanelHidden && !deck) return;
   /* the tool panel: four columns — the modes, SPLIT and UNDO on the left; DELETE / SELECT, the nudges, SHORTEN / WIDEN and REDO in the middle; the NEW CHIP keys and SET CHIP on the right */
   const arrow = dir => { const s = svgEl("svg", { class: "narr", viewBox: "0 0 24 12", "aria-hidden": "true" }); s.append(svgEl("path", { d: dir < 0 ? "M 21 6 H 4 M 9 1.5 L 4 6 L 9 10.5" : "M 3 6 H 20 M 15 1.5 L 20 6 L 15 10.5", fill: "none", stroke: "currentColor", "stroke-width": 2.2, "stroke-linecap": "round", "stroke-linejoin": "round" })); return s; };   // drawn, so both arrows are one size and sit centred
   const curl = dir => { const s = svgEl("svg", { class: "curl", viewBox: "0 0 20 14", "aria-hidden": "true" }); s.append(svgEl("path", { d: dir < 0 ? "M 17 12.5 A 6.5 6.5 0 0 0 4.5 6 M 8.5 2.5 L 4.5 6.2 L 8.5 9.8" : "M 3 12.5 A 6.5 6.5 0 0 1 15.5 6 M 11.5 2.5 L 15.5 6.2 L 11.5 9.8", fill: "none", stroke: "currentColor", "stroke-width": 2, "stroke-linecap": "round", "stroke-linejoin": "round" })); return s; };   // UNDO ↶ / REDO ↷
   const sizeIco = out => { const s = svgEl("svg", { class: "sico2", viewBox: "0 0 40 14", "aria-hidden": "true" }); s.append(svgEl("rect", { x: 12, y: 2, width: 16, height: 10, rx: 3, fill: "#3fb6f2" })); const tri = (x, d) => svgEl("path", { d: `M ${x} 2 L ${x + 6 * d} 7 L ${x} 12 Z`, fill: "#222" }); if (out) s.append(tri(28, 1), tri(12, -1)); else s.append(tri(3, 1), tri(37, -1)); s.append(svgEl("path", { d: "M 12 1 V 13 M 28 1 V 13", stroke: "#222", "stroke-width": 1.4 })); return s; };   // a chip with arrows pressing in (SHORTEN) or pushing out (WIDEN)
   const modeIco = n => { const s = svgEl("svg", { class: "mico2", viewBox: "0 0 60 14", "aria-hidden": "true" }); for (let i = 0; i < n; i++) s.append(svgEl("rect", { x: 1 + i * (58 / n), y: 1, width: 58 / n - (n > 1 ? 3 : 0), height: 12, rx: 4, fill: "none", stroke: "currentColor", "stroke-width": 1.6 })); return s; };
-  const panel = el("div", { class: "panel" });
-  panel.append(
-    key([el("span", {}, "Multi-chip"), modeIco(3)], () => weSetMode("multi"), "modek" + (S.chipMode === "multi" ? " on" : ""), "each word you type becomes its own chip"),
-    key([ln("DELETE"), ln("CHIP(S)")], weDeleteChips, "delk", "delete the selected chip(s)"),
-    key([ln("SELECT"), ln("CHIP(S)")], weTogglePick, "pickk" + (WE.picking ? " on" : ""), "then tap chips on the strip to select them; tap again to unselect"),
-    key([ln("NEW CHIP →"), ln("NEXT BEAT")], weNewNextBeat, "go2", "make the chip, then move to the next free beat"),
-    key([el("span", {}, "Single chip"), modeIco(1)], () => weSetMode("single"), "modek" + (S.chipMode === "single" ? " on" : ""), "everything you type becomes one chip across the bar"),
-    key([arrow(-1), cap("NUDGE LEFT")], () => weNudge(-1), "nudge", "nudge the chip a sixteenth of a beat earlier"),
-    key([arrow(1), cap("NUDGE RIGHT")], () => weNudge(1), "nudge", "nudge the chip a sixteenth of a beat later"),
-    key([ln("NEW CHIP –"), ln("CURRENT BEAT")], weNewCurrentBeat, "go", "make the chip; the box stays in this beat, just after it"),
-    key([splitIcon(), cap("SPLIT")], weSplit, "splitk", "split this chip in two at the cursor"),
-    key([sizeIco(false), cap("SHORTEN")], () => weSizeChip(-1), "sizek", "shorten the chip: back to its word's own width, then to the least it can be"),
-    key([sizeIco(true), cap("WIDEN")], () => weSizeChip(1), "sizek", "widen the chip to fill the room beside it, up to the next chip or the bar line"),
-    key([ln("NEW CHIP ANY SPACE"), el("span", { class: "big" }, "↔")], weNewGapChip, "go3", "a blank chip: drag it along the strip to a chip's edge, a beat line or a space; let go and it fills the room up to the next line or chip"),
-    key([curl(-1), cap("UNDO")], undo, "urk", "undo"),
-    key([curl(1), cap("REDO")], redo, "urk", "redo"),
-    key([el("span", { class: "rest" }, "𝄽"), cap("REST CHIP")], weRestChip, "restk", "a rest chip — nothing sung here"),
-    key([el("span", { class: "big" }, "↵"), cap("SET CHIP")], () => { if (!weSetChip()) toast("Nothing in hand to set"); }, "setk", "set the chip in place as it is"));
-  k.append(panel);                                                                        // under the letters, on the deck too
+  const K = {
+    multi: key([el("span", {}, "Multi-chip"), modeIco(3)], () => weSetMode("multi"), "modek" + (S.chipMode === "multi" ? " on" : ""), "each word you type becomes its own chip"),
+    del: key([ln("DELETE"), ln("CHIP(S)")], weDeleteChips, "delk", "delete the selected chip(s)"),
+    pick: key([ln("SELECT"), ln("CHIP(S)")], weTogglePick, "pickk" + (WE.picking ? " on" : ""), "then tap chips on the strip to select them; tap again to unselect"),
+    next: key([ln("NEW CHIP →"), ln("NEXT BEAT")], weNewNextBeat, "go2", "make the chip, then move to the next free beat"),
+    single: key([el("span", {}, "Single chip"), modeIco(1)], () => weSetMode("single"), "modek" + (S.chipMode === "single" ? " on" : ""), "everything you type becomes one chip across the bar"),
+    nl: key([arrow(-1), cap("NUDGE LEFT")], () => weNudge(-1), "nudge", "nudge the chip a sixteenth of a beat earlier"),
+    nr: key([arrow(1), cap("NUDGE RIGHT")], () => weNudge(1), "nudge", "nudge the chip a sixteenth of a beat later"),
+    cur: key([ln("NEW CHIP –"), ln("CURRENT BEAT")], weNewCurrentBeat, "go", "make the chip; the box stays in this beat, just after it"),
+    split: key([splitIcon(), cap("SPLIT")], weSplit, "splitk", "split this chip in two at the cursor"),
+    short: key([sizeIco(false), cap("SHORTEN")], () => weSizeChip(-1), "sizek", "shorten the chip: back to its word's own width, then to the least it can be"),
+    wide: key([sizeIco(true), cap("WIDEN")], () => weSizeChip(1), "sizek", "widen the chip to fill the room beside it, up to the next chip or the bar line"),
+    gap: key([ln("NEW CHIP ANY SPACE"), el("span", { class: "big" }, "↔")], weNewGapChip, "go3", "a blank chip: drag it along the strip to a chip's edge, a beat line or a space; let go and it fills the room up to the next line or chip"),
+    undo: key([curl(-1), cap("UNDO")], undo, "urk", "undo"),
+    redo: key([curl(1), cap("REDO")], redo, "urk", "redo"),
+    rest: key([el("span", { class: "rest" }, "𝄽"), cap("REST CHIP")], weRestChip, "restk", "a rest chip — nothing sung here"),
+    set: key([el("span", { class: "big" }, "↵"), cap("SET CHIP")], () => { if (!weSetChip()) toast("Nothing in hand to set"); }, "setk", "set the chip in place as it is"),
+  };
+  if (!deck) {                                                                              // the phone: four columns under the letters
+    const panel = el("div", { class: "panel" });
+    panel.append(K.multi, K.del, K.pick, K.next, K.single, K.nl, K.nr, K.cur, K.split, K.short, K.wide, K.gap, K.undo, K.redo, K.rest, K.set);
+    k.append(panel); return;
+  }
+  /* the deck: while the keyboard is open the bottom tool bar is the chip tool panel — one fixed row, left to right, in place of its three thirds */
+  let bar = $("chipBar"); if (!bar) { bar = el("div", { id: "chipBar" }); $("toolbar").append(bar); }
+  bar.replaceChildren(K.multi, K.single, K.split, K.undo, K.redo, K.nl, K.nr, K.short, K.wide, K.rest, K.del, K.pick, K.set, K.next, K.cur, K.gap);
 }
 /* the two halves of the deck keyboard, parted by what the grips were pulled to */
 function weApplySplit(L, R) {
@@ -10226,7 +10283,7 @@ function weBlink() { const box = $("wordEdit"); box.classList.remove("blink"); v
 function closeWordEdit() {
   if (WE.on) weSettleSpacer();
   if (WE.on && WE.dirty) { commitWordEdit(false, true); return; }
-  const was = WE.on; WE.on = false; WE.wid = null; WE.chipId = null; WE.picking = false; WE.picks = []; WE.carry = ""; $("wordEdit").classList.remove("on"); { const wp = $("wePanel"); if (wp) wp.hidden = true; } weInput().classList.remove("on"); weCaret(); document.body.classList.remove("kbOpen"); if (was && typeof deckMode === "function" && deckMode()) renderAll();   // the strips back to their rows, the stave sized to them again
+  const was = WE.on; WE.on = false; WE.wid = null; WE.chipId = null; WE.picking = false; WE.picks = []; WE.carry = ""; $("wordEdit").classList.remove("on"); weInput().classList.remove("on"); weCaret(); document.body.classList.remove("kbOpen"); if (was && typeof deckMode === "function" && deckMode()) renderAll();   // the strips back to their rows, the stave sized to them again
   const f = WE.firstChip; WE.firstChip = null;
   if (was && f && S.song.bars[f.bi] && S.song.bars[f.bi].chips.some(c => c.id === f.id)) { S.selChip = { bi: f.bi, id: f.id }; S.bi = f.bi; renderAll(); }   // the first word you typed is ready to move or stretch
 }
@@ -10235,7 +10292,7 @@ function commitWordEdit(advance, quiet, sameBeat) {
   if (!WE.on) return;
   const inp = weInput(), raw = inp.value.replace(/^\s+|\s+$/g, ""), bi = WE.bi, bar = S.song.bars[bi];
   WE.dirty = false;
-  const finish = () => { weSettleSpacer(); WE.on = false; WE.wid = null; WE.chipId = null; WE.picking = false; WE.picks = []; WE.carry = ""; inp.disabled = false; $("wordEdit").classList.remove("on"); { const wp = $("wePanel"); if (wp) wp.hidden = true; } inp.classList.remove("on"); document.body.classList.remove("kbOpen"); const f = WE.firstChip; WE.firstChip = null; if (f && S.song.bars[f.bi] && S.song.bars[f.bi].chips.some(c => c.id === f.id)) { S.selChip = { bi: f.bi, id: f.id }; S.bi = f.bi; } weCaret(); renderAll(); };
+  const finish = () => { weSettleSpacer(); WE.on = false; WE.wid = null; WE.chipId = null; WE.picking = false; WE.picks = []; WE.carry = ""; inp.disabled = false; $("wordEdit").classList.remove("on"); inp.classList.remove("on"); document.body.classList.remove("kbOpen"); const f = WE.firstChip; WE.firstChip = null; if (f && S.song.bars[f.bi] && S.song.bars[f.bi].chips.some(c => c.id === f.id)) { S.selChip = { bi: f.bi, id: f.id }; S.bi = f.bi; } weCaret(); renderAll(); };
   let nextT = WE.t;
   if (WE.chipId) {
     const c = bar.chips.find(x => x.id === WE.chipId);
@@ -10303,7 +10360,6 @@ function weOpenFromButton() {
 function initWordEdit() {
   const box = $("wordEdit"), inp = weInput(), close = box.querySelector("button.close");
   $("lyrEdit").addEventListener("click", weOpenFromButton);
-  box.querySelector("button.kb").addEventListener("click", () => { S.softKb = !S.softKb; savePrefs(); renderWeKeys(); if (!S.softKb) { inp.blur(); setTimeout(() => inp.focus(), 30); } });
   inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); commitWordEdit(true, false, true); } else if (e.key === "Tab") { e.preventDefault(); weNewNextBeat(); } else if (e.key === "Backspace" && !inp.value && !WE.chipId) { e.preventDefault(); weBackChip(); } else if (e.key === " " && !inp.value && !WE.chipId) { e.preventDefault(); weSpaceChip(); } else if (e.key === "Escape") { e.preventDefault(); WE.dirty = false; closeWordEdit(); } });
   inp.addEventListener("input", () => { weTypingStarts(); { const bar = S.song.bars[WE.bi], p = bar && !WE.chipId && bar.chips.find(c => c.placing); if (p) { const v = inp.value; if (placeGapChip(bar, WE.bi, p)) { openWordEdit(WE.bi, p.t, p); inp.value = v; } else inp.value = ""; } } WE.dirty = true; sizeInline(); });   // typing with a ↔ chip in hand sets it and the words go into it
   document.addEventListener("selectionchange", () => { if (WE.on) weCaret(); });
@@ -10372,7 +10428,7 @@ function openSettings() {
     el("div", { class: "pLbl" }, "Chord-mode notes"), seg([["#ffffff", "White"], ["#ffd23f", "Gold"], ["#6fb3ff", "Sky"], ["#8fd14f", "Green"], ["#f4a0c8", "Pink"]], S.chordColor, v => { S.chordColor = v; savePrefs(); renderAll(); }),
     el("div", { class: "mrow" }, toggle("Lines and spaces (half steps alternate line, space, line, space; off = one half step per space)", S.halfLines, v => { S.halfLines = v; savePrefs(); renderAll(); openSettings(); })),
     el("div", { class: "mrow" }, toggle("Keep the screen awake while the app is open" + ("wakeLock" in navigator ? "" : " (this browser cannot)"), S.keepAwake, v => { S.keepAwake = v; savePrefs(); if (v) wakeAcquire(); else wakeRelease(); })),
-    el("div", { class: "pLbl" }, "Lyrics keyboard"), seg([[true, "App keyboard (QWERTY + symbols)"], [false, "Phone's keyboard"]], S.softKb, v => { S.softKb = v; savePrefs(); }),
+    el("div", { class: "pLbl" }, "Lyrics keyboard"), seg([[true, "App keyboard (QWERTY + symbols)"], [false, "Phone's keyboard"]], S.softKb, v => { S.softKb = v; savePrefs(); renderWeKeys(); }),
     el("div", { class: "pLbl" }, "Lyrics font"), seg([["sans", "Current"], ["serif", "Serif"], ["smallcaps", "Small caps"]], S.lyricFont, v => { S.lyricFont = v; savePrefs(); renderAll(); }),
     el("div", { class: "pLbl" }, "Metronome"), seg([["off", "Off"], ["on", "Click while playing"], ["countin", "Count-in + click"]], S.metro, v => { S.metro = v; savePrefs(); }),
     el("div", { class: "pLbl" }, "Entry"),
@@ -11144,7 +11200,7 @@ function openHelp() {
     h("Pickup & repeats", "Setup → Pickup adds a short bar (½, 1 or 2 beats) before beat 1. Tap the bar name → Repeat this section to play a section several times."),
     h("Moving the keyboard", "Drag the grey bar at the top of the keyboard to put it anywhere; drop it near the bottom of the screen to dock it there again. It remembers where you left it. The floating palette moves by its bar in the same way."),
     h("Typing words", "Tap the Lyrics strip: the keyboard opens with the entry box at the left edge of the strip. Type a word and press ↵ — it becomes a chip at the first free spot, and the keyboard stays open for the next word. Close it with ✕ and the first word you typed is already selected."),
-    h("Keyboard keys", "The tool panel under the letters (HIDE PANEL / SHOW PANEL folds it away): Multi-chip / Single chip choose whether what you type becomes one chip per word, or one chip in all. NEW CHIP – CURRENT BEAT makes the chip and keeps the box in this beat, just after it; NEW CHIP → NEXT BEAT makes it and moves to the next free beat; NEW CHIP ANY SPACE ↔ makes a blank spacer chip to drag into place. Under Single chip the chip fills the whole bar and the box moves on to the next bar. REST CHIP drops a rest chip — a chip like any other, for a beat with nothing sung. NUDGE LEFT / NUDGE RIGHT move the chip in hand (or the entry box for a new word) a sixteenth of a beat. SHORTEN and WIDEN size it — wider up to the room beside it. SPLIT breaks the chip in two at the cursor. SELECT CHIP(S) then taps on the strip pick chips, and the tools act on all of them; DELETE CHIP(S) removes them. SET CHIP sets whatever is in hand. The entry box only ever sits on free space, so nothing can be typed over a chip."),
+    h("Keyboard keys", "The tool panel under the letters (HIDE PANEL / SHOW PANEL folds it away; on a wide screen it is the bottom tool bar while the keyboard is open, one row from Multi-chip to NEW CHIP ANY SPACE): Multi-chip / Single chip choose whether what you type becomes one chip per word, or one chip in all. NEW CHIP – CURRENT BEAT makes the chip and keeps the box in this beat, just after it; NEW CHIP → NEXT BEAT makes it and moves to the next free beat; NEW CHIP ANY SPACE ↔ makes a blank spacer chip to drag into place. Under Single chip the chip fills the whole bar and the box moves on to the next bar. REST CHIP drops a rest chip — a chip like any other, for a beat with nothing sung. NUDGE LEFT / NUDGE RIGHT move the chip in hand (or the entry box for a new word) a sixteenth of a beat. SHORTEN and WIDEN size it — wider up to the room beside it. SPLIT breaks the chip in two at the cursor. SELECT CHIP(S) then taps on the strip pick chips, and the tools act on all of them; DELETE CHIP(S) removes them. SET CHIP sets whatever is in hand. The entry box only ever sits on free space, so nothing can be typed over a chip."),
     h("Placing words", "Words have no bearing on the notes; you line them up by eye. Drag a chip anywhere along the strip — it clicks onto a beat line when close, and never overlaps another chip. To spread a word so its syllables sit under their notes, edit it and put spaces inside it (the space bar, as many as you like); it stays one chip."),
     h("Tempo", "♩= in the top row shows the tempo. − and + change it by one (hold to keep going); tap the number to type one."),
     h("Chord mode", "The two-row button beside each stave turns chord mode on for that stave. While it is on, a tap at a note's time stacks another note on it — the same pitch again gives a unison, marked with a red edge — and a tap on empty space starts the next chord at the next free spot. Notes entered in chord mode are drawn in the chord colour (white by default, changeable in Settings) with a thin black edge on head and stem. Rests enter as usual. Tap the button again to go back to single notes."),
