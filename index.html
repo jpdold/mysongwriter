@@ -8622,7 +8622,7 @@ function renderFlipPal() {
 function placeDeckStrips() {
   const app = $("app"), kbUp = deckMode() && WE.on && $("wordEdit").classList.contains("on"); app.classList.toggle("kbUp", kbUp);
   const rhy = $("rhyStrip"), lyr = $("lyrStrip");
-  if (!kbUp) { if (rhy.style.position) { rhy.style.cssText = ""; lyr.style.cssText = ""; } $("wordEdit").style.bottom = deckMode() ? Math.round(window.innerHeight - $("toolbar").getBoundingClientRect().top) + "px" : ""; return; }
+  if (!kbUp) { if (rhy.style.position || lyr.style.position) { rhy.style.cssText = ""; lyr.style.cssText = ""; } $("wordEdit").style.bottom = deckMode() ? Math.round(window.innerHeight - $("toolbar").getBoundingClientRect().top) + "px" : ""; return; }
   const win = $(deckActive() + "Win").getBoundingClientRect(), lyrH = lyr.offsetHeight, rhyH = rhy.offsetHeight;
   lyr.style.cssText = `position:fixed;left:${Math.round(win.left)}px;width:${Math.round(win.width)}px;bottom:0;margin:0;display:grid`;   // out of the rows first, so the tool bar settles where it will be
   if (S.rhyShown !== false) rhy.style.cssText = `position:fixed;left:${Math.round(win.left)}px;width:${Math.round(win.width)}px;bottom:0;margin:0;display:grid`; else rhy.style.cssText = "";   // a hidden Rhythm strip stays hidden
