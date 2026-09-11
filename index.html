@@ -348,6 +348,7 @@ body.kbOpen #app.deck { padding-bottom: 6px; }
 #app.deck .win .rArr.dn { top: calc(50% + 1px); bottom: auto; } #app.deck .win .rArr.dn::after { content: "↓"; }
 #app.deck .strip { grid-template-columns: 48px 1fr; gap: 0 2px; position: relative; }   /* the strips line up with the stave */
 #app.deck .strip .body { border-left-width: 3px; border-right-width: 3px; }                /* the same side borders as the stave frame, so every beat divider lines up to the pixel */
+#app.deck #lyrStrip .body { border-radius: 0; }                                             /* square corners like the strips above it: its edges flush with theirs */
 #app.deck #wordEdit { transform: scale(.8); transform-origin: 50% 100%; overflow: visible; }   /* the keyboard on the deck: a fifth smaller, docked on the tool bar (its bottom set by script) */
 #app.deck #wordEdit > button.close { right: auto; left: 50%; transform: translateX(-50%); }   /* the ✕ at the top centre: the corners carry the grips */
 #wordEdit .kbSplit { display: flex; gap: 6px; position: relative; justify-content: center; }
