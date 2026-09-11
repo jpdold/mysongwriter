@@ -8776,7 +8776,9 @@ function soundRange(win) {
 }
 function drawSoundHaze(svg, g) {
   const [lo, hi] = soundRange(g.win);
-  const band = (a, b) => { if (b < a) return; const y0 = g.y(b) - g.step / 2, y1 = g.y(a) + g.step / 2; svg.append(svgEl("rect", { class: "haze", x: 0, y: y0, width: g.W, height: y1 - y0, fill: "#ff3b30", opacity: 0.12, "pointer-events": "none" })); };
+  const band = (a, b) => { if (b < a) return; const y0 = g.y(b) - g.step / 2, y1 = g.y(a) + g.step / 2, hh = y1 - y0;
+    svg.append(svgEl("rect", { class: "haze", x: 0, y: y0, width: g.W, height: hh, fill: "#ff3b30", opacity: 0.32, "pointer-events": "none" }));
+    if (hh >= 22) svg.append(svgEl("text", { class: "hazeLbl", x: g.W / 2, y: y0 + hh / 2 + 6, "text-anchor": "middle", "font-size": Math.min(18, Math.max(13, hh * 0.6)), "font-weight": 800, "font-variant": "small-caps", "letter-spacing": ".04em", fill: "#fff", "paint-order": "stroke", stroke: "rgba(160,20,10,.55)", "stroke-width": 2, "pointer-events": "none" }, "Outside this sound's range — not audible")); };   // the notice, in bold white small caps, centred on the band
   band(g.lo, Math.min(lo - 1, g.hi)); band(Math.max(hi + 1, g.lo), g.hi);                  // the rows below the sound's reach, and those above it
 }
 function drawStaff(svg, g, key) {

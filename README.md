@@ -45,7 +45,7 @@ The floating tap pad is switched off in the app — nothing opens it and its ⧉
 
 ## Where the sound runs out
 
-Each stave wears a light red haze over the rows its part's sound cannot really reach — low and high — so a note placed there is expected to sound poor or not at all. The reach comes from the instrument the built-in sound imitates (a voice from F2 to C6, a bass guitar from E1 to G4, a piano the whole keyboard, and so on); a sample bank reaches a fifth beyond its recorded notes either way.
+Each stave wears a red haze over the rows its part's sound cannot really reach — low and high — with the notice “Outside this sound's range — not audible” across it in white small caps, so a note placed there is expected to sound poor or not at all. The reach comes from the instrument the built-in sound imitates (a voice from F2 to C6, a bass guitar from E1 to G4, a piano the whole keyboard, and so on); a sample bank reaches a fifth beyond its recorded notes either way.
 
 ## Running without the browser bars
 
