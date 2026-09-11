@@ -668,6 +668,7 @@ body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the s
 #weCaret.on { display: block; }
 #lyrSvg rect.chip { cursor: grab; } #lyrSvg rect.grip { cursor: ew-resize; }
 #lyrInline.on { display: block; }
+#lyrInline.on.empty { box-shadow: 0 0 0 2px #fff; }                                          /* the empty box, just tapped into place: a white border confirms it; letters typed, the chip look takes over */
 #lyrInline::placeholder { color: rgba(255,255,255,.6); font-weight: 400; }
 #lyrStrip.serif #lyrInline { font-family: var(--serif); font-weight: 600; }
 #lyrStrip.smallcaps #lyrInline { font-family: var(--serif); font-variant: small-caps; }
@@ -10065,6 +10066,7 @@ function weMoveCaret(d) { const inp = weInput(); if (inp.disabled) return; const
 /* the entry box on the strip: at its spot, as wide as its word — or, under Single chip, the whole bar, end to end */
 function placeInline() {
   const inp = weInput(); if (!WE.on) return; const g = stripGeo(), k = g.k || 1;
+  inp.classList.toggle("empty", !inp.value && !WE.chipId);                                // an empty box wears a white border: the tap is confirmed, though nothing is selected for the tools
   const pad = chipPad(); inp.style.padding = "0 " + (pad * k) + "px";                    // half a space each side, like a chip
   { const f = lyrF(); inp.style.fontSize = f !== 1 ? (16 * f) + "px" : ""; }                // the box in the strip's font at its deck size; the strip's height as ever
   const put = (leftU, widthU) => { inp.style.left = Math.round(leftU * k) + "px"; if (widthU != null) inp.style.width = Math.round(widthU * k) + "px"; };   // strip units → css pixels
