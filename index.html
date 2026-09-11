@@ -8036,10 +8036,10 @@ const _chipW = new Map(); let _measureCtx = null, _measureText = null;
 const _padW = new Map();
 /* a chip's side margin: half the width of a space, in the strip's own font */
 function chipPad() {
-  const key = S.lyricFont || "sans"; let p = _padW.get(key);
+  const fz = 16 * (typeof lyrF === "function" ? lyrF() : 1), key = (S.lyricFont || "sans") + "|" + fz; let p = _padW.get(key);
   if (p == null) {
-    if (_measureText) { _measureText.textContent = "\u00a0"; p = _measureText.getComputedTextLength() / 2; }
-    else { if (!_measureCtx) { _measureCtx = document.createElement("canvas").getContext("2d"); _measureCtx.font = "700 16px -apple-system, 'Segoe UI', Roboto, Arial, sans-serif"; } p = _measureCtx.measureText(" ").width / 2; }
+    if (_measureText) { _measureText.setAttribute("font-size", fz); _measureText.textContent = "\u00a0"; p = _measureText.getComputedTextLength() / 2; }
+    else { if (!_measureCtx) { _measureCtx = document.createElement("canvas").getContext("2d"); } _measureCtx.font = `700 ${fz}px -apple-system, 'Segoe UI', Roboto, Arial, sans-serif`; p = _measureCtx.measureText(" ").width / 2; }
     p = Math.max(1.5, Math.round(p * 10) / 10); _padW.set(key, p);
   }
   return p;
@@ -8049,12 +8049,12 @@ function chipW(c) {
   if (c.rest) return 22;
   if (c.wpx) return Math.round(c.wpx * (c.wf || 1));                          // a spacer chip: the width it was given when placed
   if (typeof WE !== "undefined" && WE.on && WE.chipId === c.id) { const v = weInput().value.trim(); if (v && v !== c.text) return chipW({ text: v }); }   // the chip in the entry box: as wide as what is typed there
-  const key = (S.lyricFont || "sans") + "|" + c.text;
+  const fz = 16 * (typeof lyrF === "function" ? lyrF() : 1), key = (S.lyricFont || "sans") + "|" + fz + "|" + c.text;   // the strip's font, at its size on the deck
   let w = _chipW.get(key);
   if (w == null) {
     if (!_measureText) { const host = document.querySelector("#lyrStrip .body"); if (host) { const svg = svgEl("svg", { width: 0, height: 0, style: "position:absolute;left:0;top:0;width:0;height:0;overflow:hidden;visibility:hidden", "aria-hidden": "true" }); _measureText = svgEl("text", { x: 0, y: 24, "font-size": 16, "font-weight": 700, "font-family": "system-ui, sans-serif", "xml:space": "preserve", style: "white-space:pre" }); svg.append(_measureText); host.append(svg); } }
-    if (_measureText) { _measureText.textContent = c.text; w = Math.ceil(_measureText.getComputedTextLength() + 2 * chipPad()); }
-    else { if (!_measureCtx) { _measureCtx = document.createElement("canvas").getContext("2d"); _measureCtx.font = "700 16px -apple-system, 'Segoe UI', Roboto, Arial, sans-serif"; } w = Math.ceil(_measureCtx.measureText(c.text).width + 2 * chipPad()); }
+    if (_measureText) { _measureText.setAttribute("font-size", fz); _measureText.textContent = c.text; w = Math.ceil(_measureText.getComputedTextLength() + 2 * chipPad()); }
+    else { if (!_measureCtx) { _measureCtx = document.createElement("canvas").getContext("2d"); } _measureCtx.font = `700 ${fz}px -apple-system, 'Segoe UI', Roboto, Arial, sans-serif`; w = Math.ceil(_measureCtx.measureText(c.text).width + 2 * chipPad()); }
     _chipW.set(key, w);
   }
   return Math.round(w * (typeof WE !== "undefined" && WE.on && WE.chipId === c.id ? 1 : (c.wf || 1)));   // wf: the chip's own width factor (SHORTEN / WIDEN); a chip in the entry box shows at its word's own width, box and text as one
@@ -8436,9 +8436,9 @@ function refitGhost() {
 /* the window whose stave is showing: it owns the beat labels and the strips' geometry */
 const leadWin = () => S.focus || ["mel", "acc", "bass"].find(w => S.winState[w] !== "closed") || "mel";
 function stripGeoRaw() { const w = leadWin(); return GEO[w] || geo(w); }
-/* the Lyrics strip's scale on the deck: its beats as wide, against its words, as on a phone (a 68px beat), so its entry and spacing
-   rules read the same; the strip's drawing, box and caret grow by k, and all chip arithmetic works in the strip's own units */
-function lyrK() { if (typeof deckMode !== "function" || !deckMode()) return 1; const g = stripGeoRaw(); return Math.round(clamp(g.beatPx / 68, 1, 1.75) * 100) / 100; }
+function lyrK() { return 1; }                                                            // the strip keeps its size and geometry
+/* the Lyrics font on the deck: larger as the beats are wider than on a phone (a 68px beat), up to 1.3× — words, chips, the box and its caret grow with it, the strip itself does not */
+function lyrF() { if (typeof deckMode !== "function" || !deckMode()) return 1; const g = stripGeoRaw(); return Math.round(clamp(g.beatPx / 68, 1, 1.3) * 100) / 100; }
 function stripGeo() { const g = stripGeoRaw(), k = lyrK(); if (k === 1) return g; return Object.assign({}, g, { k, W: g.W / k, W1: g.W1 / k, beatPx: g.beatPx / k, x: (bi, t) => g.x(bi, t) / k, at: px => g.at(px * k) }); }
 /* where the next melody note goes in the active beat, and how long it may be (words lead when Follow words is on) */
 function melodySpot(bar, bi) {
@@ -9040,15 +9040,15 @@ function renderStrips() {
         const pickFrame = () => { if (WE.on && WE.picks.some(p => p.id === c.id && p.bi === bi)) svg.append(svgEl("rect", { x: px - 2, y: 1, width: pw + 4, height: H - 2, rx: 7, fill: "none", stroke: "#7ed957", "stroke-width": 2.4, "pointer-events": "none" })); };   // picked with SELECT CHIP(S)
         if (c.gap) {                                                                    // a spacer chip: solid white, a thin dashed black edge, ↔ in the middle (it drags into place, then fills its gap)
           svg.append(svgEl("rect", { class: "chip", x: px, y: 3, width: pw, height: H - 6, rx: 6, fill: "#fff", stroke: c.placing ? "#2f7fd6" : "#111", "stroke-width": c.placing ? 1.5 : 1, "stroke-dasharray": "3 2", "data-chip": c.id, "data-bi": bi }));
-          if (c.placing) svg.append(svgEl("text", { x: px + pw / 2, y: 24, "text-anchor": "middle", "font-size": 16, "font-weight": 700, fill: "#2f7fd6", "font-family": "system-ui, sans-serif", "pointer-events": "none" }, "↔"));   // in hand: ↔ until it is set
+          if (c.placing) svg.append(svgEl("text", { x: px + pw / 2, y: 18 + 6 * lyrF(), "text-anchor": "middle", "font-size": 16 * lyrF(), "font-weight": 700, fill: "#2f7fd6", "font-family": "system-ui, sans-serif", "pointer-events": "none" }, "↔"));   // in hand: ↔ until it is set
           if (isSel) svg.append(svgEl("rect", { x: px - 1.5, y: 1.5, width: pw + 3, height: H - 3, rx: 7, fill: "none", stroke: "#2f7fd6", "stroke-width": 1.5, "pointer-events": "none" }));
           pickFrame(); return;
         }
         svg.append(svgEl("rect", { class: "chip", x: px, y: 3, width: pw, height: H - 6, rx: 6, fill: "#fff", "fill-opacity": isSel ? 0.42 : 0.2, stroke: "#fff", "stroke-width": isSel ? 1.5 : 0.8, "stroke-opacity": isSel ? 1 : 0.5, "data-chip": c.id, "data-bi": bi }));
         const editing = WE.on && WE.bi === bi && WE.chipId === c.id;
         const baseW = Math.round(natW / (c.wf || 1)), fit = pw < baseW - 0.5 ? { textLength: Math.max(8, pw - 2 * chipPad()), lengthAdjust: "spacingAndGlyphs" } : pw > baseW + 1.5 && c.text.trim().length > 1 ? { textLength: Math.max(8, pw - 2 * chipPad()), lengthAdjust: "spacing" } : {};   // condensed when squeezed or narrowed, letter-spaced when widened
-        if (!editing && c.full && c.words) c.words.forEach(w => svg.append(svgEl("text", { x: gl.x(bi, w.t) + chipPad(), y: 24, "font-size": 16, fill: "#fff", "font-weight": 700, "font-family": "system-ui, sans-serif", "xml:space": "preserve", style: "white-space:pre", "pointer-events": "none" }, w.text)));   // combined: each word where it was
-        else if (!editing) svg.append(svgEl("text", Object.assign({ x: c.full && pw > baseW ? px + pw / 2 : x, y: 24, "font-size": 16, fill: "#fff", "font-weight": 700, "font-family": "system-ui, sans-serif", "xml:space": "preserve", style: "white-space:pre", "pointer-events": "none" }, c.full && pw > baseW ? { "text-anchor": "middle" } : fit), c.text));
+        if (!editing && c.full && c.words) c.words.forEach(w => svg.append(svgEl("text", { x: gl.x(bi, w.t) + chipPad(), y: 18 + 6 * lyrF(), "font-size": 16 * lyrF(), fill: "#fff", "font-weight": 700, "font-family": "system-ui, sans-serif", "xml:space": "preserve", style: "white-space:pre", "pointer-events": "none" }, w.text)));   // combined: each word where it was
+        else if (!editing) svg.append(svgEl("text", Object.assign({ x: c.full && pw > baseW ? px + pw / 2 : x, y: 18 + 6 * lyrF(), "font-size": 16 * lyrF(), fill: "#fff", "font-weight": 700, "font-family": "system-ui, sans-serif", "xml:space": "preserve", style: "white-space:pre", "pointer-events": "none" }, c.full && pw > baseW ? { "text-anchor": "middle" } : fit), c.text));
         pickFrame();
       });
     }
@@ -9977,7 +9977,7 @@ function weMoveCaret(d) { const inp = weInput(); if (inp.disabled) return; const
 function placeInline() {
   const inp = weInput(); if (!WE.on) return; const g = stripGeo(), k = g.k || 1;
   const pad = chipPad(); inp.style.padding = "0 " + (pad * k) + "px";                    // half a space each side, like a chip
-  if (k !== 1) { inp.style.fontSize = (16 * k) + "px"; inp.style.height = (30 * k) + "px"; inp.style.top = (3 * k) + "px"; } else { inp.style.fontSize = ""; inp.style.height = ""; inp.style.top = ""; }
+  { const f = lyrF(); inp.style.fontSize = f !== 1 ? (16 * f) + "px" : ""; }                // the box in the strip's font at its deck size; the strip's height as ever
   const put = (leftU, widthU) => { inp.style.left = Math.round(leftU * k) + "px"; if (widthU != null) inp.style.width = Math.round(widthU * k) + "px"; };   // strip units → css pixels
   if (!WE.chipId && WE.t >= barBeats(WE.bi) - 1e-6) { inp.style.width = "0px"; put(g.W - 1); return; }   // the bar is full: the box waits, out of the way, at its end
   if (S.chipMode === "single" && !WE.chipId) { const x0 = g.x(WE.bi, 0), x1 = g.x(WE.bi, barBeats(WE.bi)); put(x0 + 1, Math.max(44, x1 - x0 - 2 - 2 * pad)); return; }
