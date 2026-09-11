@@ -261,7 +261,8 @@ svg text { pointer-events: none; }
 #app.deck.noparts #addView { display: none; }
 #app.deck #beatRow { display: none !important; }                                            /* no beat labels on the deck: the stave takes the room */
 #app.deck #topTransport { justify-self: start; flex: 1 1 0; min-width: 0; gap: 1px; }
-#app.deck #topTransport #tempo { margin-left: auto; margin-right: 2px; }                /* the tempo at the far end, almost flush with the flip button */
+#app.deck #topTransport { justify-content: flex-end; }                                      /* the play buttons packed to the right, stop almost flush with the tempo's − */
+#app.deck #topTransport #tempo { margin-left: 1px; margin-right: 2px; }                 /* the tempo at the far end, almost flush with the flip button */
 #app.deck #topTransport button { width: 28px; height: 26px; font-size: 13px; box-shadow: none; }
 #app.deck #tempo, #app.deck #topTransport #tempo button { height: 26px; }
 #app.deck #topTransport #tempo { box-shadow: none; }
@@ -274,7 +275,10 @@ svg text { pointer-events: none; }
 /* the tools: one bar, a button high, across the foot of the screen */
 #app.deck #arrows { width: 92px; flex: 0 0 auto; }
 #app.deck #undoRow { width: 78px; flex: 0 0 auto; margin-top: 0; }
-#app.deck #mvRow { width: 82px; flex: 0 0 auto; margin-top: 0; }
+#app.deck #mvRow { width: 82px; flex: 0 0 auto; margin-top: 0; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 8px 18px; align-self: center; }
+#app.deck #mvRow::before { content: "BULK"; grid-column: 1 / -1; grid-row: 1; display: block; height: 8px; line-height: 8px; text-align: center; font-size: 5.5px; font-weight: 800; letter-spacing: .18em; color: #fff; background: #111; border: 1.5px solid #141414; border-bottom: none; border-radius: 5px 5px 0 0; box-sizing: border-box; }   /* a cap over MOVE and DELETE: a label, not a key */
+#app.deck #toolL #mvRow button { grid-row: 2; height: 18px; font-size: 8px; border-top: 1.5px solid #141414; }   /* shaved a little at the top: the cap and the keys together stand as tall as the row */
+#app.deck #mvRow button:first-of-type { border-radius: 0 0 0 4px; } #app.deck #mvRow button:last-of-type { border-radius: 0 0 4px 0; }
 #app.deck #arrows button, #app.deck #undoRow button, #app.deck #mvRow button { height: 26px; border-top: 1.5px solid #141414; border-radius: 0; font-size: 8.5px; box-shadow: none; }
 #app.deck #arrows .aico { width: 12px; height: 12px; }
 #app.deck #arrows button:first-child, #app.deck #undoRow button:first-child, #app.deck #mvRow button:first-child { border-radius: 4px 0 0 4px; }
