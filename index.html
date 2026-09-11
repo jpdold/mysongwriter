@@ -10098,7 +10098,7 @@ function placeInline() {
   if (!_caretCtx) _caretCtx = document.createElement("canvas").getContext("2d"); _caretCtx.font = getComputedStyle(inp).font;
   const SLACK = 4;                                                                        // a few pixels past the last letter: the field never scrolls to fit its caret, and no glyph overhang is clipped
   let wU = inp.value ? Math.ceil(_caretCtx.measureText(inp.value).width) / k + SLACK : Math.max(8, Math.min(44, roomPx) - 2 * pad);   // typed: the letters (measured in the box's own font, brought back to strip units) plus that slack; empty: only what is left of the beat
-  if (WE.chipId) { const bar = S.song.bars[WE.bi], c = bar.chips.find(x => x.id === WE.chipId); if (c && !c.gap && c.text.trim()) wU = Math.max(wU, chipEditRoom(bar, WE.bi, c, g) - 2 * pad); }   // a chip being edited takes all the remaining space, to the next chip or the bar line
+  /* a chip brought into the box keeps its words' width: the box hugs the text, it never takes the room to the next chip */
   inp.scrollLeft = 0;
   const x = g.x(WE.bi, WE.t); put(clamp(x, 0, Math.max(0, g.W - wU - 2 * pad - 2)), wU);
 }
@@ -10390,7 +10390,7 @@ function addLyricChip(bar, bi, text, from = 0) {
    its legible minimum when there is not, and pushes the next chip along when even that will not fit; a bar too full for the
    minimums shrinks them all alike, so the chips still sit side by side */
 function layoutChips(bar, bi, g) {
-  const GAP = 0, x0 = g.x(bi, 0), x1 = g.x(bi, barBeats(bi)), items = [...bar.chips].sort((a, b) => a.t - b.t).map(c => ({ c, x: g.x(bi, c.t), nat: c.full ? Math.max(chipW(c), x1 - g.x(bi, c.t)) : WE.on && WE.chipId === c.id && !c.gap && c.text.trim() ? Math.max(chipW(c), chipEditRoom(bar, bi, c, g)) : chipW(c), min: chipMinW(c), w: 0 }));   // a chip in the entry box is drawn with all its remaining space   // a bar-filling chip runs to the bar line
+  const GAP = 0, x0 = g.x(bi, 0), x1 = g.x(bi, barBeats(bi)), items = [...bar.chips].sort((a, b) => a.t - b.t).map(c => ({ c, x: g.x(bi, c.t), nat: c.full ? Math.max(chipW(c), x1 - g.x(bi, c.t)) : chipW(c), min: chipMinW(c), w: 0 }));   // a chip in the entry box stays its words' width; a bar-filling chip runs to the bar line
   for (let i = 0; i < items.length; i++) {
     const it = items[i], nextX = i + 1 < items.length ? items[i + 1].x : x1 + GAP;
     it.w = Math.min(it.nat, nextX - it.x - GAP);
