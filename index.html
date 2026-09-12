@@ -8820,7 +8820,7 @@ function drawStaff(svg, g, key) {
   }
   if (!S.halfLines) { const ty = Math.round(g.y(g.hi) - g.step / 2) + 0.5; svg.append(svgEl("line", { class: "stl", x1: 0, x2: g.W, y1: ty, y2: ty, stroke: css("--line"), "stroke-width": 2 })); }
   g.bars.forEach((bi, k) => {
-    if (S.beatLines) for (let b = 1; b < barBeats(bi); b++) { const bx = g.x(bi, b); /* exact, not rounded: the halves either side match to the pixel */ svg.append(svgEl("line", { class: "stl", x1: bx, x2: bx, y1: 0, y2: g.H, stroke: "#fff", "stroke-width": g.n > 1 ? 3 : 5, opacity: 0.9 })); svg.append(svgEl("line", { class: "stl", x1: bx, x2: bx, y1: 0, y2: g.H, stroke: css("--beat"), "stroke-width": g.n > 1 ? 2 : 3, "stroke-dasharray": "6 4", opacity: g.n > 1 ? 0.7 : 1 })); }   // the beat subdivider lines — off in Settings or from the toolbar, the bar line beside them stays
+    for (let b = 1; b < barBeats(bi); b++) { const bx = g.x(bi, b); /* exact, not rounded: the halves either side match to the pixel */ svg.append(svgEl("line", { class: "stl", x1: bx, x2: bx, y1: 0, y2: g.H, stroke: "#fff", "stroke-width": g.n > 1 ? 3 : 5, opacity: 0.9 })); svg.append(svgEl("line", { class: "stl", x1: bx, x2: bx, y1: 0, y2: g.H, stroke: css("--beat"), "stroke-width": g.n > 1 ? 2 : 3, "stroke-dasharray": "6 4", opacity: g.n > 1 ? 0.7 : 1 })); }   // the beat lines within a bar: always drawn, whatever the view
     if (k > 0) { const bx = g.x(bi, 0); svg.append(svgEl("line", { class: "stl", x1: bx, x2: bx, y1: 0, y2: g.H, stroke: css("--beat"), "stroke-width": 3.5 })); }
   });
   const defs = svgEl("defs"), grad = (id, x2, y2, a) => { const lg = svgEl("linearGradient", { id, x1: 0, y1: 0, x2, y2 }); lg.append(svgEl("stop", { offset: 0, "stop-color": "#000", "stop-opacity": a }), svgEl("stop", { offset: 1, "stop-color": "#000", "stop-opacity": 0 })); return lg; };
@@ -9024,7 +9024,8 @@ function renderWindows() {
     if (S.ghost && S.ghost.part === "melody" && S.ghost.bi === bi) drawGhost(svg, g, bi, S.ghost, box);
     for (const c of chains(bar)) {
       const x0 = g.x(bi, c.t) + 1, x1 = g.x(bi, c.t + c.d) - 1, selected = c.members.some(e => e.id === sel);
-      svg.append(svgEl("rect", { class: "slot", x: x0, y: 2, width: Math.max(4, x1 - x0), height: g.H - 4, rx: 2, fill: selected ? box : "none", "fill-opacity": 0.14, stroke: c.rest ? css("--ink2") : box, "stroke-width": selected ? 2.8 : 2, "stroke-dasharray": c.rest ? "3 3" : "6 3", "data-ev": c.head.id, "data-part": "melody", "data-bi": bi }));
+      { const showSub = S.beatLines || c.rest || selected;   // the per-note dashed outline, at that note's own duration: off in Settings or from the toolbar, unless the chain is a rest or selected
+      svg.append(svgEl("rect", { class: "slot", x: x0, y: 2, width: Math.max(4, x1 - x0), height: g.H - 4, rx: 2, fill: selected ? box : "none", "fill-opacity": 0.14, stroke: showSub ? (c.rest ? css("--ink2") : box) : "none", "stroke-width": selected ? 2.8 : 2, "stroke-dasharray": c.rest ? "3 3" : "6 3", "data-ev": c.head.id, "data-part": "melody", "data-bi": bi })); }
       if (c.rest) { svg.append(svgEl("text", { x: (x0 + x1) / 2, y: g.H / 2 + 6, "text-anchor": "middle", "font-size": Math.min(18, g.step * 1.4), fill: css("--ink2"), "font-family": "Georgia, serif" }, "𝄽")); continue; }
       if (c.head.m == null && S.viewSpan === 4) { /* unpitched: nothing to draw */ }
       if (c.head.m == null) continue;
@@ -10530,7 +10531,7 @@ function openSettings() {
     el("div", { class: "pLbl" }, "Note size"), seg([["s", "Small"], ["m", "Medium"], ["l", "Large"]], S.noteSize, v => { S.noteSize = v; savePrefs(); renderAll(); }),
     el("div", { class: "pLbl" }, "Chord-mode notes"), seg([["#ffffff", "White"], ["#ffd23f", "Gold"], ["#6fb3ff", "Sky"], ["#8fd14f", "Green"], ["#f4a0c8", "Pink"]], S.chordColor, v => { S.chordColor = v; savePrefs(); renderAll(); }),
     el("div", { class: "mrow" }, toggle("Lines and spaces (half steps alternate line, space, line, space; off = one half step per space)", S.halfLines, v => { S.halfLines = v; savePrefs(); renderAll(); openSettings(); })),
-    el("div", { class: "mrow" }, toggle("Beat subdivider lines on the staves", S.beatLines, v => { S.beatLines = v; savePrefs(); renderAll(); openSettings(); })),
+    el("div", { class: "mrow" }, toggle("Beat subdivider lines (the dashed orange box drawn around each melody note, at its own duration)", S.beatLines, v => { S.beatLines = v; savePrefs(); renderAll(); openSettings(); })),
     el("div", { class: "mrow" }, toggle("Keep the screen awake while the app is open" + ("wakeLock" in navigator ? "" : " (this browser cannot)"), S.keepAwake, v => { S.keepAwake = v; savePrefs(); if (v) wakeAcquire(); else wakeRelease(); })),
     el("div", { class: "pLbl" }, "Lyrics keyboard"), seg([[true, "App keyboard (QWERTY + symbols)"], [false, "Phone's keyboard"]], S.softKb, v => { S.softKb = v; savePrefs(); renderWeKeys(); }),
     el("div", { class: "pLbl" }, "Lyrics font"), seg([["sans", "Current"], ["serif", "Serif"], ["smallcaps", "Small caps"]], S.lyricFont, v => { S.lyricFont = v; savePrefs(); renderAll(); }),
