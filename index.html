@@ -252,7 +252,7 @@ svg text { pointer-events: none; }
 #app.deck #navRight #tempo button#tempoLbl { width: auto; }
 /* the part selectors: shown or hidden from the head; ADD to VIEW keeps its place at the row's right */
 #partsBtn { display: none; }
-#app.deck #partsBtn { display: inline-flex; position: absolute; top: 50%; right: 96px; transform: translateY(-50%); align-items: center; height: 26px; padding: 0 10px; border: 1px solid #3a8a1e; border-radius: 4px; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); font-size: 9px; font-weight: 800; letter-spacing: .04em; white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,.3); }   /* between the next-bar arrow and the save button, its left edge free to move as its own width needs */
+#app.deck #partsBtn { display: inline-flex; position: absolute; top: 50%; right: 92px; transform: translateY(-50%); align-items: center; height: 26px; padding: 0 6px; border: 1px solid #3a8a1e; border-radius: 4px; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); font-size: 7.5px; font-weight: 800; letter-spacing: .01em; white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,.3); }   /* narrow, so it clears the next-bar arrow — between it and the save button, its left edge free to move as its own width needs */
 #app.deck #partsBtn:active { filter: brightness(1.1); }
 #app.deck.noparts #rollBar { display: none; }                                               /* parts hidden: the whole row folds away — the button lives in the head now, so nothing needs to stay behind to hold its place */
 #app.deck #rollBar .rollItem { flex: 0 0 150px; min-width: 0; }
@@ -8225,8 +8225,9 @@ function allocate() {
       if (w !== active) { STEPS[w] = lo; DECK_ROWS[w] = 0; continue; }
       let target = window.innerHeight - 12 - h("head") - h("rollBar") - 6 - (h("rollBar") ? 1 : 0) - (rhyOn ? h("rhyStrip") : 0) - (lyrOn ? h("lyrStrip") : 0) - (S.dynShown && !app.classList.contains("kbUp") ? (h("dynStrip") || 32) : 0) - Math.max(h("toolbar"), 30) - topExtra - 16;   // the strips, when shown, sit flush between the stave and the tool bar
       { const side = $(w + "Win").querySelector(".side"); if (side && side.offsetHeight > 0) { const kids = [...side.children].filter(k => k.offsetHeight > 0), cs = getComputedStyle(side); const need = kids.reduce((a, k) => a + k.offsetHeight, 0) + Math.max(0, kids.length - 1) * (parseFloat(cs.rowGap) || 0) + (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0); target = Math.max(target, need - 16); } }   // never shorter than the buttons beside it need: they would hold the stave's row open and leave a gap   // the stave's drawing height: the screen less the rows above and below, the three 6px margins, the tool bar's 6px when the strips show, the frame's borders and pads
-      const k = STEP_K[S.noteSize] || 1, rows = clamp(Math.floor(target / (hi * k)), rows0, 88);   // at the stave's full scale, as many rows as fill the height — never fewer than usual, up to the whole piano
-      DECK_ROWS[w] = rows; STEPS[w] = hi;                                                   // the row height stays fixed at the stave's natural scale — only the row COUNT adapts to the room the strips leave, so spacing never fluctuates
+      const k = STEP_K[S.noteSize] || 1, fitsAtFullScale = target >= rows0 * hi * k;   // room for at least the usual row count at the stave's natural scale?
+      const rows = fitsAtFullScale ? clamp(Math.floor(target / (hi * k)), rows0, 88) : rows0;
+      DECK_ROWS[w] = rows; STEPS[w] = fitsAtFullScale ? hi : Math.max(lo, target / rows0 / k);   // the usual case: row height fixed at the stave's natural scale, only the row COUNT adapts, so spacing never fluctuates — too little room even for that (a short screen): shrink the rows themselves just enough to keep the tool bar on screen, never smaller than the usual minimum
       { const key = WIN_LO[w], v = S.song && S.song.view ? viewOf(w) : null; if (v != null && v + rows - 1 > 108) S.song.view[key] = Math.max(21, 109 - rows); }   // more rows than fit above: the range reaches lower instead
     }
     return;
