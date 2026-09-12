@@ -258,6 +258,10 @@ svg text { pointer-events: none; }
 #app.deck.noparts #rollBar { display: none; }                                               /* parts hidden: the whole row folds away — the button lives in the head now, so nothing needs to stay behind to hold its place */
 #app.deck #rollBar .rollItem { flex: 0 0 150px; min-width: 0; }
 #app.deck #rollBar .rollItem:has(input:checked) { background: var(--ground2); } #app.deck #rollBar .rollItem:not(:has(input:checked)) { background: #111; }   /* the box's own colour follows its checkbox right away, not just once ADD to VIEW commits it */
+#app.deck #rollBar .rollItem label, #app.deck #rollBar .rollItem .lbl { flex: 0 1 auto; }   /* the name at its own width, so the gear has the room past it */
+#app.deck #rollBar .rollGear { flex: 1 1 0; min-width: 22px; width: auto; height: 20px; display: flex; align-items: center; justify-content: center; padding: 0; border: none; border-radius: 4px; background: none; box-shadow: none; color: #fff; cursor: pointer; }   /* the part's gear, centred in the room between the name and the pill's right edge */
+#app.deck #rollBar .rollGear .ico { width: 14px; height: 14px; display: block; }
+#app.deck #rollBar .rollGear:active { filter: brightness(1.4); }
 #addView { display: none; }
 #app.deck #addView { display: flex; grid-area: addv; align-self: center; justify-self: stretch; height: 22px; margin-top: 6px; padding: 0 2px; align-items: center; justify-content: center; text-align: center; border: 1px solid #3a8a1e; border-radius: 4px; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); font-size: 7px; font-weight: 800; letter-spacing: .02em; line-height: 1.05; white-space: normal; box-shadow: 0 1px 2px rgba(0,0,0,.3); }   /* ADD to VIEW: in the column beside the stave, so the selectors centre freely */
 #app.deck.noparts #addView { display: none; }
@@ -318,7 +322,7 @@ svg text { pointer-events: none; }
 #app.deck .sideBtn:active { filter: brightness(1.1); }
 #app.deck #dynBtn, #app.deck #rhyBtn, #app.deck #lyrBtn { position: static; background: linear-gradient(#fff, #d9d9d9); color: #111; border: 1.5px solid #141414; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); }   /* stacked below the stave's foot, in the tool bar's own silvery finish — LYRICS, RHYTHM, DYN, top to bottom */
 #app.deck #dynBtn:active, #app.deck #rhyBtn:active, #app.deck #lyrBtn:active { filter: none; background: linear-gradient(#ffd27a, #f5a623); }
-#app.deck.kbUp #rhyBtn { position: absolute; left: 0; right: 0; }   /* keyboard open: rides beside the Rhythm strip again, placed by script */
+#app.deck #dynBtn.beside, #app.deck #rhyBtn.beside, #app.deck #lyrBtn.beside { position: absolute; left: 0; right: 0; }   /* its strip shows: the button floats level with it, placed by script */
 #kbClose { display: none !important; }
 #app.deck.kbUp #kbClose { display: flex !important; background: #fff; color: #111; }
 #app.deck.kbUp #dynBtn, #app.deck.kbUp #lyrBtn, #app.deck.kbUp.norhy #rhyBtn { display: none !important; }   /* while the keyboard is open the column keeps clear of the part buttons */   /* the keyboard's CLOSE, in the column above the strip buttons while it is open */
@@ -8584,6 +8588,7 @@ function dynAt(bar, t) { let d = null; for (const e of bar.ev.melody) if (e.dyn 
    up / down buttons beside the stave, named for the parts above and below, move between them */
 const deckMode = () => window.matchMedia("(min-width: 860px) and (min-aspect-ratio: 5/4), (max-height: 520px) and (min-aspect-ratio: 5/4)").matches;
 const DECK_NAME = { mel: "MELODY", acc: "ACCOMPANIMENT", bass: "BASS" };
+const gearIco = () => { const s = svgEl("svg", { class: "ico" }); s.append(svgEl("use", { href: "#icoGear" })); return s; };   // the shared gear symbol (svgEl's third argument is text, so the <use> must be appended)
 function deckActive() { const open = ["mel", "acc", "bass"].find(w => S.winState[w] !== "closed"); return S.deck.includes(open) ? open : S.deck[0]; }
 /* a flipping third of the tool bar scrolls sideways: touch pans it natively (the keys let a swipe through), a mouse wheel scrolls
    it, and a mouse drag from anywhere in it — keys included — scrolls it too, the drag swallowing the click it would otherwise make */
@@ -8686,12 +8691,13 @@ function placeDeckLabels() {
     const x = frame.offsetLeft + frame.offsetWidth / 2;
     for (const id of ["nav", "rollBar"]) { const e = $(id); if (!e || !e.offsetWidth) continue; e.style.position = "relative"; const cur = parseFloat(e.style.left) || 0, fr = frame.getBoundingClientRect(), eb = e.getBoundingClientRect(); const mid = (fr.left + fr.right) / 2; let eMid = (eb.left + eb.right) / 2; if (id === "rollBar") { const items = e.querySelectorAll(".rollItem"); if (items.length && items[0].offsetWidth > 0) eMid = (items[0].getBoundingClientRect().left + items[items.length - 1].getBoundingClientRect().right) / 2; } else { const a = $("prevBar"), b = $("nextBar"); if (a && b) eMid = (a.getBoundingClientRect().left + b.getBoundingClientRect().right) / 2; } /* the bracket itself (← to →) over the part label, the parts button riding beside it */ e.style.left = Math.round(cur + mid - eMid) + "px"; }   // the bracket and the selectors centred on the stave's frame
     { const nav = $("deckNav"), rowTop = nav.getBoundingClientRect().top - (parseFloat(nav.style.marginTop) || 0); nav.style.marginTop = Math.max(0, frame.getBoundingClientRect().top - rowTop) + "px"; nav.style.height = frame.offsetHeight + "px"; }   // the column beside the stave: level with the frame, exactly as tall
-    { const nav = $("deckNav"), navTop = nav.getBoundingClientRect().top, H = 28, kbUp = $("app").classList.contains("kbUp");
-      /* the keyboard open: only CLOSE (level with the Lyrics strip) and the Rhythm strip's button (beside its own strip) show; LYRICS, RHYTHM and DYN otherwise sit put, stacked below the gear */
-      if (kbUp) {
-        const kc = $("kbClose"), lyrStrip = $("lyrStrip"); if (kc && lyrStrip && lyrStrip.offsetHeight > 0) { const r = lyrStrip.getBoundingClientRect(); kc.style.top = Math.round(r.top + r.height / 2 - H / 2 - navTop) + "px"; }
-        const rb = $("rhyBtn"), rhyStrip = $("rhyStrip"); if (rb && rhyStrip && rhyStrip.offsetHeight > 0) { const r = rhyStrip.getBoundingClientRect(); rb.style.top = Math.round(r.top + r.height / 2 - H / 2 - navTop) + "px"; }
-      } }
+    { const nav = $("deckNav"), navTop = nav.getBoundingClientRect().top, kbUp = $("app").classList.contains("kbUp");
+      /* a strip that shows: its button floats level with it (centred on the strip's height); a hidden strip's button stays in the stack under the gear.
+         The keyboard open: only CLOSE (level with the Lyrics strip) and the Rhythm strip's button show */
+      const beside = (id, strip) => { const b = $(id); if (!b) return; const on = !!(strip && strip.offsetHeight > 0); b.classList.toggle("beside", on);
+        if (on) { const r = strip.getBoundingClientRect(); b.style.top = Math.round(r.top + r.height / 2 - b.offsetHeight / 2 - navTop) + "px"; } else b.style.top = ""; };
+      if (kbUp) { beside("kbClose", $("lyrStrip")); beside("rhyBtn", $("rhyStrip")); }
+      else { beside("lyrBtn", $("lyrStrip")); beside("rhyBtn", $("rhyStrip")); beside("dynBtn", $("dynStrip")); } }
     top.style.left = x + "px"; top.style.top = frame.offsetTop + "px";
     bot.style.left = x + "px"; bot.style.top = (frame.offsetTop + frame.offsetHeight) + "px";
   }
@@ -8721,7 +8727,9 @@ function renderRollBar() {
     for (const w of ["mel", "acc", "bass"]) {                                            // the part selection: a check box each
       const cb = el("input", { type: "checkbox", title: "Check the parts to have in view, then ADD to VIEW" }); cb.checked = S.deckSel.includes(w);
       cb.addEventListener("change", () => { S.deckSel = ["mel", "acc", "bass"].filter(x => x === w ? cb.checked : S.deckSel.includes(x)); });
-      bar.append(el("div", { class: "rollItem" + (S.deck.includes(w) ? " open" : "") }, el("label", {}, cb, el("span", { class: "lbl" }, w === "mel" ? "Melody" : w === "acc" ? "Accompaniment" : "Bass"))));
+      const pretty = DECK_NAME[w].charAt(0) + DECK_NAME[w].slice(1).toLowerCase();
+      const gearBtn = el("button", { class: "rollGear", title: pretty + " settings", onclick: e => { e.preventDefault(); e.stopPropagation(); openWinSettings(w); } }, gearIco());   // a small gear, centred between the name and the pill's right edge: the part's own settings
+      bar.append(el("div", { class: "rollItem" + (S.deck.includes(w) ? " open" : "") }, el("label", {}, cb, el("span", { class: "lbl" }, w === "mel" ? "Melody" : w === "acc" ? "Accomp." : "Bass")), gearBtn));
     }
     { const old = $("addView"); if (old) old.remove(); }
     app.append(el("button", { id: "addView", title: "The checked parts make up the view; the up / down buttons beside the stave move between them", onclick: () => {
@@ -8731,7 +8739,7 @@ function renderRollBar() {
     const i = S.deck.indexOf(active), up = i > 0 ? S.deck[i - 1] : null, dn = i >= 0 && i < S.deck.length - 1 ? S.deck[i + 1] : null;
     const SHORT = { mel: "MELODY", acc: "ACCOMP", bass: "BASS" };
     const arrow = (dir, w) => { const b = el("button", { class: "part", title: w ? (dir < 0 ? "Up to " : "Down to ") + DECK_NAME[w] : "Nothing " + (dir < 0 ? "above" : "below"), onclick: () => { if (w) deckShow(w); } }, el("span", { class: "big" }, dir < 0 ? "▲" : "▼"), el("span", { class: "name" }, w ? SHORT[w] : "")); if (!w) b.disabled = true; return b; };
-    const gear = el("button", { class: "gearBtn", title: DECK_NAME[active].charAt(0) + DECK_NAME[active].slice(1).toLowerCase() + " settings", onclick: () => openWinSettings(active) }, svgEl("svg", { class: "ico" }, svgEl("use", { href: "#icoGear" })));
+    const gear = el("button", { class: "gearBtn", title: DECK_NAME[active].charAt(0) + DECK_NAME[active].slice(1).toLowerCase() + " settings", onclick: () => openWinSettings(active) }, gearIco());
     app.classList.toggle("dynOn", !!S.dynShown);
     app.classList.toggle("kbUp", !!(typeof WE !== "undefined" && WE.on && $("wordEdit").classList.contains("on")));   // the keyboard open: the strips ride on it, the Dynamics strip steps aside — settled here, before the stave is sized
     /* the side buttons: each strip's SHOW / HIDE beside its strip, and CLOSE for the keyboard above them — placed by script (placeDeckLabels) */
