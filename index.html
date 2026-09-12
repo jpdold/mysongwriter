@@ -8596,8 +8596,10 @@ function wireScroller(sc) {
 }
 /* the Dynamics strip: the part in view's dynamics and hairpins along the beats, on the same silver as the Rhythm strip */
 function renderDynStrip(g, bars, dividers) {
-  const svg = $("dynSvg"); if (!svg || !deckMode() || !S.dynShown) return;
-  const HD = 30, part = WIN_PART[deckActive()]; /* about a third taller than the Rhythm strip */ svg.replaceChildren(); svg.setAttribute("height", HD); svg.setAttribute("viewBox", `0 0 ${g.W} ${HD}`); svg.setAttribute("width", g.W); svg.style.width = g.W + "px";
+  const svg = $("dynSvg"); if (!svg || !deckMode()) return;
+  const HD = 30; /* about a third taller than the Rhythm strip */ svg.setAttribute("height", HD); svg.setAttribute("viewBox", `0 0 ${g.W} ${HD}`); svg.setAttribute("width", g.W); svg.style.width = g.W + "px";   // sized whether shown or not: hidden by CSS alone, so its box is never left at the browser's blank-svg default and allocate() never misjudges the room it will take
+  if (!S.dynShown) { svg.replaceChildren(); return; }
+  const part = WIN_PART[deckActive()]; svg.replaceChildren();
   svg.append(svgEl("rect", { class: "hit", x: 0, y: 0, width: g.W, height: HD, fill: "transparent", "data-lane": "dyn" }));
   dividers(svg, "#2b2e33", 0.55, HD);
   const font = { "font-family": "Georgia, 'Times New Roman', serif", "font-style": "italic", "font-weight": 700, fill: "#fff", "pointer-events": "none" };
