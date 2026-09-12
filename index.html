@@ -273,16 +273,24 @@ svg text { pointer-events: none; }
 #app.deck #head { position: relative; }
 #app.deck #topTransport #saveBtn .ico { width: 17px; height: 17px; }
 /* the tools: one bar, a button high, across the foot of the screen */
-#app.deck #arrows { width: 92px; flex: 0 0 auto; }
 #app.deck #undoRow { width: 78px; flex: 0 0 auto; margin-top: 0; }
-#app.deck #mvRow { width: 82px; flex: 0 0 auto; margin-top: 0; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 8px 18px; align-self: center; }
+/* PITCH (▲ ▼) and ITEM (◀ ▶): each its own pair, capped exactly as MOVE / DELETE's BULK cap is */
+#app.deck #pitchArrows, #app.deck #itemArrows { width: 48px; flex: 0 0 auto; margin-top: 0; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 8px 18px; align-self: center; }
+#app.deck #pitchArrows::before, #app.deck #itemArrows::before { grid-column: 1 / -1; grid-row: 1; display: block; height: 8px; line-height: 8px; text-align: center; font-size: 5.5px; font-weight: 800; letter-spacing: .18em; color: #fff; background: #111; border: 1.5px solid #141414; border-bottom: none; border-radius: 5px 5px 0 0; box-sizing: border-box; }
+#app.deck #pitchArrows::before { content: "PITCH"; } #app.deck #itemArrows::before { content: "ITEM"; }
+#app.deck #toolL #pitchArrows button, #app.deck #toolL #itemArrows button { grid-row: 2; height: 18px; font-size: 8px; border-top: 1.5px solid #141414; }
+#app.deck #pitchArrows button:first-child, #app.deck #itemArrows button:first-child { border-radius: 0 0 0 4px; } #app.deck #pitchArrows button:last-child, #app.deck #itemArrows button:last-child { border-radius: 0 0 4px 0; }
+#app.deck #pitchArrows .aico, #app.deck #itemArrows .aico { width: 12px; height: 12px; }
+/* the staff-lines switch on the flip bar's second pane, on/off like the strip show/hide buttons beside the stave */
+#app.deck .beatBtn { flex: 0 0 auto; margin-left: auto; height: 26px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 0 8px; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); font-size: 7px; font-weight: 800; letter-spacing: .04em; line-height: 1.1; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); }
+#app.deck .beatBtn:active { filter: brightness(1.1); }
+#app.deck #mvRow { width: 82px; flex: 0 0 auto; margin-top: 0; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 8px 18px; align-self: center; }   /* PITCH / ITEM beside it use the same grid: an 8px cap row over an 18px key row */
 #app.deck #mvRow::before { content: "BULK"; grid-column: 1 / -1; grid-row: 1; display: block; height: 8px; line-height: 8px; text-align: center; font-size: 5.5px; font-weight: 800; letter-spacing: .18em; color: #fff; background: #111; border: 1.5px solid #141414; border-bottom: none; border-radius: 5px 5px 0 0; box-sizing: border-box; }   /* a cap over MOVE and DELETE: a label, not a key */
 #app.deck #toolL #mvRow button { grid-row: 2; height: 18px; font-size: 8px; border-top: 1.5px solid #141414; }   /* shaved a little at the top: the cap and the keys together stand as tall as the row */
 #app.deck #mvRow button:first-of-type { border-radius: 0 0 0 4px; } #app.deck #mvRow button:last-of-type { border-radius: 0 0 4px 0; }
-#app.deck #arrows button, #app.deck #undoRow button, #app.deck #mvRow button { height: 26px; border-top: 1.5px solid #141414; border-radius: 0; font-size: 8.5px; box-shadow: none; }
-#app.deck #arrows .aico { width: 12px; height: 12px; }
-#app.deck #arrows button:first-child, #app.deck #undoRow button:first-child { border-radius: 4px 0 0 4px; }
-#app.deck #arrows button:last-child, #app.deck #undoRow button:last-child { border-radius: 0 4px 4px 0; }
+#app.deck #undoRow button { height: 26px; border-top: 1.5px solid #141414; border-radius: 0; font-size: 8.5px; box-shadow: none; }
+#app.deck #undoRow button:first-child { border-radius: 4px 0 0 4px; }
+#app.deck #undoRow button:last-child { border-radius: 0 4px 4px 0; }
 #app.deck .tplay .tri { font-size: 9px; line-height: 1; margin-right: 1px; }
 #app.deck #toolL #mvRow button:first-child { border-radius: 0 0 0 4px; } #app.deck #toolL #mvRow button:last-child { border-radius: 0 0 4px 0; }   /* square top corners: MOVE / DELETE meet the BULK cap flush; the bottom corners stay rounded */
 #app.deck #quick { width: auto; flex: 0 0 auto; display: flex; gap: 3px; align-items: center; position: static; border: none; background: none; box-shadow: none; padding: 0; }   /* the notes: keys like the other palettes on the flip bar */
@@ -311,15 +319,19 @@ svg text { pointer-events: none; }
 #app.deck #rhyStrip .tag, #app.deck #lyrStrip .tag { visibility: hidden; }
 #app.deck #lyrStrip { margin-top: 0; }                                                       /* flush on the rhythm strip */
 #app.deck.norhy #rhyStrip { display: none; } #app.deck.nolyr #lyrStrip { display: none; }
-/* the tool bar: a static left half (arrows, UNDO / REDO, MOVE / DELETE, PLAY BAR, PLAY SELECT, CHORD) and a right half that flips
-   between four palettes — notes (the quick palette), rests, dynamics, marks — with the flip button at its far corner */
+/* the tool bar, in thirds, each flipping on its own: the left between its tools (UNDO / REDO, MOVE / DELETE, PITCH, ITEM) and the
+   staff-lines switch; the middle between playback and this part's buttons; the right between four palettes — notes (the quick
+   palette), rests, dynamics, marks — each flip button at its own third's far corner */
 #toolbar { display: none; }
 #app.deck #toolbar { grid-area: t; display: flex; gap: 2px; align-items: center; margin-top: 0; min-width: 0; padding: 3px 6px; background: linear-gradient(#f2f3f5, #d2d5da); border: 1px solid #8a8d92; border-radius: 4px; box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(0,0,0,.25); }
-#app.deck #toolL { gap: 2px; }
 #app.deck button.tplay { height: 26px; font-size: 8px; padding: 0 6px; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); color: #111; font-weight: 800; letter-spacing: .04em; white-space: nowrap; }
 #app.deck button.tplay.on { background: #2f7fd6; color: #fff; }
 #app.deck button.tplay.playing, #app.deck button.tplay:active { background: linear-gradient(#ffd27a, #f5a623); color: #111; }
-#toolL { flex: 0 0 auto; display: flex; gap: 6px; align-items: center; }                     /* the static third: its own width */
+#toolL { flex: 1 1 0; min-width: 100px; display: flex; gap: 2px; align-items: center; overflow: hidden; }              /* flips now, like the other two thirds */
+#toolLScroll { flex: 1 1 0; min-width: 0; display: flex; gap: 2px; align-items: center; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -webkit-overflow-scrolling: touch; touch-action: pan-x; }
+#toolLScroll::-webkit-scrollbar { display: none; }
+#toolLScroll > * { flex: 0 0 auto; }
+#toolLScroll > [hidden] { display: none !important; }
 #toolM { flex: 1 1 0; min-width: 120px; display: flex; gap: 2px; align-items: center; overflow: hidden; }   /* the middle third: playback, or this part's buttons, flipping and scrolling */
 #app.deck #toolM, #app.deck #toolR { border-left: 1px solid rgba(0,0,0,.28); box-shadow: inset 1px 0 0 rgba(255,255,255,.75); padding-left: 8px; margin-left: 4px; align-self: stretch; }   /* a subtle divider between the thirds: a dark hairline with a light one beside it, the spacing kept even */
 #toolMScroll { flex: 1 1 0; min-width: 0; display: flex; gap: 4px; align-items: center; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -webkit-overflow-scrolling: touch; touch-action: pan-x; }
@@ -329,14 +341,14 @@ svg text { pointer-events: none; }
 #toolR { flex: 1 1 0; min-width: 120px; display: flex; gap: 2px; align-items: center; overflow: hidden; }   /* the flipping half: what is left, and no more */
 #toolScroll { flex: 1 1 0; min-width: 0; display: flex; gap: 4px; align-items: center; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -webkit-overflow-scrolling: touch; touch-action: pan-x; }   /* the palettes scroll sideways: items vanish at its edge and return as it scrolls back */
 #toolScroll::-webkit-scrollbar { display: none; }
-#app.deck #quick, #app.deck #quick .cell button, #app.deck #palette, #app.deck #flipPal, #app.deck #flipPal button, #app.deck #topTransport, #app.deck #toolMScroll button { touch-action: pan-x; }   /* a swipe over the keys pans the scroller */
+#app.deck #quick, #app.deck #quick .cell button, #app.deck #palette, #app.deck #flipPal, #app.deck #flipPal button, #app.deck #topTransport, #app.deck #toolMScroll button, #app.deck #toolLScroll button { touch-action: pan-x; }   /* a swipe over the keys pans the scroller */
 #toolScroll > * { flex: 0 0 auto; }
 #toolL button.tplay { height: 30px; padding: 0 7px; flex: 0 0 auto; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); color: #111; font-size: 8.5px; font-weight: 800; letter-spacing: .04em; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
 #toolL button.tplay.on { background: #2f7fd6; color: #fff; }
 #toolL button.tplay.playing, #toolL button.tplay:active { background: linear-gradient(#ffd27a, #f5a623); color: #111; }
-#flipBtn, #flipMBtn { margin-left: auto; flex: 0 0 auto; width: 34px; height: 30px; padding: 0; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); color: #111; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
-#flipBtn .big, #flipMBtn .big { font-size: 15px; line-height: 1; } #flipBtn .cap, #flipMBtn .cap { font-size: 6.5px; font-weight: 800; letter-spacing: .04em; line-height: 1; }
-#flipBtn:active, #flipMBtn:active { background: linear-gradient(#ffd27a, #f5a623); }
+#flipBtn, #flipMBtn, #flipLBtn { margin-left: auto; flex: 0 0 auto; width: 34px; height: 30px; padding: 0; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); color: #111; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
+#flipBtn .big, #flipMBtn .big, #flipLBtn .big { font-size: 15px; line-height: 1; } #flipBtn .cap, #flipMBtn .cap, #flipLBtn .cap { font-size: 6.5px; font-weight: 800; letter-spacing: .04em; line-height: 1; }
+#flipBtn:active, #flipMBtn:active, #flipLBtn:active { background: linear-gradient(#ffd27a, #f5a623); }
 #flipPal { display: flex; gap: 4px; align-items: center; flex: 0 0 auto; }
 #flipPal[hidden] { display: none; }
 #app.deck #quick[hidden], #app.deck #palette[hidden] { display: none !important; }        /* flipped away: their own display rules must not keep them on top */
@@ -832,7 +844,7 @@ body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the s
 
   <div id="rollBar"></div>
   <div id="deckNav"></div>
-  <div id="toolbar"><div id="toolL"></div><div id="toolM"><div id="toolMScroll"></div><button id="flipMBtn" title="Flip: playback · this part"></button></div><div id="toolR"><div id="toolScroll"><div id="flipPal"></div></div><button id="flipBtn" title="Flip the palette: notes · rests · dynamics · marks"></button></div></div>
+  <div id="toolbar"><div id="toolL"><div id="toolLScroll"></div><button id="flipLBtn" title="Flip: tools · staff lines"></button></div><div id="toolM"><div id="toolMScroll"></div><button id="flipMBtn" title="Flip: playback · this part"></button></div><div id="toolR"><div id="toolScroll"><div id="flipPal"></div></div><button id="flipBtn" title="Flip the palette: notes · rests · dynamics · marks"></button></div></div>
   <div id="beatRow"></div>
 
   <section class="win" id="melWin">
@@ -8153,14 +8165,14 @@ const setMode = () => {};                          // engine shims (the old mode
 const renderPanel = () => renderAll();
 function loadPrefs() {
   const p = readJSON(STORE.prefs, {});
-  S.theme = p.theme || "auto"; S.followWords = false; S.noteStyle = p.noteStyle || "trad"; S.noteSize = NOTE_SCALE[p.noteSize] ? p.noteSize : "m"; S.chordColor = p.chordColor || "#ffffff"; S.halfLines = p.halfLines == null ? true : !!p.halfLines; S.ftp = Object.assign({}, FTP_DEFAULT, p.ftp || {}); if (!FTP_ENABLED) S.ftp.on = false;
+  S.theme = p.theme || "auto"; S.followWords = false; S.noteStyle = p.noteStyle || "trad"; S.noteSize = NOTE_SCALE[p.noteSize] ? p.noteSize : "m"; S.chordColor = p.chordColor || "#ffffff"; S.halfLines = p.halfLines == null ? true : !!p.halfLines; S.beatLines = p.beatLines == null ? true : !!p.beatLines; S.ftp = Object.assign({}, FTP_DEFAULT, p.ftp || {}); if (!FTP_ENABLED) S.ftp.on = false;
   S.winSize = WIN[p.winSize] ? p.winSize : "m"; S.chordsDisp = p.chordsDisp || "names"; S.metro = p.metro || "off"; S.custom = p.custom || null; S.len = p.len || 1;
   S.rhyShown = p.rhyShown !== false && p.stripsShown !== false; S.lyrShown = p.lyrShown !== false && p.stripsShown !== false; S.partsShown = p.partsShown !== false; S.dynShown = !!p.dynShown; 
   S.deck = Array.isArray(p.deck) && p.deck.length ? p.deck.filter(w => ["mel", "acc", "bass"].includes(w)) : ["mel", "acc", "bass"]; if (!S.deck.length) S.deck = ["mel"];
   S.lyricFont = p.lyricFont || "sans"; S.chipMode = "multi"; S.keepAwake = p.keepAwake !== false; S.paper = Object.assign({ mel: "default", acc: "default", bass: "default" }, p.paper || {}); S.quick = Object.assign({ cells: QUICK_DEFAULT.slice(), locked: true, float: false, x: null, y: null }, p.quick || {}); if (!Array.isArray(S.quick.cells) || S.quick.cells.join() === QUICK_OLD.join()) S.quick.cells = QUICK_DEFAULT.slice(); if (S.quick.cells.length === 8) S.quick.cells.push("sl", "ti", "gh", "dt"); if (S.quick.cells.length !== 12) S.quick.cells = QUICK_DEFAULT.slice();   // a third row joined: slur, tie, ghost note, dot S.winState = Object.assign({ mel: "open", acc: "closed", bass: "closed" }, p.winState || {}); S.zoomWin = Object.assign({ mel: 1, acc: 1, bass: 1 }, p.zoomWin || {}); S.midi = p.midi || {}; S.viewSpan = [1, 2, 3, 4].includes(p.viewSpan) ? p.viewSpan : 1; if (p.softKb != null) S.softKb = p.softKb2 == null ? true : !!p.softKb2; S.kbPos = p.kbPos || null;   // the app keyboard, on unless switched off S.layout = p.layout === "stack" ? "stack" : "rolled";
   applyTheme();
 }
-function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, deck: S.deck, rhyShown: S.rhyShown, lyrShown: S.lyrShown, partsShown: S.partsShown, dynShown: S.dynShown, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, keepAwake: S.keepAwake, paper: S.paper, quick: S.quick, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout }); }
+function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, deck: S.deck, rhyShown: S.rhyShown, lyrShown: S.lyrShown, partsShown: S.partsShown, dynShown: S.dynShown, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, beatLines: S.beatLines, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, keepAwake: S.keepAwake, paper: S.paper, quick: S.quick, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout }); }
 function applyTheme() {
   const r = document.documentElement;
   if (S.theme === "dark") r.setAttribute("data-theme", "dark"); else r.removeAttribute("data-theme");
@@ -8703,9 +8715,14 @@ function renderRollBar() {
     const lb = side("lyrBtn", S.lyrShown !== false, "LYRICS", () => { S.lyrShown = S.lyrShown === false; savePrefs(); renderAll(); }, "Show or hide the Lyrics strip");
     const kc = el("button", { id: "kbClose", class: "sideBtn", title: "Close the keyboard (Esc)", onclick: () => closeWordEdit() }, el("span", { class: "big" }, "✕"), el("span", {}, "CLOSE"));
     nav.append(arrow(-1, up), arrow(1, dn), el("div", { class: "spacer" }), gear, kc, db, rb, lb);   // ▲ flush with the stave's top; the gear at the foot; the side buttons float beside their strips
-    /* the tool bar: the static left half, and the right half that flips */
-    const tl = $("toolL"), tr = $("toolR"), tm = $("toolMScroll");
-    tl.append($("arrows"), $("undoRow"), $("mvRow"));
+    /* the tool bar: the left third flips too now — its tools, or the staff-lines switch — and the middle and right thirds flip as before */
+    const tr = $("toolR"), tm = $("toolMScroll");
+    { const tls = $("toolLScroll"), flipL = S.deckFlipL || 0;
+      const pitchG = el("div", { id: "pitchArrows" }, $("arrUp"), $("arrDn")), itemG = el("div", { id: "itemArrows" }, $("arrL"), $("arrR"));
+      const blBtn = el("button", { id: "beatLinesBtn", class: "beatBtn", title: "Show or hide the beat subdivider lines on the staves", onclick: () => { S.beatLines = !S.beatLines; savePrefs(); renderAll(); } }, el("span", {}, S.beatLines ? "HIDE" : "SHOW"), el("span", {}, "BEAT LINES"));
+      tls.replaceChildren($("undoRow"), $("mvRow"), pitchG, itemG, blBtn);                 // furthest right: ITEM, then PITCH — UNDO / REDO sits leftmost
+      $("undoRow").hidden = $("mvRow").hidden = pitchG.hidden = itemG.hidden = flipL !== 0; blBtn.hidden = flipL !== 1;
+      const flb = $("flipLBtn"); flb.replaceChildren(el("span", { class: "big" }, "⟳"), el("span", { class: "cap" }, flipL === 0 ? "TOOLS" : "STAFF LINES")); flb.onclick = () => { S.deckFlipL = ((S.deckFlipL || 0) + 1) % 2; renderAll(); }; }
     if (!tm.querySelector(".tplay")) tm.append(
       el("button", { class: "tplay", id: "tPlayBar", title: "Play Bar — this part alone, this bar", onclick: e => playSolo(deckActive(), e.currentTarget) }, el("span", { class: "tri" }, "▶"), " BAR"),
       el("button", { class: "tplay", id: "tPlaySel", title: "Play Select — choose the notes to hear", onclick: e => togglePlaySelect(deckActive(), e.currentTarget) }, el("span", { class: "tri" }, "▶"), " SELECT"),
@@ -8715,13 +8732,14 @@ function renderRollBar() {
       const fb = $("flipMBtn"); fb.replaceChildren(el("span", { class: "big" }, "⟳"), el("span", { class: "cap" }, fm === 0 ? "PLAYBACK" : "THIS PART")); fb.onclick = () => { S.deckFlipM = ((S.deckFlipM || 0) + 1) % 2; renderAll(); }; }
     if (S.quick) { S.quick.float = false; S.quick.locked = true; }                       // on the deck the quick palette is part of the bar: fixed, never floating
     const sc = $("toolScroll"); sc.prepend($("quick"), $("palette"));
-    wireScroller(sc); wireScroller($("toolMScroll"));
+    wireScroller(sc); wireScroller($("toolMScroll")); wireScroller($("toolLScroll"));
     const flip = S.deckFlip || 0, FLIP_NAME = ["NOTES", "RESTS", "DYNAMICS", "MARKS"];
     $("quick").hidden = flip !== 0; $("palette").hidden = flip !== 0; $("flipPal").hidden = flip === 0;
     const fb = $("flipBtn"); fb.replaceChildren(el("span", { class: "big" }, "⟳"), el("span", { class: "cap" }, FLIP_NAME[flip])); fb.onclick = () => { S.deckFlip = ((S.deckFlip || 0) + 1) % 4; renderAll(); };
     return;
   }
   S.deckSel = null; { const old = $("addView"); if (old) old.remove(); }
+  { const ar = $("arrows"), up = $("arrUp"); if (ar && up && up.parentNode !== ar) ar.append(up, $("arrDn"), $("arrL"), $("arrR")); }   // the four arrows, split apart for the deck's two capped pairs, rejoin the phone's one row
   for (const id of ["arrows", "undoRow", "mvRow", "quick", "palette"]) { const e = $(id); if (e && e.parentNode !== app) { app.append(e); e.hidden = false; } }   // the tools back on the page
   $("topTransport").hidden = false;
   if (S.layout !== "rolled") return;
@@ -8802,7 +8820,7 @@ function drawStaff(svg, g, key) {
   }
   if (!S.halfLines) { const ty = Math.round(g.y(g.hi) - g.step / 2) + 0.5; svg.append(svgEl("line", { class: "stl", x1: 0, x2: g.W, y1: ty, y2: ty, stroke: css("--line"), "stroke-width": 2 })); }
   g.bars.forEach((bi, k) => {
-    for (let b = 1; b < barBeats(bi); b++) { const bx = g.x(bi, b); /* exact, not rounded: the halves either side match to the pixel */ svg.append(svgEl("line", { class: "stl", x1: bx, x2: bx, y1: 0, y2: g.H, stroke: "#fff", "stroke-width": g.n > 1 ? 3 : 5, opacity: 0.9 })); svg.append(svgEl("line", { class: "stl", x1: bx, x2: bx, y1: 0, y2: g.H, stroke: css("--beat"), "stroke-width": g.n > 1 ? 2 : 3, "stroke-dasharray": "6 4", opacity: g.n > 1 ? 0.7 : 1 })); }
+    if (S.beatLines) for (let b = 1; b < barBeats(bi); b++) { const bx = g.x(bi, b); /* exact, not rounded: the halves either side match to the pixel */ svg.append(svgEl("line", { class: "stl", x1: bx, x2: bx, y1: 0, y2: g.H, stroke: "#fff", "stroke-width": g.n > 1 ? 3 : 5, opacity: 0.9 })); svg.append(svgEl("line", { class: "stl", x1: bx, x2: bx, y1: 0, y2: g.H, stroke: css("--beat"), "stroke-width": g.n > 1 ? 2 : 3, "stroke-dasharray": "6 4", opacity: g.n > 1 ? 0.7 : 1 })); }   // the beat subdivider lines — off in Settings or from the toolbar, the bar line beside them stays
     if (k > 0) { const bx = g.x(bi, 0); svg.append(svgEl("line", { class: "stl", x1: bx, x2: bx, y1: 0, y2: g.H, stroke: css("--beat"), "stroke-width": 3.5 })); }
   });
   const defs = svgEl("defs"), grad = (id, x2, y2, a) => { const lg = svgEl("linearGradient", { id, x1: 0, y1: 0, x2, y2 }); lg.append(svgEl("stop", { offset: 0, "stop-color": "#000", "stop-opacity": a }), svgEl("stop", { offset: 1, "stop-color": "#000", "stop-opacity": 0 })); return lg; };
@@ -10512,6 +10530,7 @@ function openSettings() {
     el("div", { class: "pLbl" }, "Note size"), seg([["s", "Small"], ["m", "Medium"], ["l", "Large"]], S.noteSize, v => { S.noteSize = v; savePrefs(); renderAll(); }),
     el("div", { class: "pLbl" }, "Chord-mode notes"), seg([["#ffffff", "White"], ["#ffd23f", "Gold"], ["#6fb3ff", "Sky"], ["#8fd14f", "Green"], ["#f4a0c8", "Pink"]], S.chordColor, v => { S.chordColor = v; savePrefs(); renderAll(); }),
     el("div", { class: "mrow" }, toggle("Lines and spaces (half steps alternate line, space, line, space; off = one half step per space)", S.halfLines, v => { S.halfLines = v; savePrefs(); renderAll(); openSettings(); })),
+    el("div", { class: "mrow" }, toggle("Beat subdivider lines on the staves", S.beatLines, v => { S.beatLines = v; savePrefs(); renderAll(); openSettings(); })),
     el("div", { class: "mrow" }, toggle("Keep the screen awake while the app is open" + ("wakeLock" in navigator ? "" : " (this browser cannot)"), S.keepAwake, v => { S.keepAwake = v; savePrefs(); if (v) wakeAcquire(); else wakeRelease(); })),
     el("div", { class: "pLbl" }, "Lyrics keyboard"), seg([[true, "App keyboard (QWERTY + symbols)"], [false, "Phone's keyboard"]], S.softKb, v => { S.softKb = v; savePrefs(); renderWeKeys(); }),
     el("div", { class: "pLbl" }, "Lyrics font"), seg([["sans", "Current"], ["serif", "Serif"], ["smallcaps", "Small caps"]], S.lyricFont, v => { S.lyricFont = v; savePrefs(); renderAll(); }),
