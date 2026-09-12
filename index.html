@@ -8723,20 +8723,20 @@ function renderRollBar() {
       const blBtn = el("button", { id: "beatLinesBtn", class: "beatBtn", title: "Show or hide the beat subdivider lines on the staves", onclick: () => { S.beatLines = !S.beatLines; savePrefs(); renderAll(); } }, el("span", {}, S.beatLines ? "HIDE" : "SHOW"), el("span", {}, "BEAT LINES"));
       tls.replaceChildren($("undoRow"), $("mvRow"), pitchG, itemG, blBtn);                 // furthest right: ITEM, then PITCH — UNDO / REDO sits leftmost
       $("undoRow").hidden = $("mvRow").hidden = pitchG.hidden = itemG.hidden = flipL !== 0; blBtn.hidden = flipL !== 1;
-      const flb = $("flipLBtn"); flb.replaceChildren(el("span", { class: "big" }, "⟳"), el("span", { class: "cap" }, flipL === 0 ? "TOOLS" : "STAFF LINES")); flb.onclick = () => { S.deckFlipL = ((S.deckFlipL || 0) + 1) % 2; renderAll(); }; }
+      const flb = $("flipLBtn"); flb.replaceChildren(el("span", { class: "big" }, "⟳"), el("span", { class: "cap" }, "MORE")); flb.onclick = () => { S.deckFlipL = ((S.deckFlipL || 0) + 1) % 2; renderAll(); }; }
     if (!tm.querySelector(".tplay")) tm.append(
       el("button", { class: "tplay", id: "tPlayBar", title: "Play Bar — this part alone, this bar", onclick: e => playSolo(deckActive(), e.currentTarget) }, el("span", { class: "tri" }, "▶"), " BAR"),
       el("button", { class: "tplay", id: "tPlaySel", title: "Play Select — choose the notes to hear", onclick: e => togglePlaySelect(deckActive(), e.currentTarget) }, el("span", { class: "tri" }, "▶"), " SELECT"),
       el("button", { class: "tplay", id: "tChord", title: "Chord mode: every tap stacks a note on the chord being built", onclick: () => toggleChordMode(deckActive()) }, "CHORD"));
     $("tPlaySel").classList.toggle("on", !!(typeof PSEL !== "undefined" && PSEL.on)); $("tChord").classList.toggle("on", !!(S.chordWin && S.chordWin[active]));
     { const fm = S.deckFlipM || 0; $("topTransport").hidden = fm !== 0; tm.querySelectorAll(".tplay").forEach(b => { b.hidden = fm !== 1; });   // the middle third: playback, or this part's buttons
-      const fb = $("flipMBtn"); fb.replaceChildren(el("span", { class: "big" }, "⟳"), el("span", { class: "cap" }, fm === 0 ? "PLAYBACK" : "THIS PART")); fb.onclick = () => { S.deckFlipM = ((S.deckFlipM || 0) + 1) % 2; renderAll(); }; }
+      const fb = $("flipMBtn"); fb.replaceChildren(el("span", { class: "big" }, "⟳"), el("span", { class: "cap" }, "MORE")); fb.onclick = () => { S.deckFlipM = ((S.deckFlipM || 0) + 1) % 2; renderAll(); }; }
     if (S.quick) { S.quick.float = false; S.quick.locked = true; }                       // on the deck the quick palette is part of the bar: fixed, never floating
     const sc = $("toolScroll"); sc.prepend($("quick"), $("palette"));
     wireScroller(sc); wireScroller($("toolMScroll")); wireScroller($("toolLScroll"));
     const flip = S.deckFlip || 0, FLIP_NAME = ["NOTES", "RESTS", "DYNAMICS", "MARKS"];
     $("quick").hidden = flip !== 0; $("palette").hidden = flip !== 0; $("flipPal").hidden = flip === 0;
-    const fb = $("flipBtn"); fb.replaceChildren(el("span", { class: "big" }, "⟳"), el("span", { class: "cap" }, FLIP_NAME[flip])); fb.onclick = () => { S.deckFlip = ((S.deckFlip || 0) + 1) % 4; renderAll(); };
+    const fb = $("flipBtn"); fb.replaceChildren(el("span", { class: "big" }, "⟳"), el("span", { class: "cap" }, "MORE")); fb.onclick = () => { S.deckFlip = ((S.deckFlip || 0) + 1) % 4; renderAll(); };
     return;
   }
   S.deckSel = null; { const old = $("addView"); if (old) old.remove(); }
