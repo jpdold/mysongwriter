@@ -285,8 +285,9 @@ svg text { pointer-events: none; }
 /* the staff-lines switch on the flip bar's second pane, on/off like the strip show/hide buttons beside the stave */
 #app.deck .beatBtn { flex: 0 0 auto; margin-left: auto; height: 26px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 0 8px; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); font-size: 7px; font-weight: 800; letter-spacing: .04em; line-height: 1.1; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); }
 #app.deck .beatBtn:active { filter: brightness(1.1); }
-#app.deck #mvRow { width: 82px; flex: 0 0 auto; margin-top: 0; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 8px 18px; align-self: center; }   /* PITCH / ITEM beside it use the same grid: an 8px cap row over an 18px key row */
-#app.deck #mvRow::before { content: "BULK"; grid-column: 1 / -1; grid-row: 1; display: block; height: 8px; line-height: 8px; text-align: center; font-size: 5.5px; font-weight: 800; letter-spacing: .18em; color: #fff; background: #111; border: 1.5px solid #141414; border-bottom: none; border-radius: 5px 5px 0 0; box-sizing: border-box; }   /* a cap over MOVE and DELETE: a label, not a key */
+#app.deck #mvRow { width: 123px; flex: 0 0 auto; margin-top: 0; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: 8px 18px; align-self: center; }   /* MOVE, DELETE, SELECT — PITCH / ITEM beside it use the same grid: an 8px cap row over an 18px key row */
+#app.deck #mvRow.armed { width: 164px; grid-template-columns: repeat(4, 1fr); }   /* CANCEL slots in after DELETE: the row grows, so SELECT is pushed along rather than covered */
+#app.deck #mvRow::before { content: "BULK"; grid-column: 1 / -1; grid-row: 1; display: block; height: 8px; line-height: 8px; text-align: center; font-size: 5.5px; font-weight: 800; letter-spacing: .18em; color: #fff; background: #111; border: 1.5px solid #141414; border-bottom: none; border-radius: 5px 5px 0 0; box-sizing: border-box; }   /* a cap over MOVE, DELETE (and CANCEL, once armed) and SELECT: a label, not a key */
 #app.deck #toolL #mvRow button { grid-row: 2; height: 18px; font-size: 8px; border-top: 1.5px solid #141414; }   /* shaved a little at the top: the cap and the keys together stand as tall as the row */
 #app.deck #mvRow button:first-of-type { border-radius: 0 0 0 4px; } #app.deck #mvRow button:last-of-type { border-radius: 0 0 4px 0; }
 #app.deck #undoRow button { height: 26px; border-top: 1.5px solid #141414; border-radius: 0; font-size: 8.5px; box-shadow: none; }
@@ -541,7 +542,8 @@ body.kbOpen #app.deck { padding-bottom: 6px; }
 /* the arrow row and UNDO / REDO: wide, not tall, between the Lyrics strip and the tools */
 #arrows { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
 #undoRow { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-top: 22px; }             /* the arrows are 22px tall: this row sits flush beneath them */
-#mvRow { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-top: 44px; }               /* and MOVE / DELETE flush beneath UNDO / REDO */
+#mvRow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin-top: 44px; }               /* MOVE / DELETE / SELECT flush beneath UNDO / REDO */
+#mvRow.armed { grid-template-columns: repeat(4, 1fr); }                                        /* CANCEL slots in beside DELETE: the row grows, nothing is covered */
 #arrows, #undoRow, #mvRow { width: 37.5%; justify-self: end; }                                           /* the right side of the row, three quarters of the size it was */
 #arrows, #undoRow, #mvRow { grid-row: arrows-start / undo-end; align-self: start; }                     /* both share the tall cell beside the quick palette, at its top, the same distance from the Lyrics strip */
 #arrows button, #undoRow button, #mvRow button, #pitchArrows button, #itemArrows button { border-radius: 0; }                                            /* one block: shared edges, rounded only at the corners */
@@ -577,8 +579,11 @@ body.kbOpen #app.deck { padding-bottom: 6px; }
 #app.focus-acc #quick, #app.focus-bass #quick { display: none; }
 #arrows .aico { width: 15px; height: 15px; display: block; }
 #arrows button, #undoRow button, #mvRow button, #pitchArrows button, #itemArrows button { height: 22px; padding: 0; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); color: #111; font-size: 14px; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); }
-#undoRow button, #mvRow button { font-family: var(--sans); font-size: 10px; letter-spacing: .05em; }
+#undoRow button { font-family: var(--sans); font-size: 10px; letter-spacing: .05em; }
+#mvRow button { font-family: var(--sans); font-size: 8.5px; letter-spacing: .04em; }   /* three or four words share the row now: a touch smaller to keep every label on one line */
 #mvRow #delBtn { color: var(--danger); }
+#mvRow button:disabled { opacity: .45; }
+#mvRow #cancelBtn { color: #111; }   /* CANCEL: plain, so it never competes with DELETE's red blink */
 #mvRow button.on { background: linear-gradient(#6fb3ff, #2f7fd6); color: #fff; }
 @keyframes delBlink { 0%, 100% { background: linear-gradient(#fff, #d9d9d9); color: var(--danger); } 50% { background: #e5322d; color: #fff; } }
 #mvRow #delBtn.ready { animation: delBlink 1s ease-in-out infinite; }                    /* something is selected: DELETE is ready and blinks red */
@@ -880,7 +885,7 @@ body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the s
 
   <div id="arrows"><button id="arrUp" title="Up: the selected note a half step up, or the stave's register up"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V4M5 11l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="arrDn" title="Down: the selected note a half step down, or the stave's register down"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M5 13l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="arrL" title="Left: the selected note or word earlier, a picked run earlier, or the beat before"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H4M11 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="arrR" title="Right: the selected note or word later, a picked run later, or the beat after"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16M13 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
   <div id="undoRow"><button id="undoBtn" title="Undo">UNDO</button><button id="redoBtn" title="Redo">REDO</button></div>
-  <div id="mvRow"><button id="moveBtn" title="Move beats: pick a run of beats, then ← → shift what is in them into empty space">MOVE</button><button id="delBtn" title="Delete part or all of a beat, a bar or a section">DELETE</button></div>
+  <div id="mvRow"><button id="moveBtn" title="Move beats: pick a run of beats, then ← → shift what is in them into empty space">MOVE</button><button id="delBtn" title="Delete: arms on the first tap, then confirms on the second">DELETE</button><button id="selBtn" title="Select what to delete: tap the first beat of the run, then the last — or use Bar / Section">SELECT</button></div>
   <div id="quick" title="Quick palette"></div>
   <div id="palette"><div class="prow" id="palRow1"></div><div class="prow" id="palRow2"></div><div class="prow" id="palRow3"></div><div class="prow" id="palRow4"></div></div>
 
@@ -9025,8 +9030,8 @@ function renderWindows() {
     if (S.ghost && S.ghost.part === "melody" && S.ghost.bi === bi) drawGhost(svg, g, bi, S.ghost, box);
     for (const c of chains(bar)) {
       const x0 = g.x(bi, c.t) + 1, x1 = g.x(bi, c.t + c.d) - 1, selected = c.members.some(e => e.id === sel);
-      { const showSub = S.beatLines || c.rest || selected;   // the per-note dashed outline, at that note's own duration: off in Settings or from the toolbar, unless the chain is a rest or selected
-      svg.append(svgEl("rect", { class: "slot", x: x0, y: 2, width: Math.max(4, x1 - x0), height: g.H - 4, rx: 2, fill: selected ? box : "none", "fill-opacity": 0.14, stroke: showSub ? (c.rest ? css("--ink2") : box) : "none", "stroke-width": selected ? 2.8 : 2, "stroke-dasharray": c.rest ? "3 3" : "6 3", "data-ev": c.head.id, "data-part": "melody", "data-bi": bi })); }
+      { const showSub = S.beatLines || c.rest || selected;   // the per-note solid outline, at that note's own duration: off in Settings or from the toolbar, unless the chain is a rest or selected
+      svg.append(svgEl("rect", { class: "slot", x: x0, y: 2, width: Math.max(4, x1 - x0), height: g.H - 4, rx: 2, fill: selected ? box : "none", "fill-opacity": 0.14, stroke: showSub ? (c.rest ? css("--ink2") : box) : "none", "stroke-width": selected ? 2.8 : 2, "stroke-dasharray": c.rest ? "3 3" : "", "data-ev": c.head.id, "data-part": "melody", "data-bi": bi })); }
       if (c.rest) { svg.append(svgEl("text", { x: (x0 + x1) / 2, y: g.H / 2 + 6, "text-anchor": "middle", "font-size": Math.min(18, g.step * 1.4), fill: css("--ink2"), "font-family": "Georgia, serif" }, "𝄽")); continue; }
       if (c.head.m == null && S.viewSpan === 4) { /* unpitched: nothing to draw */ }
       if (c.head.m == null) continue;
@@ -9267,10 +9272,9 @@ function renderPalette() {
     return;
   }
   if (S.mv && S.mv.mode === "delete") {
-    b("Run", () => delRun("run"), { cls: "lyr", warn: true, disabled: S.mv.start == null, title: "Delete what is in the picked run" });
-    b("Bar", () => delRun("bar"), { cls: "lyr", warn: true, title: `Delete everything in bar ${barNo(S.bi)}` });
-    b("Section", () => delRun("section"), { cls: "lyr", warn: true, title: "Delete everything in this section" });
-    b(S.mv.allParts ? "All" : PART_META[S.mv.part].short, () => { S.mv.allParts = !S.mv.allParts; renderPalette(); }, { cls: "lyr", on: S.mv.allParts, title: S.mv.allParts ? "Deleting from all parts and the words — tap for this part only" : `Deleting from the ${PART_META[S.mv.part].label.toLowerCase()} only — tap for all parts and the words` });
+    b("Bar", () => delRun("bar"), { cls: "lyr", warn: true, disabled: S.mv.armed, title: "Delete everything in bar " + barNo(S.bi) });
+    b("Section", () => delRun("section"), { cls: "lyr", warn: true, disabled: S.mv.armed, title: "Delete everything in this section" });
+    b(S.mv.allParts ? "All" : PART_META[S.mv.part].short, () => { S.mv.allParts = !S.mv.allParts; renderPalette(); }, { cls: "lyr", on: S.mv.allParts, disabled: S.mv.armed, title: S.mv.allParts ? "Deleting from all parts and the words — tap for this part only" : `Deleting from the ${PART_META[S.mv.part].label.toLowerCase()} only — tap for all parts and the words` });
     b("✕", mvCancel, { cls: "txt", title: "Leave delete mode" });
     return;
   }
@@ -10532,7 +10536,7 @@ function openSettings() {
     el("div", { class: "pLbl" }, "Note size"), seg([["s", "Small"], ["m", "Medium"], ["l", "Large"]], S.noteSize, v => { S.noteSize = v; savePrefs(); renderAll(); }),
     el("div", { class: "pLbl" }, "Chord-mode notes"), seg([["#ffffff", "White"], ["#ffd23f", "Gold"], ["#6fb3ff", "Sky"], ["#8fd14f", "Green"], ["#f4a0c8", "Pink"]], S.chordColor, v => { S.chordColor = v; savePrefs(); renderAll(); }),
     el("div", { class: "mrow" }, toggle("Lines and spaces (half steps alternate line, space, line, space; off = one half step per space)", S.halfLines, v => { S.halfLines = v; savePrefs(); renderAll(); openSettings(); })),
-    el("div", { class: "mrow" }, toggle("Beat subdivider lines (the dashed orange box drawn around each melody note, at its own duration)", S.beatLines, v => { S.beatLines = v; savePrefs(); renderAll(); openSettings(); })),
+    el("div", { class: "mrow" }, toggle("Beat subdivider lines (the solid orange box drawn around each melody note, at its own duration)", S.beatLines, v => { S.beatLines = v; savePrefs(); renderAll(); openSettings(); })),
     el("div", { class: "mrow" }, toggle("Keep the screen awake while the app is open" + ("wakeLock" in navigator ? "" : " (this browser cannot)"), S.keepAwake, v => { S.keepAwake = v; savePrefs(); if (v) wakeAcquire(); else wakeRelease(); })),
     el("div", { class: "pLbl" }, "Lyrics keyboard"), seg([[true, "App keyboard (QWERTY + symbols)"], [false, "Phone's keyboard"]], S.softKb, v => { S.softKb = v; savePrefs(); renderWeKeys(); }),
     el("div", { class: "pLbl" }, "Lyrics font"), seg([["sans", "Current"], ["serif", "Serif"], ["smallcaps", "Small caps"]], S.lyricFont, v => { S.lyricFont = v; savePrefs(); renderAll(); }),
@@ -10919,21 +10923,40 @@ function wireTempo() {
    ═══════════════════════════════════════════════════════════════════════ */
 const barAbs = bi => { let a = 0; for (let k = 0; k < bi; k++) a += barBeats(k); return a; };
 function absToBar(abs) { let a = 0; for (let bi = 0; bi < S.song.bars.length; bi++) { const B = barBeats(bi); if (abs < a + B - 1e-6) return { bi, t: r3(abs - a) }; a += B; } return null; }
-/* DELETE: with something selected — picked chips, a chip, a note — it deletes that; with nothing selected it starts a delete run */
-function delReady() { const kb = typeof WE !== "undefined" && WE.on; return !!((S.mv && S.mv.mode === "delete" && S.mv.start != null) || (kb && WE.picks.length) || (!kb && selEv() && !S.selAuto)); }   // a lyrics chip alone selected (not yet picked with SELECT CHIP(S)) does not ready DELETE; nor does a stave note left selected from before the keyboard opened
-function syncMoveDelBtns() { const mb = $("moveBtn"), db = $("delBtn"); if (mb) mb.classList.toggle("on", !!(S.mv && S.mv.mode === "move")); if (db) { db.classList.toggle("on", !!(S.mv && S.mv.mode === "delete")); db.classList.toggle("ready", delReady()); } }   // called wherever a pick, a selection or a move/delete run changes, so DELETE's blink never goes stale
+/* DELETE: SELECT (or a lyrics pick) chooses what goes; the first DELETE press arms it, blinking, with CANCEL beside it; the second confirms */
+function delReady() { const kb = typeof WE !== "undefined" && WE.on; return !!((kb && WE.picks.length) || (S.mv && S.mv.mode === "delete" && S.mv.armed)); }   // DELETE blinks only once armed — SELECT must pick a run first, and a first DELETE press arms it
+function syncMoveDelBtns() {
+  const mb = $("moveBtn"), db = $("delBtn"), sb = $("selBtn"), row = $("mvRow"); if (!mb || !db || !sb || !row) return;
+  const picking = !!(S.mv && S.mv.mode === "delete"), armed = !!(picking && S.mv.armed);
+  mb.classList.toggle("on", !!(S.mv && S.mv.mode === "move")); mb.disabled = armed;
+  sb.classList.toggle("on", picking && !armed); sb.disabled = armed;
+  db.classList.toggle("on", picking); db.classList.toggle("ready", delReady()); db.disabled = !(picking && (S.mv.start != null || armed));
+  let cb = $("cancelBtn");
+  if (armed) {
+    if (!cb) cb = el("button", { id: "cancelBtn", class: "cancelk", title: "Cancel the delete" }, "CANCEL");
+    cb.onclick = () => { S.mv = null; renderAll(); };
+    row.insertBefore(cb, db.nextSibling);                                                   // right after DELETE: SELECT (and anything past it) is pushed along, never covered
+    row.classList.add("armed");
+  } else {
+    if (cb) cb.remove();
+    row.classList.remove("armed");
+  }
+}   // called wherever a pick, a selection, an arm or a move/delete run changes, so none of this goes stale
 function delAction() {
   const kb = typeof WE !== "undefined" && WE.on;
-  if (S.mv && S.mv.mode === "delete" && S.mv.start != null) { delRun("run"); return; }     // a run of beats picked: DELETE deletes it
-  if (kb) { if (WE.picks.length) weDeleteChips(); return; }                                 // the keyboard open: a lyrics chip is deleted only once SELECT CHIP(S) has picked it — a leftover note selection is ignored
-  if (selEv() && !S.selAuto) { deleteSel(); return; }
-  mvStart("delete");
+  if (kb) { if (WE.picks.length) weDeleteChips(); return; }                                 // the keyboard open: a lyrics chip is deleted only once SELECT CHIP(S) has picked it
+  if (S.mv && S.mv.mode === "delete") {
+    if (S.mv.start == null) { toast("Tap the beats to delete, then DELETE — or use Bar / Section"); return; }
+    if (S.mv.armed) { delRun("run"); return; }                                              // second press: confirmed
+    S.mv.armed = true; renderAll(); return;                                                 // first press: armed — DELETE blinks, CANCEL appears
+  }
+  toast("SELECT first, then tap what to delete");
 }
 function mvStart(mode = "move") {
   if (S.mv && S.mv.mode === mode) { mvCancel(); return; }
-  S.mv = { mode, part: S.activePart || "melody", start: null, end: null, moved: false, allParts: false, sub: null };
+  S.mv = { mode, part: S.activePart || "melody", start: null, end: null, moved: false, allParts: false, sub: null, armed: false };
   S.sel = null; S.ghost = null; S.active = null; S.justEntered = null; renderAll();
-  toast(mode === "delete" ? "Delete: tap the first beat of the run, then the last — or use Bar / Section" : "Move: tap the first beat of the run (part-way in, if you like), then the last beat");
+  toast(mode === "delete" ? "Tap the first beat of the run to delete, then the last (or use Bar / Section) — then DELETE arms it, DELETE again confirms" : "Move: tap the first beat of the run (part-way in, if you like), then the last beat");
 }
 /* the third tools row: undo, redo, and the two run tools */
 function renderRow3(r3) {
@@ -10969,6 +10992,7 @@ function mvLabel() {
 function mvTap(win, bi, t) {
   /* first tap: the whole beat. Tapping the run's first or last beat again shows its quarters; a tap on a quarter sets the start or end there. */
   const part = WIN_PART[win], mv = S.mv;
+  if (mv.mode === "delete" && mv.armed) return;   // armed: only DELETE (confirm) or CANCEL settle it now
   if (mv.part !== part) { mv.part = part; mv.start = mv.end = null; mv.moved = false; mv.sub = null; }
   const abs = barAbs(bi) + t, beat = barAbs(bi) + Math.floor(t + 1e-6), q = Math.floor((t - Math.floor(t + 1e-6)) * 4 + 1e-6) / 4;
   const done = () => { S.active = null; S.sel = null; S.ghost = null; renderAll(); };
@@ -11457,7 +11481,7 @@ async function boot() {
   $("arrUp").addEventListener("click", () => arrowUD(1)); $("arrDn").addEventListener("click", () => arrowUD(-1));
   $("arrL").addEventListener("click", () => arrowLR(-1)); $("arrR").addEventListener("click", () => arrowLR(1));
   $("undoBtn").addEventListener("click", undo); $("redoBtn").addEventListener("click", redo);
-  $("moveBtn").addEventListener("click", () => mvStart("move")); $("delBtn").addEventListener("click", delAction);
+  $("moveBtn").addEventListener("click", () => mvStart("move")); $("delBtn").addEventListener("click", delAction); $("selBtn").addEventListener("click", () => mvStart("delete"));
   $("playAllBtn").addEventListener("click", playAll);
   $("rangeBtn").addEventListener("click", openPlayRange);
   $("stopBtn").addEventListener("click", stopAll);
