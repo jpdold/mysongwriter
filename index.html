@@ -9800,7 +9800,7 @@ function initPointer() {
     if (!ld || e.pointerId !== ld.id) return; const d = ld; ld = null;
     if (d.chip && d.chip.placing) { S.selChip = { bi: d.bi, id: d.chip.id }; renderStrips(); renderNav(); return; }   // a spacer let go stays in hand: SET CHIP (or typing) sets it
     if (d.moved) { S.selChip = null; renderAll(); return; }                 // the bar goes with the release; tap again to bring it back
-    if (WE.on && WE.picking && d.chip) { const i = WE.picks.findIndex(p => p.id === d.chip.id); if (i >= 0) WE.picks.splice(i, 1); else WE.picks.push({ bi: d.bi, id: d.chip.id }); renderStrips(); return; }   // SELECT CHIP(S) is on: the tap picks the chip, or unpicks it
+    if (WE.on && WE.picking && d.chip) { const i = WE.picks.findIndex(p => p.id === d.chip.id); if (i >= 0) WE.picks.splice(i, 1); else WE.picks.push({ bi: d.bi, id: d.chip.id }); renderStrips(); syncMoveDelBtns(); return; }   // SELECT CHIP(S) is on: the tap picks the chip, or unpicks it
     const p = svgPoint(lyr, e), at = stripGeo().at(p.x);
     S.sel = null;
     if (WE.on) {                                                                       // the keyboard stays open: a chip comes into the box to edit (what was typed becomes its chip first); empty space is where the next chip starts
@@ -9843,6 +9843,7 @@ function openWordEdit(bi, t, chip) {
   inp.value = chip ? chip.text : ""; inp.disabled = false; S.bi = bi; S.selChip = chip ? { bi, id: chip.id } : null;
   lbl.textContent = chip ? "Editing · NEW CHIP – CURRENT BEAT keeps it · SPLIT at the cursor" : `Bar ${barNo(bi)} · beat ${beatLabel(WE.t)} · NEW CHIP – CURRENT BEAT makes the chip · NEW CHIP → NEXT BEAT moves on`;
   box.classList.add("on"); renderWeKeys(); applyKbPos(); renderStrips(); if (typeof deckMode === "function" && deckMode()) { if (!wasOpen0) renderAll(); else placeDeckLabels(); } else renderNav();   // on the deck: the keyboard docks, the strips ride up onto it and the stave takes their rows
+  syncMoveDelBtns();   // DELETE's ready state (a leftover note selection, say) must not go stale once the keyboard opens
   const bodyEl = $("lyrStrip").querySelector(".body"), x = g.x(bi, WE.t) * (g.k || 1);
   inp.classList.add("on"); sizeInline(); placeInline();
   if (x < bodyEl.scrollLeft || x > bodyEl.scrollLeft + bodyEl.clientWidth - 60) bodyEl.scrollLeft = Math.max(0, x - 40);
@@ -10267,12 +10268,12 @@ function wePicked() {
 /* SELECT CHIP(S): on, taps on the strip pick chips (a second tap unpicks); off again, the picks are let go */
 function weTogglePick() {
   if (!WE.on) return;
-  if (WE.picking) { WE.picking = false; WE.picks = []; renderWeKeys(); renderStrips(); toast("Selection cleared"); return; }
+  if (WE.picking) { WE.picking = false; WE.picks = []; renderWeKeys(); renderStrips(); syncMoveDelBtns(); toast("Selection cleared"); return; }
   /* the chip in progress comes into the selection first: the one under the cursor is set as it stands, words still in the box become their chip, a ↔ chip settles — and the chip so set is picked */
   if (WE.chipId) weSetInHand(); else if (weInput().value.trim() || S.song.bars[WE.bi].chips.some(c => c.placing)) weSetChip();
   WE.picking = true;
   const sc = S.selChip; if (sc && S.song.bars[sc.bi] && S.song.bars[sc.bi].chips.some(c => c.id === sc.id) && !WE.picks.some(p => p.id === sc.id)) WE.picks.push({ bi: sc.bi, id: sc.id });
-  renderWeKeys(); renderStrips(); toast(WE.picks.length ? "Selected — tap more chips on the strip to add them; the tools then act on all of them" : "Tap chips on the strip to select them — the tools then act on all of them");
+  renderWeKeys(); renderStrips(); syncMoveDelBtns(); toast(WE.picks.length ? "Selected — tap more chips on the strip to add them; the tools then act on all of them" : "Tap chips on the strip to select them — the tools then act on all of them");
 }
 /* DELETE CHIP(S): the picked chips go, else the chip in hand; with neither, it starts picking and the next press deletes the picks */
 function weDeleteChips() {
@@ -10287,7 +10288,7 @@ function weDeleteChips() {
   }
   /* nothing picked: DELETE never removes a chip on its own — it only starts SELECT CHIP(S)'s picking, so a chip is deleted
      only once it has actually been selected (the chip in hand or in the cursor is not enough by itself) */
-  WE.picking = true; renderWeKeys(); renderStrips(); toast("Tap the chip — or chips — to delete, then DELETE CHIP(S) again");
+  WE.picking = true; renderWeKeys(); renderStrips(); syncMoveDelBtns(); toast("Tap the chip — or chips — to delete, then DELETE CHIP(S) again");
 }
 /* the beat makes room. The set chips that start in the stretch from the beat of t0 to tEnd, beside `me` (a chip — or the entry box
    when null), squeeze alike so that `me` fits — each down to about three quarters of its own width, where it still reads — and
@@ -10367,7 +10368,7 @@ function weBlink() { for (const e of [$("wordEdit"), $("kbClose")]) { if (!e) co
 function closeWordEdit() {
   if (WE.on) weSettleSpacer();
   if (WE.on && WE.dirty) { commitWordEdit(false, true); return; }
-  const was = WE.on; WE.on = false; WE.wid = null; WE.chipId = null; WE.picking = false; WE.picks = []; WE.carry = ""; $("wordEdit").classList.remove("on"); weInput().classList.remove("on"); weCaret(); document.body.classList.remove("kbOpen"); if (was && typeof deckMode === "function" && deckMode()) renderAll();   // the strips back to their rows, the stave sized to them again
+  const was = WE.on; WE.on = false; WE.wid = null; WE.chipId = null; WE.picking = false; WE.picks = []; WE.carry = ""; $("wordEdit").classList.remove("on"); weInput().classList.remove("on"); weCaret(); document.body.classList.remove("kbOpen"); if (was && typeof deckMode === "function" && deckMode()) renderAll(); syncMoveDelBtns();   // DELETE's ready state, now that the keyboard is shut, reflects whatever is actually selected on the stave
   const f = WE.firstChip; WE.firstChip = null;
   if (was && f && S.song.bars[f.bi] && S.song.bars[f.bi].chips.some(c => c.id === f.id)) { S.selChip = { bi: f.bi, id: f.id }; S.bi = f.bi; renderAll(); }   // the first word you typed is ready to move or stretch
 }
@@ -10898,10 +10899,12 @@ function wireTempo() {
 const barAbs = bi => { let a = 0; for (let k = 0; k < bi; k++) a += barBeats(k); return a; };
 function absToBar(abs) { let a = 0; for (let bi = 0; bi < S.song.bars.length; bi++) { const B = barBeats(bi); if (abs < a + B - 1e-6) return { bi, t: r3(abs - a) }; a += B; } return null; }
 /* DELETE: with something selected — picked chips, a chip, a note — it deletes that; with nothing selected it starts a delete run */
-function delReady() { return !!((S.mv && S.mv.mode === "delete" && S.mv.start != null) || (typeof WE !== "undefined" && WE.on && WE.picks.length) || (selEv() && !S.selAuto)); }   // a lyrics chip alone selected (not yet picked with SELECT CHIP(S)) does not ready DELETE
+function delReady() { const kb = typeof WE !== "undefined" && WE.on; return !!((S.mv && S.mv.mode === "delete" && S.mv.start != null) || (kb && WE.picks.length) || (!kb && selEv() && !S.selAuto)); }   // a lyrics chip alone selected (not yet picked with SELECT CHIP(S)) does not ready DELETE; nor does a stave note left selected from before the keyboard opened
+function syncMoveDelBtns() { const mb = $("moveBtn"), db = $("delBtn"); if (mb) mb.classList.toggle("on", !!(S.mv && S.mv.mode === "move")); if (db) { db.classList.toggle("on", !!(S.mv && S.mv.mode === "delete")); db.classList.toggle("ready", delReady()); } }   // called wherever a pick, a selection or a move/delete run changes, so DELETE's blink never goes stale
 function delAction() {
+  const kb = typeof WE !== "undefined" && WE.on;
   if (S.mv && S.mv.mode === "delete" && S.mv.start != null) { delRun("run"); return; }     // a run of beats picked: DELETE deletes it
-  if (typeof WE !== "undefined" && WE.on && WE.picks.length) { weDeleteChips(); return; }   // a lyrics chip is deleted only once SELECT CHIP(S) has picked it — never from a bare selection
+  if (kb) { if (WE.picks.length) weDeleteChips(); return; }                                 // the keyboard open: a lyrics chip is deleted only once SELECT CHIP(S) has picked it — a leftover note selection is ignored
   if (selEv() && !S.selAuto) { deleteSel(); return; }
   mvStart("delete");
 }
@@ -10916,7 +10919,7 @@ function renderRow3(r3) {
   const b = (t, fn, opts = {}) => r3.append(el("button", { onclick: fn, class: (opts.cls || "") + (opts.on ? " on" : "") + (opts.warn ? " warn" : ""), title: opts.title, disabled: opts.disabled }, t));
   const ev = selChipObj() ? null : selEv(), own = ev && !S.selAuto;                       // dot, rest and ＋ live here, under the lengths
   $("undoBtn").disabled = !UNDO.stack.length; $("redoBtn").disabled = !UNDO.redo.length;       // the UNDO / REDO row above the tools
-  $("moveBtn").classList.toggle("on", !!(S.mv && S.mv.mode === "move")); $("delBtn").classList.toggle("on", !!(S.mv && S.mv.mode === "delete")); $("delBtn").classList.toggle("ready", delReady());   // MOVE / DELETE live under UNDO / REDO; DELETE blinks red with something selected
+  syncMoveDelBtns();   // MOVE / DELETE live under UNDO / REDO; DELETE blinks red with something selected
   r3.hidden = !r3.querySelector("button");                                                 // nothing left on this row: it folds away
 }
 /* delete what the picker points at */
