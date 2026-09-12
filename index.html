@@ -241,8 +241,8 @@ svg text { pointer-events: none; }
   grid-template-columns: 118px 108px 108px minmax(330px, 1fr) minmax(0, 1fr) var(--deckW, 44px) !important; grid-template-rows: auto auto auto auto auto auto minmax(0, 1fr) auto;
   grid-template-areas: "head head head head head head" "rollbar rollbar rollbar rollbar rollbar addv" "stage stage stage stage stage deck" "dyn dyn dyn dyn dyn deck" "rhy rhy rhy rhy rhy deck" "lyr lyr lyr lyr lyr deck" ". . . . . deck" "t t t t t t" !important; }
 /* the head: a small title at the top left; the play buttons move to the left of the bar bracket */
-#app.deck #head { grid-template-columns: 44px 1fr 44px; grid-template-rows: auto; }
-#app.deck #menuBtn { grid-column: 1; } #app.deck #gearBtn { grid-column: 3; }
+#app.deck #head { grid-template-columns: 44px 1fr 44px; grid-template-rows: auto auto; }
+#app.deck #menuBtn { grid-column: 1; grid-row: 1; } #app.deck #gearBtn { grid-column: 3; grid-row: 1; }
 #app.deck #songTitle { display: none; }                                                    /* the title is set in Song setup; no box on the deck */
 #app.deck #nav { grid-column: 2; grid-row: 1; justify-self: center; width: auto; margin-top: 0 !important; grid-template-columns: 30px minmax(160px, 340px) 30px auto; justify-content: center; }   /* in the head row, centred over the stave: ← a narrower bracket → and the parts button beside it */
 #navRight { display: none; }
@@ -252,10 +252,11 @@ svg text { pointer-events: none; }
 #app.deck #navRight #tempo button#tempoLbl { width: auto; }
 /* the part selectors: shown or hidden from the head; ADD to VIEW keeps its place at the row's right */
 #partsBtn { display: none; }
-#app.deck #partsBtn { display: inline-flex; position: static; flex: 0 0 auto; margin-left: 10px; align-items: center; height: 26px; padding: 0 10px; margin-left: 8px; border: 1px solid #3a8a1e; border-radius: 4px; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); font-size: 9px; font-weight: 800; letter-spacing: .04em; white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
+#app.deck #partsBtn { display: inline-flex; grid-column: 2 / 4; grid-row: 2; justify-self: end; position: static; align-items: center; height: 22px; margin-top: 2px; padding: 0 10px; border: 1px solid #3a8a1e; border-radius: 4px; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); font-size: 9px; font-weight: 800; letter-spacing: .04em; white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,.3); }   /* sits under the gear, at the head's right edge — a grid item now, not riding in the row that folds away */
 #app.deck #partsBtn:active { filter: brightness(1.1); }
-#app.deck.noparts #rollBar .rollItem { visibility: hidden; }                                /* parts hidden: the selectors vanish but keep their room, so the SHOW PARTS button stays put */
+#app.deck.noparts #rollBar { display: none; }                                               /* parts hidden: the whole row folds away — the button lives in the head now, so nothing needs to stay behind to hold its place */
 #app.deck #rollBar .rollItem { flex: 0 0 150px; min-width: 0; }
+#app.deck #rollBar .rollItem:has(input:checked) { background: var(--ground2); } #app.deck #rollBar .rollItem:not(:has(input:checked)) { background: #111; }   /* the box's own colour follows its checkbox right away, not just once ADD to VIEW commits it */
 #addView { display: none; }
 #app.deck #addView { display: flex; grid-area: addv; align-self: center; justify-self: stretch; height: 22px; margin-top: 6px; padding: 0 2px; align-items: center; justify-content: center; text-align: center; border: 1px solid #3a8a1e; border-radius: 4px; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); font-size: 7px; font-weight: 800; letter-spacing: .02em; line-height: 1.05; white-space: normal; box-shadow: 0 1px 2px rgba(0,0,0,.3); }   /* ADD to VIEW: in the column beside the stave, so the selectors centre freely */
 #app.deck.noparts #addView { display: none; }
@@ -587,7 +588,11 @@ body.kbOpen #app.deck { padding-bottom: 6px; }
 #mvRow button { font-family: var(--sans); font-size: 7.5px; letter-spacing: .03em; }   /* five (or six) words share the row now: smaller still, to keep every label on one line */
 #mvRow #delBtn { color: var(--danger); }
 #mvRow button:disabled { opacity: .45; }
-#mvRow #cancelBtn, #mvRow #setCopyBtn, #mvRow #xhairBtn { color: #111; }   /* plain, so none compete with DELETE's red or MOVE's blue blink */
+#mvRow #setCopyBtn, #mvRow #xhairBtn { color: #111; }   /* plain, so none compete with DELETE's red or MOVE's blue blink */
+#mvRow #cancelBtn { background: linear-gradient(#ff6b62, #c81e18); color: #fff; }   /* same gradient texture as the other keys, filled red so CANCEL reads as the one that backs out */
+#mvRow #setCopyBtn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; line-height: 1; }
+#mvRow #setCopyBtn[hidden] { display: none; }
+#mvRow #setCopyBtn .l { display: block; font-size: 6.5px; letter-spacing: 0; }   /* two short lines instead of one long word, so it never runs off the key */
 #mvRow #xhairBtn.on { background: linear-gradient(#6fb3ff, #2f7fd6); color: #fff; }   /* crosshair mode is on: drags box-select instead of taps toggling beats */
 body.xhairOn #melSvg, body.xhairOn #accSvg, body.xhairOn #bassSvg { cursor: crosshair; }
 #mvRow button.on { background: linear-gradient(#6fb3ff, #2f7fd6); color: #fff; }
@@ -667,7 +672,7 @@ textarea.lyricArea { width: 100%; min-height: 90px; border: 1px solid #999; bord
 .partCard.off { opacity: .55; }
 #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px); background: #111; color: #fff; padding: 9px 16px; border-radius: 999px;
   font-size: 13px; opacity: 0; transition: .2s; z-index: 90; pointer-events: none; max-width: 90vw; text-align: center; }
-#toast.on { opacity: 1; transform: translateX(-50%); }
+#toast.on { opacity: 1; transform: translateX(-50%); pointer-events: auto; cursor: pointer; }
 
 /* inline word editor on the lyric strip */
 #lyrStrip { position: relative; }
@@ -893,7 +898,7 @@ body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the s
 
   <div id="arrows"><button id="arrUp" title="Up: the selected note a half step up, or the stave's register up"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V4M5 11l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="arrDn" title="Down: the selected note a half step down, or the stave's register down"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M5 13l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="arrL" title="Left: the selected note or word earlier, a picked run earlier, or the beat before"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H4M11 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="arrR" title="Right: the selected note or word later, a picked run later, or the beat after"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16M13 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
   <div id="undoRow"><button id="undoBtn" title="Undo">UNDO</button><button id="redoBtn" title="Redo">REDO</button></div>
-  <div id="mvRow"><button id="moveBtn" title="Move: arms on the first tap (once empty space of the same size is found in view), then confirms on the second">MOVE</button><button id="delBtn" title="Delete: arms on the first tap, then confirms on the second">DELETE</button><button id="selBtn" title="Select a run of beats to move or delete: tap the first beat, then the last — or use Bar / Section">SELECT</button><button id="repBtn" title="Repeat: tap the beat(s) to repeat, then REPEAT — it finds the space right after and copies them there; tap again to repeat further on">REPEAT</button><button id="copyBtn" title="Copy: tap the beats or bars to copy (SET each one), then tap empty space with room enough to paste them">COPY</button><button id="xhairBtn" title="Crosshair: drag a box over what to copy — release to set it, straight into the copied set" hidden>CROSSHAIR</button><button id="setCopyBtn" title="Set: add what is tapped to the copied set (up to 5)" hidden>SET TO COPY</button></div>
+  <div id="mvRow"><button id="moveBtn" title="Move: arms on the first tap (once empty space of the same size is found in view), then confirms on the second">MOVE</button><button id="delBtn" title="Delete: arms on the first tap, then confirms on the second">DELETE</button><button id="selBtn" title="Select a run of beats to move or delete: tap the first beat, then the last — or use Bar / Section">SELECT</button><button id="repBtn" title="Repeat: tap the beat(s) to repeat, then REPEAT — it finds the space right after and copies them there; tap again to repeat further on">REPEAT</button><button id="copyBtn" title="Copy: tap the beats or bars to copy (SET each one), then tap empty space with room enough to paste them">COPY</button><button id="xhairBtn" title="Crosshair: drag a box over what to copy — release to set it, straight into the copied set" hidden>CROSSHAIR</button><button id="setCopyBtn" title="Set: add what is tapped to the copied set (up to 5)" hidden><span class="l">SET TO</span><span class="l">COPY</span></button></div>
   <div id="quick" title="Quick palette"></div>
   <div id="palette"><div class="prow" id="palRow1"></div><div class="prow" id="palRow2"></div><div class="prow" id="palRow3"></div><div class="prow" id="palRow4"></div></div>
 
@@ -6735,10 +6740,11 @@ function svgEl(tag, attrs = {}, text) {
   return e;
 }
 let toastTimer = null;
-function toast(msg, ms = 3700) {
+function toast(msg, ms = 5200) {
   const t = $("toast"); t.textContent = msg; t.classList.add("on");
   clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("on"), ms);
 }
+$("toast").addEventListener("pointerdown", () => { clearTimeout(toastTimer); $("toast").classList.remove("on"); });   // tapping it closes it right away instead of waiting out the timer
 function reportErr(msg) {
   let b = $("errBanner");
   if (!b) {
@@ -8220,7 +8226,7 @@ function allocate() {
       let target = window.innerHeight - 12 - h("head") - h("rollBar") - 6 - (h("rollBar") ? 1 : 0) - (rhyOn ? h("rhyStrip") : 0) - (lyrOn ? h("lyrStrip") : 0) - (S.dynShown && !app.classList.contains("kbUp") ? (h("dynStrip") || 32) : 0) - Math.max(h("toolbar"), 30) - topExtra - 16;   // the strips, when shown, sit flush between the stave and the tool bar
       { const side = $(w + "Win").querySelector(".side"); if (side && side.offsetHeight > 0) { const kids = [...side.children].filter(k => k.offsetHeight > 0), cs = getComputedStyle(side); const need = kids.reduce((a, k) => a + k.offsetHeight, 0) + Math.max(0, kids.length - 1) * (parseFloat(cs.rowGap) || 0) + (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0); target = Math.max(target, need - 16); } }   // never shorter than the buttons beside it need: they would hold the stave's row open and leave a gap   // the stave's drawing height: the screen less the rows above and below, the three 6px margins, the tool bar's 6px when the strips show, the frame's borders and pads
       const k = STEP_K[S.noteSize] || 1, rows = clamp(Math.floor(target / (hi * k)), rows0, 88);   // at the stave's full scale, as many rows as fill the height — never fewer than usual, up to the whole piano
-      DECK_ROWS[w] = rows; STEPS[w] = Math.max(lo, target / rows / k);                      // and the rows share that height exactly
+      DECK_ROWS[w] = rows; STEPS[w] = hi;                                                   // the row height stays fixed at the stave's natural scale — only the row COUNT adapts to the room the strips leave, so spacing never fluctuates
       { const key = WIN_LO[w], v = S.song && S.song.view ? viewOf(w) : null; if (v != null && v + rows - 1 > 108) S.song.view[key] = Math.max(21, 109 - rows); }   // more rows than fit above: the range reaches lower instead
     }
     return;
@@ -8690,7 +8696,7 @@ function renderRollBar() {
   const deck = deckMode(), app = $("app"); app.classList.toggle("deck", deck);
   { const tr = $("topTransport"); if ($("tempo").parentNode !== tr) tr.append($("tempo")); if (deck) { if ($("saveBtn").parentNode !== $("head")) $("head").append($("saveBtn")); } else if ($("saveBtn").parentNode !== tr) tr.append($("saveBtn"));   // the tempo travels with the play buttons; on the deck the save button rides in the head
     if (deck) { if (tr.parentNode !== $("toolMScroll")) $("toolMScroll").prepend(tr); } else if (tr.parentNode !== $("head")) $("head").insertBefore(tr, $("gearBtn")); }   // on the deck the play buttons live in the middle third of the tool bar
-  if (!deck && pb.parentNode !== $("head")) $("head").insertBefore(pb, $("topTransport"));   // off the deck the parts button waits, hidden, in the head
+  if (pb.parentNode !== $("head")) $("head").insertBefore(pb, deck ? $("gearBtn") : $("topTransport"));   // off the deck the parts button waits, hidden, in the head; on the deck it rides there too, under the gear
   { const nv = $("nav"); if (deck) { if (nv.parentNode !== $("head")) $("head").insertBefore(nv, $("gearBtn")); } else if (nv.parentNode === $("head")) $("head").after(nv); }   // the bar bracket: up in the head row on the deck
   if (deck) app.style.setProperty("--deckW", Math.max(28, Math.round((app.clientWidth - 24 - 10 - 80) / 17)) + "px");   // the part buttons' column: exactly a quarter of a beat of the stave beside it
   app.classList.toggle("rolled", S.layout === "rolled" && !deck);
@@ -8709,7 +8715,6 @@ function renderRollBar() {
       cb.addEventListener("change", () => { S.deckSel = ["mel", "acc", "bass"].filter(x => x === w ? cb.checked : S.deckSel.includes(x)); });
       bar.append(el("div", { class: "rollItem" + (S.deck.includes(w) ? " open" : "") }, el("label", {}, cb, el("span", { class: "lbl" }, w === "mel" ? "Melody" : w === "acc" ? "Accompaniment" : "Bass"))));
     }
-    bar.append(pb);                                                                        // HIDE / SHOW PARTS after the Bass selector
     { const old = $("addView"); if (old) old.remove(); }
     app.append(el("button", { id: "addView", title: "The checked parts make up the view; the up / down buttons beside the stave move between them", onclick: () => {
       const sel = ["mel", "acc", "bass"].filter(w => S.deckSel.includes(w)); if (!sel.length) { toast("Check at least one part"); return; }
@@ -11203,16 +11208,22 @@ function xhairFinish(win, x0, y0, x1, y1) {
   for (let bi = a.bi; bi <= b.bi; bi++) { const abs0 = barAbs(bi);
     for (const ev of (S.song.bars[bi].ev[part] || [])) { const es = r3(abs0 + ev.t), ee = r3(es + ev.d);
       if (es < tEnd - 1e-6 && ee > tStart + 1e-6) { if (!groups.has(es)) groups.set(es, []); groups.get(es).push(ev); } } }
-  let lo = Infinity, hi = -Infinity, any = false;
+  const spans = []; let skipped = false;
   for (const [es, members] of groups) {
     const within = members.map(ev => ev.rest || ev.m == null ? true : (g.y(ev.m) >= y0 - 1e-6 && g.y(ev.m) <= y1 + 1e-6));
     if (!within.some(Boolean)) continue;                                        // this note or chord isn't touched by the box at all
-    if (!within.every(Boolean)) { toast("That splits a chord — drag over the whole chord"); return; }
-    for (const ev of members) { const ee = r3(es + ev.d); if (es < tStart - 1e-6 || ee > tEnd + 1e-6) { toast("That cuts through a note — drag over whole entries only"); return; } lo = Math.min(lo, es); hi = Math.max(hi, ee); any = true; }
+    if (!within.every(Boolean)) { skipped = true; continue; }                    // splits a chord — leave the whole chord out, keep the rest
+    const ends = members.map(ev => r3(es + ev.d)), hi = Math.max(...ends);
+    if (es < tStart - 1e-6 || hi > tEnd + 1e-6) { skipped = true; continue; }    // cuts through a note — leave it out, keep the rest
+    spans.push({ start: es, end: hi });
   }
-  if (!any) { toast("Nothing there to copy — drag over some notes"); return; }
-  cpy.part = part; cpy.buf.push([{ start: r3(lo), end: r3(hi) }]); renderAll();
-  toast(`Set — ${cpy.buf.length} of 5 copied. Drag more, tap more, or tap empty space to paste`);
+  if (!spans.length) { toast(skipped ? "Nothing whole in that box to copy — drag over full entries" : "Nothing there to copy — drag over some notes"); return; }
+  spans.sort((p, q) => p.start - q.start);
+  const merged = [spans[0]];
+  for (let i = 1; i < spans.length; i++) { const last = merged[merged.length - 1], s = spans[i];
+    if (s.start <= last.end + 1e-6) last.end = Math.max(last.end, s.end); else merged.push(s); }
+  cpy.part = part; cpy.buf.push(merged); renderAll();
+  toast(skipped ? `Set — ${cpy.buf.length} of 5 copied (some notes in the box didn't qualify and were skipped)` : `Set — ${cpy.buf.length} of 5 copied. Drag more, tap more, or tap empty space to paste`);
 }
 /* MOVE armed: a tap elsewhere on the stave tries to redirect the destination there instead of the one found automatically */
 function mvOverrideTap(win, bi, t) {
