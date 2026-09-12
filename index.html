@@ -280,7 +280,8 @@ svg text { pointer-events: none; }
 #app.deck #pitchArrows::before { content: "PITCH"; } #app.deck #itemArrows::before { content: "ITEM"; }
 #app.deck #toolL #pitchArrows button, #app.deck #toolL #itemArrows button { grid-row: 2; height: 18px; font-size: 8px; border-top: 1.5px solid #141414; }
 #app.deck #pitchArrows button:first-child, #app.deck #itemArrows button:first-child { border-radius: 0 0 0 4px; } #app.deck #pitchArrows button:last-child, #app.deck #itemArrows button:last-child { border-radius: 0 0 4px 0; }
-#app.deck #pitchArrows .aico, #app.deck #itemArrows .aico { width: 12px; height: 12px; }
+#app.deck #pitchArrows .aico, #app.deck #itemArrows .aico { width: 13px; height: 13px; }
+#app.deck #pitchArrows .aico path, #app.deck #itemArrows .aico path { stroke: #000; stroke-width: 3.4; }   /* dark, bold and thick, but still crisp at this size */
 /* the staff-lines switch on the flip bar's second pane, on/off like the strip show/hide buttons beside the stave */
 #app.deck .beatBtn { flex: 0 0 auto; margin-left: auto; height: 26px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 0 8px; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); font-size: 7px; font-weight: 800; letter-spacing: .04em; line-height: 1.1; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); }
 #app.deck .beatBtn:active { filter: brightness(1.1); }
@@ -543,7 +544,7 @@ body.kbOpen #app.deck { padding-bottom: 6px; }
 #mvRow { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-top: 44px; }               /* and MOVE / DELETE flush beneath UNDO / REDO */
 #arrows, #undoRow, #mvRow { width: 37.5%; justify-self: end; }                                           /* the right side of the row, three quarters of the size it was */
 #arrows, #undoRow, #mvRow { grid-row: arrows-start / undo-end; align-self: start; }                     /* both share the tall cell beside the quick palette, at its top, the same distance from the Lyrics strip */
-#arrows button, #undoRow button, #mvRow button { border-radius: 0; }                                            /* one block: shared edges, rounded only at the corners */
+#arrows button, #undoRow button, #mvRow button, #pitchArrows button, #itemArrows button { border-radius: 0; }                                            /* one block: shared edges, rounded only at the corners */
 #arrows button + button, #undoRow button + button, #mvRow button + button { border-left: none; }
 #undoRow button, #mvRow button { border-top: none; }
 #arrows button:first-child { border-top-left-radius: 4px; } #arrows button:last-child { border-top-right-radius: 4px; }
@@ -575,13 +576,13 @@ body.kbOpen #app.deck { padding-bottom: 6px; }
 #quick.float .qctl { grid-row: 2 / 5; }
 #app.focus-acc #quick, #app.focus-bass #quick { display: none; }
 #arrows .aico { width: 15px; height: 15px; display: block; }
-#arrows button, #undoRow button, #mvRow button { height: 22px; padding: 0; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); color: #111; font-size: 14px; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); }
+#arrows button, #undoRow button, #mvRow button, #pitchArrows button, #itemArrows button { height: 22px; padding: 0; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); color: #111; font-size: 14px; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); }
 #undoRow button, #mvRow button { font-family: var(--sans); font-size: 10px; letter-spacing: .05em; }
 #mvRow #delBtn { color: var(--danger); }
 #mvRow button.on { background: linear-gradient(#6fb3ff, #2f7fd6); color: #fff; }
 @keyframes delBlink { 0%, 100% { background: linear-gradient(#fff, #d9d9d9); color: var(--danger); } 50% { background: #e5322d; color: #fff; } }
 #mvRow #delBtn.ready { animation: delBlink 1s ease-in-out infinite; }                    /* something is selected: DELETE is ready and blinks red */
-#arrows button:active, #undoRow button:active, #mvRow button:active { background: linear-gradient(#ffd27a, #f5a623); }
+#arrows button:active, #undoRow button:active, #mvRow button:active, #pitchArrows button:active, #itemArrows button:active { background: linear-gradient(#ffd27a, #f5a623); }
 #undoRow button:disabled { opacity: .45; }
 #transport { display: flex; gap: 6px; }
 #transport button { width: 42px; height: 40px; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #cfcfcf); color: #111; font-size: 17px; padding: 0; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
