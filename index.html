@@ -286,7 +286,8 @@ svg text { pointer-events: none; }
 #app.deck .beatBtn { flex: 0 0 auto; margin-left: auto; height: 26px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 0 8px; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); font-size: 7px; font-weight: 800; letter-spacing: .04em; line-height: 1.1; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); }
 #app.deck .beatBtn:active { filter: brightness(1.1); }
 #app.deck #mvRow { width: 205px; flex: 0 0 auto; margin-top: 0; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: 8px 18px; align-self: center; }   /* MOVE, DELETE, SELECT, REPEAT, COPY — PITCH / ITEM beside it use the same grid: an 8px cap row over an 18px key row */
-#app.deck #mvRow.armed { width: 246px; grid-template-columns: repeat(6, 1fr); }   /* CANCEL slots in beside whichever of MOVE / DELETE is armed: the row grows, nothing is covered */
+#app.deck #mvRow.armed { width: 246px; grid-template-columns: repeat(6, 1fr); }   /* CANCEL slots in beside whichever key is in charge: the row grows, nothing is covered */
+#app.deck #mvRow.armed:has(#setCopyBtn:not([hidden])) { width: 287px; grid-template-columns: repeat(7, 1fr); }   /* COPY also gets SET TO COPY, ahead of CANCEL */
 #app.deck #mvRow button { font-size: 7px; }
 #app.deck #mvRow::before { content: "BULK"; grid-column: 1 / -1; grid-row: 1; display: block; height: 8px; line-height: 8px; text-align: center; font-size: 5.5px; font-weight: 800; letter-spacing: .18em; color: #fff; background: #111; border: 1.5px solid #141414; border-bottom: none; border-radius: 5px 5px 0 0; box-sizing: border-box; }   /* a cap over MOVE, DELETE (and CANCEL, once armed) and SELECT: a label, not a key */
 #app.deck #toolL #mvRow button { grid-row: 2; height: 18px; font-size: 8px; border-top: 1.5px solid #141414; }   /* shaved a little at the top: the cap and the keys together stand as tall as the row */
@@ -544,7 +545,8 @@ body.kbOpen #app.deck { padding-bottom: 6px; }
 #arrows { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
 #undoRow { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-top: 22px; }             /* the arrows are 22px tall: this row sits flush beneath them */
 #mvRow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; margin-top: 44px; }              /* MOVE / DELETE / SELECT / REPEAT / COPY flush beneath UNDO / REDO */
-#mvRow.armed { grid-template-columns: repeat(6, 1fr); width: 180px; }                                    /* CANCEL slots in beside whichever of MOVE / DELETE is armed: the row grows a little, nothing is covered */
+#mvRow.armed { grid-template-columns: repeat(6, 1fr); width: 180px; }                                    /* CANCEL slots in beside whichever key is in charge: the row grows a little, nothing is covered */
+#mvRow.armed:has(#setCopyBtn:not([hidden])) { grid-template-columns: repeat(7, 1fr); width: 210px; }        /* COPY also gets SET TO COPY, ahead of CANCEL */
 #arrows, #undoRow { width: 37.5%; justify-self: end; }                                                    /* the right side of the row, three quarters of the size it was */
 #mvRow { width: 150px; justify-self: end; }                                                             /* five (six, armed) narrow words: its own fixed width rather than a share of the row */
 #arrows, #undoRow, #mvRow { grid-row: arrows-start / undo-end; align-self: start; }                     /* both share the tall cell beside the quick palette, at its top, the same distance from the Lyrics strip */
@@ -585,7 +587,7 @@ body.kbOpen #app.deck { padding-bottom: 6px; }
 #mvRow button { font-family: var(--sans); font-size: 7.5px; letter-spacing: .03em; }   /* five (or six) words share the row now: smaller still, to keep every label on one line */
 #mvRow #delBtn { color: var(--danger); }
 #mvRow button:disabled { opacity: .45; }
-#mvRow #cancelBtn { color: #111; }   /* CANCEL: plain, so it never competes with DELETE's red blink */
+#mvRow #cancelBtn, #mvRow #setCopyBtn { color: #111; }   /* plain, so neither competes with DELETE's red or MOVE's blue blink */
 #mvRow button.on { background: linear-gradient(#6fb3ff, #2f7fd6); color: #fff; }
 @keyframes delBlink { 0%, 100% { background: linear-gradient(#fff, #d9d9d9); color: var(--danger); } 50% { background: #e5322d; color: #fff; } }
 #mvRow #delBtn.ready { animation: delBlink 1s ease-in-out infinite; }                    /* something is selected: DELETE is ready and blinks red */
@@ -889,7 +891,7 @@ body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the s
 
   <div id="arrows"><button id="arrUp" title="Up: the selected note a half step up, or the stave's register up"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V4M5 11l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="arrDn" title="Down: the selected note a half step down, or the stave's register down"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M5 13l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="arrL" title="Left: the selected note or word earlier, a picked run earlier, or the beat before"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H4M11 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="arrR" title="Right: the selected note or word later, a picked run later, or the beat after"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16M13 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
   <div id="undoRow"><button id="undoBtn" title="Undo">UNDO</button><button id="redoBtn" title="Redo">REDO</button></div>
-  <div id="mvRow"><button id="moveBtn" title="Move: arms on the first tap (once empty space of the same size is found in view), then confirms on the second">MOVE</button><button id="delBtn" title="Delete: arms on the first tap, then confirms on the second">DELETE</button><button id="selBtn" title="Select a run of beats to move or delete: tap the first beat, then the last — or use Bar / Section">SELECT</button><button id="repBtn" title="Repeat: tap the beat(s) to repeat, then REPEAT — it finds the space right after and copies them there; tap again to repeat further on">REPEAT</button><button id="copyBtn" title="Copy: tap the beats or bars to copy (SET each one), then tap empty space with room enough to paste them">COPY</button></div>
+  <div id="mvRow"><button id="moveBtn" title="Move: arms on the first tap (once empty space of the same size is found in view), then confirms on the second">MOVE</button><button id="delBtn" title="Delete: arms on the first tap, then confirms on the second">DELETE</button><button id="selBtn" title="Select a run of beats to move or delete: tap the first beat, then the last — or use Bar / Section">SELECT</button><button id="repBtn" title="Repeat: tap the beat(s) to repeat, then REPEAT — it finds the space right after and copies them there; tap again to repeat further on">REPEAT</button><button id="copyBtn" title="Copy: tap the beats or bars to copy (SET each one), then tap empty space with room enough to paste them">COPY</button><button id="setCopyBtn" title="Set: add what is tapped to the copied set (up to 5)" hidden>SET TO COPY</button></div>
   <div id="quick" title="Quick palette"></div>
   <div id="palette"><div class="prow" id="palRow1"></div><div class="prow" id="palRow2"></div><div class="prow" id="palRow3"></div><div class="prow" id="palRow4"></div></div>
 
@@ -9029,7 +9031,7 @@ function renderWindows() {
       const ax = first ? 0 : g.x(bi, S.active.beat), ax1 = last ? g.W : g.x(bi, Math.min(barBeats(bi), S.active.beat + 1)), aw = ax1 - ax;
       svg.append(svgEl("rect", { x: ax, y: 0, width: aw, height: g.H, fill: css("--box"), opacity: 0.28, "pointer-events": "none" }), svgEl("rect", { x: ax + 1, y: 1, width: aw - 2, height: g.H - 2, fill: "none", stroke: css("--box"), "stroke-width": 2, opacity: 0.9, "pointer-events": "none" }));
     }
-    drawMoveSel(svg, g, bi, "melody"); drawSpanBands(svg, g, bi, "melody");
+    drawMoveSel(svg, g, bi, "melody"); drawRepeatSel(svg, g, bi, "melody"); drawCopySel(svg, g, bi, "melody"); drawSpanBands(svg, g, bi, "melody");
     if (S.ghost && S.ghost.part === "melody" && S.ghost.bi === bi) drawGhost(svg, g, bi, S.ghost, box);
     for (const c of chains(bar)) {
       const x0 = g.x(bi, c.t) + 1, x1 = g.x(bi, c.t + c.d) - 1, selected = c.members.some(e => e.id === sel);
@@ -9781,6 +9783,8 @@ function initPointer() {
       S.selChip = null;
       if (PSEL.on) { if (d.ev && !d.ev.rest && d.ev.m != null) { const key = d.part + ":" + d.ev.id; if (PSEL.ids.has(key)) PSEL.ids.delete(key); else PSEL.ids.add(key); renderWindows(); } return; }   // Play Select: taps only choose notes
       if (S.mv) { mvTap(win, at.bi, at.t); return; }                                                                    // move mode: taps pick the run, or lock it in
+      if (S.rep) { repTap(win, at.bi, at.t); return; }                                                                   // repeat mode: taps toggle the beat(s) to repeat
+      if (S.cpy) { cpyTap(win, at.bi, at.t); return; }                                                                   // copy mode: taps toggle what to copy, or paste onto empty space
       if (d.ev && S.artic && !d.ev.rest && d.ev.m != null) { S.bi = d.bi; applyArtic(d.bi, d.part, d.ev); return; }   // slurs and marks may reach into locked beats
       if (S.dynArm) { applyDynAt(d.ev ? d.bi : at.bi, d.part, d.ev, at.t); return; }        // an armed dynamic: on the note tapped, or the first note of the beat tapped
       if (d.locked) { if (d.ev) { activate(d.bi, d.ev.t, d.part); S.sel = { bi: d.bi, part: d.part, id: d.ev.id }; S.selAuto = false; renderAll(); return; } activate(at.bi, at.t, WIN_PART[win]); showBox(at.bi, WIN_PART[win]); return; }
@@ -10929,23 +10933,29 @@ function absToBar(abs) { let a = 0; for (let bi = 0; bi < S.song.bars.length; bi
 /* DELETE: SELECT (or a lyrics pick) chooses what goes; the first DELETE press arms it, blinking, with CANCEL beside it; the second confirms */
 function delReady() { const kb = typeof WE !== "undefined" && WE.on; return !!((kb && WE.picks.length) || (S.mv && S.mv.mode === "delete" && S.mv.armed)); }   // DELETE blinks only once armed — SELECT must pick a run first, and a first DELETE press arms it
 function syncMoveDelBtns() {
-  const mb = $("moveBtn"), db = $("delBtn"), sb = $("selBtn"), row = $("mvRow"); if (!mb || !db || !sb || !row) return;
+  const mb = $("moveBtn"), db = $("delBtn"), sb = $("selBtn"), rb = $("repBtn"), cyb = $("copyBtn"), scb = $("setCopyBtn"), row = $("mvRow");
+  if (!mb || !db || !sb || !rb || !cyb || !scb || !row) return;
   const picking = !!(S.mv && S.mv.mode === "delete"), delArmed = !!(picking && S.mv.armed), moveArmed = !!(S.mv && S.mv.mode === "move");
-  const anyArmed = delArmed || moveArmed, armedBtn = moveArmed ? mb : delArmed ? db : null;
-  mb.classList.toggle("on", moveArmed); mb.classList.toggle("ready", moveArmed); mb.disabled = delArmed;
-  sb.classList.toggle("on", picking && !delArmed); sb.disabled = anyArmed;
-  db.classList.toggle("on", picking); db.classList.toggle("ready", delReady()); db.disabled = moveArmed || !(picking && (S.mv.start != null || delArmed));
+  const anyArmed = delArmed || moveArmed, repOn = !!S.rep, cpyOn = !!S.cpy, busy = anyArmed || picking || repOn || cpyOn;
+  mb.classList.toggle("on", moveArmed); mb.classList.toggle("ready", moveArmed); mb.disabled = delArmed || repOn || cpyOn;
+  sb.classList.toggle("on", picking && !delArmed); sb.disabled = anyArmed || repOn || cpyOn;
+  db.classList.toggle("on", picking); db.classList.toggle("ready", delReady()); db.disabled = moveArmed || repOn || cpyOn || !(picking && (S.mv.start != null || delArmed));
+  rb.classList.toggle("on", repOn); rb.disabled = anyArmed || picking || cpyOn;
+  cyb.classList.toggle("on", cpyOn); cyb.disabled = anyArmed || picking || repOn;
+  scb.hidden = !cpyOn;
+  const armedBtn = moveArmed ? mb : delArmed ? db : repOn ? rb : cpyOn ? cyb : null;
   let cb = $("cancelBtn");
-  if (anyArmed) {
+  if (armedBtn) {
     if (!cb) cb = el("button", { id: "cancelBtn", class: "cancelk", title: "Cancel" }, "CANCEL");
-    cb.onclick = () => { S.mv = null; renderAll(); };
-    row.insertBefore(cb, armedBtn.nextSibling);                                             // right after whichever of MOVE / DELETE armed: everything past it is pushed along, never covered
+    cb.onclick = () => { S.mv = null; S.rep = null; S.cpy = null; renderAll(); };
+    if (cpyOn) { row.insertBefore(scb, armedBtn.nextSibling); row.insertBefore(cb, scb.nextSibling); }   // COPY also gets SET TO COPY, ahead of CANCEL
+    else row.insertBefore(cb, armedBtn.nextSibling);                                        // right after whichever button is in charge: everything past it is pushed along, never covered
     row.classList.add("armed");
   } else {
     if (cb) cb.remove();
     row.classList.remove("armed");
   }
-}   // called wherever a pick, a selection, an arm or a move/delete run changes, so none of this goes stale
+}   // called wherever a pick, a selection, an arm or a move/delete/repeat/copy in progress changes, so none of this goes stale
 function delAction() {
   const kb = typeof WE !== "undefined" && WE.on;
   if (kb) { if (WE.picks.length) weDeleteChips(); return; }                                 // the keyboard open: a lyrics chip is deleted only once SELECT CHIP(S) has picked it
@@ -11022,6 +11032,112 @@ function moveAction() {
     S.mv.mode = "move"; S.mv.armed = true; S.mv.dest = dest; renderAll(); return;
   }
   toast("SELECT first, then tap the beats to move");
+}
+/* every event of `part` that starts inside [s, e) — each with the bar it is in and its own absolute start */
+function eventsInSpan(part, s, e) {
+  const out = []; const a = absToBar(s), b = absToBar(Math.max(s, e - 1e-6)); if (!a || !b) return out;
+  for (let bi = a.bi; bi <= b.bi; bi++) { const abs0 = barAbs(bi); for (const ev of (S.song.bars[bi].ev[part] || [])) { const es = abs0 + ev.t; if (es >= s - 1e-6 && es < e - 1e-6) out.push({ ev, bi, abs: r3(es) }); } }
+  return out;
+}
+/* consecutive whole beats (1, 2, 3 …) become one range each; a gap starts a new one */
+function mergeBeatsToRanges(beats) {
+  const out = []; let cur = null;
+  for (const b of [...beats].sort((x, y) => x - y)) { if (cur && Math.abs(b - cur.end) < 1e-6) cur.end = r3(b + 1); else { cur = { start: r3(b), end: r3(b + 1) }; out.push(cur); } }
+  return out;
+}
+/* every one of these ranges must hold only whole entries — nothing that starts before it or runs past it */
+function regionsQualify(part, ranges) {
+  for (const r of ranges) { const a = absToBar(r.start), b = absToBar(Math.max(r.start, r.end - 1e-6)); if (!a || !b) return false;
+    for (let bi = a.bi; bi <= b.bi; bi++) { const abs0 = barAbs(bi);
+      for (const ev of (S.song.bars[bi].ev[part] || [])) { const es = abs0 + ev.t, ee = r3(es + ev.d);
+        if (es < r.end - 1e-6 && ee > r.start + 1e-6 && (es < r.start - 1e-6 || ee > r.end + 1e-6)) return false; } } }
+  return true;
+}
+
+/* REPEAT: tap REPEAT to start, tap the beat(s) to repeat (any pattern — contiguous or not), tap REPEAT to copy them into
+   the space right after the pattern; tap REPEAT again to keep going, each time into the space right after the last copy */
+function repStart() {
+  if (S.rep) { S.rep = null; renderAll(); return; }
+  S.mv = null; S.cpy = null; S.rep = { part: S.activePart || "melody", picks: [], cursor: null };
+  S.sel = null; S.ghost = null; S.active = null; renderAll();
+  toast("Tap the beat(s) to repeat — a bar, a few beats, even a pattern with gaps — then REPEAT");
+}
+function repTap(win, bi, t) {
+  const part = WIN_PART[win], rep = S.rep;
+  if (rep.part !== part) { rep.part = part; rep.picks = []; }
+  const beat = r3(barAbs(bi) + Math.floor(t + 1e-6));
+  const i = rep.picks.indexOf(beat); if (i >= 0) rep.picks.splice(i, 1); else rep.picks.push(beat);
+  rep.picks.sort((a, b) => a - b); rep.cursor = null; rep.cursorBar = null;                 // the pattern changed: chain again from right after it
+  S.active = null; S.sel = null; S.ghost = null; renderAll();
+}
+/* where the next repeat would land: a single tapped beat marches forward one beat at a time (into the next bar too,
+   if it comes to that); two or more beats — a pattern, gaps and all — repeat whole-bar to whole-bar instead, at the
+   same beats of the next bar, since "the space right after" a pattern with gaps in it is the next bar wearing it */
+function repDest(rep) {
+  if (rep.picks.length > 1) {
+    const originBar = absToBar(Math.min(...rep.picks)).bi, barStart = rep.cursorBar != null ? rep.cursorBar : originBar + 1;
+    if (barStart >= S.song.bars.length) return null;
+    const originAbs = barAbs(originBar), destAbs = barAbs(barStart);
+    return { picks: rep.picks.map(p => r3(destAbs + (p - originAbs))), barStart };
+  }
+  const base = rep.cursor != null ? rep.cursor : r3(rep.picks[0] + 1);
+  return { picks: [base], barStart: null };
+}
+function repAction() {
+  if (!S.rep) { repStart(); return; }
+  const rep = S.rep; if (!rep.picks.length) { toast("Tap the beat(s) to repeat first"); return; }
+  const dest = repDest(rep); if (!dest) { toast("No room left — that runs past the end of the song"); return; }
+  const rMax = barAbs(S.song.bars.length - 1) + barBeats(S.song.bars.length - 1);
+  if (dest.picks.some(dp => dp + 1 > rMax + 1e-6)) { toast("No room left — that runs past the end of the song"); return; }
+  for (const dp of dest.picks) { if (!spanFree(rep.part, dp, r3(dp + 1))) { toast(rep.picks.length > 1 ? "The next bar isn't free at those same beats — tap elsewhere to repeat into instead" : "No room right after the pattern to repeat into"); return; } }
+  dest.picks.forEach((dp, i) => { eventsInSpan(rep.part, rep.picks[i], r3(rep.picks[i] + 1)).forEach(({ ev, abs }) => {
+    const at = absToBar(r3(dp + (abs - rep.picks[i]))); if (!at) return; const clone = Object.assign({}, ev, { id: uid() }); clone.t = at.t; S.song.bars[at.bi].ev[rep.part].push(clone); }); });
+  if (dest.barStart != null) { rep.cursorBar = dest.barStart + 1; rep.cursor = null; } else { rep.cursor = r3(dest.picks[0] + 1); rep.cursorBar = null; }
+  renderAll();
+  toast("Repeated — REPEAT again to keep going, or tap a beat to repeat something new");
+}
+
+/* COPY: tap COPY to start; tap beats that hold something to gather them, SET TO COPY to bank that group (up to 5, each
+   one a complete entry or entries — no half a note or chord); tap any empty beat with room to paste everything banked,
+   exactly as it read at the source */
+function cpyStart() {
+  if (S.cpy) { S.cpy = null; renderAll(); return; }
+  S.mv = null; S.rep = null; S.cpy = { part: S.activePart || "melody", buf: [], work: [] };
+  S.sel = null; S.ghost = null; S.active = null; renderAll();
+  toast("Tap the beats or bars to copy, then SET TO COPY — up to 5 times; tap empty space to paste");
+}
+function cpyTap(win, bi, t) {
+  const part = WIN_PART[win], cpy = S.cpy;
+  if (cpy.part !== part && !cpy.buf.length) { cpy.part = part; cpy.work = []; }
+  if (part !== cpy.part) { toast("Copying from " + PART_META[cpy.part].label.toLowerCase() + " — CANCEL to switch parts"); return; }
+  const beat = r3(barAbs(bi) + Math.floor(t + 1e-6));
+  const hasEv = eventsInSpan(part, beat, r3(beat + 1)).length > 0;
+  if (!hasEv) {
+    if (cpy.buf.length) { cpyPasteAt(beat); return; }
+    toast("Tap a beat with something on it, to copy it"); return;
+  }
+  const i = cpy.work.indexOf(beat); if (i >= 0) cpy.work.splice(i, 1); else cpy.work.push(beat);
+  cpy.work.sort((a, b) => a - b);
+  S.active = null; S.sel = null; renderAll();
+}
+function setCopyAction() {
+  const cpy = S.cpy; if (!cpy) return;
+  if (!cpy.work.length) { toast("Tap the beats to copy first"); return; }
+  if (cpy.buf.length >= 5) { toast("5 already copied — paste them, or CANCEL to start over"); return; }
+  const ranges = mergeBeatsToRanges(cpy.work);
+  if (!regionsQualify(cpy.part, ranges)) { toast("That runs into part of a note or chord — copy whole entries only"); return; }
+  cpy.buf.push(ranges); cpy.work = []; renderAll();
+  toast(`Set — ${cpy.buf.length} of 5 copied. Tap more to copy, or tap empty space to paste`);
+}
+function cpyPasteAt(destBeat) {
+  const cpy = S.cpy; const all = cpy.buf.flat(); if (!all.length) return;
+  const lo = Math.min(...all.map(r => r.start)), hi = Math.max(...all.map(r => r.end)), delta = r3(destBeat - lo);
+  const rMax = barAbs(S.song.bars.length - 1) + barBeats(S.song.bars.length - 1);
+  if (destBeat + (hi - lo) > rMax + 1e-6 || destBeat < -1e-6) { toast("No room left there for the whole copied set"); return; }
+  for (const r of all) { if (!spanFree(cpy.part, r3(r.start + delta), r3(r.end + delta))) { toast("Not enough empty room there for everything copied"); return; } }
+  all.forEach(r => { eventsInSpan(cpy.part, r.start, r.end).forEach(({ ev, abs }) => {
+    const at = absToBar(r3(abs + delta)); if (!at) return; const clone = Object.assign({}, ev, { id: uid() }); clone.t = at.t; S.song.bars[at.bi].ev[cpy.part].push(clone); }); });
+  S.cpy = null; renderAll(); toast("Pasted");
 }
 function mvTap(win, bi, t) {
   /* first tap: the whole beat. Tapping the run's first or last beat again shows its quarters; a tap on a quarter sets the start or end there. */
@@ -11138,6 +11254,27 @@ const TSC_VALUES = [["whole", 4, "𝅝", "1"], ["half", 2, "𝅗𝅥", "½"], ["
 const TSC_RESTS = ["𝄻", "𝄼", "𝄽", "𝄾", "𝄿", "𝅀", "𝅁", "𝅂"];
 const tscDur = e => TSC_VALUES[e.v][1] * (e.dots === 2 ? 1.75 : e.dots === 1 ? 1.5 : 1);
 const tscGlyph = e => (e.rest ? TSC_RESTS[e.v] : TSC_VALUES[e.v][2]) + (e.dots ? "·".repeat(e.dots) : "");
+/* the beat(s) REPEAT will copy (purple) and, once known, where the next copy would land (green, dashed) */
+function drawRepeatSel(svg, g, bi, part) {
+  if (!S.rep || S.rep.part !== part || !S.rep.picks.length) return;
+  const a = barAbs(bi), box = (s, e, color, dash) => { const s0 = Math.max(s, a), e0 = Math.min(e, a + barBeats(bi)); if (e0 <= s0 + 1e-6) return;
+    const x0 = g.x(bi, s0 - a), x1 = g.x(bi, e0 - a);
+    svg.append(svgEl("rect", { x: x0, y: 1, width: x1 - x0, height: g.H - 2, fill: color, opacity: 0.22, "pointer-events": "none" }),
+               svgEl("rect", { x: x0 + 1, y: 2, width: x1 - x0 - 2, height: g.H - 4, fill: "none", stroke: color, "stroke-width": 2.5, "stroke-dasharray": dash, "pointer-events": "none" })); };
+  mergeBeatsToRanges(S.rep.picks).forEach(r => box(r.start, r.end, "#8250df", ""));
+  const dest = repDest(S.rep);
+  if (dest) mergeBeatsToRanges(dest.picks).forEach(r => box(r.start, r.end, "#3fb950", "8 4"));
+}
+/* what COPY has gathered so far this pass (gold), and what it has already banked (purple, solid) */
+function drawCopySel(svg, g, bi, part) {
+  if (!S.cpy || S.cpy.part !== part) return;
+  const a = barAbs(bi), box = (s, e, color) => { const s0 = Math.max(s, a), e0 = Math.min(e, a + barBeats(bi)); if (e0 <= s0 + 1e-6) return;
+    const x0 = g.x(bi, s0 - a), x1 = g.x(bi, e0 - a);
+    svg.append(svgEl("rect", { x: x0, y: 1, width: x1 - x0, height: g.H - 2, fill: color, opacity: 0.22, "pointer-events": "none" }),
+               svgEl("rect", { x: x0 + 1, y: 2, width: x1 - x0 - 2, height: g.H - 4, fill: "none", stroke: color, "stroke-width": 2.5, "pointer-events": "none" })); };
+  S.cpy.buf.forEach(ranges => ranges.forEach(r => box(r.start, r.end, "#8250df")));
+  mergeBeatsToRanges(S.cpy.work).forEach(r => box(r.start, r.end, "#d4a72c"));
+}
 function openTsCalc() {
   const wrap = el("div", { class: "tsc" });
   wrap.append(el("div", { class: "tiny", style: "margin-bottom:6px" }, "Tap values to lay a rhythm on the strip, one at a time. Nothing divides it yet — Calculate finds the time signature that fits best and shows how it falls into bars."));
@@ -11284,7 +11421,7 @@ function tscSend() {
   const go = () => {
     for (let k = from; k <= lastBi; k++) bars[k].ev.melody = [];
     pieces.forEach(p => { const ev = { id: uid(), t: p.t, d: p.d }; if (p.rest) ev.rest = true; else { ev.m = null; if (p.tie) ev.tie = true; } bars[p.bi].ev.melody.push(ev); });
-    closeModal(); S.sel = null; S.active = null; S.ghost = null; S.mv = null; renderAll();
+    closeModal(); S.sel = null; S.active = null; S.ghost = null; S.mv = null; S.rep = null; S.cpy = null; renderAll();
     toast(`Rhythm placed in ${span}${overflow ? " — it ran past the last bar" : ""}. Tap the boxes to give them pitches.`);
   };
   if (bars.slice(from, lastBi + 1).some(b => b.ev.melody.length)) confirmModal(`The melody in ${span} will be replaced by this rhythm. Go ahead?`, go, "Replace"); else go();
@@ -11334,7 +11471,7 @@ function openPlayRange() {
 /* Play Select: choose notes one by one, hear just those; the rest are greyed while it plays */
 const PSEL = { on: false, ids: new Set(), playing: false };
 function togglePlaySelect(win, btn) {
-  if (!PSEL.on) { PSEL.on = true; PSEL.ids.clear(); PSEL.playing = false; S.sel = null; S.ghost = null; S.mv = null; renderAll(); toast("Tap the notes you want to hear, then ▶ in the blue box again"); return; }
+  if (!PSEL.on) { PSEL.on = true; PSEL.ids.clear(); PSEL.playing = false; S.sel = null; S.ghost = null; S.mv = null; S.rep = null; S.cpy = null; renderAll(); toast("Tap the notes you want to hear, then ▶ in the blue box again"); return; }
   if (S.playing && PSEL.playing) { stopPlayback(); return; }
   if (!PSEL.ids.size) { toast("Tap some notes first — ✕ in the tools leaves Play Select"); return; }
   playSelected();
@@ -11415,13 +11552,13 @@ function playSolo(win, btn) {
 function undo() {
   if (!UNDO.stack.length) { toast("Nothing to undo"); return; }
   const snap = UNDO.stack.pop(); if (UNDO.last) UNDO.redo.push(UNDO.last);
-  S.song = upgradeSong(JSON.parse(snap)); UNDO.last = snap; UNDO.replaying = true; S.sel = null; S.mv = null; S.ghost = null;
+  S.song = upgradeSong(JSON.parse(snap)); UNDO.last = snap; UNDO.replaying = true; S.sel = null; S.mv = null; S.rep = null; S.cpy = null; S.ghost = null;
   renderAll(); refreshBox(); toast("Undone");
 }
 function redo() {
   if (!UNDO.redo.length) { toast("Nothing to redo"); return; }
   const snap = UNDO.redo.pop(); if (UNDO.last) UNDO.stack.push(UNDO.last);
-  S.song = upgradeSong(JSON.parse(snap)); UNDO.last = snap; UNDO.replaying = true; S.sel = null; S.mv = null; S.ghost = null;
+  S.song = upgradeSong(JSON.parse(snap)); UNDO.last = snap; UNDO.replaying = true; S.sel = null; S.mv = null; S.rep = null; S.cpy = null; S.ghost = null;
   renderAll(); refreshBox(); toast("Redone");
 }
 
@@ -11520,7 +11657,7 @@ async function boot() {
   $("arrUp").addEventListener("click", () => arrowUD(1)); $("arrDn").addEventListener("click", () => arrowUD(-1));
   $("arrL").addEventListener("click", () => arrowLR(-1)); $("arrR").addEventListener("click", () => arrowLR(1));
   $("undoBtn").addEventListener("click", undo); $("redoBtn").addEventListener("click", redo);
-  $("moveBtn").addEventListener("click", moveAction); $("delBtn").addEventListener("click", delAction); $("selBtn").addEventListener("click", () => mvStart("delete"));
+  $("moveBtn").addEventListener("click", moveAction); $("delBtn").addEventListener("click", delAction); $("selBtn").addEventListener("click", () => mvStart("delete")); $("repBtn").addEventListener("click", repAction); $("copyBtn").addEventListener("click", cpyStart); $("setCopyBtn").addEventListener("click", setCopyAction);
   $("playAllBtn").addEventListener("click", playAll);
   $("rangeBtn").addEventListener("click", openPlayRange);
   $("stopBtn").addEventListener("click", stopAll);
