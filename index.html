@@ -285,8 +285,9 @@ svg text { pointer-events: none; }
 /* the staff-lines switch on the flip bar's second pane, on/off like the strip show/hide buttons beside the stave */
 #app.deck .beatBtn { flex: 0 0 auto; margin-left: auto; height: 26px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 0 8px; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); font-size: 7px; font-weight: 800; letter-spacing: .04em; line-height: 1.1; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); }
 #app.deck .beatBtn:active { filter: brightness(1.1); }
-#app.deck #mvRow { width: 123px; flex: 0 0 auto; margin-top: 0; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: 8px 18px; align-self: center; }   /* MOVE, DELETE, SELECT — PITCH / ITEM beside it use the same grid: an 8px cap row over an 18px key row */
-#app.deck #mvRow.armed { width: 164px; grid-template-columns: repeat(4, 1fr); }   /* CANCEL slots in after DELETE: the row grows, so SELECT is pushed along rather than covered */
+#app.deck #mvRow { width: 205px; flex: 0 0 auto; margin-top: 0; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: 8px 18px; align-self: center; }   /* MOVE, DELETE, SELECT, REPEAT, COPY — PITCH / ITEM beside it use the same grid: an 8px cap row over an 18px key row */
+#app.deck #mvRow.armed { width: 246px; grid-template-columns: repeat(6, 1fr); }   /* CANCEL slots in beside whichever of MOVE / DELETE is armed: the row grows, nothing is covered */
+#app.deck #mvRow button { font-size: 7px; }
 #app.deck #mvRow::before { content: "BULK"; grid-column: 1 / -1; grid-row: 1; display: block; height: 8px; line-height: 8px; text-align: center; font-size: 5.5px; font-weight: 800; letter-spacing: .18em; color: #fff; background: #111; border: 1.5px solid #141414; border-bottom: none; border-radius: 5px 5px 0 0; box-sizing: border-box; }   /* a cap over MOVE, DELETE (and CANCEL, once armed) and SELECT: a label, not a key */
 #app.deck #toolL #mvRow button { grid-row: 2; height: 18px; font-size: 8px; border-top: 1.5px solid #141414; }   /* shaved a little at the top: the cap and the keys together stand as tall as the row */
 #app.deck #mvRow button:first-of-type { border-radius: 0 0 0 4px; } #app.deck #mvRow button:last-of-type { border-radius: 0 0 4px 0; }
@@ -542,9 +543,10 @@ body.kbOpen #app.deck { padding-bottom: 6px; }
 /* the arrow row and UNDO / REDO: wide, not tall, between the Lyrics strip and the tools */
 #arrows { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
 #undoRow { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-top: 22px; }             /* the arrows are 22px tall: this row sits flush beneath them */
-#mvRow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin-top: 44px; }               /* MOVE / DELETE / SELECT flush beneath UNDO / REDO */
-#mvRow.armed { grid-template-columns: repeat(4, 1fr); }                                        /* CANCEL slots in beside DELETE: the row grows, nothing is covered */
-#arrows, #undoRow, #mvRow { width: 37.5%; justify-self: end; }                                           /* the right side of the row, three quarters of the size it was */
+#mvRow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; margin-top: 44px; }              /* MOVE / DELETE / SELECT / REPEAT / COPY flush beneath UNDO / REDO */
+#mvRow.armed { grid-template-columns: repeat(6, 1fr); width: 180px; }                                    /* CANCEL slots in beside whichever of MOVE / DELETE is armed: the row grows a little, nothing is covered */
+#arrows, #undoRow { width: 37.5%; justify-self: end; }                                                    /* the right side of the row, three quarters of the size it was */
+#mvRow { width: 150px; justify-self: end; }                                                             /* five (six, armed) narrow words: its own fixed width rather than a share of the row */
 #arrows, #undoRow, #mvRow { grid-row: arrows-start / undo-end; align-self: start; }                     /* both share the tall cell beside the quick palette, at its top, the same distance from the Lyrics strip */
 #arrows button, #undoRow button, #mvRow button, #pitchArrows button, #itemArrows button { border-radius: 0; }                                            /* one block: shared edges, rounded only at the corners */
 #arrows button + button, #undoRow button + button, #mvRow button + button { border-left: none; }
@@ -580,13 +582,15 @@ body.kbOpen #app.deck { padding-bottom: 6px; }
 #arrows .aico { width: 15px; height: 15px; display: block; }
 #arrows button, #undoRow button, #mvRow button, #pitchArrows button, #itemArrows button { height: 22px; padding: 0; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); color: #111; font-size: 14px; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); }
 #undoRow button { font-family: var(--sans); font-size: 10px; letter-spacing: .05em; }
-#mvRow button { font-family: var(--sans); font-size: 8.5px; letter-spacing: .04em; }   /* three or four words share the row now: a touch smaller to keep every label on one line */
+#mvRow button { font-family: var(--sans); font-size: 7.5px; letter-spacing: .03em; }   /* five (or six) words share the row now: smaller still, to keep every label on one line */
 #mvRow #delBtn { color: var(--danger); }
 #mvRow button:disabled { opacity: .45; }
 #mvRow #cancelBtn { color: #111; }   /* CANCEL: plain, so it never competes with DELETE's red blink */
 #mvRow button.on { background: linear-gradient(#6fb3ff, #2f7fd6); color: #fff; }
 @keyframes delBlink { 0%, 100% { background: linear-gradient(#fff, #d9d9d9); color: var(--danger); } 50% { background: #e5322d; color: #fff; } }
 #mvRow #delBtn.ready { animation: delBlink 1s ease-in-out infinite; }                    /* something is selected: DELETE is ready and blinks red */
+@keyframes moveBlink { 0%, 100% { background: linear-gradient(#fff, #d9d9d9); color: #111; } 50% { background: #2f7fd6; color: #fff; } }
+#mvRow #moveBtn.ready { animation: moveBlink 1s ease-in-out infinite; }                  /* empty space of the same size found: MOVE is armed and blinks blue */
 #arrows button:active, #undoRow button:active, #mvRow button:active, #pitchArrows button:active, #itemArrows button:active { background: linear-gradient(#ffd27a, #f5a623); }
 #undoRow button:disabled { opacity: .45; }
 #transport { display: flex; gap: 6px; }
@@ -885,7 +889,7 @@ body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the s
 
   <div id="arrows"><button id="arrUp" title="Up: the selected note a half step up, or the stave's register up"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V4M5 11l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="arrDn" title="Down: the selected note a half step down, or the stave's register down"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M5 13l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="arrL" title="Left: the selected note or word earlier, a picked run earlier, or the beat before"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H4M11 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="arrR" title="Right: the selected note or word later, a picked run later, or the beat after"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16M13 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
   <div id="undoRow"><button id="undoBtn" title="Undo">UNDO</button><button id="redoBtn" title="Redo">REDO</button></div>
-  <div id="mvRow"><button id="moveBtn" title="Move beats: pick a run of beats, then ← → shift what is in them into empty space">MOVE</button><button id="delBtn" title="Delete: arms on the first tap, then confirms on the second">DELETE</button><button id="selBtn" title="Select what to delete: tap the first beat of the run, then the last — or use Bar / Section">SELECT</button></div>
+  <div id="mvRow"><button id="moveBtn" title="Move: arms on the first tap (once empty space of the same size is found in view), then confirms on the second">MOVE</button><button id="delBtn" title="Delete: arms on the first tap, then confirms on the second">DELETE</button><button id="selBtn" title="Select a run of beats to move or delete: tap the first beat, then the last — or use Bar / Section">SELECT</button><button id="repBtn" title="Repeat: tap the beat(s) to repeat, then REPEAT — it finds the space right after and copies them there; tap again to repeat further on">REPEAT</button><button id="copyBtn" title="Copy: tap the beats or bars to copy (SET each one), then tap empty space with room enough to paste them">COPY</button></div>
   <div id="quick" title="Quick palette"></div>
   <div id="palette"><div class="prow" id="palRow1"></div><div class="prow" id="palRow2"></div><div class="prow" id="palRow3"></div><div class="prow" id="palRow4"></div></div>
 
@@ -8421,7 +8425,6 @@ function arrowUD(d) {
 }
 /* ← →: a picked run, the selected word, the selected note, or the active beat (across bars); with no beat, the bar */
 function arrowLR(d) {
-  if (S.mv && S.mv.mode === "move") { mvShift(d); return; }
   const sc = selChipObj(); if (sc) { setChipTime(sc.bar, sc.chip, sc.chip.t + d * 0.0625); renderAll(); return; }
   const ev = selEv(); if (ev) { moveSel(d * Math.min(gridStep(), baseLen(ev.d))); return; }
   stepBeat(d);
@@ -10927,15 +10930,16 @@ function absToBar(abs) { let a = 0; for (let bi = 0; bi < S.song.bars.length; bi
 function delReady() { const kb = typeof WE !== "undefined" && WE.on; return !!((kb && WE.picks.length) || (S.mv && S.mv.mode === "delete" && S.mv.armed)); }   // DELETE blinks only once armed — SELECT must pick a run first, and a first DELETE press arms it
 function syncMoveDelBtns() {
   const mb = $("moveBtn"), db = $("delBtn"), sb = $("selBtn"), row = $("mvRow"); if (!mb || !db || !sb || !row) return;
-  const picking = !!(S.mv && S.mv.mode === "delete"), armed = !!(picking && S.mv.armed);
-  mb.classList.toggle("on", !!(S.mv && S.mv.mode === "move")); mb.disabled = armed;
-  sb.classList.toggle("on", picking && !armed); sb.disabled = armed;
-  db.classList.toggle("on", picking); db.classList.toggle("ready", delReady()); db.disabled = !(picking && (S.mv.start != null || armed));
+  const picking = !!(S.mv && S.mv.mode === "delete"), delArmed = !!(picking && S.mv.armed), moveArmed = !!(S.mv && S.mv.mode === "move");
+  const anyArmed = delArmed || moveArmed, armedBtn = moveArmed ? mb : delArmed ? db : null;
+  mb.classList.toggle("on", moveArmed); mb.classList.toggle("ready", moveArmed); mb.disabled = delArmed;
+  sb.classList.toggle("on", picking && !delArmed); sb.disabled = anyArmed;
+  db.classList.toggle("on", picking); db.classList.toggle("ready", delReady()); db.disabled = moveArmed || !(picking && (S.mv.start != null || delArmed));
   let cb = $("cancelBtn");
-  if (armed) {
-    if (!cb) cb = el("button", { id: "cancelBtn", class: "cancelk", title: "Cancel the delete" }, "CANCEL");
+  if (anyArmed) {
+    if (!cb) cb = el("button", { id: "cancelBtn", class: "cancelk", title: "Cancel" }, "CANCEL");
     cb.onclick = () => { S.mv = null; renderAll(); };
-    row.insertBefore(cb, db.nextSibling);                                                   // right after DELETE: SELECT (and anything past it) is pushed along, never covered
+    row.insertBefore(cb, armedBtn.nextSibling);                                             // right after whichever of MOVE / DELETE armed: everything past it is pushed along, never covered
     row.classList.add("armed");
   } else {
     if (cb) cb.remove();
@@ -10983,16 +10987,46 @@ function delRun(scope) {
   if (scope === "section") confirmModal(`Delete everything in ${label}${mv.allParts ? " (all parts and words)" : " (" + PART_META[mv.part].label.toLowerCase() + ")"}?`, go, "Delete"); else go();
 }
 function mvCancel() { S.mv = null; renderAll(); }
-function mvLock() { S.mv = null; renderAll(); toast("Locked in"); }
 function mvLabel() {
   const a = absToBar(S.mv.start), eb = absToBar(S.mv.end - 1e-6); if (!a || !eb) return "";
   const endT = r3(S.mv.end - barAbs(eb.bi)), whole = Math.abs(endT - Math.round(endT)) < 1e-6;
   return `${beatLabel(a.t)} of bar ${barNo(a.bi)} → ${whole ? "through beat " + Math.round(endT) : "up to " + beatLabel(endT)} of bar ${barNo(eb.bi)}`;
 }
+function viewAbsRange() { const bars = viewBars(); if (!bars.length) return null; return { from: barAbs(bars[0]), to: barAbs(bars[bars.length - 1]) + barBeats(bars[bars.length - 1]) }; }
+function spanFree(part, s, e, skip) {
+  const a = absToBar(Math.max(0, s)), b = absToBar(Math.max(0, e - 1e-6)); if (!a || !b) return false;
+  for (let bi = a.bi; bi <= b.bi; bi++) { const abs0 = barAbs(bi);
+    for (const ev of (S.song.bars[bi].ev[part] || [])) { if (skip && skip.has(ev)) continue; const es = abs0 + ev.t, ee = es + ev.d; if (es < e - 1e-6 && ee > s + 1e-6) return false; }
+  }
+  return true;
+}
+/* the nearest same-size empty stretch of `part`, at a beat boundary, inside the bars now in view — null when none fits */
+function findEmptySpan(part, len) {
+  const rng = viewAbsRange(); if (!rng) return null;
+  for (let cand = Math.ceil(rng.from - 1e-6); cand + len <= rng.to + 1e-6; cand++) {
+    if (spanFree(part, cand, cand + len)) return { start: r3(cand), end: r3(cand + len) };
+  }
+  return null;
+}
+/* MOVE: SELECT picks the run (as for DELETE); the first MOVE press claims it, finds empty space of the same size in
+   view and arms — MOVE blinks; the second MOVE press moves the group there via mvShift, and the sequence ends */
+function moveAction() {
+  if (S.mv && S.mv.mode === "move" && S.mv.armed) {
+    const d = S.mv.dest; if (!d) { S.mv = null; renderAll(); return; }
+    mvShift(r3(d.start - S.mv.start)); S.mv = null; renderAll(); toast("Moved"); return;
+  }
+  if (S.mv && S.mv.mode === "delete" && !S.mv.armed) {
+    if (S.mv.start == null) { toast("Tap the beats to move, then MOVE"); return; }
+    const dest = findEmptySpan(S.mv.part, r3(S.mv.end - S.mv.start));
+    if (!dest) { toast("No empty space that size in the current view"); return; }
+    S.mv.mode = "move"; S.mv.armed = true; S.mv.dest = dest; renderAll(); return;
+  }
+  toast("SELECT first, then tap the beats to move");
+}
 function mvTap(win, bi, t) {
   /* first tap: the whole beat. Tapping the run's first or last beat again shows its quarters; a tap on a quarter sets the start or end there. */
   const part = WIN_PART[win], mv = S.mv;
-  if (mv.mode === "delete" && mv.armed) return;   // armed: only DELETE (confirm) or CANCEL settle it now
+  if (mv.armed) return;   // armed (move or delete): only its own button confirms it now, or CANCEL settles it
   if (mv.part !== part) { mv.part = part; mv.start = mv.end = null; mv.moved = false; mv.sub = null; }
   const abs = barAbs(bi) + t, beat = barAbs(bi) + Math.floor(t + 1e-6), q = Math.floor((t - Math.floor(t + 1e-6)) * 4 + 1e-6) / 4;
   const done = () => { S.active = null; S.sel = null; S.ghost = null; renderAll(); };
@@ -11003,12 +11037,10 @@ function mvTap(win, bi, t) {
     }
     mv.sub = null;                                                                // a tap elsewhere just leaves the quarters
   }
-  if (mv.mode !== "delete" && mv.moved) { mvLock(); return; }                    // after a move, any tap locks the group in
   if (mv.start == null) { mv.start = beat; mv.end = beat + 1; done(); return; }
   const first = Math.floor(mv.start + 1e-6), last = Math.ceil(mv.end - 1e-6) - 1;
   if (beat === first && (Math.abs(mv.start - first) < 1e-6 || beat !== last)) { mv.sub = { which: "start", beat }; done(); toast("Tap the quarter the run starts on"); return; }
   if (beat === last) { mv.sub = { which: "end", beat }; done(); toast("Tap the quarter the run ends on"); return; }
-  if (mv.mode !== "delete" && abs >= mv.start - 1e-6 && abs < mv.end - 1e-6) { mvLock(); return; }   // a tap inside the run: lock it in
   if (beat + 1 <= mv.start + 1e-6) mv.start = beat;                             // reaching back: whole beats
   else mv.end = Math.max(mv.end, beat + 1);                                      // reaching forward: through that beat
   const r = sectionRange(sectionOfBar(bi)); mv.start = Math.max(mv.start, barAbs(r.start)); mv.end = Math.min(mv.end, barAbs(r.end));
@@ -11079,6 +11111,13 @@ function drawMoveSel(svg, g, bi, part) {
     const x0 = g.x(bi, s - a), x1 = g.x(bi, e - a);
     svg.append(svgEl("rect", { x: x0, y: 1, width: x1 - x0, height: g.H - 2, fill: col, opacity: 0.22, "pointer-events": "none" }),
                svgEl("rect", { x: x0 + 1, y: 2, width: x1 - x0 - 2, height: g.H - 4, fill: "none", stroke: col, "stroke-width": 2.5, "stroke-dasharray": S.mv.moved ? "" : "8 4", "pointer-events": "none" }));
+  }
+  if (S.mv.mode === "move" && S.mv.dest) {                                        // where MOVE will land the group once confirmed
+    const ds = Math.max(S.mv.dest.start, a), de = Math.min(S.mv.dest.end, a + barBeats(bi));
+    if (de > ds + 1e-6) { const dx0 = g.x(bi, ds - a), dx1 = g.x(bi, de - a);
+      svg.append(svgEl("rect", { x: dx0, y: 1, width: dx1 - dx0, height: g.H - 2, fill: "#3fb950", opacity: 0.3, "pointer-events": "none" }),
+                 svgEl("rect", { x: dx0 + 1, y: 2, width: dx1 - dx0 - 2, height: g.H - 4, fill: "none", stroke: "#2ea043", "stroke-width": 2.5, "pointer-events": "none" }));
+    }
   }
   const sub = S.mv.sub;                                                           // the beat opened into quarters
   if (sub && sub.beat >= a && sub.beat < a + barBeats(bi)) {
@@ -11481,7 +11520,7 @@ async function boot() {
   $("arrUp").addEventListener("click", () => arrowUD(1)); $("arrDn").addEventListener("click", () => arrowUD(-1));
   $("arrL").addEventListener("click", () => arrowLR(-1)); $("arrR").addEventListener("click", () => arrowLR(1));
   $("undoBtn").addEventListener("click", undo); $("redoBtn").addEventListener("click", redo);
-  $("moveBtn").addEventListener("click", () => mvStart("move")); $("delBtn").addEventListener("click", delAction); $("selBtn").addEventListener("click", () => mvStart("delete"));
+  $("moveBtn").addEventListener("click", moveAction); $("delBtn").addEventListener("click", delAction); $("selBtn").addEventListener("click", () => mvStart("delete"));
   $("playAllBtn").addEventListener("click", playAll);
   $("rangeBtn").addEventListener("click", openPlayRange);
   $("stopBtn").addEventListener("click", stopAll);
