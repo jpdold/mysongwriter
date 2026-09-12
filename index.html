@@ -395,7 +395,8 @@ body.kbOpen #app.deck { padding-bottom: 6px; }
 #wordEdit .half { display: flex; flex-direction: column; gap: 3px; flex: 1 1 0; min-width: 0; position: relative; }
 #wordEdit .half .krow { justify-content: flex-end; } #wordEdit .half.r .krow { justify-content: flex-start; }
 #wordEdit .half .krow button { flex: 1 1 0; }
-#wordEdit .half .grip { position: absolute; top: -30px; width: 40px; height: 30px; border: 2px solid var(--tag); border-bottom: none; border-radius: 8px 8px 0 0; background-color: #e9e9e9; background-image: radial-gradient(circle, #666 1.5px, transparent 1.8px); background-size: 8px 8px; background-position: 6px 5px; cursor: ew-resize; touch-action: none; user-select: none; -webkit-user-select: none; }   /* the square grippy thumb handles: pull a half apart, drop it where you like */
+#wordEdit .half .grip { position: absolute; top: -20px; width: 40px; height: 20px; border: 2px solid var(--tag); border-bottom: none; border-radius: 8px 8px 0 0; background-color: #e9e9e9; background-image: radial-gradient(circle, #666 1.5px, transparent 1.8px); background-size: 8px 8px; background-position: 6px 4px; cursor: ew-resize; touch-action: none; user-select: none; -webkit-user-select: none; }   /* short, so it does not loom over the keys — the square grippy thumb handles: pull a half apart, drop it where you like */
+#wordEdit .half .grip::before { content: ""; position: absolute; top: -10px; left: -10px; right: -10px; bottom: -6px; }   /* a bigger, invisible pad to grab it by, without stealing the key just below */
 #wordEdit .half.l .grip { left: 0; } #wordEdit .half.r .grip { right: 0; }
 #app.deck.kbUp #rhyStrip, #app.deck.kbUp #lyrStrip { z-index: 71; }                         /* while the keyboard is open the strips ride on top of it (placed by script); closed, they return to their rows */
 #app.deck #lyrEdit { position: absolute; left: 3px; right: auto; width: 42px; top: 50%; transform: translateY(-50%); z-index: 3; }   /* on the left, in the strip's tag column; the right margin holds the strip's SHOW / HIDE */                                          /* the stave reaches the column beside it */
@@ -713,7 +714,8 @@ body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the s
 #lyrStrip .body { overflow-y: visible; }
 #wordEdit .weKeys { display: flex; flex-direction: column; gap: 3px; }
 #wordEdit .weKeys .krow { display: flex; gap: 3px; justify-content: center; }
-#wordEdit .weKeys button { flex: 1 1 0; min-width: 0; height: 38px; padding: 0; font-size: 17px; font-family: var(--sans); background: #f4f4f4; border: 1px solid #bbb; border-radius: 6px; color: #111; box-shadow: 0 1px 0 #999; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
+#wordEdit .weKeys button { position: relative; flex: 1 1 0; min-width: 0; height: 38px; padding: 0; font-size: 17px; font-family: var(--sans); background: #f4f4f4; border: 1px solid #bbb; border-radius: 6px; color: #111; box-shadow: 0 1px 0 #999; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
+#wordEdit .weKeys button::before { content: ""; position: absolute; inset: -1.5px -2px; }   /* closes most of the gap to the next key, so a tap that lands between two keys still picks one — the keys themselves stay the same neat size */
 #wordEdit .weKeys button:active { background: #cfe3fb; transform: translateY(1px); }
 #wordEdit .weKeys .krow { gap: 4px; }
 #wordEdit .weKeys button.sym { font-family: var(--serif); }
