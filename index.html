@@ -103,9 +103,11 @@ svg text { pointer-events: none; }
 }
 
 /* ── header ── */
-#head { display: grid; grid-template-columns: 44px 1fr 44px; grid-template-rows: auto auto; gap: 2px 6px; align-items: center; }
-#topTransport { justify-self: center; display: flex; gap: 4px; min-width: 0; }
-#topTransport button, #navRight button { width: 36px; height: 34px; position: relative; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #cfcfcf); color: #111; font-size: 17px; padding: 0; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
+#head { display: grid; grid-template-columns: 44px 30px 1fr 44px; grid-template-rows: auto auto; gap: 2px 4px; align-items: center; }   /* ☰, the refresh button beside it, the play buttons, the gear */
+#menuBtn { grid-column: 1; grid-row: 2; } #reloadBtn { grid-column: 2; grid-row: 2; } #topTransport { grid-column: 3; grid-row: 2; } #gearBtn { grid-column: 4; grid-row: 2; }
+#reloadBtn { width: 30px; height: 36px; font-size: 22px; font-weight: 700; padding: 0; }   /* ⟳: reloads the app */
+#topTransport { justify-self: center; display: flex; gap: 3px; min-width: 0; max-width: 100%; overflow-x: auto; scrollbar-width: none; }   /* packed a little tighter, the refresh button beside the menu having taken some of its room */
+#topTransport button, #navRight button { width: 32px; height: 34px; position: relative; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #cfcfcf); color: #111; font-size: 17px; padding: 0; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
 #topTransport button.on, #navRight button.on { background: linear-gradient(#ffd27a, #f5a623); }
 #topTransport button .bar, #navRight button .bar { position: absolute; left: calc(50% + 4.5px); top: 50%; transform: translateY(-50%); width: 3.5px; height: 12px; background: #111; border-radius: 1px; }   /* almost touching the triangle, as tall as its base */
 #topTransport #playAllBtn, #navRight #playAllBtn { padding-right: 6px; }
@@ -116,9 +118,9 @@ svg text { pointer-events: none; }
 #topTransport #rangeBtn, #navRight #rangeBtn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; }
 #topTransport #rangeBtn .top, #navRight #rangeBtn .top { display: block; line-height: 15px; }
 #topTransport #rangeBtn .sub, #navRight #rangeBtn .sub { display: block; font-size: 6.5px; font-weight: 800; letter-spacing: .04em; line-height: 8px; font-family: var(--sans); margin-top: 1px; }
-#tempo { display: flex; align-items: center; margin-left: 2px; border: 1.5px solid #141414; border-radius: 4px; overflow: hidden; height: 34px; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
-#topTransport #tempo button, #navRight #tempo button { width: 24px; height: 34px; border: none; border-radius: 0; box-shadow: none; font-size: 18px; font-weight: 700; }
-#topTransport #tempo button#tempoLbl, #navRight #tempo button#tempoLbl { width: auto; min-width: 46px; padding: 0 2px; font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums; background: #111; color: #fff; }
+#tempo { display: flex; align-items: center; margin-left: 0; border: 1.5px solid #141414; border-radius: 4px; overflow: hidden; height: 34px; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
+#topTransport #tempo button, #navRight #tempo button { width: 20px; height: 34px; border: none; border-radius: 0; box-shadow: none; font-size: 18px; font-weight: 700; }
+#topTransport #tempo button#tempoLbl, #navRight #tempo button#tempoLbl { width: auto; min-width: 42px; padding: 0 2px; font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums; background: #111; color: #fff; }
 #topTransport #tempo button:active, #navRight #tempo button:active { background: linear-gradient(#ffd27a, #f5a623); }
 #app { overflow-x: hidden; }
 .btn.warn { background: #c8402f; color: #fff; border-color: #a93226; }
@@ -242,10 +244,10 @@ svg text { pointer-events: none; }
   grid-template-columns: 118px 108px 108px minmax(330px, 1fr) minmax(0, 1fr) var(--deckW, 44px) !important; grid-template-rows: auto auto auto auto auto auto minmax(0, 1fr) auto;
   grid-template-areas: "head head head head head head" "rollbar rollbar rollbar rollbar rollbar addv" "stage stage stage stage stage deck" "dyn dyn dyn dyn dyn deck" "rhy rhy rhy rhy rhy deck" "lyr lyr lyr lyr lyr deck" ". . . . . deck" "t t t t t t" !important; }
 /* the head: a small title at the top left; the play buttons move to the left of the bar bracket */
-#app.deck #head { grid-template-columns: 44px 1fr 44px; grid-template-rows: auto; }
-#app.deck #menuBtn { grid-column: 1; } #app.deck #gearBtn { grid-column: 3; }
+#app.deck #head { grid-template-columns: 44px 36px 1fr 44px; grid-template-rows: auto; }   /* ☰, the refresh button beside it, the bracket, the gear */
+#app.deck #menuBtn { grid-column: 1; grid-row: 1; } #app.deck #reloadBtn { grid-column: 2; grid-row: 1; } #app.deck #gearBtn { grid-column: 4; grid-row: 1; }
 #app.deck #songTitle { display: none; }                                                    /* the title is set in Song setup; no box on the deck */
-#app.deck #nav { grid-column: 2; grid-row: 1; justify-self: center; width: auto; margin-top: 0 !important; grid-template-columns: 30px minmax(160px, 340px) 30px auto; justify-content: center; }   /* in the head row, centred over the stave: ← a narrower bracket → and the parts button beside it */
+#app.deck #nav { grid-column: 3; grid-row: 1; justify-self: center; width: auto; margin-top: 0 !important; grid-template-columns: 30px minmax(160px, 340px) 30px auto; justify-content: center; }   /* in the head row, centred over the stave: ← a narrower bracket → and the parts button beside it */
 #navRight { display: none; }
 #app.deck #navRight { display: none; }
 #app.deck #navRight button { width: 32px; height: 30px; font-size: 15px; }
@@ -403,7 +405,8 @@ body.kbOpen #app.deck { padding-bottom: 6px; }
 #wordEdit .half .grip::before { content: ""; position: absolute; top: -10px; left: -10px; right: -10px; bottom: -6px; }   /* a bigger, invisible pad to grab it by, without stealing the key just below */
 #wordEdit .half.l .grip { left: 0; } #wordEdit .half.r .grip { right: 0; }
 #app.deck.kbUp #rhyStrip, #app.deck.kbUp #lyrStrip { z-index: 71; }                         /* while the keyboard is open the strips ride on top of it (placed by script); closed, they return to their rows */
-#app.deck #lyrEdit { position: absolute; left: 3px; right: auto; width: 42px; top: 50%; transform: translateY(-50%); z-index: 3; }   /* on the left, in the strip's tag column; the right margin holds the strip's SHOW / HIDE */                                          /* the stave reaches the column beside it */
+#app.deck #lyrEdit { position: absolute; left: 3px; right: auto; width: 42px; top: 50%; transform: translateY(-50%); z-index: 3; }
+body.kbOpen #lyrEdit, #app.deck.kbUp #lyrEdit { display: none !important; }   /* while the keyboard is open EDIT steps aside; it returns when the keyboard closes */   /* on the left, in the strip's tag column; the right margin holds the strip's SHOW / HIDE */                                          /* the stave reaches the column beside it */
 #app.deck #rhyStrip { margin-top: 0 !important; }                                          /* flush on the stave */
 #app.deck #deckNav { display: flex; }
 /* the column beside the stave, as tall as the stave: the part's gear, ▲ ▼ to the parts above and below, then centred the tall
@@ -679,9 +682,9 @@ textarea.lyricArea { width: 100%; min-height: 90px; border: 1px solid #999; bord
 .partCard .dot { width: 10px; height: 10px; border-radius: 50%; }
 .partCard .ph b { flex: 1; font-weight: 600; }
 .partCard.off { opacity: .55; }
-#toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px); background: #111; color: #fff; padding: 9px 16px; border-radius: 999px;
+#toast { position: fixed; left: 50%; top: 14px; transform: translateX(-50%) translateY(-20px); background: #111; color: #fff; padding: 9px 16px; border-radius: 999px;   /* drops in at the top of the screen */
   font-size: 13px; opacity: 0; transition: .2s; z-index: 90; pointer-events: none; max-width: 90vw; text-align: center; }
-#toast.on { opacity: 1; transform: translateX(-50%); pointer-events: auto; cursor: pointer; }
+#toast.on { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; cursor: pointer; }
 
 /* inline word editor on the lyric strip */
 #lyrStrip { position: relative; }
@@ -863,6 +866,7 @@ body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the s
   <header id="head">
     <input id="songTitle" type="text" placeholder="“My Song Title”" autocomplete="off" spellcheck="false" aria-label="Song title">
     <button class="iconBtn" id="menuBtn" title="Menu" aria-label="Menu">☰</button>
+    <button class="iconBtn" id="reloadBtn" title="Refresh the app" aria-label="Refresh">⟳</button>
     <button id="partsBtn" title="Show or hide the part selectors">HIDE PARTS</button>
     <div id="topTransport"><button id="playAllBtn" title="Play All — the whole song from the start">▶<span class="bar"></span></button><button id="rangeBtn" title="Play Range — bars and beats you type in"><span class="top">▶<span class="dots">…</span></span><span class="sub">RANGE</span></button><button id="stopBtn" title="Stop">■</button><div id="tempo" title="Tempo"><button id="tempoDn" aria-label="Slower">−</button><button id="tempoLbl" title="Tap to type a tempo">♩=120</button><button id="tempoUp" aria-label="Faster">+</button></div><button id="saveBtn" title="Save — the song library"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 3 h11 l3 3 v11 h-14 z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><rect x="6" y="3.6" width="7" height="4.4" fill="currentColor"/><rect x="5.5" y="11" width="9" height="5.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></button></div>
     <button class="iconBtn" id="gearBtn" title="Settings" aria-label="Settings"><svg class="ico"><use href="#icoGear"/></svg></button>
@@ -6759,6 +6763,7 @@ function toast(msg, ms = 5200) {
   clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("on"), ms);
 }
 $("toast").addEventListener("pointerdown", () => { clearTimeout(toastTimer); $("toast").classList.remove("on"); });   // tapping it closes it right away instead of waiting out the timer
+$("reloadBtn").addEventListener("click", () => location.reload());   // ⟳ beside the menu: a fresh load of the app
 function reportErr(msg) {
   let b = $("errBanner");
   if (!b) {
@@ -8799,6 +8804,7 @@ function renderAll() {
   if (S.si !== S.siLast && S.si !== sectionOfBar(S.bi) && S.song.sections[S.si]) S.bi = sectionRange(S.si).start;   // a section op moved us
   S.si = sectionOfBar(S.bi); S.siLast = S.si;
   renderHeader(); renderNav(); renderRollBar(); renderPalette(); allocate(); renderWindows(); renderStrips(); renderBeatRow(); placeDeckLabels();
+  if (deckMode()) { const a = deckActive(), r0 = DECK_ROWS[a], s0 = STEPS[a]; allocate(); if (DECK_ROWS[a] !== r0 || Math.abs(STEPS[a] - s0) > 1e-6) { renderWindows(); renderStrips(); renderBeatRow(); placeDeckLabels(); } }   // measured once more now everything has settled: whatever moved mid-render (a strip, the keyboard, the head) cannot leave the stave sized to stale room
   saveSoon();
 }
 function renderLights() { renderNav(); }
@@ -10354,9 +10360,9 @@ function weDeleteChips() {
     renderWeKeys(); renderAll(); placeInline(); weCaret();
     const n = picks.length; toast(`${n} chip${n > 1 ? "s" : ""} deleted`); return;
   }
-  /* nothing picked: DELETE never removes a chip on its own — it only starts SELECT CHIP(S)'s picking, so a chip is deleted
-     only once it has actually been selected (the chip in hand or in the cursor is not enough by itself) */
-  WE.picking = true; renderWeKeys(); renderStrips(); syncMoveDelBtns(); toast("Tap the chip — or chips — to delete, then DELETE CHIP(S) again");
+  /* nothing picked: DELETE never removes a chip on its own, and never starts the picking itself either — the one way is
+     SELECT CHIP(S), tap the chip(s), DELETE CHIP(S) (the chip in hand or under the cursor is not enough by itself) */
+  toast(WE.picking ? "Tap the chip(s) on the strip first, then DELETE CHIP(S)" : "SELECT CHIP(S) first, tap the chip(s), then DELETE CHIP(S)");
 }
 /* the beat makes room. The set chips that start in the stretch from the beat of t0 to tEnd, beside `me` (a chip — or the entry box
    when null), squeeze alike so that `me` fits — each down to about three quarters of its own width, where it still reads — and
