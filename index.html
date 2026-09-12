@@ -241,8 +241,8 @@ svg text { pointer-events: none; }
   grid-template-columns: 118px 108px 108px minmax(330px, 1fr) minmax(0, 1fr) var(--deckW, 44px) !important; grid-template-rows: auto auto auto auto auto auto minmax(0, 1fr) auto;
   grid-template-areas: "head head head head head head" "rollbar rollbar rollbar rollbar rollbar addv" "stage stage stage stage stage deck" "dyn dyn dyn dyn dyn deck" "rhy rhy rhy rhy rhy deck" "lyr lyr lyr lyr lyr deck" ". . . . . deck" "t t t t t t" !important; }
 /* the head: a small title at the top left; the play buttons move to the left of the bar bracket */
-#app.deck #head { grid-template-columns: 44px 1fr 44px; grid-template-rows: auto auto; }
-#app.deck #menuBtn { grid-column: 1; grid-row: 1; } #app.deck #gearBtn { grid-column: 3; grid-row: 1; }
+#app.deck #head { grid-template-columns: 44px 1fr 44px; grid-template-rows: auto; }
+#app.deck #menuBtn { grid-column: 1; } #app.deck #gearBtn { grid-column: 3; }
 #app.deck #songTitle { display: none; }                                                    /* the title is set in Song setup; no box on the deck */
 #app.deck #nav { grid-column: 2; grid-row: 1; justify-self: center; width: auto; margin-top: 0 !important; grid-template-columns: 30px minmax(160px, 340px) 30px auto; justify-content: center; }   /* in the head row, centred over the stave: ← a narrower bracket → and the parts button beside it */
 #navRight { display: none; }
@@ -252,7 +252,7 @@ svg text { pointer-events: none; }
 #app.deck #navRight #tempo button#tempoLbl { width: auto; }
 /* the part selectors: shown or hidden from the head; ADD to VIEW keeps its place at the row's right */
 #partsBtn { display: none; }
-#app.deck #partsBtn { display: inline-flex; grid-column: 2 / 4; grid-row: 2; justify-self: end; position: static; align-items: center; height: 22px; margin-top: 2px; padding: 0 10px; border: 1px solid #3a8a1e; border-radius: 4px; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); font-size: 9px; font-weight: 800; letter-spacing: .04em; white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,.3); }   /* sits under the gear, at the head's right edge — a grid item now, not riding in the row that folds away */
+#app.deck #partsBtn { display: inline-flex; position: absolute; top: 50%; right: 96px; transform: translateY(-50%); align-items: center; height: 26px; padding: 0 10px; border: 1px solid #3a8a1e; border-radius: 4px; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); font-size: 9px; font-weight: 800; letter-spacing: .04em; white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,.3); }   /* between the next-bar arrow and the save button, its left edge free to move as its own width needs */
 #app.deck #partsBtn:active { filter: brightness(1.1); }
 #app.deck.noparts #rollBar { display: none; }                                               /* parts hidden: the whole row folds away — the button lives in the head now, so nothing needs to stay behind to hold its place */
 #app.deck #rollBar .rollItem { flex: 0 0 150px; min-width: 0; }
@@ -8696,7 +8696,7 @@ function renderRollBar() {
   const deck = deckMode(), app = $("app"); app.classList.toggle("deck", deck);
   { const tr = $("topTransport"); if ($("tempo").parentNode !== tr) tr.append($("tempo")); if (deck) { if ($("saveBtn").parentNode !== $("head")) $("head").append($("saveBtn")); } else if ($("saveBtn").parentNode !== tr) tr.append($("saveBtn"));   // the tempo travels with the play buttons; on the deck the save button rides in the head
     if (deck) { if (tr.parentNode !== $("toolMScroll")) $("toolMScroll").prepend(tr); } else if (tr.parentNode !== $("head")) $("head").insertBefore(tr, $("gearBtn")); }   // on the deck the play buttons live in the middle third of the tool bar
-  if (pb.parentNode !== $("head")) $("head").insertBefore(pb, deck ? $("gearBtn") : $("topTransport"));   // off the deck the parts button waits, hidden, in the head; on the deck it rides there too, under the gear
+  if (pb.parentNode !== $("head")) $("head").insertBefore(pb, deck ? $("gearBtn") : $("topTransport"));   // off the deck the parts button waits, hidden, in the head; on the deck it rides there too, beside the save button and the gear
   { const nv = $("nav"); if (deck) { if (nv.parentNode !== $("head")) $("head").insertBefore(nv, $("gearBtn")); } else if (nv.parentNode === $("head")) $("head").after(nv); }   // the bar bracket: up in the head row on the deck
   if (deck) app.style.setProperty("--deckW", Math.max(28, Math.round((app.clientWidth - 24 - 10 - 80) / 17)) + "px");   // the part buttons' column: exactly a quarter of a beat of the stave beside it
   app.classList.toggle("rolled", S.layout === "rolled" && !deck);
