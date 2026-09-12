@@ -10942,7 +10942,7 @@ function syncMoveDelBtns() {
   if (!mb || !db || !sb || !rb || !cyb || !xhb || !scb || !row) return;
   const picking = !!(S.mv && S.mv.mode === "delete"), delArmed = !!(picking && S.mv.armed), moveArmed = !!(S.mv && S.mv.mode === "move");
   const anyArmed = delArmed || moveArmed, repOn = !!S.rep, cpyOn = !!S.cpy, busy = anyArmed || picking || repOn || cpyOn;
-  mb.classList.toggle("on", moveArmed); mb.classList.toggle("ready", moveArmed); mb.disabled = delArmed || repOn || cpyOn;
+  mb.classList.toggle("on", moveArmed); mb.classList.toggle("ready", moveArmed && !!S.mv.dest); mb.disabled = delArmed || repOn || cpyOn;
   sb.classList.toggle("on", picking && !delArmed); sb.disabled = anyArmed || repOn || cpyOn;
   db.classList.toggle("on", picking); db.classList.toggle("ready", delReady()); db.disabled = moveArmed || repOn || cpyOn || !(picking && (S.mv.start != null || delArmed));
   rb.classList.toggle("on", repOn); rb.disabled = anyArmed || picking || cpyOn;
@@ -11027,15 +11027,17 @@ function findEmptySpan(part, len) {
 /* MOVE: SELECT picks the run (as for DELETE); the first MOVE press claims it, finds empty space of the same size in
    view and arms — MOVE blinks; the second MOVE press moves the group there via mvShift, and the sequence ends */
 function moveAction() {
-  if (S.mv && S.mv.mode === "move" && S.mv.armed) {
-    const d = S.mv.dest; if (!d) { S.mv = null; renderAll(); return; }
-    mvShift(r3(d.start - S.mv.start)); S.mv = null; renderAll(); toast("Moved"); return;
+  if (S.mv && S.mv.mode === "move") {
+    if (!S.mv.dest) { toast("Tap a spot on the stave with enough empty room, then MOVE"); return; }
+    mvShift(r3(S.mv.dest.start - S.mv.start)); S.mv = null; renderAll(); toast("Moved"); return;
   }
   if (S.mv && S.mv.mode === "delete" && !S.mv.armed) {
     if (S.mv.start == null) { toast("Tap the beats to move, then MOVE"); return; }
     const dest = findEmptySpan(S.mv.part, r3(S.mv.end - S.mv.start));
-    if (!dest) { toast("No empty space that size in the current view"); return; }
-    S.mv.mode = "move"; S.mv.armed = true; S.mv.dest = dest; renderAll(); return;
+    S.mv.mode = "move"; S.mv.armed = true; S.mv.dest = dest;                     // dest may be null — the user can still tap a spot to use instead
+    renderAll();
+    toast(dest ? "Found empty space — MOVE moves it there, or tap elsewhere to pick a different spot first" : "No matching empty space in view — tap a spot with room, then MOVE");
+    return;
   }
   toast("SELECT first, then tap the beats to move");
 }
@@ -11064,7 +11066,7 @@ function regionsQualify(part, ranges) {
    the space right after the pattern; tap REPEAT again to keep going, each time into the space right after the last copy */
 function repStart() {
   if (S.rep) { S.rep = null; renderAll(); return; }
-  S.mv = null; S.cpy = null; S.rep = { part: S.activePart || "melody", picks: [], cursor: null };
+  S.mv = null; S.cpy = null; S.rep = { part: S.activePart || "melody", picks: [], cursor: null, cursorBar: null, destOverride: null };
   S.sel = null; S.ghost = null; S.active = null; renderAll();
   toast("Tap the beat(s) to repeat — a bar, a few beats, even a pattern with gaps — then REPEAT");
 }
@@ -11072,22 +11074,39 @@ function repTap(win, bi, t) {
   const part = WIN_PART[win], rep = S.rep;
   if (rep.part !== part) { rep.part = part; rep.picks = []; }
   const beat = r3(barAbs(bi) + Math.floor(t + 1e-6));
+  if (rep.picks.length && !eventsInSpan(part, beat, r3(beat + 1)).length) { repOverrideTap(rep, beat); return; }   // empty, with a pattern already picked: try it as the destination instead
   const i = rep.picks.indexOf(beat); if (i >= 0) rep.picks.splice(i, 1); else rep.picks.push(beat);
-  rep.picks.sort((a, b) => a - b); rep.cursor = null; rep.cursorBar = null;                 // the pattern changed: chain again from right after it
+  rep.picks.sort((a, b) => a - b); rep.cursor = null; rep.cursorBar = null; rep.destOverride = null;   // the pattern changed: chain again from right after it
   S.active = null; S.sel = null; S.ghost = null; renderAll();
+}
+/* a tap on empty space once a pattern is picked: redirect the destination there instead of the automatic guess —
+   a single beat lands exactly there; a pattern of two or more snaps to the bar the tap landed in, at the same beats */
+function repOverrideTap(rep, beat) {
+  const multi = rep.picks.length > 1, lo = Math.min(...rep.picks);
+  const at = absToBar(beat); if (!at) return;
+  const destAbs = multi ? barAbs(at.bi) : beat;
+  const originAbs = multi ? barAbs(absToBar(lo).bi) : lo;
+  const trial = rep.picks.map(p => r3(destAbs + (p - originAbs)));
+  const rMax = barAbs(S.song.bars.length - 1) + barBeats(S.song.bars.length - 1);
+  if (trial.some(dp => dp + 1 > rMax + 1e-6 || dp < -1e-6)) { toast("That runs past the end of the song"); return; }
+  for (const dp of trial) { if (!spanFree(rep.part, dp, r3(dp + 1))) { toast(multi ? "Not free at those same beats there — try elsewhere" : "Not enough room there"); return; } }
+  rep.destOverride = destAbs; S.active = null; S.sel = null; renderAll();
+  toast("Destination set — tap REPEAT to copy there");
 }
 /* where the next repeat would land: a single tapped beat marches forward one beat at a time (into the next bar too,
    if it comes to that); two or more beats — a pattern, gaps and all — repeat whole-bar to whole-bar instead, at the
-   same beats of the next bar, since "the space right after" a pattern with gaps in it is the next bar wearing it */
+   same beats of the next bar, since "the space right after" a pattern with gaps in it is the next bar wearing it.
+   A destination tapped by hand — repOverrideTap — always wins over either automatic guess. */
 function repDest(rep) {
+  const lo = Math.min(...rep.picks);
   if (rep.picks.length > 1) {
-    const originBar = absToBar(Math.min(...rep.picks)).bi, barStart = rep.cursorBar != null ? rep.cursorBar : originBar + 1;
-    if (barStart >= S.song.bars.length) return null;
-    const originAbs = barAbs(originBar), destAbs = barAbs(barStart);
-    return { picks: rep.picks.map(p => r3(destAbs + (p - originAbs))), barStart };
+    const originAbs = barAbs(absToBar(lo).bi);
+    let destAbs = rep.destOverride;
+    if (destAbs == null) { const barStart = rep.cursorBar != null ? rep.cursorBar : absToBar(lo).bi + 1; if (barStart >= S.song.bars.length) return null; destAbs = barAbs(barStart); }
+    return { picks: rep.picks.map(p => r3(destAbs + (p - originAbs))) };
   }
-  const base = rep.cursor != null ? rep.cursor : r3(rep.picks[0] + 1);
-  return { picks: [base], barStart: null };
+  const base = rep.destOverride != null ? rep.destOverride : (rep.cursor != null ? rep.cursor : r3(rep.picks[0] + 1));
+  return { picks: [base] };
 }
 function repAction() {
   if (!S.rep) { repStart(); return; }
@@ -11098,7 +11117,9 @@ function repAction() {
   for (const dp of dest.picks) { if (!spanFree(rep.part, dp, r3(dp + 1))) { toast(rep.picks.length > 1 ? "The next bar isn't free at those same beats — tap elsewhere to repeat into instead" : "No room right after the pattern to repeat into"); return; } }
   dest.picks.forEach((dp, i) => { eventsInSpan(rep.part, rep.picks[i], r3(rep.picks[i] + 1)).forEach(({ ev, abs }) => {
     const at = absToBar(r3(dp + (abs - rep.picks[i]))); if (!at) return; const clone = Object.assign({}, ev, { id: uid() }); clone.t = at.t; S.song.bars[at.bi].ev[rep.part].push(clone); }); });
-  if (dest.barStart != null) { rep.cursorBar = dest.barStart + 1; rep.cursor = null; } else { rep.cursor = r3(dest.picks[0] + 1); rep.cursorBar = null; }
+  const landed = dest.picks[0];                                                 // the next auto-guess always continues from wherever this one actually landed, override or not
+  if (rep.picks.length > 1) { const at = absToBar(landed); rep.cursorBar = at ? at.bi + 1 : null; rep.cursor = null; } else { rep.cursor = r3(landed + 1); rep.cursorBar = null; }
+  rep.destOverride = null;
   renderAll();
   toast("Repeated — REPEAT again to keep going, or tap a beat to repeat something new");
 }
@@ -11193,10 +11214,21 @@ function xhairFinish(win, x0, y0, x1, y1) {
   cpy.part = part; cpy.buf.push([{ start: r3(lo), end: r3(hi) }]); renderAll();
   toast(`Set — ${cpy.buf.length} of 5 copied. Drag more, tap more, or tap empty space to paste`);
 }
+/* MOVE armed: a tap elsewhere on the stave tries to redirect the destination there instead of the one found automatically */
+function mvOverrideTap(win, bi, t) {
+  const mv = S.mv;
+  if (WIN_PART[win] !== mv.part) { toast("Moving the " + PART_META[mv.part].label.toLowerCase() + " — CANCEL to switch parts"); return; }
+  const beat = r3(barAbs(bi) + Math.floor(t + 1e-6)), len = r3(mv.end - mv.start);
+  if (beat >= mv.start - 1e-6 && beat < mv.end - 1e-6) return;                   // tapping the source itself does nothing
+  if (!spanFree(mv.part, beat, r3(beat + len))) { toast("Not enough empty room there"); return; }
+  mv.dest = { start: beat, end: r3(beat + len) }; S.active = null; S.sel = null; renderAll();
+  toast("Destination set — tap MOVE to move it there");
+}
 function mvTap(win, bi, t) {
   /* first tap: the whole beat. Tapping the run's first or last beat again shows its quarters; a tap on a quarter sets the start or end there. */
   const part = WIN_PART[win], mv = S.mv;
-  if (mv.armed) return;   // armed (move or delete): only its own button confirms it now, or CANCEL settles it
+  if (mv.mode === "move") { mvOverrideTap(win, bi, t); return; }                 // armed for a move: a tap elsewhere redirects the destination
+  if (mv.armed) return;   // armed for delete: only DELETE confirms it now, or CANCEL settles it
   if (mv.part !== part) { mv.part = part; mv.start = mv.end = null; mv.moved = false; mv.sub = null; }
   const abs = barAbs(bi) + t, beat = barAbs(bi) + Math.floor(t + 1e-6), q = Math.floor((t - Math.floor(t + 1e-6)) * 4 + 1e-6) / 4;
   const done = () => { S.active = null; S.sel = null; S.ghost = null; renderAll(); };
