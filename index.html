@@ -6684,7 +6684,7 @@ const SOUND_RANGE = { piano: [21, 108], s808: [24, 72], bass: [28, 67], tuba: [2
 function soundRange(win) {
   const P = S.song && S.song.parts ? S.song.parts[WIN_PART[win]] : null; if (!P) return [21, 108];
   const bank = P.bank && typeof SAMPLES !== "undefined" && SAMPLES.meta.has(P.bank) ? SAMPLES.meta.get(P.bank) : null;
-  if (bank && bank.hi >= bank.lo) return [bank.lo - 7, bank.hi + 7];
+  if (bank && bank.hi >= bank.lo) return [Math.max(21, bank.lo - 7), Math.min(108, bank.hi + 7)];   // a sample library: its own span, a fifth either way, never past the keyboard
   return SOUND_RANGE[TIMBRE(P.inst)] || [21, 108];
 }
 /* how far the register may scroll: the whole keyboard normally, or — with the setting on — no further than where each
@@ -8506,7 +8506,8 @@ function openSettings() {
     el("div", { class: "mrow" }, toggle("Beat lines inside the bars (the bar lines stay, and so does the spacing)", S.beatDividers !== false, v => { S.beatDividers = v; savePrefs(); renderAll(); })),
     el("div", { class: "mrow" }, toggle("Note boxes — the solid orange box drawn around each melody note, at its own duration", S.beatLines, v => { S.beatLines = v; savePrefs(); renderAll(); openSettings(); })),
     el("div", { class: "mrow" }, toggle("Lines and spaces (half steps alternate line, space, line, space; off = one half step per space)", S.halfLines, v => { S.halfLines = v; savePrefs(); renderAll(); openSettings(); })),
-    el("div", { class: "mrow" }, toggle("Lock the register scroll at the edge of each sound's range (top and bottom alike, on every stave)", S.rangeLock, v => { S.rangeLock = v; savePrefs(); renderAll(); openSettings(); })),
+    el("div", { class: "mrow" }, toggle("Lock the register scroll at the edge of each sound's range (top and bottom alike, on every stave)", S.rangeLock, v => { S.rangeLock = v; if (v) ["mel", "acc", "bass"].forEach(w => { const { rows } = rowsOf(w), [minV, , maxV] = viewLimits(w, rows); S.song.view[WIN_LO[w]] = clamp(viewOf(w), minV, maxV); }); savePrefs(); renderAll(); openSettings(); })),   // switched on, every stave's view is pulled inside its range at once
+    el("div", { class: "tiny" }, "Locks to: " + ["mel", "acc", "bass"].map(w => { const [lo, hi] = soundRange(w), P = S.song.parts[WIN_PART[w]], k = keyObj(S.song.key); return `${DECK_NAME[w].charAt(0) + DECK_NAME[w].slice(1).toLowerCase()} ${noteName(lo, k)}–${noteName(hi, k)} (${P.bank || P.inst})`; }).join(" · ") + ". A piano or a sample library that spans the keyboard leaves nothing to lock."),
     el("div", { class: "pLbl" }, "Chords displayed"), seg([["names", "Names (C, G7)"], ["roman", "Roman (I, V7)"], ["off", "Hidden"]], S.chordsDisp, v => { S.chordsDisp = v; S.song.showRoman = v === "roman"; savePrefs(); renderAll(); }),
     el("div", { class: "pLbl" }, "Notes appearance"), seg([["trad", "Traditional"], ["pill", "Pills"], ["circle", "Circles"]], S.noteStyle, v => { S.noteStyle = v; savePrefs(); renderAll(); }),
     el("div", { class: "pLbl" }, "Note size"), seg([["x", "Micro"], ["s", "Small"], ["m", "Medium"], ["l", "Large"]], S.noteSize, v => { S.noteSize = v; savePrefs(); renderAll(); }),
