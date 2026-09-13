@@ -140,21 +140,6 @@ def split_list(s, sep=";"):
     return [p.strip() for p in s.split(sep) if p.strip()]
 
 
-def pattern_common(row):
-    """Fields shared by all pattern banks."""
-    return {
-        "name": row.get("Pattern"),
-        "slots": parse_slots(row.get("Duration group (ms)")),
-        "readsAs": row.get("Reads as"),
-        "bpmRange": parse_range(row.get("BPM Range")),
-        "slot": row.get("Slot"),
-        "ratio": row.get("Ratio"),
-        "sustain": row.get("Sustain"),
-        "mute": row.get("Mute"),
-        "custom": str(row.get("Pattern", "")).lower().startswith("custom"),
-    }
-
-
 # --- load --------------------------------------------------------------------
 
 wb = load_workbook(WB_PATH, data_only=True)
@@ -234,38 +219,13 @@ for r in rows_as_dicts(sheet("Genre_Chord_Bank")):
         "chords": chords,
     })
 
-# Pattern banks
-guitar_bank, piano_bank, bass_bank, ensemble_bank = [], [], [], []
-for r in rows_as_dicts(sheet("Guitar_Strum_Bank")):
-    guitar_bank.append(pattern_common(r))
-for r in rows_as_dicts(sheet("Piano_Pattern_Bank")):
-    p = pattern_common(r)
-    p["hands"] = r.get("Hands")
-    p["pedal"] = r.get("Pedal")
-    piano_bank.append(p)
-for r in rows_as_dicts(sheet("Bass_Pattern_Bank")):
-    p = pattern_common(r)
-    p["noteChoice"] = r.get("Note choice")
-    bass_bank.append(p)
-for r in rows_as_dicts(sheet("Ensemble_Pattern_Bank")):
-    p = pattern_common(r)
-    p["suits"] = r.get("Suits")
-    ensemble_bank.append(p)
-
 # Genre pattern map
 pattern_map = []
 for r in rows_as_dicts(sheet("Genre_Pattern_Map")):
-    pattern_map.append({
+    pattern_map.append({                      # the band pattern banks were dropped (2026-09-13): only tempo and meter are read from this sheet
         "genre": r.get("Genre"),
-        "guitarPrimary": r.get("Primary accompaniment pattern"),
-        "guitarAlternates": split_list(r.get("Alternate patterns")),
-        "bassPattern": r.get("Bass pattern (Bass_Pattern_Bank)"),
         "defaultBpm": r.get("Default BPM"),
         "meter": r.get("Meter"),
-        "notes": r.get("Notes"),
-        "pianoPrimary": r.get("Piano primary pattern"),
-        "pianoAlternates": split_list(r.get("Piano alternates")),
-        "ensembleSuggestion": r.get("Ensemble suggestion (Ensemble_Pattern_Bank)"),
     })
 
 # --- validation --------------------------------------------------------------
@@ -276,22 +236,6 @@ for g in sorted(bank_genres - map_genres):
     warn(f"Genre in chord bank but not in pattern map: {g!r}")
 for g in sorted(map_genres - bank_genres):
     warn(f"Genre in pattern map but not in chord bank: {g!r}")
-
-
-def names(bank):
-    return {p["name"] for p in bank}
-
-
-guitar_names, piano_names = names(guitar_bank), names(piano_bank)
-bass_names, ensemble_names = names(bass_bank), names(ensemble_bank)
-
-
-def in_bank(val, bank):
-    """Exact name match first; then with a trailing usage note '(...)' stripped,
-    since bank names may themselves contain parens ('Block chords (half)')."""
-    if val in bank:
-        return True
-    return re.sub(r"\s*\([^)]*\)\s*$", "", val).strip() in bank
 
 
 # Chord templates: vocab exemplars like 'I', 'i7 / ii7', 'V65 / V43 / V42'
@@ -323,28 +267,6 @@ def vocab_shapes(vocab):
 VOCAB_SHAPES = vocab_shapes(chord_vocab)
 
 
-for m in pattern_map:
-    g = m["genre"]
-    for label, val, bank in (
-        ("guitar primary", m["guitarPrimary"], guitar_names),
-        ("bass", m["bassPattern"], bass_names),
-        ("piano primary", m["pianoPrimary"], piano_names),
-    ):
-        if val and not in_bank(val, bank):
-            warn(f"{g}: {label} pattern not found in bank: {val!r}")
-    for val in m["guitarAlternates"]:
-        if not in_bank(val, guitar_names):
-            warn(f"{g}: guitar alternate not in bank: {val!r}")
-    for val in m["pianoAlternates"]:
-        if not in_bank(val, piano_names):
-            warn(f"{g}: piano alternate not in bank: {val!r}")
-    es = m["ensembleSuggestion"]
-    if es and es not in ("\u2014", "-"):
-        # can be compound: 'A (strings) + B (horns)'
-        for part in re.split(r"\s*\+\s*", es):
-            if not in_bank(part.strip(), ensemble_names):
-                warn(f"{g}: ensemble suggestion not in bank: {part.strip()!r}")
-
 for g, sections in genres.items():
     prev_end = 0
     for s in sections:
@@ -368,19 +290,13 @@ data = {
         "source": WB_PATH,
         "compiled": date.today().isoformat(),
         "referenceBpm": 60,
-        "note": "All pattern slot durations are ms at 60 BPM; scale by 60/BPM at runtime.",
+        "note": "Genres carry structure, chords, default BPM and meter only; the band pattern banks were removed on 2026-09-13.",
     },
     "reference": reference,
     "instruments": instruments,
     "registerMap": register_map,
     "chordVocabulary": chord_vocab,
     "genres": [{"name": g, "sections": genres[g]} for g in order],
-    "patternBanks": {
-        "guitar": guitar_bank,
-        "piano": piano_bank,
-        "bass": bass_bank,
-        "ensemble": ensemble_bank,
-    },
     "genrePatternMap": pattern_map,
 }
 

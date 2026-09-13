@@ -999,7 +999,7 @@ const SONG_DATA = {
     "source": "genre_chord_bank_v9.xlsx",
     "compiled": "2026-09-02",
     "referenceBpm": 60,
-    "note": "All pattern slot durations are ms at 60 BPM; scale by 60/BPM at runtime."
+    "note": "Genres carry structure, chords, default BPM and meter only; the band pattern banks were removed on 2026-09-13."
   },
   "reference": [
     {
@@ -4359,2413 +4359,131 @@ const SONG_DATA = {
       ]
     }
   ],
-  "patternBanks": {
-    "guitar": [
-      {
-        "name": "Custom (user-defined)",
-        "slots": null,
-        "readsAs": "Simple mode: user enters only chords / notes / rhythm (tap or pick note lengths). Envelope auto-fills from the default rule on the Reference sheet. Advanced (optional): per-slot ratio / sustain / mute.",
-        "bpmRange": null,
-        "slot": null,
-        "ratio": null,
-        "sustain": null,
-        "mute": null,
-        "custom": true
-      },
-      {
-        "name": "Whole-note / pad",
-        "slots": [
-          4000
-        ],
-        "readsAs": "one hit, ring the bar",
-        "bpmRange": [
-          40,
-          80
-        ],
-        "slot": 4000,
-        "ratio": 0.95,
-        "sustain": 3800,
-        "mute": 200,
-        "custom": false
-      },
-      {
-        "name": "Half-note strum",
-        "slots": [
-          2000,
-          2000
-        ],
-        "readsAs": "1 — 3 —",
-        "bpmRange": [
-          40,
-          80
-        ],
-        "slot": 2000,
-        "ratio": 0.9,
-        "sustain": 1800,
-        "mute": 200,
-        "custom": false
-      },
-      {
-        "name": "Quarter-note strum",
-        "slots": [
-          1000,
-          1000,
-          1000,
-          1000
-        ],
-        "readsAs": "1 2 3 4",
-        "bpmRange": [
-          60,
-          120
-        ],
-        "slot": 1000,
-        "ratio": 0.8,
-        "sustain": 800,
-        "mute": 200,
-        "custom": false
-      },
-      {
-        "name": "Eighth-note down-up",
-        "slots": [
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500
-        ],
-        "readsAs": "1 & 2 & 3 & 4 &",
-        "bpmRange": [
-          70,
-          140
-        ],
-        "slot": 500,
-        "ratio": 0.7,
-        "sustain": 350,
-        "mute": 150,
-        "custom": false
-      },
-      {
-        "name": "16th-note strum",
-        "slots": [
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250
-        ],
-        "readsAs": "1 e & a 2 e & a…",
-        "bpmRange": [
-          60,
-          130
-        ],
-        "slot": 250,
-        "ratio": 0.55,
-        "sustain": 140,
-        "mute": 110,
-        "custom": false
-      },
-      {
-        "name": "Downstrokes only (8ths)",
-        "slots": [
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500
-        ],
-        "readsAs": "all downs",
-        "bpmRange": [
-          80,
-          140
-        ],
-        "slot": 500,
-        "ratio": 0.6,
-        "sustain": 300,
-        "mute": 200,
-        "custom": false
-      },
-      {
-        "name": "Down-up",
-        "slots": [
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500
-        ],
-        "readsAs": "D U D U D U D U",
-        "bpmRange": [
-          80,
-          130
-        ],
-        "slot": 500,
-        "ratio": 0.7,
-        "sustain": 350,
-        "mute": 150,
-        "custom": false
-      },
-      {
-        "name": "Swing 8ths",
-        "slots": [
-          667,
-          333,
-          667,
-          333,
-          667,
-          333,
-          667,
-          333
-        ],
-        "readsAs": "long-short × 4",
-        "bpmRange": [
-          60,
-          130
-        ],
-        "slot": "667/333",
-        "ratio": "0.75/0.50",
-        "sustain": "500/165",
-        "mute": "167/168",
-        "custom": false
-      },
-      {
-        "name": "Shuffle",
-        "slots": [
-          667,
-          333,
-          667,
-          333,
-          667,
-          333,
-          667,
-          333
-        ],
-        "readsAs": "same grid as swing",
-        "bpmRange": [
-          60,
-          130
-        ],
-        "slot": "667/333",
-        "ratio": "0.75/0.50",
-        "sustain": "500/165",
-        "mute": "167/168",
-        "custom": false
-      },
-      {
-        "name": "Backbeat strum",
-        "slots": [
-          1000,
-          1000,
-          1000,
-          1000
-        ],
-        "readsAs": "louder hits on the 2nd and 4th 1000",
-        "bpmRange": [
-          90,
-          120
-        ],
-        "slot": 1000,
-        "ratio": 0.5,
-        "sustain": 500,
-        "mute": 500,
-        "custom": false
-      },
-      {
-        "name": "Train / boom-chicka",
-        "slots": [
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500
-        ],
-        "readsAs": "bass, chop, bass, chop",
-        "bpmRange": [
-          80,
-          130
-        ],
-        "slot": 500,
-        "ratio": "0.80/0.35",
-        "sustain": "400/175",
-        "mute": "100/325",
-        "custom": false
-      },
-      {
-        "name": "Two-step",
-        "slots": [
-          1000,
-          1000,
-          1000,
-          1000
-        ],
-        "readsAs": "bass on 1 and 3, chord on 2 and 4",
-        "bpmRange": [
-          60,
-          120
-        ],
-        "slot": 1000,
-        "ratio": "0.85/0.45",
-        "sustain": "850/450",
-        "mute": "150/550",
-        "custom": false
-      },
-      {
-        "name": "Waltz (3/4 bar = 3000)",
-        "slots": [
-          1000,
-          1000,
-          1000
-        ],
-        "readsAs": "1 2 3",
-        "bpmRange": [
-          70,
-          110
-        ],
-        "slot": 1000,
-        "ratio": "0.85/0.40/0.40",
-        "sustain": "850/400/400",
-        "mute": "150/600/600",
-        "custom": false
-      },
-      {
-        "name": "Boom-chick-chick waltz",
-        "slots": [
-          1000,
-          1000,
-          1000
-        ],
-        "readsAs": "bass, chop, chop",
-        "bpmRange": [
-          80,
-          130
-        ],
-        "slot": 1000,
-        "ratio": "0.85/0.40/0.40",
-        "sustain": "850/400/400",
-        "mute": "150/600/600",
-        "custom": false
-      },
-      {
-        "name": "Reggae skank",
-        "slots": [
-          1000,
-          1000,
-          1000,
-          1000
-        ],
-        "readsAs": "sound only on 2 and 4; 1 and 3 are rest",
-        "bpmRange": [
-          60,
-          90
-        ],
-        "slot": 1000,
-        "ratio": "0.00/0.25/0.00/0.25",
-        "sustain": "0/250/0/250",
-        "mute": "1000/750/1000/750",
-        "custom": false
-      },
-      {
-        "name": "Disco chuck",
-        "slots": [
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250
-        ],
-        "readsAs": "muted 16ths",
-        "bpmRange": [
-          90,
-          125
-        ],
-        "slot": 250,
-        "ratio": 0.2,
-        "sustain": 50,
-        "mute": 200,
-        "custom": false
-      },
-      {
-        "name": "Funk 16th / chicken scratch",
-        "slots": [
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250
-        ],
-        "readsAs": "muted 16ths, some ghosted",
-        "bpmRange": [
-          85,
-          120
-        ],
-        "slot": 250,
-        "ratio": 0.2,
-        "sustain": 50,
-        "mute": 200,
-        "custom": false
-      },
-      {
-        "name": "Anticipated / push",
-        "slots": [
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500
-        ],
-        "readsAs": "Anticipated / push",
-        "bpmRange": [
-          70,
-          130
-        ],
-        "slot": 500,
-        "ratio": 0.65,
-        "sustain": 325,
-        "mute": 175,
-        "custom": false
-      },
-      {
-        "name": "Ballad broken strum",
-        "slots": [
-          2000,
-          2000
-        ],
-        "readsAs": "or 4000",
-        "bpmRange": [
-          40,
-          80
-        ],
-        "slot": 2000,
-        "ratio": 0.9,
-        "sustain": 1800,
-        "mute": 200,
-        "custom": false
-      },
-      {
-        "name": "Fingerstyle / arpeggio (8ths)",
-        "slots": [
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500
-        ],
-        "readsAs": "one note per 8th",
-        "bpmRange": [
-          50,
-          110
-        ],
-        "slot": 500,
-        "ratio": 0.85,
-        "sustain": 425,
-        "mute": 75,
-        "custom": false
-      },
-      {
-        "name": "Fingerstyle / arpeggio (16ths)",
-        "slots": [
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250
-        ],
-        "readsAs": "one note per 16th",
-        "bpmRange": [
-          50,
-          100
-        ],
-        "slot": 250,
-        "ratio": 0.75,
-        "sustain": 190,
-        "mute": 60,
-        "custom": false
-      },
-      {
-        "name": "Travis picking",
-        "slots": [
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250
-        ],
-        "readsAs": "alternating bass on 1 and 3 of each beat",
-        "bpmRange": [
-          60,
-          110
-        ],
-        "slot": 250,
-        "ratio": "0.80/0.55",
-        "sustain": "200/140",
-        "mute": "50/110",
-        "custom": false
-      },
-      {
-        "name": "Carter scratch",
-        "slots": [
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500
-        ],
-        "readsAs": "bass then brush",
-        "bpmRange": [
-          70,
-          120
-        ],
-        "slot": 500,
-        "ratio": "0.80/0.30",
-        "sustain": "400/150",
-        "mute": "100/350",
-        "custom": false
-      },
-      {
-        "name": "Alberti broken chord",
-        "slots": [
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500
-        ],
-        "readsAs": "low-high-mid-high",
-        "bpmRange": [
-          50,
-          100
-        ],
-        "slot": 500,
-        "ratio": 0.8,
-        "sustain": 400,
-        "mute": 100,
-        "custom": false
-      },
-      {
-        "name": "Palm-muted chug (8ths)",
-        "slots": [
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500
-        ],
-        "readsAs": "short 8ths",
-        "bpmRange": [
-          120,
-          180
-        ],
-        "slot": 500,
-        "ratio": 0.25,
-        "sustain": 125,
-        "mute": 375,
-        "custom": false
-      },
-      {
-        "name": "Palm-muted chug (16ths)",
-        "slots": [
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250
-        ],
-        "readsAs": "short 16ths",
-        "bpmRange": [
-          120,
-          180
-        ],
-        "slot": 250,
-        "ratio": 0.2,
-        "sustain": 50,
-        "mute": 200,
-        "custom": false
-      },
-      {
-        "name": "Power-chord downstroke",
-        "slots": [
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500
-        ],
-        "readsAs": "or 1000 × 4",
-        "bpmRange": [
-          140,
-          200
-        ],
-        "slot": 500,
-        "ratio": 0.55,
-        "sustain": 275,
-        "mute": 225,
-        "custom": false
-      },
-      {
-        "name": "Double-stop chops",
-        "slots": [
-          1000,
-          1000,
-          1000,
-          1000
-        ],
-        "readsAs": "hits on 2 and 4",
-        "bpmRange": [
-          80,
-          140
-        ],
-        "slot": 1000,
-        "ratio": 0.3,
-        "sustain": 300,
-        "mute": 700,
-        "custom": false
-      },
-      {
-        "name": "Rasgueado burst",
-        "slots": [
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          3000
-        ],
-        "readsAs": "fast fan, then hold",
-        "bpmRange": [
-          60,
-          100
-        ],
-        "slot": "125/3000",
-        "ratio": "0.90/0.95",
-        "sustain": "110/2850",
-        "mute": "15/150",
-        "custom": false
-      },
-      {
-        "name": "Tremolo",
-        "slots": [
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125
-        ],
-        "readsAs": "or 62.5 × 64",
-        "bpmRange": [
-          60,
-          100
-        ],
-        "slot": 125,
-        "ratio": 1,
-        "sustain": 125,
-        "mute": 0,
-        "custom": false
-      },
-      {
-        "name": "Clawhammer",
-        "slots": [
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500
-        ],
-        "readsAs": "down, brush, thumb",
-        "bpmRange": [
-          70,
-          120
-        ],
-        "slot": 500,
-        "ratio": "0.80/0.35",
-        "sustain": "400/175",
-        "mute": "100/325",
-        "custom": false
-      }
-    ],
-    "piano": [
-      {
-        "name": "Custom (user-defined)",
-        "slots": null,
-        "readsAs": "Simple mode: user enters only chords / notes / rhythm (tap or pick note lengths). Envelope auto-fills from the default rule on the Reference sheet. Advanced (optional): per-slot ratio / sustain / mute.",
-        "bpmRange": null,
-        "slot": null,
-        "ratio": null,
-        "sustain": null,
-        "mute": null,
-        "custom": true,
-        "hands": "user sets LH / RH roles",
-        "pedal": null
-      },
-      {
-        "name": "Block chords (whole)",
-        "slots": [
-          4000
-        ],
-        "readsAs": "one chord, let ring",
-        "bpmRange": [
-          40,
-          80
-        ],
-        "slot": 4000,
-        "ratio": 0.95,
-        "sustain": 3800,
-        "mute": 200,
-        "custom": false,
-        "hands": "Both: chord + LH root octave",
-        "pedal": "Yes"
-      },
-      {
-        "name": "Block chords (half)",
-        "slots": [
-          2000,
-          2000
-        ],
-        "readsAs": "1 — 3 —",
-        "bpmRange": [
-          40,
-          90
-        ],
-        "slot": 2000,
-        "ratio": 0.9,
-        "sustain": 1800,
-        "mute": 200,
-        "custom": false,
-        "hands": "Both",
-        "pedal": "Yes"
-      },
-      {
-        "name": "Block chords (quarter / hymn)",
-        "slots": [
-          1000,
-          1000,
-          1000,
-          1000
-        ],
-        "readsAs": "1 2 3 4",
-        "bpmRange": [
-          60,
-          110
-        ],
-        "slot": 1000,
-        "ratio": 0.85,
-        "sustain": 850,
-        "mute": 150,
-        "custom": false,
-        "hands": "Both",
-        "pedal": "Optional"
-      },
-      {
-        "name": "Straight-8th pop chords",
-        "slots": [
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500
-        ],
-        "readsAs": "1 & 2 & 3 & 4 &",
-        "bpmRange": [
-          70,
-          140
-        ],
-        "slot": 500,
-        "ratio": 0.7,
-        "sustain": 350,
-        "mute": 150,
-        "custom": false,
-        "hands": "RH chords 8ths, LH root each chord change",
-        "pedal": "Optional"
-      },
-      {
-        "name": "Rock 8ths (octave LH)",
-        "slots": [
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500
-        ],
-        "readsAs": "driving 8ths",
-        "bpmRange": [
-          110,
-          160
-        ],
-        "slot": 500,
-        "ratio": 0.6,
-        "sustain": 300,
-        "mute": 200,
-        "custom": false,
-        "hands": "RH chords 8ths, LH octave roots 8ths",
-        "pedal": "No"
-      },
-      {
-        "name": "Alberti bass",
-        "slots": [
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500
-        ],
-        "readsAs": "low-high-mid-high",
-        "bpmRange": [
-          50,
-          110
-        ],
-        "slot": 500,
-        "ratio": 0.8,
-        "sustain": 400,
-        "mute": 100,
-        "custom": false,
-        "hands": "LH: low-high-mid-high",
-        "pedal": "No"
-      },
-      {
-        "name": "Arpeggio 8ths (Pachelbel)",
-        "slots": [
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500
-        ],
-        "readsAs": "root-5th-3rd rising",
-        "bpmRange": [
-          50,
-          110
-        ],
-        "slot": 500,
-        "ratio": 0.85,
-        "sustain": 425,
-        "mute": 75,
-        "custom": false,
-        "hands": "LH root + RH rising broken chord",
-        "pedal": "Yes"
-      },
-      {
-        "name": "Arpeggio 16ths",
-        "slots": [
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250
-        ],
-        "readsAs": "continuous 16ths",
-        "bpmRange": [
-          50,
-          100
-        ],
-        "slot": 250,
-        "ratio": 0.75,
-        "sustain": 190,
-        "mute": 60,
-        "custom": false,
-        "hands": "Both, flowing",
-        "pedal": "Yes"
-      },
-      {
-        "name": "Ballad open arpeggio",
-        "slots": [
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500
-        ],
-        "readsAs": "wide slow rise",
-        "bpmRange": [
-          40,
-          85
-        ],
-        "slot": 500,
-        "ratio": 0.9,
-        "sustain": 450,
-        "mute": 50,
-        "custom": false,
-        "hands": "LH root-5th-10th spread",
-        "pedal": "Yes"
-      },
-      {
-        "name": "Stride / oom-pah",
-        "slots": [
-          1000,
-          1000,
-          1000,
-          1000
-        ],
-        "readsAs": "bass, chord, bass, chord",
-        "bpmRange": [
-          80,
-          140
-        ],
-        "slot": 1000,
-        "ratio": "0.80/0.40",
-        "sustain": "800/400",
-        "mute": "200/600",
-        "custom": false,
-        "hands": "LH: bass on 1 & 3, chord on 2 & 4",
-        "pedal": "No"
-      },
-      {
-        "name": "Waltz oom-pah-pah (3/4 bar = 3000)",
-        "slots": [
-          1000,
-          1000,
-          1000
-        ],
-        "readsAs": "bass, chord, chord",
-        "bpmRange": [
-          70,
-          110
-        ],
-        "slot": 1000,
-        "ratio": "0.85/0.40/0.40",
-        "sustain": "850/400/400",
-        "mute": "150/600/600",
-        "custom": false,
-        "hands": "LH bass then RH chords",
-        "pedal": "No"
-      },
-      {
-        "name": "Waltz arpeggio (3/4 bar = 3000)",
-        "slots": [
-          500,
-          500,
-          500,
-          500,
-          500,
-          500
-        ],
-        "readsAs": "broken chord in 3",
-        "bpmRange": [
-          60,
-          100
-        ],
-        "slot": 500,
-        "ratio": 0.85,
-        "sustain": 425,
-        "mute": 75,
-        "custom": false,
-        "hands": "Both, flowing",
-        "pedal": "Yes"
-      },
-      {
-        "name": "Boogie-woogie LH",
-        "slots": [
-          667,
-          333,
-          667,
-          333,
-          667,
-          333,
-          667,
-          333
-        ],
-        "readsAs": "long-short walking line",
-        "bpmRange": [
-          90,
-          140
-        ],
-        "slot": "667/333",
-        "ratio": "0.80/0.60",
-        "sustain": "534/200",
-        "mute": "133/133",
-        "custom": false,
-        "hands": "LH walking pattern, swing 8ths",
-        "pedal": "No"
-      },
-      {
-        "name": "Blues shuffle comp",
-        "slots": [
-          667,
-          333,
-          667,
-          333,
-          667,
-          333,
-          667,
-          333
-        ],
-        "readsAs": "chord shuffle",
-        "bpmRange": [
-          60,
-          130
-        ],
-        "slot": "667/333",
-        "ratio": "0.75/0.50",
-        "sustain": "500/165",
-        "mute": "167/168",
-        "custom": false,
-        "hands": "RH chords, swing 8ths",
-        "pedal": "No"
-      },
-      {
-        "name": "Charleston comp (jazz)",
-        "slots": [
-          1500,
-          2500
-        ],
-        "readsAs": "short hit, syncopated hit, space",
-        "bpmRange": [
-          100,
-          200
-        ],
-        "slot": "1500/2500",
-        "ratio": "0.35/0.30",
-        "sustain": "525/750",
-        "mute": "975/1750",
-        "custom": false,
-        "hands": "RH chords: hit on 1 and the & of 2",
-        "pedal": "No"
-      },
-      {
-        "name": "Gospel backbeat chords",
-        "slots": [
-          1000,
-          1000,
-          1000,
-          1000
-        ],
-        "readsAs": "1 2 3 4, weight on 2 & 4",
-        "bpmRange": [
-          70,
-          95
-        ],
-        "slot": 1000,
-        "ratio": 0.7,
-        "sustain": 700,
-        "mute": 300,
-        "custom": false,
-        "hands": "Both: louder on 2 & 4",
-        "pedal": "Optional"
-      },
-      {
-        "name": "R&B broken 16ths",
-        "slots": [
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250
-        ],
-        "readsAs": "smooth broken 16ths",
-        "bpmRange": [
-          60,
-          95
-        ],
-        "slot": 250,
-        "ratio": 0.6,
-        "sustain": 150,
-        "mute": 100,
-        "custom": false,
-        "hands": "Both, syncopated broken chord",
-        "pedal": "Optional"
-      },
-      {
-        "name": "Montuno",
-        "slots": [
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500
-        ],
-        "readsAs": "syncopated Latin vamp",
-        "bpmRange": [
-          90,
-          120
-        ],
-        "slot": 500,
-        "ratio": 0.65,
-        "sustain": 325,
-        "mute": 175,
-        "custom": false,
-        "hands": "RH octaves + inner notes, syncopated",
-        "pedal": "No"
-      },
-      {
-        "name": "Reggae bubble",
-        "slots": [
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500
-        ],
-        "readsAs": "rest-chord on every '&'",
-        "bpmRange": [
-          60,
-          90
-        ],
-        "slot": 500,
-        "ratio": "0.00/0.35",
-        "sustain": "0/175",
-        "mute": "500/325",
-        "custom": false,
-        "hands": "RH chords on offbeat 8ths only",
-        "pedal": "No"
-      },
-      {
-        "name": "Hip-hop / trap stabs",
-        "slots": [
-          1000,
-          3000
-        ],
-        "readsAs": "stab, then space",
-        "bpmRange": [
-          60,
-          100
-        ],
-        "slot": "1000/3000",
-        "ratio": "0.50/0.00",
-        "sustain": "500/0",
-        "mute": "500/3000",
-        "custom": false,
-        "hands": "Both: stab on 1, ring or rest",
-        "pedal": "Optional"
-      },
-      {
-        "name": "EDM pad",
-        "slots": [
-          4000
-        ],
-        "readsAs": "held chord",
-        "bpmRange": [
-          100,
-          130
-        ],
-        "slot": 4000,
-        "ratio": 0.98,
-        "sustain": 3900,
-        "mute": 100,
-        "custom": false,
-        "hands": "Both, sustained with pedal",
-        "pedal": "Yes"
-      },
-      {
-        "name": "Broken octaves",
-        "slots": [
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500
-        ],
-        "readsAs": "low-high-low-high",
-        "bpmRange": [
-          80,
-          140
-        ],
-        "slot": 500,
-        "ratio": 0.7,
-        "sustain": 350,
-        "mute": 150,
-        "custom": false,
-        "hands": "LH alternating octave 8ths",
-        "pedal": "No"
-      },
-      {
-        "name": "Tremolo octaves",
-        "slots": [
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125
-        ],
-        "readsAs": "rapid repeat",
-        "bpmRange": [
-          60,
-          100
-        ],
-        "slot": 125,
-        "ratio": 1,
-        "sustain": 125,
-        "mute": 0,
-        "custom": false,
-        "hands": "Either hand",
-        "pedal": "No"
-      }
-    ],
-    "bass": [
-      {
-        "name": "Custom (user-defined)",
-        "slots": null,
-        "readsAs": "Simple mode: user enters only chords / notes / rhythm (tap or pick note lengths). Envelope auto-fills from the default rule on the Reference sheet. Advanced (optional): per-slot ratio / sustain / mute.",
-        "bpmRange": null,
-        "slot": null,
-        "ratio": null,
-        "sustain": null,
-        "mute": null,
-        "custom": true,
-        "noteChoice": "user chooses chord tones"
-      },
-      {
-        "name": "Whole-note root",
-        "slots": [
-          4000
-        ],
-        "readsAs": "one note, ring the bar",
-        "bpmRange": [
-          40,
-          90
-        ],
-        "slot": 4000,
-        "ratio": 0.95,
-        "sustain": 3800,
-        "mute": 200,
-        "custom": false,
-        "noteChoice": "Root"
-      },
-      {
-        "name": "Half-note roots",
-        "slots": [
-          2000,
-          2000
-        ],
-        "readsAs": "1 — 3 —",
-        "bpmRange": [
-          40,
-          100
-        ],
-        "slot": 2000,
-        "ratio": 0.9,
-        "sustain": 1800,
-        "mute": 200,
-        "custom": false,
-        "noteChoice": "Root (or root, fifth)"
-      },
-      {
-        "name": "Root quarters",
-        "slots": [
-          1000,
-          1000,
-          1000,
-          1000
-        ],
-        "readsAs": "1 2 3 4",
-        "bpmRange": [
-          60,
-          130
-        ],
-        "slot": 1000,
-        "ratio": 0.8,
-        "sustain": 800,
-        "mute": 200,
-        "custom": false,
-        "noteChoice": "Root"
-      },
-      {
-        "name": "Walking quarters",
-        "slots": [
-          1000,
-          1000,
-          1000,
-          1000
-        ],
-        "readsAs": "1 2 3 4, moving line",
-        "bpmRange": [
-          100,
-          160
-        ],
-        "slot": 1000,
-        "ratio": 0.9,
-        "sustain": 900,
-        "mute": 100,
-        "custom": false,
-        "noteChoice": "Root-3rd-5th-approach into next chord"
-      },
-      {
-        "name": "Root 8ths",
-        "slots": [
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500
-        ],
-        "readsAs": "driving 8ths",
-        "bpmRange": [
-          80,
-          160
-        ],
-        "slot": 500,
-        "ratio": 0.6,
-        "sustain": 300,
-        "mute": 200,
-        "custom": false,
-        "noteChoice": "Root"
-      },
-      {
-        "name": "Offbeat 8ths",
-        "slots": [
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500
-        ],
-        "readsAs": "rest-note on every '&'",
-        "bpmRange": [
-          100,
-          130
-        ],
-        "slot": 500,
-        "ratio": "0.00/0.55",
-        "sustain": "0/275",
-        "mute": "500/225",
-        "custom": false,
-        "noteChoice": "Root (house / EDM feel)"
-      },
-      {
-        "name": "Two-step root-fifth",
-        "slots": [
-          1000,
-          1000,
-          1000,
-          1000
-        ],
-        "readsAs": "R on 1 & 3, 5th on 2 & 4",
-        "bpmRange": [
-          60,
-          130
-        ],
-        "slot": 1000,
-        "ratio": "0.85/0.85",
-        "sustain": "850/850",
-        "mute": "150/150",
-        "custom": false,
-        "noteChoice": "Root, fifth, alternating"
-      },
-      {
-        "name": "Disco octaves",
-        "slots": [
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500
-        ],
-        "readsAs": "low-high octave 8ths",
-        "bpmRange": [
-          105,
-          125
-        ],
-        "slot": 500,
-        "ratio": 0.55,
-        "sustain": 275,
-        "mute": 225,
-        "custom": false,
-        "noteChoice": "Root octaves alternating"
-      },
-      {
-        "name": "Boogie line",
-        "slots": [
-          667,
-          333,
-          667,
-          333,
-          667,
-          333,
-          667,
-          333
-        ],
-        "readsAs": "swung walking boogie",
-        "bpmRange": [
-          90,
-          140
-        ],
-        "slot": "667/333",
-        "ratio": "0.80/0.60",
-        "sustain": "534/200",
-        "mute": "133/133",
-        "custom": false,
-        "noteChoice": "R-3-5-6-b7-6-5-3 style walk"
-      },
-      {
-        "name": "Shuffle roots",
-        "slots": [
-          667,
-          333,
-          667,
-          333,
-          667,
-          333,
-          667,
-          333
-        ],
-        "readsAs": "long-short on root",
-        "bpmRange": [
-          60,
-          130
-        ],
-        "slot": "667/333",
-        "ratio": "0.75/0.50",
-        "sustain": "500/165",
-        "mute": "167/168",
-        "custom": false,
-        "noteChoice": "Root (or R-5)"
-      },
-      {
-        "name": "Funk 16th line",
-        "slots": [
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250
-        ],
-        "readsAs": "syncopated, some ghosted",
-        "bpmRange": [
-          85,
-          120
-        ],
-        "slot": 250,
-        "ratio": "0.50/0.15",
-        "sustain": "125/38",
-        "mute": "125/212",
-        "custom": false,
-        "noteChoice": "Root + octave, ghosts between"
-      },
-      {
-        "name": "Tumbao",
-        "slots": [
-          1500,
-          1000,
-          1500
-        ],
-        "readsAs": "hits on the '&' of 2 and on 4",
-        "bpmRange": [
-          90,
-          115
-        ],
-        "slot": "1500/1000/1500",
-        "ratio": "0.60/0.70/0.60",
-        "sustain": "900/700/900",
-        "mute": "600/300/600",
-        "custom": false,
-        "noteChoice": "Root and fifth, anticipating next chord"
-      },
-      {
-        "name": "One-drop",
-        "slots": [
-          1000,
-          1000,
-          1000,
-          1000
-        ],
-        "readsAs": "silent 1, notes on 2-4",
-        "bpmRange": [
-          60,
-          90
-        ],
-        "slot": 1000,
-        "ratio": "0.00/0.70/0.70/0.70",
-        "sustain": "0/700/700/700",
-        "mute": "1000/300/300/300",
-        "custom": false,
-        "noteChoice": "Root, fifth"
-      },
-      {
-        "name": "808 sustain",
-        "slots": [
-          4000
-        ],
-        "readsAs": "one gliding note per bar",
-        "bpmRange": [
-          60,
-          150
-        ],
-        "slot": 4000,
-        "ratio": 0.9,
-        "sustain": 3600,
-        "mute": 400,
-        "custom": false,
-        "noteChoice": "Root, glide into next root"
-      },
-      {
-        "name": "Pedal 8ths (muted)",
-        "slots": [
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500
-        ],
-        "readsAs": "tight chugging root",
-        "bpmRange": [
-          120,
-          180
-        ],
-        "slot": 500,
-        "ratio": 0.35,
-        "sustain": 175,
-        "mute": 325,
-        "custom": false,
-        "noteChoice": "Root pedal, doubles guitar chugs"
-      },
-      {
-        "name": "Waltz root (3/4 bar = 3000)",
-        "slots": [
-          1000,
-          1000,
-          1000
-        ],
-        "readsAs": "note on 1 only",
-        "bpmRange": [
-          70,
-          110
-        ],
-        "slot": 1000,
-        "ratio": "0.85/0.00/0.00",
-        "sustain": "850/0/0",
-        "mute": "150/1000/1000",
-        "custom": false,
-        "noteChoice": "Root on the downbeat"
-      }
-    ],
-    "ensemble": [
-      {
-        "name": "Custom (user-defined)",
-        "slots": null,
-        "readsAs": "Simple mode: user enters only chords / notes / rhythm (tap or pick note lengths). Envelope auto-fills from the default rule on the Reference sheet. Advanced (optional): per-slot ratio / sustain / mute.",
-        "bpmRange": null,
-        "slot": null,
-        "ratio": null,
-        "sustain": null,
-        "mute": null,
-        "custom": true,
-        "suits": "any"
-      },
-      {
-        "name": "Sustained pad",
-        "slots": [
-          4000
-        ],
-        "readsAs": "held chord, slow attack",
-        "bpmRange": [
-          40,
-          130
-        ],
-        "slot": 4000,
-        "ratio": 0.98,
-        "sustain": 3900,
-        "mute": 100,
-        "custom": false,
-        "suits": "Strings, horns"
-      },
-      {
-        "name": "Half-note swells",
-        "slots": [
-          2000,
-          2000
-        ],
-        "readsAs": "two rising swells",
-        "bpmRange": [
-          50,
-          110
-        ],
-        "slot": 2000,
-        "ratio": 0.95,
-        "sustain": 1900,
-        "mute": 100,
-        "custom": false,
-        "suits": "Strings"
-      },
-      {
-        "name": "Swell into downbeat",
-        "slots": [
-          4000
-        ],
-        "readsAs": "crescendo landing on next bar",
-        "bpmRange": [
-          50,
-          120
-        ],
-        "slot": 4000,
-        "ratio": 0.9,
-        "sustain": 3600,
-        "mute": 400,
-        "custom": false,
-        "suits": "Strings, horns"
-      },
-      {
-        "name": "Quarter stabs",
-        "slots": [
-          1000,
-          1000,
-          1000,
-          1000
-        ],
-        "readsAs": "short hits 1 2 3 4",
-        "bpmRange": [
-          80,
-          140
-        ],
-        "slot": 1000,
-        "ratio": 0.3,
-        "sustain": 300,
-        "mute": 700,
-        "custom": false,
-        "suits": "Horns"
-      },
-      {
-        "name": "Offbeat stabs",
-        "slots": [
-          1000,
-          1000,
-          1000,
-          1000
-        ],
-        "readsAs": "hits on 2 & 4 only",
-        "bpmRange": [
-          80,
-          140
-        ],
-        "slot": 1000,
-        "ratio": "0.00/0.30",
-        "sustain": "0/300",
-        "mute": "1000/700",
-        "custom": false,
-        "suits": "Horns, strings"
-      },
-      {
-        "name": "Horn punches",
-        "slots": [
-          1500,
-          2500
-        ],
-        "readsAs": "hit on 1, hit on the '&' of 2",
-        "bpmRange": [
-          95,
-          140
-        ],
-        "slot": "1500/2500",
-        "ratio": "0.30/0.35",
-        "sustain": "450/875",
-        "mute": "1050/1625",
-        "custom": false,
-        "suits": "Horns"
-      },
-      {
-        "name": "Soul riff",
-        "slots": [
-          500,
-          500,
-          3000
-        ],
-        "readsAs": "two tight 8ths, then space",
-        "bpmRange": [
-          85,
-          125
-        ],
-        "slot": "500/500/3000",
-        "ratio": "0.60/0.60/0.00",
-        "sustain": "300/300/0",
-        "mute": "200/200/3000",
-        "custom": false,
-        "suits": "Horns"
-      },
-      {
-        "name": "8th ostinato",
-        "slots": [
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500,
-          500
-        ],
-        "readsAs": "repeating 8th figure",
-        "bpmRange": [
-          90,
-          150
-        ],
-        "slot": 500,
-        "ratio": 0.7,
-        "sustain": 350,
-        "mute": 150,
-        "custom": false,
-        "suits": "Strings"
-      },
-      {
-        "name": "16th ostinato",
-        "slots": [
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250,
-          250
-        ],
-        "readsAs": "urgent repeating 16ths",
-        "bpmRange": [
-          100,
-          160
-        ],
-        "slot": 250,
-        "ratio": 0.6,
-        "sustain": 150,
-        "mute": 100,
-        "custom": false,
-        "suits": "Strings"
-      },
-      {
-        "name": "Tremolo",
-        "slots": [
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125,
-          125
-        ],
-        "readsAs": "shimmering roll",
-        "bpmRange": [
-          60,
-          140
-        ],
-        "slot": 125,
-        "ratio": 1,
-        "sustain": 125,
-        "mute": 0,
-        "custom": false,
-        "suits": "Strings"
-      },
-      {
-        "name": "Pizzicato quarters",
-        "slots": [
-          1000,
-          1000,
-          1000,
-          1000
-        ],
-        "readsAs": "plucked, very short",
-        "bpmRange": [
-          70,
-          130
-        ],
-        "slot": 1000,
-        "ratio": 0.15,
-        "sustain": 150,
-        "mute": 850,
-        "custom": false,
-        "suits": "Strings"
-      },
-      {
-        "name": "Held fifth drone",
-        "slots": [
-          4000
-        ],
-        "readsAs": "open fifth, no 3rd",
-        "bpmRange": [
-          40,
-          100
-        ],
-        "slot": 4000,
-        "ratio": 0.98,
-        "sustain": 3900,
-        "mute": 100,
-        "custom": false,
-        "suits": "Strings"
-      }
-    ]
-  },
   "genrePatternMap": [
     {
       "genre": "Pop classic radio",
-      "guitarPrimary": "Eighth-note down-up",
-      "guitarAlternates": [
-        "Ballad broken strum",
-        "Fingerstyle / arpeggio (8ths)",
-        "16th-note strum"
-      ],
-      "bassPattern": "Root 8ths",
       "defaultBpm": 116,
-      "meter": "4/4",
-      "notes": "8ths drive verses; broken strum for a quieter verse 1",
-      "pianoPrimary": "Straight-8th pop chords",
-      "pianoAlternates": [
-        "Ballad open arpeggio",
-        "Block chords (half)"
-      ],
-      "ensembleSuggestion": "Sustained pad (chorus only)"
+      "meter": "4/4"
     },
     {
       "genre": "Pop shorter modern",
-      "guitarPrimary": "Eighth-note down-up",
-      "guitarAlternates": [
-        "16th-note strum",
-        "Whole-note / pad"
-      ],
-      "bassPattern": "Root 8ths",
       "defaultBpm": 112,
-      "meter": "4/4",
-      "notes": "Pad works for intro/bridge; 8th roots keep energy",
-      "pianoPrimary": "Straight-8th pop chords",
-      "pianoAlternates": [
-        "EDM pad",
-        "Arpeggio 8ths (Pachelbel)"
-      ],
-      "ensembleSuggestion": "Sustained pad (chorus only)"
+      "meter": "4/4"
     },
     {
       "genre": "Pop no pre-chorus",
-      "guitarPrimary": "Eighth-note down-up",
-      "guitarAlternates": [
-        "Ballad broken strum",
-        "Down-up"
-      ],
-      "bassPattern": "Root quarters",
       "defaultBpm": 108,
-      "meter": "4/4",
-      "notes": null,
-      "pianoPrimary": "Straight-8th pop chords",
-      "pianoAlternates": [
-        "Ballad open arpeggio"
-      ],
-      "ensembleSuggestion": "—"
+      "meter": "4/4"
     },
     {
       "genre": "Pop chorus early",
-      "guitarPrimary": "Eighth-note down-up",
-      "guitarAlternates": [
-        "16th-note strum",
-        "Anticipated / push"
-      ],
-      "bassPattern": "Root 8ths",
       "defaultBpm": 120,
-      "meter": "4/4",
-      "notes": "Push pattern lifts the early chorus",
-      "pianoPrimary": "Straight-8th pop chords",
-      "pianoAlternates": [
-        "Rock 8ths (octave LH)"
-      ],
-      "ensembleSuggestion": "Swell into downbeat (into chorus)"
+      "meter": "4/4"
     },
     {
       "genre": "Pop with post-chorus",
-      "guitarPrimary": "Eighth-note down-up",
-      "guitarAlternates": [
-        "16th-note strum",
-        "Whole-note / pad"
-      ],
-      "bassPattern": "Root 8ths",
       "defaultBpm": 114,
-      "meter": "4/4",
-      "notes": "Pad or 16ths differentiate the post-chorus",
-      "pianoPrimary": "Straight-8th pop chords",
-      "pianoAlternates": [
-        "EDM pad",
-        "Arpeggio 16ths"
-      ],
-      "ensembleSuggestion": "8th ostinato (post-chorus)"
+      "meter": "4/4"
     },
     {
       "genre": "Hip-hop",
-      "guitarPrimary": "Whole-note / pad",
-      "guitarAlternates": [
-        "Half-note strum",
-        "Ballad broken strum"
-      ],
-      "bassPattern": "Half-note roots (or 808 sustain)",
       "defaultBpm": 90,
-      "meter": "4/4",
-      "notes": "Boom-bap feel; chords sustain, bass syncopates",
-      "pianoPrimary": "Hip-hop / trap stabs",
-      "pianoAlternates": [
-        "Block chords (whole)"
-      ],
-      "ensembleSuggestion": "Held fifth drone (optional)"
+      "meter": "4/4"
     },
     {
       "genre": "Trap",
-      "guitarPrimary": "Whole-note / pad",
-      "guitarAlternates": [
-        "Half-note strum"
-      ],
-      "bassPattern": "808 sustain",
       "defaultBpm": 140,
-      "meter": "4/4",
-      "notes": "Notated 140, feels half-time at 70; long 808-style bass",
-      "pianoPrimary": "Block chords (whole)",
-      "pianoAlternates": [
-        "Hip-hop / trap stabs"
-      ],
-      "ensembleSuggestion": "Sustained pad (dark voicing)"
+      "meter": "4/4"
     },
     {
       "genre": "R&B",
-      "guitarPrimary": "Fingerstyle / arpeggio (16ths)",
-      "guitarAlternates": [
-        "Ballad broken strum",
-        "16th-note strum"
-      ],
-      "bassPattern": "Two-step root-fifth",
       "defaultBpm": 78,
-      "meter": "4/4",
-      "notes": "Smooth 16ths; keep sustain high",
-      "pianoPrimary": "R&B broken 16ths",
-      "pianoAlternates": [
-        "Arpeggio 16ths",
-        "Ballad open arpeggio"
-      ],
-      "ensembleSuggestion": "Sustained pad"
+      "meter": "4/4"
     },
     {
       "genre": "Funk",
-      "guitarPrimary": "Funk 16th / chicken scratch",
-      "guitarAlternates": [
-        "Disco chuck",
-        "Double-stop chops"
-      ],
-      "bassPattern": "Funk 16th line",
       "defaultBpm": 104,
-      "meter": "4/4",
-      "notes": "Short sustain everywhere; the mute IS the groove",
-      "pianoPrimary": "R&B broken 16ths",
-      "pianoAlternates": [
-        "Charleston comp (jazz)",
-        "Montuno"
-      ],
-      "ensembleSuggestion": "Horn punches"
+      "meter": "4/4"
     },
     {
       "genre": "Disco",
-      "guitarPrimary": "Disco chuck",
-      "guitarAlternates": [
-        "16th-note strum",
-        "Down-up"
-      ],
-      "bassPattern": "Disco octaves",
       "defaultBpm": 118,
-      "meter": "4/4",
-      "notes": "Octave 8th bass is the disco signature",
-      "pianoPrimary": "Rock 8ths (octave LH)",
-      "pianoAlternates": [
-        "Straight-8th pop chords"
-      ],
-      "ensembleSuggestion": "8th ostinato (strings) + Offbeat stabs (horns)"
+      "meter": "4/4"
     },
     {
       "genre": "EDM",
-      "guitarPrimary": "Whole-note / pad",
-      "guitarAlternates": [
-        "Anticipated / push",
-        "Downstrokes only (8ths)"
-      ],
-      "bassPattern": "Offbeat 8ths",
       "defaultBpm": 126,
-      "meter": "4/4",
-      "notes": "Offbeat bass = house feel; pad carries harmony",
-      "pianoPrimary": "EDM pad",
-      "pianoAlternates": [
-        "Straight-8th pop chords"
-      ],
-      "ensembleSuggestion": "Sustained pad"
+      "meter": "4/4"
     },
     {
       "genre": "Country",
-      "guitarPrimary": "Train / boom-chicka",
-      "guitarAlternates": [
-        "Carter scratch",
-        "Travis picking",
-        "Two-step"
-      ],
-      "bassPattern": "Two-step root-fifth",
       "defaultBpm": 112,
-      "meter": "4/4",
-      "notes": "Root-fifth alternation on 1 and 3",
-      "pianoPrimary": "Stride / oom-pah",
-      "pianoAlternates": [
-        "Block chords (quarter / hymn)",
-        "Arpeggio 8ths (Pachelbel)"
-      ],
-      "ensembleSuggestion": "—"
+      "meter": "4/4"
     },
     {
       "genre": "Folk",
-      "guitarPrimary": "Travis picking",
-      "guitarAlternates": [
-        "Fingerstyle / arpeggio (8ths)",
-        "Clawhammer",
-        "Down-up"
-      ],
-      "bassPattern": "Two-step root-fifth",
       "defaultBpm": 92,
-      "meter": "4/4",
-      "notes": "Fingerstyle-first genre",
-      "pianoPrimary": "Arpeggio 8ths (Pachelbel)",
-      "pianoAlternates": [
-        "Ballad open arpeggio",
-        "Block chords (quarter / hymn)"
-      ],
-      "ensembleSuggestion": "—"
+      "meter": "4/4"
     },
     {
       "genre": "Blues 12-bar",
-      "guitarPrimary": "Shuffle",
-      "guitarAlternates": [
-        "Swing 8ths",
-        "Double-stop chops"
-      ],
-      "bassPattern": "Boogie line",
       "defaultBpm": 92,
-      "meter": "4/4",
-      "notes": "Everything swings or nothing does",
-      "pianoPrimary": "Blues shuffle comp",
-      "pianoAlternates": [
-        "Boogie-woogie LH"
-      ],
-      "ensembleSuggestion": "Soul riff (horns, optional)"
+      "meter": "4/4"
     },
     {
       "genre": "Blues 8-bar",
-      "guitarPrimary": "Shuffle",
-      "guitarAlternates": [
-        "Ballad broken strum"
-      ],
-      "bassPattern": "Shuffle roots",
       "defaultBpm": 68,
-      "meter": "4/4",
-      "notes": "Slow blues; broken strum for verses",
-      "pianoPrimary": "Blues shuffle comp",
-      "pianoAlternates": [
-        "Block chords (half)"
-      ],
-      "ensembleSuggestion": "Sustained pad (slow)"
+      "meter": "4/4"
     },
     {
       "genre": "Jazz AABA",
-      "guitarPrimary": "Swing 8ths",
-      "guitarAlternates": [
-        "Backbeat strum",
-        "Half-note strum"
-      ],
-      "bassPattern": "Walking quarters",
       "defaultBpm": 132,
-      "meter": "4/4",
-      "notes": "Quarter-note bass = walking line; comp on 2 & 4",
-      "pianoPrimary": "Charleston comp (jazz)",
-      "pianoAlternates": [
-        "Block chords (half)"
-      ],
-      "ensembleSuggestion": "Horn punches (big-band feel)"
+      "meter": "4/4"
     },
     {
       "genre": "Reggae",
-      "guitarPrimary": "Reggae skank",
-      "guitarAlternates": [
-        "Double-stop chops"
-      ],
-      "bassPattern": "One-drop",
       "defaultBpm": 74,
-      "meter": "4/4",
-      "notes": "One-drop: bass avoids beat 1",
-      "pianoPrimary": "Reggae bubble",
-      "pianoAlternates": [
-        "Gospel backbeat chords"
-      ],
-      "ensembleSuggestion": "Offbeat stabs (horns)"
+      "meter": "4/4"
     },
     {
       "genre": "Latin",
-      "guitarPrimary": "Anticipated / push",
-      "guitarAlternates": [
-        "Rasgueado burst",
-        "Eighth-note down-up"
-      ],
-      "bassPattern": "Tumbao",
       "defaultBpm": 102,
-      "meter": "4/4",
-      "notes": "Push pattern approximates tresillo/tumbao",
-      "pianoPrimary": "Montuno",
-      "pianoAlternates": [
-        "Charleston comp (jazz)"
-      ],
-      "ensembleSuggestion": "Horn punches"
+      "meter": "4/4"
     },
     {
       "genre": "Gospel",
-      "guitarPrimary": "Backbeat strum",
-      "guitarAlternates": [
-        "Ballad broken strum",
-        "16th-note strum"
-      ],
-      "bassPattern": "Root quarters",
       "defaultBpm": 80,
-      "meter": "4/4",
-      "notes": "Strong 2 & 4; high sustain",
-      "pianoPrimary": "Gospel backbeat chords",
-      "pianoAlternates": [
-        "Block chords (quarter / hymn)"
-      ],
-      "ensembleSuggestion": "Sustained pad + Swell into downbeat"
+      "meter": "4/4"
     },
     {
       "genre": "Metal",
-      "guitarPrimary": "Palm-muted chug (8ths)",
-      "guitarAlternates": [
-        "Palm-muted chug (16ths)",
-        "Power-chord downstroke"
-      ],
-      "bassPattern": "Pedal 8ths (muted)",
       "defaultBpm": 150,
-      "meter": "4/4",
-      "notes": "Bass doubles guitar rhythm",
-      "pianoPrimary": "Rock 8ths (octave LH)",
-      "pianoAlternates": [
-        "Broken octaves"
-      ],
-      "ensembleSuggestion": "—"
+      "meter": "4/4"
     },
     {
       "genre": "Classical period",
-      "guitarPrimary": "Alberti broken chord",
-      "guitarAlternates": [
-        "Half-note strum",
-        "Fingerstyle / arpeggio (8ths)"
-      ],
-      "bassPattern": "Half-note roots",
       "defaultBpm": 100,
-      "meter": "4/4",
-      "notes": "Alberti in accompaniment register",
-      "pianoPrimary": "Alberti bass",
-      "pianoAlternates": [
-        "Block chords (half)"
-      ],
-      "ensembleSuggestion": "Sustained pad"
+      "meter": "4/4"
     },
     {
       "genre": "Classical sentence",
-      "guitarPrimary": "Alberti broken chord",
-      "guitarAlternates": [
-        "Half-note strum",
-        "Fingerstyle / arpeggio (8ths)"
-      ],
-      "bassPattern": "Half-note roots",
       "defaultBpm": 104,
-      "meter": "4/4",
-      "notes": null,
-      "pianoPrimary": "Alberti bass",
-      "pianoAlternates": [
-        "Block chords (half)"
-      ],
-      "ensembleSuggestion": "Sustained pad"
+      "meter": "4/4"
     },
     {
       "genre": "Classical Pachelbel",
-      "guitarPrimary": "Fingerstyle / arpeggio (8ths)",
-      "guitarAlternates": [
-        "Alberti broken chord",
-        "Fingerstyle / arpeggio (16ths)"
-      ],
-      "bassPattern": "Whole-note root",
       "defaultBpm": 70,
-      "meter": "4/4",
-      "notes": "Slow harmonic rhythm; let bass ring",
-      "pianoPrimary": "Arpeggio 8ths (Pachelbel)",
-      "pianoAlternates": [
-        "Arpeggio 16ths"
-      ],
-      "ensembleSuggestion": "Half-note swells"
+      "meter": "4/4"
     },
     {
       "genre": "Classical binary",
-      "guitarPrimary": "Alberti broken chord",
-      "guitarAlternates": [
-        "Fingerstyle / arpeggio (8ths)"
-      ],
-      "bassPattern": "Half-note roots",
       "defaultBpm": 96,
-      "meter": "4/4",
-      "notes": null,
-      "pianoPrimary": "Alberti bass",
-      "pianoAlternates": [
-        "Broken octaves"
-      ],
-      "ensembleSuggestion": "Pizzicato quarters (B section)"
+      "meter": "4/4"
     },
     {
       "genre": "Classical ternary",
-      "guitarPrimary": "Alberti broken chord",
-      "guitarAlternates": [
-        "Waltz (3/4 bar = 3000)",
-        "Fingerstyle / arpeggio (8ths)"
-      ],
-      "bassPattern": "Half-note roots",
       "defaultBpm": 96,
-      "meter": "4/4",
-      "notes": "Choose Waltz alternate if user selects 3/4",
-      "pianoPrimary": "Alberti bass",
-      "pianoAlternates": [
-        "Waltz oom-pah-pah (3/4 bar = 3000)",
-        "Arpeggio 8ths (Pachelbel)"
-      ],
-      "ensembleSuggestion": "Tremolo (middle section)"
+      "meter": "4/4"
     }
   ]
 };
@@ -6961,26 +4679,23 @@ const VOCAB_TIERS = (() => {
    SECTION 3 · SONG MODEL & STATE
    ═══════════════════════════════════════════════════════════════════════ */
 const TS_BEATS = { "4/4": 4, "3/4": 3, "2/4": 2, "6/8": 3 };
-const PARTS = ["melody", "sub", "backup", "bass", "accomp", "ensemble"];
+const PARTS = ["melody", "sub", "backup", "bass", "accomp"];
 const PART_META = {
   melody: { label: "Melody", short: "Lead", color: "var(--melody)", hex: "#c8553d", bank: null },
   sub: { label: "Sub vocal", short: "Sub", color: "var(--sub)", hex: "#d99a2b", bank: null },
   backup: { label: "Backup vocals", short: "Backup", color: "var(--backup)", hex: "#9b7bc6", bank: null },
   bass: { label: "Bass", short: "Bass", color: "var(--bass)", hex: "#3a4f8f", bank: "bass" },
   accomp: { label: "Accompaniment", short: "Accomp", color: "var(--accomp)", hex: "#2f7f78", bank: "guitar" },
-  ensemble: { label: "Countermelody / ensemble", short: "Ensemble", color: "var(--ensemble)", hex: "#5a8f3d", bank: "ensemble" },
 };
 const INSTRUMENTS = {
   melody: ["Voice", "Piano", "Acoustic guitar", "Trumpet", "Clarinet"],
   sub: ["Voice"], backup: ["Voices"],
   bass: ["Bass guitar", "Synth / 808 bass", "Tuba"],
   accomp: ["Acoustic guitar", "12-string guitar", "Electric guitar (clean)", "Electric guitar (drive)", "Piano"],
-  ensemble: ["Strings", "Horns", "Clarinet", "Trumpet", "Tuba"],
 };
-const bankFor = part => part === "accomp" ? (S.song.parts.accomp.inst === "Piano" ? "piano" : "guitar") : PART_META[part].bank;
 
 function newBar(chord = null) {
-  return { id: uid(), chord, chords: chord ? [{ t: 0, sym: chord }] : [], lyric: "", chips: [], ev: { melody: [], bass: [], accomp: [], ensemble: [] }, custom: { bass: true, accomp: true, ensemble: false } };   // accompaniment and bass start as empty staves, like the melody: no prefabricated lines
+  return { id: uid(), chord, chords: chord ? [{ t: 0, sym: chord }] : [], lyric: "", chips: [], ev: { melody: [], bass: [], accomp: [] } };   // every stave starts empty: the accompaniment and bass are written by hand, like the melody
 }
 /* chords live at beats: bar.chords = [{ t, sym }] sorted by t; bar.chord mirrors the one on beat 1 */
 const barChords = bar => bar.chords || (bar.chords = bar.chord ? [{ t: 0, sym: bar.chord }] : []);
@@ -7018,9 +4733,8 @@ function newSong() {
       melody: { on: true, inst: "Voice", vol: 1, bank: null },
       sub: { on: false, inst: "Voice", mode: "harmony", interval: -3, vol: 0.8 },
       backup: { on: false, inst: "Voices", vol: 0.45 },
-      bass: { on: true, inst: "Bass guitar", pattern: "Root quarters", vol: 0.9, feel: null },
-      accomp: { on: true, inst: "Acoustic guitar", pattern: "Quarter-note strum", vol: 0.7, feel: null },
-      ensemble: { on: false, inst: "Strings", pattern: "Sustained pad", vol: 0.5, feel: null },
+      bass: { on: true, inst: "Bass guitar", vol: 0.9 },
+      accomp: { on: true, inst: "Acoustic guitar", vol: 0.7 },
     },
   };
   const prog = ["I", "V", "vi", "IV"];
@@ -7130,9 +4844,8 @@ function pasteSection(after) {
   S.si = after + 1;
 }
 
-/* genre template → structure, chords, tempo, meter, patterns */
+/* genre template → structure, chords, tempo, meter */
 const genreMap = name => SONG_DATA.genrePatternMap.find(m => m.genre === name);
-const stripNote = s => s ? String(s).replace(/\s*\([^)]*\)\s*$/, "").trim() : s;
 function templateIsMinor(g) { return g.sections.some(s => s.chords.some(c => /^i(?![iv])/.test(c) || c === "i")) && !g.sections[0].chords.some(c => /^I(?![IV])/.test(c)); }
 function loadGenre(name, keepLyrics) {
   const g = SONG_DATA.genres.find(x => x.name === name);
@@ -7148,12 +4861,6 @@ function loadGenre(name, keepLyrics) {
   if (m) {
     if (!song.bpmCustom && m.defaultBpm) song.bpm = m.defaultBpm;     // the user's own tempo survives a reload
     if (TS_BEATS[m.meter] && !sameGenre) song.sig = m.meter;
-    const acc = song.parts.accomp.inst === "Piano" ? stripNote(m.pianoPrimary) : stripNote(m.guitarPrimary);
-    if (acc) song.parts.accomp.pattern = acc;
-    const bass = stripNote(m.bassPattern); if (bass) song.parts.bass.pattern = bass;
-    const ens = m.ensembleSuggestion && m.ensembleSuggestion !== "—" ? stripNote(m.ensembleSuggestion.split("+")[0]) : null;
-    if (ens && patternByName("ensemble", ens)) { song.parts.ensemble.pattern = ens; song.parts.ensemble.on = true; song.parts.ensemble.inst = /horn/i.test(m.ensembleSuggestion) ? "Horns" : "Strings"; }
-    else song.parts.ensemble.on = false;
   }
   const key = keyObj(song.key);
   if (templateIsMinor(g) && !key.minor) { song.key = parallelMinor(key).name; toast(`${name} is written in a minor key — switched to ${song.key}`); }
@@ -7184,12 +4891,12 @@ function upgradeSong(s) {
   const base = newSong();
   s.parts = Object.assign({}, base.parts, s.parts || {});
   for (const p in base.parts) s.parts[p] = Object.assign({}, base.parts[p], s.parts[p]);
-  s.bars.forEach(b => { b.chips = b.chips || []; b.ev = Object.assign({ melody: [], bass: [], accomp: [], ensemble: [] }, b.ev || {}); b.custom = Object.assign({ bass: false, accomp: false, ensemble: false }, b.custom || {}); if (!b.chords) b.chords = b.chord ? [{ t: 0, sym: b.chord }] : []; });
+  s.bars.forEach(b => { b.chips = b.chips || []; b.ev = Object.assign({ melody: [], bass: [], accomp: [] }, b.ev || {}); delete b.custom; delete b.ev.ensemble; if (!b.chords) b.chords = b.chord ? [{ t: 0, sym: b.chord }] : []; });
   if (s.snap == null) s.snap = true;
   if (!(Number(s.bpm) > 0)) s.bpm = 120; else s.bpm = Number(s.bpm);
   if (!s.view) {                                   // older songs: open the window on what they contain
     let mlo = 60, alo = 36;
-    s.bars.forEach(b => { b.ev.melody.forEach(e => { if (!e.rest && e.m < mlo + 2) mlo = e.m - 2; }); ["bass", "accomp", "ensemble"].forEach(p => (b.ev[p] || []).forEach(e => { if (!e.rest && e.m < alo + 2) alo = e.m - 2; })); });
+    s.bars.forEach(b => { b.ev.melody.forEach(e => { if (!e.rest && e.m < mlo + 2) mlo = e.m - 2; }); ["bass", "accomp"].forEach(p => (b.ev[p] || []).forEach(e => { if (!e.rest && e.m < alo + 2) alo = e.m - 2; })); });
     s.view = { melLo: clamp(mlo, 21, 108 - 13 + 1), accLo: clamp(alo, 21, 96 - 13 + 1) };
   }
   return s;
@@ -7391,31 +5098,6 @@ function nextUnpitchedChipOld() { return null; }
    Slot durations in SONG_DATA are ms at 60 BPM → beats = ms / 1000.
    Register placement follows SONG_DATA.registerMap defaults.
    ═══════════════════════════════════════════════════════════════════════ */
-function patternByName(bank, name) {
-  const list = SONG_DATA.patternBanks[bank] || [];
-  if (!name) return null;
-  let p = list.find(x => x.name === name);
-  if (!p) { const n = stripNote(name); p = list.find(x => x.name === n) || list.find(x => stripNote(x.name) === n); }
-  return p || null;
-}
-const slashVals = v => v == null ? [] : String(v).split("/").map(x => parseFloat(x)).filter(x => !isNaN(x));
-/* Reference sheet default envelope by slot length */
-function autoRatio(d) { if (d >= 2) return 0.9; if (d >= 1) return 0.8; if (d >= 0.5) return 0.7; if (d >= 0.25) return 0.6; return 1; }
-function patternSlots(p, B, feel) {
-  let slots = p && p.slots ? p.slots.map(ms => ms / 1000) : [1];
-  if (!slots.length) slots = [1];
-  const ratios = p ? slashVals(p.ratio) : [];
-  const out = []; let t = 0, i = 0;
-  while (t < B - 1e-6) {
-    const d = Math.min(slots[i % slots.length], B - t);
-    let r = ratios.length ? ratios[i % ratios.length] : autoRatio(d);
-    if (feel && feel.ratio != null) r = clamp(r * feel.ratio, 0, 1);
-    if (feel && feel.accent && i % 2 === 1) r = r * 0.85;
-    out.push({ t: r3(t), d: r3(d), ratio: r });
-    t += d; i++;
-  }
-  return out;
-}
 function chordOf(bi) { return S.song.bars[bi] ? chordAt(bi, 0) : null; }
 const chordTonesPcs = ch => ch.iv.map(i => (ch.rootPc + i) % 12);
 function melodyRange(bi) {
@@ -7437,35 +5119,10 @@ function voiceChord(ch, lo, hi, below) {
   while (tones.length > 2 && tones[tones.length - 1] > limit) tones.pop();
   return tones;
 }
-function accompVoicing(bi, ch = chordOf(bi)) {
-  if (!ch) return [];
-  const mr = melodyRange(bi), center = mr ? mr.center - 12 : 60;
-  return voiceChord(ch, clamp(Math.round(center) - 7, 48, 60), 72, mr ? mr.lo : null);
-}
-function ensembleVoicing(bi, ch = chordOf(bi)) {
-  if (!ch) return [];
-  const mr = melodyRange(bi);
-  return voiceChord(ch, 55, 79, mr ? mr.lo : null).slice(0, 3);
-}
 function backupVoicing(bi, ch = chordOf(bi)) {
   if (!ch) return [];
   const mr = melodyRange(bi), top = mr ? mr.lo - 3 : 67;
   return voiceChord(ch, clamp(top - 14, 55, 64), 79, mr ? mr.lo : 70).slice(-3);
-}
-function bassPitch(ch, pat, idx) {
-  const name = pat ? pat.name.toLowerCase() : "";
-  const root = 40 + (((ch.rootPc - 40) % 12) + 12) % 12;          // E2 … D#3
-  const third = ch.iv[1] || 4, fifth = ch.iv[2] || 7;
-  let seq;
-  if (/walking/.test(name)) seq = [0, third, fifth, 9];
-  else if (/octave|disco/.test(name)) seq = [0, 12];
-  else if (/boogie/.test(name)) seq = [0, third, fifth, 9, 10, 9, fifth, third];
-  else if (/root-fifth|two-step/.test(name)) seq = [0, fifth];
-  else if (/tumbao/.test(name)) seq = [0, fifth, 0];
-  else if (/funk/.test(name)) seq = [0, 0, 12, 0, 10, 0, fifth, 0];
-  else seq = [0];
-  const m = root + seq[idx % seq.length];
-  return m > 55 ? m - 12 : m;
 }
 /* snap a pitch to the nearest chord tone (or scale tone when the bar has no chord) */
 function chordSnapper(bi, t = 0) {
@@ -7499,29 +5156,14 @@ function subVocalEvents(bi) {
   if (sp.mode === "harmony") return mel.map(e => ({ t: e.t, d: e.d, m: chordSnapper(bi, e.t)(e.m + sp.interval) }));
   return callResponse(bi, sp.interval, 48, 96);
 }
-const isCountermelodyInst = inst => /trumpet|clarinet/i.test(inst || "");
 /* every sounding event of a part in a bar: { t, d, ms, vel, sus, auto?, src? } */
 function partEvents(part, bi) {
-  const song = S.song, P = song.parts[part], bar = song.bars[bi], B = barBeats(bi);
+  const song = S.song, P = song.parts[part];
   if (!P.on) return [];
   if (part === "melody") return melodyPlayEvents(bi);
   if (part === "sub") return subVocalEvents(bi).map(e => ({ ...e, ms: [e.m], vel: 0.7, sus: e.d * 0.95, auto: true }));
   if (part === "backup") return chordSegments(bi).map(seg => ({ t: seg.t, d: seg.d, ms: backupVoicing(bi, seg.ch), vel: 0.35, sus: seg.d * 0.97, auto: true })).filter(e => e.ms.length);
-  if (bar.custom[part]) return bandPlayEvents(part, bi);
-  if (part === "ensemble" && isCountermelodyInst(P.inst)) return callResponse(bi, 0, 55, 79).map(e => ({ ...e, ms: [e.m], vel: 0.55, sus: e.d * 0.9, auto: true }));
-  const segs = chordSegments(bi); if (!segs.length) return [];
-  const chAt = t => { let c = segs[0].ch; for (const sg of segs) if (sg.t <= t + 1e-6) c = sg.ch; return c; };
-  const pat = patternByName(bankFor(part), P.pattern), slots = patternSlots(pat, B, P.feel);
-  if (part === "bass") return slots.filter(s => s.ratio > 0.001).map((s, i) => ({ t: s.t, d: s.d, ms: [bassPitch(chAt(s.t), pat, i)], vel: 0.8, sus: Math.max(0.05, s.d * s.ratio), auto: true }));
-  const vcache = new Map();
-  const voicingAt = t => { const ch = chAt(t); if (!vcache.has(ch.sym)) vcache.set(ch.sym, part === "accomp" ? accompVoicing(bi, ch) : ensembleVoicing(bi, ch)); return vcache.get(ch.sym); };
-  const arp = pat && /arpeggio|alberti|travis|fingerstyle|montuno|broken|tremolo|ostinato|clawhammer|boogie/i.test(pat.name);
-  return slots.map((s, i) => {
-    const voicing = voicingAt(s.t); if (!voicing.length) return { vel: 0 };
-    let ms = voicing;
-    if (arp) { const seq = /alberti/i.test(pat.name) ? [0, 2, 1, 2] : null; const k = seq ? seq[i % seq.length] : i % voicing.length; ms = [voicing[Math.min(k, voicing.length - 1)]]; }
-    return { t: s.t, d: s.d, ms, vel: s.ratio < 0.01 ? 0 : (part === "ensemble" ? 0.45 : 0.6), sus: Math.max(0.05, s.d * s.ratio), auto: true };
-  }).filter(e => e.vel > 0);
+  return bandPlayEvents(part, bi);                                                     // bass and accompaniment: the notes written on their staves
 }
 /* progression light: 1 = every voice full, 0 = every voice empty, 0.5 = between */
 function barCoverage(bi) {
@@ -7532,8 +5174,7 @@ function barCoverage(bi) {
     const P = song.parts[p]; if (!P.on) continue;
     if (p === "melody" || p === "sub") vals.push(sum(bar.ev.melody, "melody"));
     else if (p === "backup") vals.push(chordSymAt(bi, 0) ? 1 : 0);
-    else if (bar.custom[p]) vals.push(sum(bar.ev[p] || [], p));
-    else vals.push(chordSymAt(bi, 0) && P.pattern ? 1 : 0);
+    else vals.push(sum(bar.ev[p] || [], p));
   }
   if (!vals.length) return 0;
   const min = Math.min(...vals), max = Math.max(...vals);
@@ -7873,7 +5514,7 @@ function openSongSetup() {
   body.push(el("div", { class: "pLbl" }, "Chords"));
   body.push(el("div", { class: "mrow" }, el("button", { class: "btn", onclick: () => { closeModal(); openChordsSheet(); } }, "Chords…"), el("span", { class: "tiny" }, "the chord at any beat of this section")));
   body.push(el("div", { class: "pLbl" }, "Genre template"));
-  body.push(el("div", { class: "tiny", style: "margin-bottom:6px" }, "Loads the song structure, chords, tempo and band patterns for a style. Your own words and notes can be kept, and a tempo you've set yourself is kept when you reload the same genre."));
+  body.push(el("div", { class: "tiny", style: "margin-bottom:6px" }, "Loads the song structure, chords and tempo for a style. Your own words and notes can be kept, and a tempo you've set yourself is kept when you reload the same genre."));
   const grid = el("div", { class: "genreGrid" });
   let picked = song.genre;
   const keep = el("label", { class: "toggle on", style: "margin-top:8px" }, el("span", { class: "sw" }), "Keep my words and notes");
@@ -8132,11 +5773,7 @@ function partNotesText(part, bi) {
   if (part === "melody") return fmt(bar.ev.melody.filter(e => e.rest || e.m != null));
   if (part === "sub") return fmt(subVocalEvents(bi));
   if (part === "backup") return chordSegments(bi).map(seg => backupVoicing(bi, seg.ch).map(m => noteName(m, key)).join(" ")).filter(Boolean).join(" | ");
-  if (bar.custom[part]) return fmt([...(bar.ev[part] || [])]);
-  const evs = partEvents(part, bi);
-  if (!evs.length) return "";
-  const pcs = [...new Set(evs.flatMap(e => e.ms))].sort((a, b) => a - b).map(m => noteName(m, key));
-  return `${song.parts[part].pattern} · ${pcs.join(" ")}`;
+  return fmt([...(bar.ev[part] || [])]);
 }
 function openPartView(part) {
   const song = S.song, v = $("partView"), P = song.parts[part], meta = PART_META[part];
@@ -8334,7 +5971,7 @@ function fracLabel(x) { const w = Math.floor(x + 1e-6), f = r3(x - w), fr = { 0.
 /* cut a bar down to n beats: everything at or past the new end goes, anything crossing it is shortened */
 function trimBarTo(bar, n) {
   bar.beats = r3(n);
-  for (const p of ["melody", "bass", "accomp", "ensemble"]) { if (!bar.ev[p]) continue; bar.ev[p] = bar.ev[p].filter(e => e.t < n - 1e-6); bar.ev[p].forEach(e => { if (e.t + e.d > n) e.d = r3(n - e.t); }); }
+  for (const p of ["melody", "bass", "accomp"]) { if (!bar.ev[p]) continue; bar.ev[p] = bar.ev[p].filter(e => e.t < n - 1e-6); bar.ev[p].forEach(e => { if (e.t + e.d > n) e.d = r3(n - e.t); }); }
   bar.chips = (bar.chips || []).filter(c => c.t < n - 1e-6); bar.chips.forEach(c => { if (c.t + c.d > n) c.d = r3(n - c.t); });
   bar.chords = barChords(bar).filter(c => c.t < n - 1e-6); syncBarChord(bar);
   if (typeof syncNotesToChips === "function") syncNotesToChips(bar);
@@ -8343,7 +5980,7 @@ function trimBarTo(bar, n) {
 function pickupUsedEnd(bar) {
   let end = 0;
   bar.ev.melody.forEach(e => { if (!e.rest && e.m != null) end = Math.max(end, e.t + e.d); });
-  ["bass", "accomp", "ensemble"].forEach(p => { if (bar.custom && bar.custom[p]) (bar.ev[p] || []).forEach(e => { if (!e.rest) end = Math.max(end, e.t + e.d); }); });
+  ["bass", "accomp"].forEach(p => (bar.ev[p] || []).forEach(e => { if (!e.rest) end = Math.max(end, e.t + e.d); }));
   (bar.chips || []).forEach(c => { if (!c.rest) end = Math.max(end, c.t + Math.min(c.d || 0.25, 0.25)); });
   barChords(bar).forEach(c => { if (c.t > 1e-6) end = Math.max(end, c.t + 0.25); });
   return Math.min(fullBarBeats(), Math.ceil(end * 4 - 1e-6) / 4);
@@ -8520,6 +6157,8 @@ function melodyPlayEvents(bi) {
 }
 const barSlotsSummary = bi => chains(S.song.bars[bi]).filter(c => !c.rest).length;
 /* hand-placed band notes: one sound per tie chain, held into the next bar when tied over */
+/* the default envelope of a hand-placed note, by its length: how much of it rings */
+function autoRatio(d) { if (d >= 2) return 0.9; if (d >= 1) return 0.8; if (d >= 0.5) return 0.7; if (d >= 0.25) return 0.6; return 1; }
 function bandPlayEvents(part, bi) {
   const bar = S.song.bars[bi], out = [];
   for (const c of chains(bar, part)) {
@@ -8626,7 +6265,6 @@ function chordPieces(bi, t, d, part) {
   while (left > 1e-6) {
     const bar = S.song.bars[b];
     if (!bar) return { deny: "Not enough space remaining — the song ends before this note would." };
-    if (part !== "melody" && b !== bi && !bar.custom[part]) return { deny: `Not enough space remaining — bar ${barNo(b)} still follows its ${PART_META[part].label.toLowerCase()} pattern. Set that bar to Custom first.` };
     const B = barBeats(b); if (at >= B - 1e-6) { b++; at = 0; continue; }
     const edge = Math.min(B, Math.floor(at + 1e-6) + 1);                                   // the end of the beat this piece sits in
     let room = r3(Math.min(left, edge - at));
@@ -8659,7 +6297,6 @@ function planSpan(bi, t, d, part = "melody") {
   while (left > 1e-6) {
     const bar = S.song.bars[b];
     if (!bar) return { deny: "Not enough space remaining — the song ends before this note would." };
-    if (part !== "melody" && b !== bi && !bar.custom[part]) return { deny: `Not enough space remaining — bar ${barNo(b)} still follows its ${PART_META[part].label.toLowerCase()} pattern. Set that bar to Custom first.` };
     const room = r3(Math.min(left, barBeats(b) - at));
     if (room <= 1e-6) return { deny: "Not enough space remaining." };
     const evs = bar.ev[part] || [];
@@ -8714,7 +6351,7 @@ function melodySpot(bar, bi) {
 /* the entry box for the picked length at the next free spot in the active beat; false when nothing fits */
 function showBox(bi, part = "melody", quiet = false, at = null) {
   const bar = S.song.bars[bi]; if (!S.active || S.active.bi !== bi) return false;
-  if (part !== "melody" && (!S.song.parts[part].on || !bar.custom[part])) return false;
+  if (part !== "melody" && !S.song.parts[part].on) return false;
   const sp = at != null ? ftpSpot(bar, bi, part) : part === "melody" ? melodySpot(bar, bi) : (() => { const t = freeSpotInBeat(bar, bi, S.active.beat, part); return t == null ? null : { ts: t, d: noteLenBeats() }; })();
   if (!sp) { if (!quiet) toast("This beat is full — tap another beat"); return false; }
   let { ts, d } = sp;
@@ -9273,7 +6910,7 @@ function renderWindows() {
     svg.append(svgEl("rect", { class: "hit", x: 0, y: 0, width: g.W, height: g.H, fill: "transparent", "data-lane": win }));
     $(win + "Win").classList.toggle("compact", g.step < 7);
     const head = document.querySelector(`.winHead[data-win="${win}"]`);
-    head.textContent = `${part === "accomp" ? "Accompaniment" : "Bass"} – ${P.on ? P.inst + (bar.custom[part] ? " · custom" : P.pattern ? " · " + P.pattern : "") : "off"}`;
+    head.textContent = `${part === "accomp" ? "Accompaniment" : "Bass"} – ${P.on ? P.inst : "off"}`;
     if (!P.on) { svg.append(svgEl("text", { x: g.W / 2, y: g.H / 2 + 4, "text-anchor": "middle", "font-size": 11, fill: css("--ink2"), "font-family": "system-ui, sans-serif" }, "off — tap ⚙ to turn on")); continue; }
     for (const bi of viewBars()) {
     const bar = song.bars[bi], sel = S.sel && S.sel.bi === bi && S.sel.part === part ? S.sel.id : null;
@@ -9284,7 +6921,7 @@ function renderWindows() {
     }
     drawMoveSel(svg, g, bi, part); drawSpanBands(svg, g, bi, part);
     if (S.ghost && S.ghost.part === part && S.ghost.bi === bi) drawGhost(svg, g, bi, S.ghost, color);
-    if (bar.custom[part]) {
+    {
       const unison = unisonIds(bar.ev[part] || []), pickedP = pickedIn(bi, part);
       const groups = S.noteStyle === "trad" ? beamGroups(bar.ev[part].filter(e => e.m >= g.lo && e.m <= g.hi)) : [], beamed = new Set(groups.flatMap(gp => gp.evs.map(e => e.id)));
       groups.forEach(gp => drawBeamed(svg, g, gp, color, e => g.x(bi, e.t) + 2));
@@ -9309,9 +6946,6 @@ function renderWindows() {
         drawNote(svg, g, x0 + 1, e.m, e.d, e.chord ? S.chordColor : color, { "data-ev": e.id, "data-part": part, "data-bi": bi }, { noStem: beamed.has(e.id), outline: e.chord ? "#111" : null, uni: unison.has(e.id), ghostNote: !!e.ghost });
         if (e.id === sel || pickedP.has(e.id)) drawSelFrame(svg, x0 - 1, g.y(e.m) - g.step, Math.max(6, x1 - x0 + 2), g.step * 2, 3);
       }
-    } else {
-      for (const e of partEvents(part, bi)) for (const m of e.ms) if (m >= g.lo && m <= g.hi)
-        svg.append(svgEl("rect", { x: g.x(bi, e.t) + 1.5, y: g.y(m) - g.step * 0.38, width: Math.max(3, e.sus * g.beatPx - 3), height: g.step * 0.76, rx: g.step * 0.38, fill: color, opacity: 0.55, "pointer-events": "none" }));
     }
     }
     svg.append(svgEl("line", { id: win + "Head", x1: -5, x2: -5, y1: 0, y2: g.H, stroke: css("--accent"), "stroke-width": 2, "pointer-events": "none" }));
@@ -9593,7 +7227,7 @@ function tapRest() {
 /* a rest at the next free spot of the active beat, in the given part */
 function placeRestNow(part) {
   const bi = S.active.bi, bar = S.song.bars[bi];
-  if (part !== "melody") { if (!S.song.parts[part].on) { toast(`${PART_META[part].label} is off`); return; } if (!bar.custom[part]) { toast(`${PART_META[part].label} follows its pattern here — switch this bar to Custom first`); return; } }
+  if (part !== "melody") { if (!S.song.parts[part].on) { toast(`${PART_META[part].label} is off`); return; } }
   const sp = part === "melody" ? melodySpot(bar, bi) : (t => t == null ? null : { ts: t, d: noteLenBeats() })(freeSpotInBeat(bar, bi, S.active.beat, part));
   if (!sp) { toast("This beat is full"); return; }
   const room = part === "melody" ? freeSpan(bar, sp.ts) : (() => { const nx = (bar.ev[part] || []).filter(e => e.t > sp.ts + 1e-6).sort((a, b) => a.t - b.t)[0]; return r3((nx ? nx.t : barBeats(bi)) - sp.ts); })();
@@ -9607,7 +7241,6 @@ function restOverflow(bi, part, left) {
   let b = bi + 1;
   while (left > 1e-6 && S.song.bars[b]) {
     const bar = S.song.bars[b], evs = bar.ev[part] || [];
-    if (part !== "melody" && !bar.custom[part]) break;
     const nx = evs.filter(e => part === "melody" || !e.rest).map(e => e.t).sort((a, c) => a - c)[0];
     const room = r3(Math.min(left, nx != null ? nx : barBeats(b)));
     if (room <= 1e-6) break;
@@ -9706,7 +7339,6 @@ function tapTie() {
   if (next && Math.abs(next.t - (ev.t + ev.d)) < 1e-6) { if (next.rest) { toast("Can't tie into a rest"); return; } ev.tie = true; if (ev.m != null) next.m = ev.m; else if (next.m != null) ev.m = next.m; }
   else if (!next && Math.abs(ev.t + ev.d - B) < 1e-6) {
     const nb = S.song.bars[bi + 1]; if (!nb) { toast("No next bar to tie into"); return; }
-    if (part !== "melody" && !nb.custom[part]) nb.custom[part] = true;                       // the tie carries into a custom bar
     let first = sortedEv(nb, part)[0];
     if (!first || first.t > 1e-6) { first = { id: uid(), t: 0, d: Math.min(baseLen(ev.d), first ? first.t : barBeats(bi + 1)), m: ev.m == null ? null : ev.m }; nb.ev[part].push(first); }
     else if (first.rest) { toast("The next bar starts with a rest"); return; } else if (ev.m != null) first.m = ev.m;
@@ -9770,7 +7402,6 @@ function tapBand(win, bi, t, m) {
   if (!inActive(bi, t)) activate(bi, t, part); S.activePart = part;      // one tap: the beat wakes and the box appears
   S.bi = bi;
   if (!P.on) { openWinSettings(win); return; }
-  if (!bar.custom[part]) { toast(`${PART_META[part].label} follows its pattern — switch it to Custom in ⚙ to place notes`); return; }
   if (chordOn(part)) { const ch = chordChainAt(bar, t, part); if (ch) { addChordNote(bi, ch, m, part); return; } }
   const gh = S.ghost, direct = !!(S.justEntered && S.justEntered.bi === bi && S.justEntered.beat === S.active.beat && S.justEntered.part === part);
   const spot = freeSpotInBeat(bar, bi, S.active.beat, part);
@@ -10831,7 +8462,7 @@ function openSettings() {
 }
 function openWinSettings(win) {
   const song = S.song, part = WIN_PART[win], P = song.parts[part], bar = curBar(), body = [];
-  const instSel = el("select", { class: "sel", onchange: e => { P.inst = e.target.value; if (part === "accomp") { const m = genreMap(song.genre); if (!patternByName(bankFor("accomp"), P.pattern)) P.pattern = (m && stripNote(P.inst === "Piano" ? m.pianoPrimary : m.guitarPrimary)) || SONG_DATA.patternBanks[bankFor("accomp")][1].name; } renderAll(); openWinSettings(win); } });
+  const instSel = el("select", { class: "sel", onchange: e => { P.inst = e.target.value; renderAll(); openWinSettings(win); } });
   INSTRUMENTS[part].forEach(n => instSel.append(el("option", { value: n, selected: n === P.inst }, n)));
   const row = el("div", { class: "pRow" }, instSel);
   const banks = [...SAMPLES.meta.keys()];
@@ -10844,7 +8475,7 @@ function openWinSettings(win) {
   if (part === "melody") {
     const { start, end } = curRange();
     body.push(el("div", { class: "pLbl" }, "Register"), el("div", { class: "pRow" }, el("span", { class: "tiny" }, `Window shows ${noteName(viewOf("mel"), keyObj(song.key))}–${noteName(viewOf("mel") + rowsOf("mel").rows - 1, keyObj(song.key))} — use ↑ ↓ beside the window (hold for an octave)`)));
-    for (const p of ["sub", "backup", "ensemble"]) {
+    for (const p of ["sub", "backup"]) {
       const X = song.parts[p], card = el("div", { class: "partCard" + (X.on ? "" : " off") });
       card.append(el("div", { class: "ph" }, el("span", { class: "dot", style: `background:var(--${p})` }), el("b", {}, PART_META[p].label), toggle("", X.on, v => { X.on = v; renderAll(); openWinSettings(win); })));
       if (X.on) {
@@ -10852,10 +8483,6 @@ function openWinSettings(win) {
         if (p === "sub") {
           const seg = el("div", { class: "seg sm" }); [["harmony", "Sing together"], ["response", "Call & answer"]].forEach(([v, l]) => seg.append(el("button", { class: X.mode === v ? "on" : "", onclick: () => { X.mode = v; renderAll(); openWinSettings(win); } }, l))); r2.append(seg);
           const iv = el("select", { class: "sel", onchange: e => { X.interval = parseInt(e.target.value, 10); renderAll(); } }); [[3, "a 3rd above"], [-3, "a 3rd below"], [4, "a 4th above"], [-4, "a 4th below"], [7, "a 5th above"], [-5, "a 5th below"], [12, "octave above"], [-12, "octave below"], [0, "unison"]].forEach(([v, l]) => iv.append(el("option", { value: v, selected: v === X.interval }, l))); r2.append(iv);
-        } else if (p === "ensemble") {
-          const is = el("select", { class: "sel", onchange: e => { X.inst = e.target.value; renderAll(); openWinSettings(win); } }); INSTRUMENTS.ensemble.forEach(n => is.append(el("option", { value: n, selected: n === X.inst }, n))); r2.append(is);
-          if (!isCountermelodyInst(X.inst)) { const ps = el("select", { class: "sel", onchange: e => { X.pattern = e.target.value; renderAll(); } }); SONG_DATA.patternBanks.ensemble.filter(x => !x.custom).forEach(x => ps.append(el("option", { value: x.name, selected: x.name === X.pattern }, x.name))); r2.append(ps); }
-          else r2.append(el("span", { class: "tiny" }, "answers in the melody's rests"));
         } else r2.append(el("span", { class: "tiny" }, "soft chord-tone pads under the lead"));
         r2.append(el("input", { type: "range", min: 0, max: 1, step: 0.05, value: X.vol, style: "width:90px", title: "Volume", oninput: e => { X.vol = parseFloat(e.target.value); saveSoon(); } }));
         card.append(r2);
@@ -10866,16 +8493,10 @@ function openWinSettings(win) {
       el("button", { class: "btn sm danger", onclick: () => confirmModal(`Clear the melody and rhythm in this bar?`, () => { bar.ev.melody = []; syncNotesToChips(bar); S.sel = null; renderAll(); }, "Clear bar") }, "Clear bar"),
       el("button", { class: "btn sm danger", onclick: () => confirmModal(`Are you sure? This deletes every melody note in ${curSection().name}.`, () => { for (let i = start; i < end; i++) { song.bars[i].ev.melody = []; syncNotesToChips(song.bars[i]); } S.sel = null; renderAll(); }, "Delete melody") }, "Clear section")));
   } else {
-    const bank = bankFor(part), list = SONG_DATA.patternBanks[bank].filter(x => !x.custom), m = genreMap(song.genre);
-    const suggested = m ? [part === "bass" ? m.bassPattern : (bank === "piano" ? m.pianoPrimary : m.guitarPrimary), ...(part === "accomp" ? (bank === "piano" ? m.pianoAlternates : m.guitarAlternates) : [])].map(stripNote).filter(Boolean) : [];
-    const patSel = el("select", { class: "sel", onchange: e => { P.pattern = e.target.value; renderAll(); openWinSettings(win); } });
-    list.forEach(x => patSel.append(el("option", { value: x.name, selected: x.name === P.pattern }, (suggested.includes(x.name) ? "★ " : "") + x.name)));
-    const pat = patternByName(bank, P.pattern);
-    body.push(el("div", { class: "pLbl" }, "Pattern"), el("div", { class: "pRow" }, patSel, pat ? el("span", { class: "tiny" }, `${pat.readsAs || ""}${pat.bpmRange ? " · best " + pat.bpmRange[0] + "–" + pat.bpmRange[1] + " BPM" : ""}`) : null));
-    const { start, end } = curRange(), allCustom = song.bars.slice(start, end).every(b => b.custom[part]);
-    body.push(el("div", { class: "mrow" }, toggle("Custom — I'll place the notes myself (this section)", allCustom, v => { for (let i = start; i < end; i++) song.bars[i].custom[part] = v; renderAll(); openWinSettings(win); })));
-    if (allCustom) body.push(el("div", { class: "pRow" }, el("button", { class: "btn sm", onclick: () => { for (let i = start; i < end; i++) { song.bars[i].custom[part] = false; const evs = partEvents(part, i); song.bars[i].custom[part] = true; song.bars[i].ev[part] = evs.flatMap(e => e.ms.map(mm => ({ id: uid(), t: e.t, d: e.d, m: mm }))); } renderAll(); closeModal(); toast("Pattern copied in as editable notes"); } }, "Start from the pattern"), el("button", { class: "btn sm danger", onclick: () => { for (let i = start; i < end; i++) song.bars[i].ev[part] = []; renderAll(); } }, "Clear notes"), el("span", { class: "tiny" }, "Tap the window to place notes at the palette length.")));
-    else body.push(el("div", { class: "mrow" }, toggle("Fine-tune the feel", !!P.feel, v => { P.feel = v ? { ratio: 1, accent: false } : null; renderAll(); openWinSettings(win); }), P.feel ? el("span", { class: "tiny" }, "Ring") : null, P.feel ? el("input", { type: "range", min: 0.3, max: 1.3, step: 0.05, value: P.feel.ratio, style: "width:110px", oninput: e => { P.feel.ratio = parseFloat(e.target.value); saveSoon(); } }) : null, P.feel ? toggle("Accent downbeats", P.feel.accent, v => { P.feel.accent = v; renderAll(); }) : null));
+    const { start, end } = curRange();
+    body.push(el("div", { class: "pLbl" }, "Notes"), el("div", { class: "pRow" },
+      el("button", { class: "btn sm danger", onclick: () => confirmModal(`Clear every ${PART_META[part].label.toLowerCase()} note in ${curSection().name}?`, () => { for (let i = start; i < end; i++) song.bars[i].ev[part] = []; S.sel = null; renderAll(); }, "Clear notes") }, "Clear notes"),
+      el("span", { class: "tiny" }, "Tap the window to place notes at the palette length; they tie within a bar and across the bar line like the melody's.")));
   }
   const paperSeg = el("div", { class: "seg sm" });                                       // the paper shade of this stave
   [["default", "Default"], ["aged", "Aged"], ["eggshell", "Light eggshell"], ["white", "Plain white"]].forEach(([v, l]) => paperSeg.append(el("button", { class: (S.paper[win] || "default") === v ? "on" : "", onclick: () => { S.paper[win] = v; savePrefs(); renderAll(); openWinSettings(win); } }, l)));
@@ -11078,7 +8699,6 @@ function ftpDuration(v) {
 function ftpEnter() {
   ftpSync();
   const part = ftpPart(), bi = S.active.bi, bar = S.song.bars[bi];
-  if (part !== "melody" && !bar.custom[part]) { toast(`${PART_META[part].label} follows its pattern in this bar — switch it to Custom in ⚙ beside its window`); return; }
   const sp = ftpSpot(bar, bi, part);
   if (!sp) { toast("This beat is full — → moves to the next"); return; }
   const plan = planSpan(bi, sp.ts, sp.d, part); if (plan.deny) { noticeModal(plan.deny); return; }
@@ -11266,7 +8886,7 @@ function delRun(scope) {
   if (scope === "run") { if (mv.start == null) { toast("Tap the first and last beat first"); return; } start = mv.start; end = mv.end; label = "the picked beats"; }
   else if (scope === "bar") { start = barAbs(S.bi); end = start + barBeats(S.bi); label = `bar ${barNo(S.bi)}`; }
   else { const r = sectionRange(sectionOfBar(S.bi)); start = barAbs(r.start); end = barAbs(r.end); label = "this section"; }
-  const parts = mv.allParts ? ["melody", "accomp", "bass", "ensemble"] : [mv.part];
+  const parts = mv.allParts ? ["melody", "accomp", "bass"] : [mv.part];
   const go = () => {
     let n = 0;
     parts.forEach(part => { const grp = mvGroup(part, start, end); grp.forEach(o => { const bar = S.song.bars[o.bi]; bar.ev[part] = bar.ev[part].filter(e => e !== o.e); n++; }); });
@@ -11844,7 +9464,7 @@ function togglePlaySelect(win, btn) {
 function leavePlaySelect() { if (S.playing && PSEL.playing) stopPlayback(); PSEL.on = false; PSEL.ids.clear(); PSEL.playing = false; renderAll(); }
 function playSelected() {
   let b0 = Infinity, b1 = -1, t0 = 0, t1 = 0;
-  S.song.bars.forEach((bar, bi) => { for (const part of ["melody", "accomp", "bass", "ensemble"]) (bar.ev[part] || []).forEach(e => { if (!PSEL.ids.has(part + ":" + e.id)) return; if (bi < b0 || (bi === b0 && e.t < t0)) { b0 = bi; t0 = e.t; } if (bi > b1 || (bi === b1 && e.t + e.d > t1)) { b1 = bi; t1 = r3(e.t + e.d); } }); });
+  S.song.bars.forEach((bar, bi) => { for (const part of ["melody", "accomp", "bass"]) (bar.ev[part] || []).forEach(e => { if (!PSEL.ids.has(part + ":" + e.id)) return; if (bi < b0 || (bi === b0 && e.t < t0)) { b0 = bi; t0 = e.t; } if (bi > b1 || (bi === b1 && e.t + e.d > t1)) { b1 = bi; t1 = r3(e.t + e.d); } }); });
   if (b1 < 0) return;
   S.solo = null; S.bi = b0;
   startPlaybackRange(b0, t0, b1, Math.min(t1, barBeats(b1)), new Set(PSEL.ids));   // (this stops anything already playing first)
@@ -11900,7 +9520,7 @@ function openHelp() {
     h("Words", "Tap the Lyrics strip at a beat and type straight into it (↵ moves to the next note; tapping elsewhere keeps what you typed). Tap the Lyrics tag to paste a whole section. Words sit on the rhythm's notes; drag one to line it up; tap one to nudge, split into letters, edit or delete it."),
     h("Articulation", "• staccato, ‒ tenuto, ◠ slur. With a note selected, tap a mark to apply it. Otherwise tap a mark to arm it: notes you enter carry it, and tapping existing notes marks them; tap the mark again to finish. For a slur, tap the first note then the last."),
     h("Chords", "Chord names sit in the beat row; tap a beat there or use Chords… in ☰ → Song setup to set the chord at any beat. A chord holds until the next change."),
-    h("Accompaniment & Bass", "Empty staves to write on, like the melody — a new song and a genre load bring chords, structure and tempo, not band lines. ⚙ on each window sets instrument, sound and volume; switch Custom off there to have a genre pattern play the section instead, and Start from the pattern copies it in as notes to edit."),
+    h("Accompaniment & Bass", "Empty staves to write on, like the melody — a new song and a genre load bring chords, structure and tempo, nothing prefabricated. ⚙ on each window sets instrument, sound and volume. Hand-placed notes tie within a bar and across the bar line like the melody's."),
     h("Settings ⚙", "View (stacked staves, or rolled up into three bars with + / −), theme, window sizing, chords display, note appearance (traditional, pills, circles), half steps on lines, metronome."),
     h("Menu ☰", "Share a link or per-musician parts, export/import files, save."),
   ]);
@@ -11958,7 +9578,6 @@ function midiNote(part, m, vel) {
     else { const t = rhythmEnd(bar); if (t >= B - 1e-6) { toast("Bar is full"); return; } bar.ev.melody.push({ id: uid(), t, d: Math.min(noteLenBeats(), freeSpan(bar, t)), m }); }
     syncNotesToChips(bar); if (S.followWords) S.cursor = nextUnpitchedChip(bi, null);
   } else {
-    if (!bar.custom[part]) { toast(`${PART_META[part].label}: switch to Custom to record notes`); return; }
     const last = [...bar.ev[part]].sort((a, b) => a.t - b.t).pop(), t = last ? r3(last.t + last.d) : 0;
     if (t >= B - 1e-6) { toast("Bar is full"); return; }
     bar.ev[part].push({ id: uid(), t, d: Math.min(noteLenBeats(), B - t), m });
@@ -11996,7 +9615,7 @@ function upgradeTies(song) {                       // older songs: a note past i
   const B = TS_BEATS[song.sig] || 4;
   song.bars.forEach((bar, bi) => {
     bar.ev.melody.forEach(e => { if (!e.rest && e.t + e.d > B + 1e-6) { const over = r3(e.t + e.d - B); e.d = r3(B - e.t); e.tie = true; const nb = song.bars[bi + 1]; if (nb && !nb.ev.melody.some(x => x.t < over - 1e-6)) nb.ev.melody.push({ id: uid(), t: 0, d: Math.min(over, B), m: e.m }); } });
-    ["bass", "accomp", "ensemble"].forEach(p => (bar.ev[p] || []).forEach(e => { if (e.t + e.d > B) e.d = r3(B - e.t); }));
+    ["bass", "accomp"].forEach(p => (bar.ev[p] || []).forEach(e => { if (e.t + e.d > B) e.d = r3(B - e.t); }));
     if (song.view && song.view.bassLo == null) { song.view.bassLo = 40; if (song.view.accLo === 36 || song.view.accLo === 48) song.view.accLo = 55; }
   });
 }

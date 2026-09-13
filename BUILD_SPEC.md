@@ -57,8 +57,8 @@ clearly-sectioned code as you strip.
   hip-hop, trap, R&B, funk, disco, EDM, country, folk, blues, jazz, latin,
   gospel, metal, classical forms, …). Choosing a genre loads its template:
   song structure (sections + bar ranges), chord progression (one chord per
-  bar), default BPM/meter, and default patterns per instrument from
-  `genrePatternMap`.
+  bar) and default BPM/meter from `genrePatternMap`. (The per-instrument
+  pattern defaults and the pattern banks were removed on 2026-09-13.)
 - Classical genres: draft upgraded progressions (inversions, cadential 6-4,
   V7) are generated **at compile time as alternates** — agreed approach.
 
@@ -73,11 +73,10 @@ registers, position vs melody, voicing/collision rules, hard clamps).
    pitch offset. Secondary to melody.
 3. **Backup vocals** — chord tones only; pads/oohs, echoes, short responses;
    always quieter than lead and sub.
-4. **Bass** — bass guitar (mono), patterns from `patternBanks.bass`.
+4. **Bass** — bass guitar (mono), written by hand on its own stave.
 5. **Accompaniment** — guitar (acoustic / 12-string / electric clean / drive)
-   or piano, patterns from `patternBanks.guitar` / `.piano`.
-6. **Countermelody / ensemble** — strings, horns, clarinet, trumpet, tuba;
-   patterns from `patternBanks.ensemble`; answers in the melody's rests.
+   or piano, written by hand on its own stave.
+6. ~~Countermelody / ensemble~~ — removed on 2026-09-13 along with the pattern banks.
 
 All vocal parts calibrate with the **reference bar** (see Register_Map).
 Timbre synth hints per instrument are in `SONG_DATA.instruments`.
@@ -113,10 +112,7 @@ Must be intuitive. Two modes that coexist:
 
 ## Timing model
 
-- All pattern slot durations in the data are **ms at the 60 BPM reference**
-  (quarter = 1000 ms, 4/4 bar = 4000 ms). Scale by `60 / BPM` at runtime.
-- Patterns carry per-slot ratio / sustain / mute values for the envelope.
-- BPM ranges per pattern indicate where each pattern sounds right.
+- (Pattern slot timing no longer applies: the pattern banks were removed on 2026-09-13.)
 
 ## Section operations
 
