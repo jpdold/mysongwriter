@@ -641,6 +641,8 @@ body.xhairOn #melSvg, body.xhairOn #accSvg, body.xhairOn #bassSvg { cursor: cros
 #modal .mrow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }
 #modal .mfoot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
 .pLbl { font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: #555; font-weight: 700; margin: 10px 0 4px; }
+.pSec { font-size: 13px; font-weight: 800; color: #111; margin: 16px 0 0; padding-top: 10px; border-top: 1px solid rgba(0,0,0,.14); }   /* a section of Settings */
+.pSec:first-child { margin-top: 0; padding-top: 0; border-top: none; }
 .pRow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 4px 0; }
 .pRow.tight { gap: 4px; }
 .pHead { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
@@ -5943,14 +5945,15 @@ function allocateDuo() {
   const band = duoBandWin(), k = STEP_K[S.noteSize] || 1;
   const clampView = (w, rows) => { const key = WIN_LO[w], v = S.song && S.song.view ? viewOf(w) : null, [minV, topV] = viewLimits(w, rows); if (v != null && v + rows - 1 > topV) S.song.view[key] = Math.max(minV, topV + 1 - rows); };
   for (const w of ["mel", "acc", "bass"]) if (w !== "mel" && w !== band) { STEPS[w] = WIN[S.winSize][w][1]; DECK_ROWS[w] = 0; }
-  { const [rows0, lo, hi] = WIN[S.winSize].mel, target = Math.round(window.innerHeight / 3) - 16, fits = target >= rows0 * hi * k;
-    const rows = fits ? clamp(Math.floor(target / (hi * k)), rows0, 88) : rows0; DECK_ROWS.mel = rows; STEPS.mel = fits ? hi : Math.max(lo, target / rows0 / k); clampView("mel", rows); }
-  { const [rows0, lo, hi0] = WIN[S.winSize][band], hi = Math.max(hi0, WIN[S.winSize].mel[2]);
+  let bandH;                                                                              // the band part: about a third of the screen's height at its natural scale, flush on the tool bar
+  { const [rows0, lo, hi0] = WIN[S.winSize][band], hi = Math.max(hi0, WIN[S.winSize].mel[2]), target = Math.round(window.innerHeight / 3) - 16, fits = target >= rows0 * hi * k;
+    const rows = fits ? clamp(Math.floor(target / (hi * k)), rows0, 88) : rows0; DECK_ROWS[band] = rows; STEPS[band] = fits ? hi : Math.max(lo, target / rows0 / k); clampView(band, rows); bandH = rows * STEPS[band] * k + 16; }
+  { const [rows0, lo, hi] = WIN[S.winSize].mel;                                          // the melody: everything from its top down to the band, less the strips between — its row height stretched a whisker so the band lands flush
     const tb = $("toolbar").getBoundingClientRect(), melFrame = $("melWin").querySelector(".frame"), strips = ["dynStrip", "rhyStrip", "lyrStrip"].map(id => $(id)).filter(e => e && e.offsetHeight > 0 && getComputedStyle(e).position !== "fixed");
-    const above = Math.max(melFrame.getBoundingClientRect().bottom, ...strips.map(e => e.getBoundingClientRect().bottom));
-    let target = Math.round(tb.top - above) - 16;                                        // less the stave's own 10px of padding and the frame's 6px of border
-    if (!(target > 40)) target = rows0 * hi * k;                                          // nothing measured yet (the first pass): the natural size, corrected by the settle pass
-    const rows = clamp(Math.floor(target / (hi * k)), 4, 88); DECK_ROWS[band] = rows; STEPS[band] = target / rows / k; clampView(band, rows); }
+    const stripsH = strips.reduce((sum, e) => sum + e.offsetHeight, 0), top = melFrame.getBoundingClientRect().top;
+    let target = Math.round(tb.top - top - stripsH - bandH) - 16;                          // less the stave's own 10px of padding and the frame's 6px of border
+    if (!(target > 40) || !melFrame.offsetHeight) target = rows0 * hi * k;                // nothing measured yet (the first pass): the natural size, corrected by the settle pass
+    const rows = clamp(Math.floor(target / (hi * k)), 4, 88); DECK_ROWS.mel = rows; STEPS.mel = target / rows / k; clampView("mel", rows); }
 }
 function allocate() {
   if (duoMode() && !kbUpNow()) { allocateDuo(); return; }
@@ -8478,34 +8481,42 @@ function openSettings() {
   const custom = S.custom || { ground: "#3b4a5a", ground2: "#2d3945", accent: "#3b8bd6", lyric: "#3f8fd0", box: "#f0a63c" };
   const colorRow = el("div", { class: "pRow tight" });
   if (S.theme === "custom") [["ground", "Body"], ["ground2", "Strips"], ["accent", "Buttons"], ["lyric", "Lyrics"], ["box", "Rhythm boxes"]].forEach(([k, l]) => colorRow.append(el("label", { class: "tiny", style: "display:inline-flex;align-items:center;gap:4px" }, el("input", { type: "color", value: custom[k], oninput: e => { custom[k] = e.target.value; S.custom = custom; applyTheme(); savePrefs(); }, onchange: () => renderAll() }), l)));
+  const sec = t => el("div", { class: "pSec" }, t), wide = deckMode();
   openModal("Settings", [
+    sec("Look"),
     el("div", { class: "pLbl" }, "Theme"), seg([["auto", "Default"], ["dark", "Dark"], ["custom", "Custom"]], S.theme, v => { S.theme = v; if (v === "custom" && !S.custom) S.custom = custom; applyTheme(); savePrefs(); renderAll(); }), colorRow,   // the staves are painted at render time: redrawn at once, not on the next load
-    el("div", { class: "pLbl" }, "View"), seg([["stack", "Stacked staves"], ["rolled", "Rolled up · the deck"]], S.layout, v => { S.layout = v; if (v === "rolled") { S.focus = null; $("app").classList.remove("focused", "focus-mel", "focus-acc", "focus-bass"); } else ["mel", "acc", "bass"].forEach(w => { if (S.winState[w] === "closed") S.winState[w] = "open"; }); savePrefs(); renderAll(); }),   // Stacked: every stave opens
-    el("div", { class: "tiny" }, "Stacked staves shows all three staves at once, on any screen. Rolled up shows one bar with + / − on a phone and, on a wide screen, the deck: one part at a time with its buttons beside it."),
-    el("div", { class: "pLbl" }, "Window shows"), seg([[1, "1 bar"], [2, "2 bars"], [3, "3 bars"], [4, "4 bars"]], S.viewSpan, v => { S.viewSpan = v; savePrefs(); renderAll(); }),
-    el("div", { class: "tiny" }, "More bars make the staves proportionately wider — swipe sideways to move along them; every window and strip scrolls together."),
-    el("div", { class: "pLbl" }, "Stacked staves on a wide screen"), el("div", { class: "mrow" }, seg([[4, "4 bars"], [8, "8 bars"]], S.duoBars === 8 ? 8 : 4, v => { S.duoBars = v; savePrefs(); renderAll(); }), seg([["acc", "Accompaniment below"], ["bass", "Bass below"]], duoBandWin(), v => { S.duoBand = v; savePrefs(); renderAll(); })),
-    el("div", { class: "tiny" }, "The melody, about a third of the height, over its strips, with this many bars across the width — then the accompaniment or the bass filling the rest, flush on the tool bar; ⇄ beside it swaps the two."),
+    sec("Layout"),
+    el("div", { class: "pLbl" }, "View"), seg([["stack", "Stacked staves"], ["rolled", "Rolled up"]], S.layout, v => { S.layout = v; if (v === "rolled") { S.focus = null; $("app").classList.remove("focused", "focus-mel", "focus-acc", "focus-bass"); } else ["mel", "acc", "bass"].forEach(w => { if (S.winState[w] === "closed") S.winState[w] = "open"; }); savePrefs(); renderAll(); }),   // Stacked: every stave opens
+    el("div", { class: "tiny" }, wide ? "On this wide screen — Stacked staves: the melody over its strips, with the accompaniment or the bass filling the rest. Rolled up: the deck, one part at a time with its buttons beside it." : "On a phone — Stacked staves: all three staves, one above the other. Rolled up: one bar at a time, the parts as three bars with + / − to open and close each. (On a wide screen, Stacked is the melody over the accompaniment or bass; Rolled up is the deck, one part at a time.)"),
+    ...(S.layout === "stack" ? [
+      el("div", { class: "pLbl" }, "Stacked staves on a wide screen"), el("div", { class: "mrow" }, seg([[4, "4 bars"], [8, "8 bars"]], S.duoBars === 8 ? 8 : 4, v => { S.duoBars = v; savePrefs(); renderAll(); }), seg([["acc", "Accompaniment below"], ["bass", "Bass below"]], duoBandWin(), v => { S.duoBand = v; savePrefs(); renderAll(); })),
+      el("div", { class: "tiny" }, "This many bars across the width, nothing to scroll. The accompaniment or the bass sits below the strips at about a third of the height, flush on the tool bar; the melody takes the rest. ⇄ beside the lower stave swaps the two."),
+    ] : []),
+    el("div", { class: "pLbl" }, S.layout === "stack" ? "Window shows (on a phone, and the deck)" : "Window shows"), seg([[1, "1 bar"], [2, "2 bars"], [3, "3 bars"], [4, "4 bars"]], S.viewSpan, v => { S.viewSpan = v; savePrefs(); renderAll(); }),
+    el("div", { class: "tiny" }, "More bars make the staves proportionately wider — swipe sideways to move along them; every window and strip scrolls together. Note size Micro (below) fits them all across instead."),
     el("div", { class: "pLbl" }, "Window sizing"), seg([["s", "Small"], ["m", "Medium"], ["l", "Large"]], S.winSize, v => { S.winSize = v; savePrefs(); renderAll(); }),
     el("div", { class: "mrow" }, el("button", { class: "btn sm", onclick: () => { S.zoomWin = { mel: 1, acc: 1, bass: 1 }; S.winState = S.layout === "rolled" ? { mel: "open", acc: "closed", bass: "closed" } : { mel: "open", acc: "open", bass: "open" }; savePrefs(); renderAll(); openSettings(); } }, "Reset windows"), el("span", { class: "tiny" }, "Windows share the screen: melody gets the most. The button under each ⚙ shrinks, closes and reopens a window; pinch a window to zoom it.")),
+    sec("Staves"),
+    el("div", { class: "mrow" }, toggle("Beat lines inside the bars (the bar lines stay, and so does the spacing)", S.beatDividers !== false, v => { S.beatDividers = v; savePrefs(); renderAll(); })),
+    el("div", { class: "mrow" }, toggle("Note boxes — the solid orange box drawn around each melody note, at its own duration", S.beatLines, v => { S.beatLines = v; savePrefs(); renderAll(); openSettings(); })),
+    el("div", { class: "mrow" }, toggle("Lines and spaces (half steps alternate line, space, line, space; off = one half step per space)", S.halfLines, v => { S.halfLines = v; savePrefs(); renderAll(); openSettings(); })),
+    el("div", { class: "mrow" }, toggle("Lock the register scroll at the edge of each sound's range (top and bottom alike, on every stave)", S.rangeLock, v => { S.rangeLock = v; savePrefs(); renderAll(); openSettings(); })),
     el("div", { class: "pLbl" }, "Chords displayed"), seg([["names", "Names (C, G7)"], ["roman", "Roman (I, V7)"], ["off", "Hidden"]], S.chordsDisp, v => { S.chordsDisp = v; S.song.showRoman = v === "roman"; savePrefs(); renderAll(); }),
     el("div", { class: "pLbl" }, "Notes appearance"), seg([["trad", "Traditional"], ["pill", "Pills"], ["circle", "Circles"]], S.noteStyle, v => { S.noteStyle = v; savePrefs(); renderAll(); }),
     el("div", { class: "pLbl" }, "Note size"), seg([["x", "Micro"], ["s", "Small"], ["m", "Medium"], ["l", "Large"]], S.noteSize, v => { S.noteSize = v; savePrefs(); renderAll(); }),
     el("div", { class: "tiny" }, "Micro: notes small enough that every bar the window shows fits across it side by side, with nothing to scroll — set Window shows to 2, 3 or 4 bars to see and edit several at once, upright or widescreen."),
     el("div", { class: "pLbl" }, "Chord-mode notes"), seg([["#ffffff", "White"], ["#ffd23f", "Gold"], ["#6fb3ff", "Sky"], ["#8fd14f", "Green"], ["#f4a0c8", "Pink"]], S.chordColor, v => { S.chordColor = v; savePrefs(); renderAll(); }),
-    el("div", { class: "mrow" }, toggle("Lines and spaces (half steps alternate line, space, line, space; off = one half step per space)", S.halfLines, v => { S.halfLines = v; savePrefs(); renderAll(); openSettings(); })),
-    el("div", { class: "mrow" }, toggle("Beat lines inside the bars (the bar lines stay, and so does the spacing)", S.beatDividers !== false, v => { S.beatDividers = v; savePrefs(); renderAll(); })),
-    el("div", { class: "mrow" }, toggle("Beat subdivider lines (the solid orange box drawn around each melody note, at its own duration)", S.beatLines, v => { S.beatLines = v; savePrefs(); renderAll(); openSettings(); })),
-    el("div", { class: "mrow" }, toggle("Lock the register scroll at the edge of each sound's range (top and bottom alike, on every stave)", S.rangeLock, v => { S.rangeLock = v; savePrefs(); renderAll(); openSettings(); })),
-    el("div", { class: "mrow" }, toggle("Keep the screen awake while the app is open" + ("wakeLock" in navigator ? "" : " (this browser cannot)"), S.keepAwake, v => { S.keepAwake = v; savePrefs(); if (v) wakeAcquire(); else wakeRelease(); })),
+    sec("Lyrics & keyboard"),
+    el("div", { class: "pLbl" }, "Lyrics font"), seg([["sans", "Current"], ["serif", "Serif"], ["smallcaps", "Small caps"]], S.lyricFont, v => { S.lyricFont = v; savePrefs(); renderAll(); }),
     el("div", { class: "pLbl" }, "Lyrics keyboard"), seg([[true, "App keyboard (QWERTY + symbols)"], [false, "Phone's keyboard"]], S.softKb, v => { S.softKb = v; savePrefs(); renderWeKeys(); }),
     el("div", { class: "pLbl" }, "Keyboard layout"), seg([["flat", "Flat"], ["standard", "Standard"]], S.kbLayout, v => { S.kbLayout = v; savePrefs(); renderWeKeys(); }),
     el("div", { class: "tiny" }, "Flat: square corners, the letter keys flush together (still clear of the edge); the space bars, BACKSPACE, ⇧, ?!’ and àéñ keep their spacing. Standard: the rounded, spaced keys."),
     el("div", { class: "pLbl" }, "Keyboard theme"), seg([["classic", "Current"], ["blue", "Light blue · black keys · white letters"], ["black", "Black · white keys · black letters"], ["gray", "Dark grey · light blue keys · white letters"]], S.kbTheme, v => { S.kbTheme = v; savePrefs(); renderWeKeys(); }),
-    el("div", { class: "pLbl" }, "Lyrics font"), seg([["sans", "Current"], ["serif", "Serif"], ["smallcaps", "Small caps"]], S.lyricFont, v => { S.lyricFont = v; savePrefs(); renderAll(); }),
+    sec("Playback & entry"),
     el("div", { class: "pLbl" }, "Metronome"), seg([["off", "Off"], ["on", "Click while playing"], ["countin", "Count-in + click"]], S.metro, v => { S.metro = v; savePrefs(); }),
-    el("div", { class: "pLbl" }, "Entry"),
     el("div", { class: "mrow" }, toggle("Snap to beat (half-beats)", S.song.snap, v => { S.song.snap = v; renderAll(); openSettings(); })),
+    sec("Device"),
+    el("div", { class: "mrow" }, toggle("Keep the screen awake while the app is open" + ("wakeLock" in navigator ? "" : " (this browser cannot)"), S.keepAwake, v => { S.keepAwake = v; savePrefs(); if (v) wakeAcquire(); else wakeRelease(); })),
     el("div", { class: "mrow" }, el("button", { class: "btn sm", onclick: () => { closeModal(); openSampler(); } }, "♪ Sounds & samples"), el("button", { class: "btn sm", onclick: () => { closeModal(); openHelp(); } }, "How it works")),
   ]);
 }
