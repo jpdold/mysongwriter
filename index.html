@@ -5951,7 +5951,7 @@ function allocateDuo() {
   { const [rows0, lo, hi] = WIN[S.winSize].mel;                                          // the melody: everything from its top down to the band, less the strips between — its row height stretched a whisker so the band lands flush
     const tb = $("toolbar").getBoundingClientRect(), melFrame = $("melWin").querySelector(".frame"), strips = ["dynStrip", "rhyStrip", "lyrStrip"].map(id => $(id)).filter(e => e && e.offsetHeight > 0 && getComputedStyle(e).position !== "fixed");
     const stripsH = strips.reduce((sum, e) => sum + e.offsetHeight, 0), top = melFrame.getBoundingClientRect().top;
-    let target = Math.round(tb.top - top - stripsH - bandH) - 16;                          // less the stave's own 10px of padding and the frame's 6px of border
+    let target = tb.top - top - stripsH - bandH - 16;                                      // less the stave's own 10px of padding and the frame's 6px of border — not rounded, so the sum lands on the tool bar to the pixel
     if (!(target > 40) || !melFrame.offsetHeight) target = rows0 * hi * k;                // nothing measured yet (the first pass): the natural size, corrected by the settle pass
     const rows = clamp(Math.floor(target / (hi * k)), 4, 88); DECK_ROWS.mel = rows; STEPS.mel = target / rows / k; clampView("mel", rows); }
 }
