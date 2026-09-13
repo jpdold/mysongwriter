@@ -8240,9 +8240,9 @@ const WIN_WEIGHT = { mel: 1.5, acc: 1, bass: 1 };
 const STEPS = { mel: 14, acc: 8, bass: 8 };      // computed by allocate()
 const WIN_PART = { mel: "melody", acc: "accomp", bass: "bass" };
 const WIN_LO = { mel: "melLo", acc: "accLo", bass: "bassLo" };
-const NOTE_SCALE = { s: 0.55, m: 0.72, l: 0.92 }; const NS = () => NOTE_SCALE[S.noteSize] || 1;   // note size: heads, stems and flags; the stave never changes
+const NOTE_SCALE = { x: 0.42, s: 0.55, m: 0.72, l: 0.92 }; const NS = () => NOTE_SCALE[S.noteSize] || 1;   // x is Micro: notes small enough that every bar the window shows fits across it, side by side, with no sideways scrolling   // note size: heads, stems and flags; the stave never changes
 const HK = () => S.halfLines ? 1.55 : 1;         // lines-and-spaces: heads grow to fill a space (two rows)
-const STEP_K = { s: 0.94, m: 1, l: 1.06 };       // row height nudges a little with the note size
+const STEP_K = { x: 0.82, s: 0.94, m: 1, l: 1.06 };   // row height nudges a little with the note size (Micro's rows tighter still, so more of the range shows)
 Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", noteSize: "m", chordMode: false, chordWin: { mel: false, acc: false, bass: false }, chordColor: "#ffffff", justEntered: null, activePart: "melody", lastEntered: null, ftp: null, mv: null, selAuto: false, halfLines: true, winSize: "m", chordsDisp: "names", metro: "off", winState: { mel: "open", acc: "closed", bass: "closed" }, zoomWin: { mel: 1, acc: 1, bass: 1 }, lyricFont: "sans", viewSpan: 1, layout: "rolled", selChip: null, deck: ["mel", "acc", "bass"], deckSel: null, rhyShown: true, lyrShown: true, partsShown: true, dynShown: false, dynArm: null, ghost: null, restNext: false, restLen: null, ghostNext: false, artic: null, slurFrom: null, active: null, softKb: ("ontouchstart" in window), popPos: null, mode: "melody", rangeLock: false, kbLayout: "standard", kbTheme: "classic", kbSpace: 0, kbBackUp: 0 });
 const UNDO = { stack: [], redo: [], last: null, max: 60 };
 const setMode = () => {};                          // engine shims (the old mode sheets are gone)
@@ -8346,8 +8346,9 @@ let GEO = {};
 function geo(win) {
   const svg = $(win + "Svg"), B = barBeats(), { rows, step } = rowsOf(win), lo = viewOf(win), hi = lo + rows - 1;
   const n = S.viewSpan, first = viewFirst(), W1 = Math.max(120, svg.parentNode.clientWidth || $("rhyStrip").querySelector(".body").clientWidth || 300), padL = 0, padR = 0, padT = 5, padB = 5;   // no pad at the ends: every beat, first and last, is exactly one share of the width
-  const bars = viewBars(), beatPx = (W1 - padL - padR) / B, starts = {}; let accB = 0;
+  const bars = viewBars(), starts = {}; let accB = 0;
   for (const b of bars) { starts[b] = accB; accB += barBeats(b); }
+  const beatPx = (W1 - padL - padR) / (S.noteSize === "x" ? Math.max(accB, B) : B);   // a bar to the window's width — or, at Micro, every bar in view across it side by side, nothing to scroll
   const W = padL + padR + Math.max(accB, B) * beatPx;
   const g = { win, B, n, first, bars, starts, totalBeats: accB, W, W1, H: padT + rows * step + padB, padL, padT, step, lo, hi, beatPx };
   svg.setAttribute("width", W); svg.style.width = W + "px"; svg.style.touchAction = W > W1 + 1 ? "pan-x" : "none";
@@ -10693,7 +10694,8 @@ function openSettings() {
     el("div", { class: "mrow" }, el("button", { class: "btn sm", onclick: () => { S.zoomWin = { mel: 1, acc: 1, bass: 1 }; S.winState = S.layout === "rolled" ? { mel: "open", acc: "closed", bass: "closed" } : { mel: "open", acc: "open", bass: "open" }; savePrefs(); renderAll(); openSettings(); } }, "Reset windows"), el("span", { class: "tiny" }, "Windows share the screen: melody gets the most. The button under each ⚙ shrinks, closes and reopens a window; pinch a window to zoom it.")),
     el("div", { class: "pLbl" }, "Chords displayed"), seg([["names", "Names (C, G7)"], ["roman", "Roman (I, V7)"], ["off", "Hidden"]], S.chordsDisp, v => { S.chordsDisp = v; S.song.showRoman = v === "roman"; savePrefs(); renderAll(); }),
     el("div", { class: "pLbl" }, "Notes appearance"), seg([["trad", "Traditional"], ["pill", "Pills"], ["circle", "Circles"]], S.noteStyle, v => { S.noteStyle = v; savePrefs(); renderAll(); }),
-    el("div", { class: "pLbl" }, "Note size"), seg([["s", "Small"], ["m", "Medium"], ["l", "Large"]], S.noteSize, v => { S.noteSize = v; savePrefs(); renderAll(); }),
+    el("div", { class: "pLbl" }, "Note size"), seg([["x", "Micro"], ["s", "Small"], ["m", "Medium"], ["l", "Large"]], S.noteSize, v => { S.noteSize = v; savePrefs(); renderAll(); }),
+    el("div", { class: "tiny" }, "Micro: notes small enough that every bar the window shows fits across it side by side, with nothing to scroll — set Window shows to 2, 3 or 4 bars to see and edit several at once, upright or widescreen."),
     el("div", { class: "pLbl" }, "Chord-mode notes"), seg([["#ffffff", "White"], ["#ffd23f", "Gold"], ["#6fb3ff", "Sky"], ["#8fd14f", "Green"], ["#f4a0c8", "Pink"]], S.chordColor, v => { S.chordColor = v; savePrefs(); renderAll(); }),
     el("div", { class: "mrow" }, toggle("Lines and spaces (half steps alternate line, space, line, space; off = one half step per space)", S.halfLines, v => { S.halfLines = v; savePrefs(); renderAll(); openSettings(); })),
     el("div", { class: "mrow" }, toggle("Beat subdivider lines (the solid orange box drawn around each melody note, at its own duration)", S.beatLines, v => { S.beatLines = v; savePrefs(); renderAll(); openSettings(); })),
