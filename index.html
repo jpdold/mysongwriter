@@ -9906,7 +9906,7 @@ function openWordEdit(bi, t, chip) {
   /* the keyboard: a fresh word starts at the first free spot from t (the left edge, or after the last word);
      an existing chip edits in place. The box never sits on another chip. */
   const box = $("wordEdit"), inp = weInput(), lbl = box.querySelector(".lbl2"), bar = S.song.bars[bi];
-  if (WE.on && WE.dirty) commitWordEdit(false, true);
+  if (WE.on && WE.dirty) commitWordEdit(false, true, false, true);   // whatever is in the box is set as one chip on the way out
   if (!WE.on) { WE.firstChip = null; WE.lastChip = null; S.chipMode = "multi"; }               // a fresh keyboard session: the first word typed will be the one selected on close
   normalizeLyrics(bar);
   WE.on = true; WE.bi = bi; WE.dirty = false; WE.wid = null; WE.chipId = chip ? chip.id : null;
@@ -10302,7 +10302,7 @@ function weSetChip() {
   if (!WE.on) return false;
   const bar = S.song.bars[WE.bi], placing = bar.chips.find(c => c.placing);
   if (placing) { placeGapChip(bar, WE.bi, placing); return true; }
-  if (weInput().value.trim() || WE.chipId) { commitWordEdit(true); return true; }
+  if (weInput().value.trim() || WE.chipId) { commitWordEdit(true, false, false, true); return true; }   // SET CHIP: everything in the box as one chip, however many words
   return false;
 }
 /* Single chip tapped while the bar already holds chips: delete them (a bar-wide box appears), combine them into one bar-wide
@@ -10441,13 +10441,15 @@ function weSizeChip(d) {
 function weBlink() { for (const e of [$("wordEdit"), $("kbClose")]) { if (!e) continue; e.classList.remove("blink"); void e.offsetWidth; e.classList.add("blink"); setTimeout(() => e.classList.remove("blink"), 950); } }
 function closeWordEdit() {
   if (WE.on) weSettleSpacer();
-  if (WE.on && WE.dirty) { commitWordEdit(false, true); return; }
+  if (WE.on && WE.dirty) { commitWordEdit(false, true, false, true); return; }   // set as one chip on the way out
   const was = WE.on; WE.on = false; WE.wid = null; WE.chipId = null; WE.picking = false; WE.picks = []; WE.carry = ""; $("wordEdit").classList.remove("on"); weInput().classList.remove("on"); weCaret(); document.body.classList.remove("kbOpen"); if (was && typeof deckMode === "function" && deckMode()) renderAll(); syncMoveDelBtns();   // DELETE's ready state, now that the keyboard is shut, reflects whatever is actually selected on the stave
   const f = WE.firstChip; WE.firstChip = null;
   if (was && f && S.song.bars[f.bi] && S.song.bars[f.bi].chips.some(c => c.id === f.id)) { S.selChip = { bi: f.bi, id: f.id }; S.bi = f.bi; renderAll(); }   // the first word you typed is ready to move or stretch
 }
-function commitWordEdit(advance, quiet, sameBeat) {
-  /* ↵: the text becomes a chip at the entry spot (or updates the chip being edited); the box moves on to just after it */
+function commitWordEdit(advance, quiet, sameBeat, asOne) {
+  /* ↵: the text becomes a chip at the entry spot (or updates the chip being edited); the box moves on to just after it.
+     asOne (SET CHIP, ↵, and the box being set on its way out): the words become one chip, however many — SPLIT parts them later;
+     the NEW CHIP keys follow the mode instead, a chip per word under Multi-chip */
   if (!WE.on) return;
   const inp = weInput(), raw = inp.value.replace(/^\s+|\s+$/g, ""), bi = WE.bi, bar = S.song.bars[bi];
   WE.dirty = false;
@@ -10460,7 +10462,7 @@ function commitWordEdit(advance, quiet, sameBeat) {
     if (c) { nextT = c.t + chipFull(c, stripGeo()); WE.lastChip = c.id; }
     WE.chipId = null;
   } else if (raw) {
-    const words = S.chipMode === "single" ? [raw] : raw.split(/\s+/).filter(Boolean);   // Multi-chip: a chip per word, flush one after another; Single chip: one chip across the whole bar
+    const words = S.chipMode === "single" || asOne ? [raw] : raw.split(/\s+/).filter(Boolean);   // Multi-chip: a chip per word, flush one after another; Single chip: one chip across the whole bar; set as one: one chip of all the words
     const room = sameBeatRoom(bar, bi);
     let from = room.from, made = 0;                                                        // never before the right-most chip's edge
     for (const w of words) { const c = addLyricChip(bar, bi, w, from); if (!c) break; if (S.chipMode === "single") { c.full = true; from = barBeats(bi); } else from = c.t + chipFull(c, stripGeo()); if (!WE.firstChip) WE.firstChip = { bi, id: c.id }; WE.lastChip = c.id; made++; }
@@ -10519,7 +10521,7 @@ function weOpenFromButton() {
 function initWordEdit() {
   const box = $("wordEdit"), inp = weInput(), close = box.querySelector("button.close");
   $("lyrEdit").addEventListener("click", weOpenFromButton);
-  inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); commitWordEdit(true, false, true); } else if (e.key === "Tab") { e.preventDefault(); weNewNextBeat(); } else if (e.key === "Backspace" && !inp.value && !WE.chipId) { e.preventDefault(); weBackChip(); } else if (e.key === " " && !inp.value && !WE.chipId) { e.preventDefault(); weSpaceChip(); } else if (e.key === "Escape") { e.preventDefault(); WE.dirty = false; closeWordEdit(); } });
+  inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); commitWordEdit(true, false, true, true); } else if (e.key === "Tab") { e.preventDefault(); weNewNextBeat(); } else if (e.key === "Backspace" && !inp.value && !WE.chipId) { e.preventDefault(); weBackChip(); } else if (e.key === " " && !inp.value && !WE.chipId) { e.preventDefault(); weSpaceChip(); } else if (e.key === "Escape") { e.preventDefault(); WE.dirty = false; closeWordEdit(); } });
   inp.addEventListener("input", () => { weTypingStarts(); { const bar = S.song.bars[WE.bi], p = bar && !WE.chipId && bar.chips.find(c => c.placing); if (p) { const v = inp.value; if (placeGapChip(bar, WE.bi, p)) { openWordEdit(WE.bi, p.t, p); inp.value = v; } else inp.value = ""; } } WE.dirty = true; sizeInline(); });   // typing with a ↔ chip in hand sets it and the words go into it
   document.addEventListener("selectionchange", () => { if (WE.on) weCaret(); });
   ["keyup", "click", "focus"].forEach(ev => inp.addEventListener(ev, () => weCaret()));
