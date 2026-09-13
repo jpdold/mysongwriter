@@ -27,6 +27,10 @@ Windows share the screen: the melody gets the most room and Accompaniment and Ba
 
 The dots under the bar bracket show each bar of the section: green when every voice is full, white when empty, yellow in between.
 
+## Deleting notes
+
+Tap the beat a note is in, then tap the note itself: it is selected, and **DEL** — a red square with a white outline at the foot of the stave's button column (under the gear on the deck) — appears; it is not there until something is picked. Tap more notes, in any beat or on any stave, and they are picked too; a picked note tapped again is let go, and entering a new note lets them all go. Tap DEL and a small **Delete selected?** asks, Yes or No: every picked note goes, a tied note as one. UNDO brings them back. The trash-can button is gone.
+
 ## Chord mode
 
 The two-row button beside each stave turns chord mode on for that stave: every tap at a note's time stacks another note on it **at the length picked in the palette**, whatever is already there (a quarter under two eighths stays a quarter, and the eighths keep their beam); the same pitch again gives a unison (marked with a red edge), and a tap on empty space starts the next chord. A stacked note longer than the rest of its beat is dealt out beat by beat, each piece the largest values that fill it, all tied on — a dotted half dropped on a beat is three tied quarters, a quarter dropped on the "and" is two tied eighths — running into the next bar when it must. Chord-mode notes are drawn in the chord colour (white by default, changeable in Settings) with a thin black edge on head and stem. Rests enter as usual. Tap the button again for single notes.

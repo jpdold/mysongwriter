@@ -190,12 +190,15 @@ svg text { pointer-events: none; }
 .win.closed .pselClose { display: none; }
 .win .focus { display: none; width: 24px; height: 24px; padding: 0; border: 1px solid rgba(255,255,255,.35); border-radius: 4px; background: rgba(0,0,0,.25); color: var(--on-ground); font-size: 13px; }
 .win .focus.on { background: linear-gradient(#ffd27a, #f5a623); color: #111; }
-.win .trash:active { background: var(--danger); }
-.win.closed .trash { display: none; }
-.win .trash { margin-top: auto; width: 24px; height: 24px; padding: 0; border: 1px solid rgba(255,255,255,.7); border-radius: 4px; background: rgba(255,255,255,.16); color: #fff; display: grid; place-items: center; }   /* sinks to the bottom of the column; a bright bin */
-.win .trash .ico { width: 18px; height: 18px; display: block; }
-.win .trash:active { background: var(--danger); }
-.win.closed .trash { display: none; }
+.win .delBtn { margin-top: auto; }                                                     /* sinks to the foot of the column */
+.delBtn { width: 30px; height: 30px; padding: 0; border: 2px solid #fff; border-radius: 4px; background: var(--danger); color: #fff; font: 800 10px/1 system-ui, sans-serif; letter-spacing: .3px; display: grid; place-items: center; box-shadow: 0 0 0 1px rgba(0,0,0,.35); cursor: pointer; }
+.delBtn[hidden] { display: none; }
+.delBtn:active { filter: brightness(1.15); }
+.win.closed .delBtn { display: none; }
+#deckNav button.delBtn { width: 34px; height: 34px; margin: 4px auto 0; flex: 0 0 auto; padding: 0; background: var(--danger); border: 2px solid #fff; border-radius: 4px; color: #fff; font: 800 10px/1 system-ui, sans-serif; box-shadow: 0 0 0 1px rgba(0,0,0,.35); display: grid; place-items: center; }
+#deckNav button.delBtn[hidden] { display: none; }
+#delAsk { position: fixed; z-index: 60; display: flex; align-items: center; gap: 10px; padding: 6px 8px; background: #fff; color: #111; border: 1px solid #333; border-radius: 6px; box-shadow: 0 4px 14px rgba(0,0,0,.3); font-size: 12px; white-space: nowrap; }
+#delAsk .btn { padding: 3px 10px; font-size: 12px; min-height: 0; }   /* sinks to the bottom of the column; a bright bin */
 @media (min-width: 860px) and (min-aspect-ratio: 5/4), (max-height: 520px) and (min-aspect-ratio: 5/4) { .win .focus { display: block; } }
 /* one window given the whole screen (wide layouts) */
 #app.focused { max-width: none !important; grid-template-columns: 1fr !important; }
@@ -932,7 +935,7 @@ body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the s
   <section class="win" id="melWin">
     <div class="gutter"><button class="rArr up" data-win="mel" data-dir="1" title="Higher">︿</button><svg id="melGut"></svg><button class="rArr dn" data-win="mel" data-dir="-1" title="Lower">﹀</button></div>
     <div class="frame"><svg id="melSvg"></svg></div>
-    <div class="side"><button class="gear" data-win="mel" title="Melody settings"><svg class="ico"><use href="#icoGear"/></svg></button><button class="sizer" data-win="mel" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="mel" title="Play Bar — the melody alone, this bar">▶</button><button class="psel" data-win="mel" title="Play Select — choose the melody notes to hear">▶</button><button class="chordBtn" data-win="mel" title="Chord mode: every tap stacks a note on the chord being built"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="2.5" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.2"/><line x1="2.5" y1="10" x2="17.5" y2="10" stroke="currentColor" stroke-width="1.2"/><ellipse cx="9.4" cy="6.4" rx="2.3" ry="1.55" fill="currentColor" transform="rotate(-20 9.4 6.4)"/><line x1="11.5" y1="6.1" x2="11.5" y2="3.6" stroke="currentColor" stroke-width="1.1"/><ellipse cx="10.6" cy="13.6" rx="2.3" ry="1.55" fill="currentColor" transform="rotate(-20 10.6 13.6)"/><line x1="8.5" y1="13.9" x2="8.5" y2="16.4" stroke="currentColor" stroke-width="1.1"/></svg></button><button class="pselClose" data-win="mel" title="Leave Play Select" hidden>✕</button><button class="focus" data-win="mel" title="Give this window the whole screen">⛶</button><button class="trash" data-win="mel" title="Delete the selected note or word, or clear the active beat"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 6h12M8 6V4h4v2M6 6l1 11h6l1-11M8.5 9v6M11.5 9v6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+    <div class="side"><button class="gear" data-win="mel" title="Melody settings"><svg class="ico"><use href="#icoGear"/></svg></button><button class="sizer" data-win="mel" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="mel" title="Play Bar — the melody alone, this bar">▶</button><button class="psel" data-win="mel" title="Play Select — choose the melody notes to hear">▶</button><button class="chordBtn" data-win="mel" title="Chord mode: every tap stacks a note on the chord being built"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="2.5" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.2"/><line x1="2.5" y1="10" x2="17.5" y2="10" stroke="currentColor" stroke-width="1.2"/><ellipse cx="9.4" cy="6.4" rx="2.3" ry="1.55" fill="currentColor" transform="rotate(-20 9.4 6.4)"/><line x1="11.5" y1="6.1" x2="11.5" y2="3.6" stroke="currentColor" stroke-width="1.1"/><ellipse cx="10.6" cy="13.6" rx="2.3" ry="1.55" fill="currentColor" transform="rotate(-20 10.6 13.6)"/><line x1="8.5" y1="13.9" x2="8.5" y2="16.4" stroke="currentColor" stroke-width="1.1"/></svg></button><button class="pselClose" data-win="mel" title="Leave Play Select" hidden>✕</button><button class="focus" data-win="mel" title="Give this window the whole screen">⛶</button><button class="delBtn" data-win="mel" title="Delete the selected notes" hidden>DEL</button></div>
   </section>
 
   <div class="strip" id="dynStrip">
@@ -969,14 +972,14 @@ body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the s
     <button class="winHead" data-win="acc">Accompaniment</button>
     <div class="gutter"><button class="rArr up" data-win="acc" data-dir="1" title="Higher">︿</button><svg id="accGut"></svg><button class="rArr dn" data-win="acc" data-dir="-1" title="Lower">﹀</button></div>
     <div class="frame"><svg id="accSvg"></svg></div>
-    <div class="side"><button class="gear" data-win="acc" title="Accompaniment settings"><svg class="ico"><use href="#icoGear"/></svg></button><button class="sizer" data-win="acc" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="acc" title="Play Bar — the accompaniment alone, this bar">▶</button><button class="psel" data-win="acc" title="Play Select — choose the accompaniment notes to hear">▶</button><button class="chordBtn" data-win="acc" title="Chord mode: every tap stacks a note on the chord being built"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="2.5" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.2"/><line x1="2.5" y1="10" x2="17.5" y2="10" stroke="currentColor" stroke-width="1.2"/><ellipse cx="9.4" cy="6.4" rx="2.3" ry="1.55" fill="currentColor" transform="rotate(-20 9.4 6.4)"/><line x1="11.5" y1="6.1" x2="11.5" y2="3.6" stroke="currentColor" stroke-width="1.1"/><ellipse cx="10.6" cy="13.6" rx="2.3" ry="1.55" fill="currentColor" transform="rotate(-20 10.6 13.6)"/><line x1="8.5" y1="13.9" x2="8.5" y2="16.4" stroke="currentColor" stroke-width="1.1"/></svg></button><button class="pselClose" data-win="acc" title="Leave Play Select" hidden>✕</button><button class="focus" data-win="acc" title="Give this window the whole screen">⛶</button><button class="trash" data-win="acc" title="Delete the selected note, or clear the active beat"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 6h12M8 6V4h4v2M6 6l1 11h6l1-11M8.5 9v6M11.5 9v6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+    <div class="side"><button class="gear" data-win="acc" title="Accompaniment settings"><svg class="ico"><use href="#icoGear"/></svg></button><button class="sizer" data-win="acc" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="acc" title="Play Bar — the accompaniment alone, this bar">▶</button><button class="psel" data-win="acc" title="Play Select — choose the accompaniment notes to hear">▶</button><button class="chordBtn" data-win="acc" title="Chord mode: every tap stacks a note on the chord being built"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="2.5" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.2"/><line x1="2.5" y1="10" x2="17.5" y2="10" stroke="currentColor" stroke-width="1.2"/><ellipse cx="9.4" cy="6.4" rx="2.3" ry="1.55" fill="currentColor" transform="rotate(-20 9.4 6.4)"/><line x1="11.5" y1="6.1" x2="11.5" y2="3.6" stroke="currentColor" stroke-width="1.1"/><ellipse cx="10.6" cy="13.6" rx="2.3" ry="1.55" fill="currentColor" transform="rotate(-20 10.6 13.6)"/><line x1="8.5" y1="13.9" x2="8.5" y2="16.4" stroke="currentColor" stroke-width="1.1"/></svg></button><button class="pselClose" data-win="acc" title="Leave Play Select" hidden>✕</button><button class="focus" data-win="acc" title="Give this window the whole screen">⛶</button><button class="delBtn" data-win="acc" title="Delete the selected notes" hidden>DEL</button></div>
   </section>
 
   <section class="win" id="bassWin">
     <button class="winHead" data-win="bass">Bass</button>
     <div class="gutter"><button class="rArr up" data-win="bass" data-dir="1" title="Higher">︿</button><svg id="bassGut"></svg><button class="rArr dn" data-win="bass" data-dir="-1" title="Lower">﹀</button></div>
     <div class="frame"><svg id="bassSvg"></svg></div>
-    <div class="side"><button class="gear" data-win="bass" title="Bass settings"><svg class="ico"><use href="#icoGear"/></svg></button><button class="sizer" data-win="bass" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="bass" title="Play Bar — the bass alone, this bar">▶</button><button class="psel" data-win="bass" title="Play Select — choose the bass notes to hear">▶</button><button class="chordBtn" data-win="bass" title="Chord mode: every tap stacks a note on the chord being built"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="2.5" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.2"/><line x1="2.5" y1="10" x2="17.5" y2="10" stroke="currentColor" stroke-width="1.2"/><ellipse cx="9.4" cy="6.4" rx="2.3" ry="1.55" fill="currentColor" transform="rotate(-20 9.4 6.4)"/><line x1="11.5" y1="6.1" x2="11.5" y2="3.6" stroke="currentColor" stroke-width="1.1"/><ellipse cx="10.6" cy="13.6" rx="2.3" ry="1.55" fill="currentColor" transform="rotate(-20 10.6 13.6)"/><line x1="8.5" y1="13.9" x2="8.5" y2="16.4" stroke="currentColor" stroke-width="1.1"/></svg></button><button class="pselClose" data-win="bass" title="Leave Play Select" hidden>✕</button><button class="focus" data-win="bass" title="Give this window the whole screen">⛶</button><button class="trash" data-win="bass" title="Delete the selected note, or clear the active beat"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 6h12M8 6V4h4v2M6 6l1 11h6l1-11M8.5 9v6M11.5 9v6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+    <div class="side"><button class="gear" data-win="bass" title="Bass settings"><svg class="ico"><use href="#icoGear"/></svg></button><button class="sizer" data-win="bass" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="bass" title="Play Bar — the bass alone, this bar">▶</button><button class="psel" data-win="bass" title="Play Select — choose the bass notes to hear">▶</button><button class="chordBtn" data-win="bass" title="Chord mode: every tap stacks a note on the chord being built"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="2.5" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.2"/><line x1="2.5" y1="10" x2="17.5" y2="10" stroke="currentColor" stroke-width="1.2"/><ellipse cx="9.4" cy="6.4" rx="2.3" ry="1.55" fill="currentColor" transform="rotate(-20 9.4 6.4)"/><line x1="11.5" y1="6.1" x2="11.5" y2="3.6" stroke="currentColor" stroke-width="1.1"/><ellipse cx="10.6" cy="13.6" rx="2.3" ry="1.55" fill="currentColor" transform="rotate(-20 10.6 13.6)"/><line x1="8.5" y1="13.9" x2="8.5" y2="16.4" stroke="currentColor" stroke-width="1.1"/></svg></button><button class="pselClose" data-win="bass" title="Leave Play Select" hidden>✕</button><button class="focus" data-win="bass" title="Give this window the whole screen">⛶</button><button class="delBtn" data-win="bass" title="Delete the selected notes" hidden>DEL</button></div>
   </section>
 
 
@@ -8251,7 +8254,7 @@ const WIN_LO = { mel: "melLo", acc: "accLo", bass: "bassLo" };
 const NOTE_SCALE = { x: 0.42, s: 0.55, m: 0.72, l: 0.92 }; const NS = () => NOTE_SCALE[S.noteSize] || 1;   // x is Micro: notes small enough that every bar the window shows fits across it, side by side, with no sideways scrolling   // note size: heads, stems and flags; the stave never changes
 const HK = () => S.halfLines ? 1.55 : 1;         // lines-and-spaces: heads grow to fill a space (two rows)
 const STEP_K = { x: 0.82, s: 0.94, m: 1, l: 1.06 };   // row height nudges a little with the note size (Micro's rows tighter still, so more of the range shows)
-Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", noteSize: "m", chordMode: false, chordWin: { mel: false, acc: false, bass: false }, chordColor: "#ffffff", justEntered: null, activePart: "melody", lastEntered: null, ftp: null, mv: null, selAuto: false, halfLines: true, winSize: "m", chordsDisp: "names", metro: "off", winState: { mel: "open", acc: "closed", bass: "closed" }, zoomWin: { mel: 1, acc: 1, bass: 1 }, lyricFont: "sans", viewSpan: 1, layout: "rolled", selChip: null, deck: ["mel", "acc", "bass"], deckSel: null, rhyShown: true, lyrShown: true, partsShown: true, dynShown: false, dynArm: null, ghost: null, restNext: false, restLen: null, ghostNext: false, artic: null, slurFrom: null, active: null, softKb: ("ontouchstart" in window), popPos: null, mode: "melody", rangeLock: false, kbLayout: "standard", kbTheme: "classic", kbSpace: 0, kbBackUp: 0 });
+Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", noteSize: "m", chordMode: false, chordWin: { mel: false, acc: false, bass: false }, chordColor: "#ffffff", justEntered: null, activePart: "melody", lastEntered: null, ftp: null, mv: null, selAuto: false, halfLines: true, winSize: "m", chordsDisp: "names", metro: "off", winState: { mel: "open", acc: "closed", bass: "closed" }, zoomWin: { mel: 1, acc: 1, bass: 1 }, lyricFont: "sans", viewSpan: 1, layout: "rolled", selChip: null, deck: ["mel", "acc", "bass"], deckSel: null, rhyShown: true, lyrShown: true, partsShown: true, dynShown: false, dynArm: null, ghost: null, restNext: false, restLen: null, ghostNext: false, artic: null, slurFrom: null, active: null, softKb: ("ontouchstart" in window), popPos: null, mode: "melody", rangeLock: false, kbLayout: "standard", kbTheme: "classic", kbSpace: 0, kbBackUp: 0, picked: [] });
 const UNDO = { stack: [], redo: [], last: null, max: 60 };
 const setMode = () => {};                          // engine shims (the old mode sheets are gone)
 const renderPanel = () => renderAll();
@@ -8537,13 +8540,42 @@ function freshSongState() {
   if (typeof WE !== "undefined") { WE.on = false; WE.dirty = false; WE.wid = null; WE.chipId = null; const box = $("wordEdit"); if (box) box.classList.remove("on"); const inp = $("lyrInline"); if (inp) inp.classList.remove("on"); }
 }
 function activate(bi, t, part = "melody") { S.active = { bi, beat: beatOf(bi, t) }; S.activePart = part; S.bi = bi; S.sel = null; S.selAuto = false; S.ghost = null; S.selChip = null; S.justEntered = null; renderAll(); }
-/* 🗑 at the bottom of a stave's button column: the selected word (melody), the selected note in that part, or the active beat in that part */
-function staveTrash(win) {
-  const part = WIN_PART[win];
-  if (win === "mel") { const sc = selChipObj(); if (sc) { deleteChip(sc.bar, sc.chip); return; } }
-  if (S.sel && S.sel.part === part && selEv()) { deleteSel(); return; }
-  if (S.active && (S.activePart || "melody") === part) { clearActiveBeat(); return; }
-  toast(`Tap a ${PART_META[part].label.toLowerCase()} note to delete it, or a beat to clear it`);
+/* the notes tapped directly: each one tapped is picked (tapped again, it is let go); they build up across beats and staves until DEL removes them all, or a new note is entered.
+   DEL — square, red, at the foot of a stave's button column (on the deck, under the gear) — shows only while something is picked, and asks first. */
+const isPicked = (bi, part, id) => (S.picked || []).some(p => p.bi === bi && p.part === part && p.id === id);
+function pick(bi, part, id) { if (!id) return; if (!isPicked(bi, part, id)) S.picked.push({ bi, part, id }); }
+function unpick(bi, part, id) { S.picked = (S.picked || []).filter(p => !(p.bi === bi && p.part === part && p.id === id)); }
+function prunePicked() { S.picked = (S.picked || []).filter(p => { const b = S.song.bars[p.bi]; return b && b.ev && (b.ev[p.part] || []).some(e => e.id === p.id); }); }
+function pickedIn(bi, part) { return new Set((S.picked || []).filter(p => p.bi === bi && p.part === part).map(p => p.id)); }
+function deletePicked() {
+  prunePicked(); const list = S.picked; if (!list.length) { closeDelAsk(); return; }
+  let n = 0;
+  for (const p of list) {
+    const bar = S.song.bars[p.bi], ev = (bar.ev[p.part] || []).find(e => e.id === p.id); if (!ev) continue;
+    const ch = chainOf(bar, ev, p.part), ids = new Set(ch ? ch.members.map(e => e.id) : [ev.id]);      // a tied note goes as one
+    bar.ev[p.part] = bar.ev[p.part].filter(e => !ids.has(e.id)); n++;
+    bar.ev[p.part].forEach(e => { if (e.slur && ids.has(e.slur)) delete e.slur; });
+    const prev = bar.ev[p.part].filter(e => e.tie && e.t < ev.t && Math.abs(e.t + e.d - ev.t) < 1e-6 && (e.m === ev.m || e.m == null)).sort((a, b) => b.t - a.t)[0]; if (prev) delete prev.tie;
+    if (p.part === "melody") syncNotesToChips(bar);
+  }
+  S.picked = []; S.sel = null; S.justEntered = null; S.ghost = null; closeDelAsk(); renderAll(); refreshBox();
+  toast(`${n} ${n === 1 ? "note" : "notes"} deleted — UNDO brings ${n === 1 ? "it" : "them"} back`);
+}
+function closeDelAsk() { const a = $("delAsk"); if (a) a.remove(); }
+function delAskAway(e) { const a = $("delAsk"); if (!a) return; if (a.contains(e.target)) document.addEventListener("pointerdown", delAskAway, { once: true }); else closeDelAsk(); }
+function delAskOpen(btn) {
+  closeDelAsk(); prunePicked(); if (!S.picked.length) { renderDelBtns(); return; }
+  const ask = el("div", { id: "delAsk" }, el("span", {}, "Delete selected?"), el("button", { class: "btn sm acc", onclick: deletePicked }, "Yes"), el("button", { class: "btn sm", onclick: closeDelAsk }, "No"));
+  document.body.append(ask);
+  const r = btn.getBoundingClientRect(), w = ask.offsetWidth, h = ask.offsetHeight;
+  let left = r.left - w - 8; if (left < 4) left = Math.min(window.innerWidth - w - 4, r.right + 8);
+  ask.style.left = Math.round(left) + "px"; ask.style.top = Math.round(clamp(r.top + r.height / 2 - h / 2, 4, window.innerHeight - h - 4)) + "px";
+  setTimeout(() => document.addEventListener("pointerdown", delAskAway, { once: true }), 0);
+}
+function renderDelBtns() {
+  prunePicked(); const any = S.picked.length > 0;
+  document.querySelectorAll(".delBtn").forEach(b => { const w = b.dataset.win; b.hidden = !(any && (w === "deck" || S.picked.some(p => PART_WIN[p.part] === w))); });
+  if (!any) closeDelAsk();
 }
 /* ↑ ↓: the selected note a half step; otherwise the register of the stave in use */
 function arrowUD(d) {
@@ -8573,7 +8605,7 @@ function clearActiveBeat() {
   const heads = chains(bar, part).filter(c => c.t >= beat - 1e-6 && c.t < b1 - 1e-6);
   if (!heads.length) { toast("Nothing starts in this beat"); return; }
   const ids = new Set(heads.flatMap(c => c.members.map(e => e.id)));
-  bar.ev[part] = bar.ev[part].filter(e => !ids.has(e.id));
+  bar.ev[part] = bar.ev[part].filter(e => !ids.has(e.id)); S.picked = [];
   heads.filter(c => c.tieOut).forEach(() => {
     let b = bi + 1;
     while (S.song.bars[b]) {
@@ -8649,11 +8681,11 @@ function placeSpan(pieces, part, m, artic) {
   let head = null;
   pieces.forEach((p, k) => {
     const bar = S.song.bars[p.bi];
-    if (part !== "melody") bar.ev[part] = bar.ev[part].filter(e => !(e.rest && e.t < p.t + p.d - 1e-6 && e.t + e.d > p.t + 1e-6));
+    if (part !== "melody" && !chordOn(part)) bar.ev[part] = bar.ev[part].filter(e => !(e.rest && e.t < p.t + p.d - 1e-6 && e.t + e.d > p.t + 1e-6));
     const ev = { id: uid(), t: p.t, d: p.d, m }; if (S.ghostNext && m != null) ev.ghost = true; if (k < pieces.length - 1) ev.tie = true; if (k === 0 && artic) ev.artic = artic; if (p.noBeam) ev.noBeam = true; if (m != null && chordOn(part)) ev.chord = true;
     bar.ev[part].push(ev); if (part === "melody") syncNotesToChips(bar); if (k === 0) head = ev;
   });
-  S.lastEntered = { part, bi: pieces[0].bi, id: head.id }; if (m != null) S.ghostNext = false;
+  S.lastEntered = { part, bi: pieces[0].bi, id: head.id }; if (m != null) S.ghostNext = false; S.picked = [];
   return head;
 }
 /* the box follows the picked length; a length that no longer fits is refused */
@@ -8879,7 +8911,8 @@ function renderRollBar() {
     const rb = side("rhyBtn", S.rhyShown !== false, "RHYTHM", () => { S.rhyShown = S.rhyShown === false; savePrefs(); renderAll(); }, "Show or hide the Rhythm strip");
     const lb = side("lyrBtn", S.lyrShown !== false, "LYRICS", () => { S.lyrShown = S.lyrShown === false; savePrefs(); renderAll(); }, "Show or hide the Lyrics strip");
     const kc = el("button", { id: "kbClose", class: "sideBtn", title: "Close the keyboard (Esc)", onclick: () => closeWordEdit() }, el("span", { class: "big" }, "✕"), el("span", {}, "CLOSE"));
-    nav.append(arrow(-1, up), arrow(1, dn), el("div", { class: "spacer" }), gear, kc, lb, rb, db);   // ▲ flush with the stave's top; the gear at the foot; LYRICS, RHYTHM, DYN stacked below that, flush with the stave's bottom
+    const delB = el("button", { class: "delBtn", "data-win": "deck", title: "Delete the selected notes", hidden: true, onclick: e => delAskOpen(e.currentTarget) }, "DEL");
+    nav.append(arrow(-1, up), arrow(1, dn), el("div", { class: "spacer" }), delB, gear, kc, lb, rb, db);   // ▲ flush with the stave's top; the gear at the foot; LYRICS, RHYTHM, DYN stacked below that, flush with the stave's bottom
     /* the tool bar: the left third flips too now — its tools, or the staff-lines switch — and the middle and right thirds flip as before */
     const tr = $("toolR"), tm = $("toolMScroll");
     { const tls = $("toolLScroll"), flipL = S.deckFlipL || 0;
@@ -8927,6 +8960,7 @@ function renderAll() {
   S.si = sectionOfBar(S.bi); S.siLast = S.si;
   renderHeader(); renderNav(); renderRollBar(); renderPalette(); allocate(); renderWindows(); renderStrips(); renderBeatRow(); placeDeckLabels();
   if (deckMode()) { const a = deckActive(), r0 = DECK_ROWS[a], s0 = STEPS[a]; allocate(); if (DECK_ROWS[a] !== r0 || Math.abs(STEPS[a] - s0) > 1e-6) { renderWindows(); renderStrips(); renderBeatRow(); placeDeckLabels(); } }   // measured once more now everything has settled: whatever moved mid-render (a strip, the keyboard, the head) cannot leave the stave sized to stale room
+  renderDelBtns();
   saveSoon();
 }
 function renderLights() { renderNav(); }
@@ -9186,7 +9220,7 @@ function renderWindows() {
     svg.append(svgEl("rect", { class: "hit", x: 0, y: 0, width: g.W, height: g.H, fill: "transparent", "data-lane": "mel" }));
     for (const bi of viewBars()) {
     const bar = song.bars[bi], sel = S.sel && S.sel.bi === bi && S.sel.part === "melody" ? S.sel.id : null;
-    const unison = unisonIds(bar.ev.melody);
+    const unison = unisonIds(bar.ev.melody), pickedM = pickedIn(bi, "melody");
     const groups = S.noteStyle === "trad" ? beamGroups(bar.ev.melody.filter(e => e.m != null && e.m >= g.lo && e.m <= g.hi)) : [], beamed = new Set(groups.flatMap(gp => gp.evs.map(e => e.id)));
     const cur = S.cursor && S.cursor.bi === bi ? bar.chips.find(c => c.id === S.cursor.chipId) : null;
     if (cur && S.followWords) svg.append(svgEl("rect", { x: g.x(bi, cur.t), y: 0, width: Math.max(6, cur.d * g.beatPx), height: g.H, fill: box, opacity: 0.12, "pointer-events": "none" }));
@@ -9198,7 +9232,7 @@ function renderWindows() {
     drawMoveSel(svg, g, bi, "melody"); drawRepeatSel(svg, g, bi, "melody"); drawCopySel(svg, g, bi, "melody"); drawSpanBands(svg, g, bi, "melody");
     if (S.ghost && S.ghost.part === "melody" && S.ghost.bi === bi) drawGhost(svg, g, bi, S.ghost, box);
     for (const c of chains(bar)) {
-      const x0 = g.x(bi, c.t) + 1, x1 = g.x(bi, c.t + c.d) - 1, selected = c.members.some(e => e.id === sel);
+      const x0 = g.x(bi, c.t) + 1, x1 = g.x(bi, c.t + c.d) - 1, selected = c.members.some(e => e.id === sel || pickedM.has(e.id));
       { const showSub = S.beatLines || c.rest || selected;   // the per-note solid outline, at that note's own duration: off in Settings or from the toolbar, unless the chain is a rest or selected
       svg.append(svgEl("rect", { class: "slot", x: x0, y: 2, width: Math.max(4, x1 - x0), height: g.H - 4, rx: 2, fill: selected ? box : "none", "fill-opacity": 0.14, stroke: showSub ? (c.rest ? css("--ink2") : box) : "none", "stroke-width": selected ? 2.8 : 2, "stroke-dasharray": c.rest ? "3 3" : "", "data-ev": c.head.id, "data-part": "melody", "data-bi": bi })); }
       if (c.rest) { svg.append(svgEl("text", { x: (x0 + x1) / 2, y: g.H / 2 + 6, "text-anchor": "middle", "font-size": Math.min(18, g.step * 1.4), fill: css("--ink2"), "font-family": "Georgia, serif" }, "𝄽")); continue; }
@@ -9211,7 +9245,7 @@ function renderWindows() {
         if (e.tie) { const nx = k < c.members.length - 1 ? g.x(bi, c.members[k + 1].t) + 2 + headGeom(g).rx : g.x(bi, barBeats(bi)) + (g.bars.includes(bi + 1) ? 2 + headGeom(g).rx : 0); tieArcAt(svg, g.x(bi, e.t) + 2 + headGeom(g).rx, nx, g.y(m) + g.step * 0.5, ink); }
       });
       if (tiedFromPrev(bi, c) && bi === g.first) tieArcAt(svg, 0, x0 + headGeom(g).rx, g.y(m) + g.step * 0.5, ink);
-      if (c.members.some(e => e.id === sel)) drawSelFrame(svg, x0 - 1, g.y(m) - g.step, x1 - x0 + 2, g.step * 2, 4);
+      if (selected) drawSelFrame(svg, x0 - 1, g.y(m) - g.step, x1 - x0 + 2, g.step * 2, 4);
     }
     groups.forEach(gp => drawBeamed(svg, g, gp, ink, e => g.x(bi, e.t) + 2));
     for (const e of bar.ev.melody) {
@@ -9251,7 +9285,7 @@ function renderWindows() {
     drawMoveSel(svg, g, bi, part); drawSpanBands(svg, g, bi, part);
     if (S.ghost && S.ghost.part === part && S.ghost.bi === bi) drawGhost(svg, g, bi, S.ghost, color);
     if (bar.custom[part]) {
-      const unison = unisonIds(bar.ev[part] || []);
+      const unison = unisonIds(bar.ev[part] || []), pickedP = pickedIn(bi, part);
       const groups = S.noteStyle === "trad" ? beamGroups(bar.ev[part].filter(e => e.m >= g.lo && e.m <= g.hi)) : [], beamed = new Set(groups.flatMap(gp => gp.evs.map(e => e.id)));
       groups.forEach(gp => drawBeamed(svg, g, gp, color, e => g.x(bi, e.t) + 2));
       for (const c of chains(bar, part)) {
@@ -9273,7 +9307,7 @@ function renderWindows() {
         if (e.rest) { svg.append(svgEl("rect", { class: "noteEl", x: x0, y: 2, width: Math.max(4, x1 - x0), height: g.H - 4, rx: 2, fill: "none", stroke: css("--ink2"), "stroke-dasharray": "3 3", "data-ev": e.id, "data-part": part, "data-bi": bi })); continue; }
         if (e.m < g.lo || e.m > g.hi) { svg.append(svgEl("text", { class: "noteEl", x: x0 + 2, y: e.m > g.hi ? 9 : g.H - 3, "font-size": 8, "font-weight": 700, fill: color, "data-ev": e.id, "data-part": part, "data-bi": bi, style: "pointer-events:all" }, (e.m > g.hi ? "▲" : "▼") + noteName(e.m, key))); continue; }
         drawNote(svg, g, x0 + 1, e.m, e.d, e.chord ? S.chordColor : color, { "data-ev": e.id, "data-part": part, "data-bi": bi }, { noStem: beamed.has(e.id), outline: e.chord ? "#111" : null, uni: unison.has(e.id), ghostNote: !!e.ghost });
-        if (e.id === sel) drawSelFrame(svg, x0 - 1, g.y(e.m) - g.step, Math.max(6, x1 - x0 + 2), g.step * 2, 3);
+        if (e.id === sel || pickedP.has(e.id)) drawSelFrame(svg, x0 - 1, g.y(e.m) - g.step, Math.max(6, x1 - x0 + 2), g.step * 2, 3);
       }
     } else {
       for (const e of partEvents(part, bi)) for (const m of e.ms) if (m >= g.lo && m <= g.hi)
@@ -9689,7 +9723,7 @@ function moveSel(dt) {
   if (S.sel.part === "melody") { const chip = bar.chips.find(c => c.id === ev.chip); if (chip) setChipTime(bar, chip, nt); else syncNotesToChips(bar); }
   renderAll();
 }
-function deleteSel() { const ev = selEv(); if (!ev) return; const bar = S.song.bars[S.sel.bi]; bar.ev[S.sel.part] = bar.ev[S.sel.part].filter(e => e.id !== ev.id); bar.ev[S.sel.part].forEach(e => { if (e.slur === ev.id) delete e.slur; }); { const prev = bar.ev[S.sel.part].filter(e => e.t < ev.t).sort((a, b) => b.t - a.t)[0]; if (prev && prev.tie && Math.abs(prev.t + prev.d - ev.t) < 1e-6) delete prev.tie; } if (S.sel.part === "melody") { const prev = bar.ev.melody.filter(e => e.t < ev.t).sort((a, b) => b.t - a.t)[0]; if (prev && prev.tie) delete prev.tie; syncNotesToChips(bar); if (S.followWords) S.cursor = nextUnpitchedChip(S.sel.bi, null); } S.sel = null; S.justEntered = null; renderAll(); refreshBox(); }
+function deleteSel() { const ev = selEv(); if (!ev) return; const bar = S.song.bars[S.sel.bi]; unpick(S.sel.bi, S.sel.part, ev.id); bar.ev[S.sel.part] = bar.ev[S.sel.part].filter(e => e.id !== ev.id); bar.ev[S.sel.part].forEach(e => { if (e.slur === ev.id) delete e.slur; }); { const prev = bar.ev[S.sel.part].filter(e => e.t < ev.t).sort((a, b) => b.t - a.t)[0]; if (prev && prev.tie && Math.abs(prev.t + prev.d - ev.t) < 1e-6) delete prev.tie; } if (S.sel.part === "melody") { const prev = bar.ev.melody.filter(e => e.t < ev.t).sort((a, b) => b.t - a.t)[0]; if (prev && prev.tie) delete prev.tie; syncNotesToChips(bar); if (S.followWords) S.cursor = nextUnpitchedChip(S.sel.bi, null); } S.sel = null; S.justEntered = null; renderAll(); refreshBox(); }
 /* the entry box, at the picked length, whenever the active beat has no note selected */
 function refreshBox() { if (S.active && !S.sel && !S.mv && !PSEL.on && !(S.ftp && S.ftp.on) && !S.ghost) showBox(S.active.bi, S.activePart || "melody", true); }
 function ensureVisible(part, m) {
@@ -9706,9 +9740,9 @@ function tapMelody(bi, t, m) {
   if (chain) {
     S.ghost = null;
     if (chordOn("melody") && chain.head.m != null) { addChordNote(bi, chordChainAt(bar, t, "melody"), m, "melody"); return; }          // chord mode: stack it, unison included — wherever along the note the tap lands
-    if (!inActive(bi, chain.t)) { activate(bi, chain.t); S.activePart = "melody"; S.sel = { bi, part: "melody", id: chain.head.id }; S.selAuto = false; renderAll(); return; }   // a tap along a long note: its own beat wakes and it is selected
-    if (!(S.sel && S.sel.part === "melody" && chain.members.some(e => e.id === S.sel.id))) { S.sel = { bi, part: "melody", id: chain.head.id }; S.selAuto = false; renderAll(); return; }   // first tap: select the box
-    if (chain.head.m === m) { S.sel = null; renderAll(); return; }                                                                                       // same pitch again: done
+    if (!inActive(bi, chain.t)) { activate(bi, chain.t); S.activePart = "melody"; S.sel = { bi, part: "melody", id: chain.head.id }; S.selAuto = false; pick(bi, "melody", chain.head.id); renderAll(); return; }   // a tap along a long note: its own beat wakes and it is selected
+    if (!(S.sel && S.sel.part === "melody" && chain.members.some(e => e.id === S.sel.id))) { S.sel = { bi, part: "melody", id: chain.head.id }; S.selAuto = false; pick(bi, "melody", chain.head.id); renderAll(); return; }   // first tap: select the box — and pick it for DEL
+    if (chain.head.m === m) { S.sel = null; unpick(bi, "melody", chain.head.id); renderAll(); return; }                                                    // same pitch again: let go
     setChainPitch(bar, chain, m); previewNote(m, "melody");
     if (S.artic && S.artic !== "slur" && chain.head.m == null) chain.head.artic = S.artic;
     S.sel = { bi, part: "melody", id: chain.head.id };
@@ -9954,9 +9988,13 @@ function initPointer() {
       if (S.cpy) { cpyTap(win, at.bi, at.t); return; }                                                                   // copy mode: taps toggle what to copy, or paste onto empty space
       if (d.ev && S.artic && !d.ev.rest && d.ev.m != null) { S.bi = d.bi; applyArtic(d.bi, d.part, d.ev); return; }   // slurs and marks may reach into locked beats
       if (S.dynArm) { applyDynAt(d.ev ? d.bi : at.bi, d.part, d.ev, at.t); return; }        // an armed dynamic: on the note tapped, or the first note of the beat tapped
-      if (d.locked) { if (d.ev) { activate(d.bi, d.ev.t, d.part); S.sel = { bi: d.bi, part: d.part, id: d.ev.id }; S.selAuto = false; renderAll(); return; } activate(at.bi, at.t, WIN_PART[win]); showBox(at.bi, WIN_PART[win]); return; }
+      if (d.locked) {
+        if (d.ev) { activate(d.bi, d.ev.t, d.part); S.sel = { bi: d.bi, part: d.part, id: d.ev.id }; S.selAuto = false; pick(d.bi, d.part, d.ev.id); renderAll(); return; }
+        if (win === "mel") { const ch = chordChainAt(S.song.bars[at.bi], at.t, "melody"); if (ch && beatOf(at.bi, ch.t) !== beatOf(at.bi, at.t)) { activate(at.bi, ch.t); S.sel = { bi: at.bi, part: "melody", id: ch.head.id }; S.selAuto = false; pick(at.bi, "melody", ch.head.id); renderAll(); return; } }   // a tap along a tied or long note, in a later beat than it starts: its own beat wakes and it is selected
+        activate(at.bi, at.t, WIN_PART[win]); showBox(at.bi, WIN_PART[win]); return;
+      }
       if (d.ev && d.part === "melody" && !d.ev.rest) { tapMelody(d.bi, at.t, g.m(p.y)); return; }
-      if (d.ev) { S.bi = d.bi; select(d.bi, d.part, S.sel && S.sel.id === d.ev.id ? null : d.ev.id); if (d.ev.m != null && !d.ev.rest && S.sel && S.sel.id === d.ev.id) previewNote(d.ev.m, d.part); return; }
+      if (d.ev) { S.bi = d.bi; const again = !!(S.sel && S.sel.id === d.ev.id); if (again) unpick(d.bi, d.part, d.ev.id); else pick(d.bi, d.part, d.ev.id); select(d.bi, d.part, again ? null : d.ev.id); if (d.ev.m != null && !d.ev.rest && S.sel && S.sel.id === d.ev.id) previewNote(d.ev.m, d.part); return; }
       if (win === "mel") tapMelody(at.bi, at.t, g.m(p.y)); else tapBand(win, at.bi, at.t, g.m(p.y));
     };
     svg.addEventListener("pointerup", up); svg.addEventListener("pointercancel", () => { dragCtx = null; xhairCancel(); });
@@ -11851,7 +11889,8 @@ function openHelp() {
     h("Time signature calculator", "☰ → Time signature calculator. Tap note and rest values onto a free strip one at a time — dots, double dots and ties apply to the selected or last entry. − + set the tempo (the song's own), ▶ Hear rhythm taps it out, and Calculate ranks the time signatures that fit, showing how the rhythm falls into bars for each; green lines are bar lines between entries, orange ones cut through a note that would be tied over. Separately, Send to song as melody slots writes the rhythm into the melody from the current bar on as pitch-less boxes, cut by the song's own bars, asking first if it would replace anything."),
     h("Deleting", "Tap Delete in the tools. Then either tap the first and last beat of a run (tap either again to open it into quarters and pick the exact start or end) and press Run, or press Bar or Section to clear the whole current bar or section. The part button chooses the window you picked on only, or all parts plus the words. UNDO brings anything back; REDO puts it away again."),
     h("Moving beats", "Tap Move in the tools, then tap the first beat of the run and the last beat; a tap takes the whole beat. Tap the first beat again and it opens into quarters — tap the quarter the run should start on. Tap the last beat again for its quarters and the run ends there. The run must be one unbroken stretch. ← → shift everything in it (in the window you picked it on) a beat earlier or later, staying inside the section and only into empty space; notes that cross a bar line are tied over it. Tap the group once to lock it in. ✕ leaves move mode."),
-    h("Clearing a beat", "With a beat active and no note selected, 🗑 in the tools removes every note, rest or slot that starts in that beat for the part you activated it in, including any tied run-on into later bars. ↶ undoes it."),
+    h("Deleting notes", "Tap the beat a note is in, then tap the note itself: it is selected, and DEL — a red square at the foot of the stave's buttons (under the gear on the deck) — appears. Tap more notes, in any beat or on any stave, to pick them too; a picked note tapped again is let go. Tap DEL and answer Delete selected? — every picked note goes, a tied note as one. UNDO brings them back."),
+    h("Clearing a beat", "Delete in the tools, then Run with the first and last beat, clears every note, rest or slot in that stretch for the part you picked it on. ↶ undoes it."),
     h("After an entry", "A note you have just placed stays selected, so the pitch arrows act on it at once; the length and dot buttons pick the length of the next note (tap the note itself to select it deliberately if you want to change its length), and a tap on another row in its column re-pitches it. A tap anywhere else on the stave lets it go: in the same beat that tap places the next note straight away at the next free spot, with the picked length; in another beat it activates that beat."),
     h("Long notes", "A note longer than the room left in its beat runs on through the following beats, and into the next bars, tied — as long as those beats are empty. A note that starts part-way through a beat is written as the value that fills the rest of that beat, standing alone (never beamed to its neighbours), tied to the remainder in the next beat. The white band along the top and bottom of the stave runs from the note to where it ends. If something is already in the way, or the song ends first, the note is refused with a message saying there is not enough space."),
     h("Full screen", "☰ → Full screen hides the browser bars (Android, desktop). On iPhone, use Share → Add to Home Screen; the icon then opens the app with no address bar at all."),
@@ -11980,7 +12019,7 @@ async function boot() {
   $("barLabel").addEventListener("click", openSectionOps);
   wireTempo();
   $("saveBtn").addEventListener("click", openLibrary);
-  document.querySelectorAll(".win .trash").forEach(b => b.addEventListener("click", () => staveTrash(b.dataset.win)));
+  document.querySelectorAll(".win .delBtn").forEach(b => b.addEventListener("click", () => delAskOpen(b)));
   $("arrUp").addEventListener("click", () => arrowUD(1)); $("arrDn").addEventListener("click", () => arrowUD(-1));
   $("arrL").addEventListener("click", () => arrowLR(-1)); $("arrR").addEventListener("click", () => arrowLR(1));
   $("undoBtn").addEventListener("click", undo); $("redoBtn").addEventListener("click", redo);
@@ -11999,12 +12038,12 @@ async function boot() {
     const tag = (document.activeElement && document.activeElement.tagName) || "";
     if (["INPUT", "TEXTAREA", "SELECT"].includes(tag) || $("overlay").classList.contains("on")) return;
     if (e.key === " ") { e.preventDefault(); if (S.playing) stopAll(); else playBarAll(); }
-    else if (e.key === "Escape") { S.sel = null; S.ghost = null; S.artic = null; S.slurFrom = null; S.active = null; closeWordEdit(); if (S.focus) setFocus(S.focus); else renderAll(); }
+    else if (e.key === "Escape") { S.sel = null; S.ghost = null; S.picked = []; closeDelAsk(); S.artic = null; S.slurFrom = null; S.active = null; closeWordEdit(); if (S.focus) setFocus(S.focus); else renderAll(); }
     else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); undo(); }
     else if (e.key === "ArrowLeft" && !S.sel) { e.preventDefault(); if (S.bi > 0) { S.bi--; renderAll(); } }
     else if (e.key === "ArrowRight" && !S.sel) { e.preventDefault(); if (S.bi < S.song.bars.length - 1) { S.bi++; renderAll(); } }
     else if (S.sel) {
-      if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); deleteSel(); }
+      if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); if (S.picked && S.picked.length) deletePicked(); else deleteSel(); }
       else if (e.key === "ArrowUp") { e.preventDefault(); transposeSel(e.shiftKey ? 12 : 1); }
       else if (e.key === "ArrowDown") { e.preventDefault(); transposeSel(e.shiftKey ? -12 : -1); }
       else if (e.key === "ArrowLeft") { e.preventDefault(); moveSel(-gridStep()); }
