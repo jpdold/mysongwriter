@@ -394,7 +394,11 @@ body.kbOpen #app.deck { padding-bottom: 6px; }
 #app.deck.duo #rollBar, #app.deck.duo #partsBtn, #app.deck.duo #addView { display: none !important; }
 #app.deck.duo #accWin.deckOn, #app.deck.duo #bassWin.deckOn { grid-area: band; margin-top: 0 !important; align-self: start; }
 #app.deck.duo.kbUp #accWin, #app.deck.duo.kbUp #bassWin { display: none !important; }
-#app.deck #rollBar .rollItem:has(input:disabled) { opacity: .6; }                          /* the last part in view: its box greyed until another is checked */
+#app.deck #rollBar .rollItem:has(input:disabled) { opacity: .6; }
+#app.deck.duo { padding: 6px 2px 6px 0; gap: 0 4px; }                                        /* the duo: what is left of the margins goes to the staves too */
+#app.deck.duo .win, #app.deck.duo .strip { grid-template-columns: 42px 1fr; }               /* a slimmer gutter: the pitch labels and the ↑ ↓ arrows, nothing displaced */
+#app.deck.duo .win .gutter svg { width: 32px; margin-left: 10px; }
+#app.deck.duo .win .rArr { left: 0; }                          /* the last part in view: its box greyed until another is checked */
 #app.deck .win .sizer, #app.deck .win .focus, #app.deck .win .winHead, #app.deck .win .side { display: none !important; }   /* the side buttons live in the column beside the stave */
 #app.deck .win { grid-template-columns: 48px 1fr; gap: 0 2px; }                             /* the gutter: the pitch labels, then the skinny ↑ ↓ */
 #app.deck .win .gutter svg { width: 34px; margin-left: 14px; }                             /* the pitch labels beside the frame, as before */
@@ -6563,7 +6567,7 @@ function renderRollBar() {
     if (deck) { if (tr.parentNode !== $("toolMScroll")) $("toolMScroll").prepend(tr); } else if (tr.parentNode !== $("head")) $("head").insertBefore(tr, $("gearBtn")); }   // on the deck the play buttons live in the middle third of the tool bar
   if (pb.parentNode !== $("head")) $("head").insertBefore(pb, deck ? $("gearBtn") : $("topTransport"));   // off the deck the parts button waits, hidden, in the head; on the deck it rides there too, beside the save button and the gear
   { const nv = $("nav"); if (deck) { if (nv.parentNode !== $("head")) $("head").insertBefore(nv, $("gearBtn")); } else if (nv.parentNode === $("head")) $("head").after(nv); }   // the bar bracket: up in the head row on the deck
-  if (deck) app.style.setProperty("--deckW", Math.max(40, Math.min(46, Math.round((app.clientWidth - 24 - 10 - 80) / 17))) + "px");   // the part buttons' column: about a quarter of a beat of the stave beside it, never wider than its buttons need — the width goes to the stave
+  if (deck) app.style.setProperty("--deckW", (duoMode() ? 40 : Math.max(40, Math.min(46, Math.round((app.clientWidth - 24 - 10 - 80) / 17)))) + "px");   // the duo: the column as slim as its buttons allow   // the part buttons' column: about a quarter of a beat of the stave beside it, never wider than its buttons need — the width goes to the stave
   app.classList.toggle("rolled", S.layout === "rolled" && !deck);
   ["mel", "acc", "bass"].forEach(w => { app.classList.toggle("open-" + w, S.layout === "rolled" && !deck && S.winState[w] !== "closed"); $(w + "Win").classList.remove("deckOn"); });
   if (deck) {
@@ -6708,8 +6712,12 @@ const focusOn = win => { const f = focusOf(win); return !!(f && f.on); };
 const focusRange = win => { const f = focusOf(win), lo = f && f.lo != null ? f.lo : 64; return [lo, lo + 8]; };
 function focusHome(win) { const { rows } = rowsOf(win), [minV, , maxV] = viewLimits(win, rows), [blo] = focusRange(win); return clamp(blo - Math.floor((rows - 9) / 2), minV, maxV); }
 function focusReturn(win) { S.song.view[WIN_LO[win]] = focusHome(win); S.sel = null; S.ghost = null; renderAll(); }
+function focusCaps(g) {                                                                 // the y of the first (top) and fifth (bottom) lines, as drawStaff draws them
+  const [blo, bhi] = focusRange(g.win);
+  return S.halfLines ? [Math.round(g.y(bhi)) + 0.5, Math.round(g.y(blo)) + 0.5] : [Math.round(g.y(bhi) - g.step / 2) + 0.5, Math.round(g.y(blo) + g.step / 2) + 0.5];
+}
 function drawFocusCover(svg, g) {
-  const [blo, bhi] = focusRange(g.win), top = g.y(bhi) - g.step / 2, bot = g.y(blo) + g.step / 2;
+  const [ct, cb] = focusCaps(g), top = ct - 1, bot = cb + 1;                                 // the cover meets the lines' own edges: bar and beat lines end at the first and fifth lines
   if (top > 0) svg.append(svgEl("rect", { class: "focusCover", x: 0, y: 0, width: g.W, height: Math.min(g.H, top), fill: "#fff", "pointer-events": "none" }));
   if (bot < g.H) svg.append(svgEl("rect", { class: "focusCover", x: 0, y: Math.max(0, bot), width: g.W, height: g.H - Math.max(0, bot), fill: "#fff", "pointer-events": "none" }));
 }
