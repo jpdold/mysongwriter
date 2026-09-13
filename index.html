@@ -7849,14 +7849,22 @@ function openSongSetup() {
   KEYS.forEach(k => (k.minor ? og2 : og1).append(el("option", { value: k.name, selected: k.name === song.key }, k.name)));
   keySel.append(og1, og2);
   const sigSeg = el("div", { class: "seg" });
-  Object.keys(TS_BEATS).forEach(s => sigSeg.append(el("button", { class: s === song.sig ? "on" : "", onclick: () => { song.sig = s; song.bars.forEach(distributeChips); renderAll(); openSongSetup(); } }, s)));
+  Object.keys(TS_BEATS).forEach(s => sigSeg.append(el("button", { class: s === song.sig ? "on" : "", onclick: () => { song.sig = s; if (song.pickup === "custom") applyPickup("custom"); song.bars.forEach(distributeChips); renderAll(); openSongSetup(); } }, s)));
   const setBpm = v => { song.bpm = clamp(parseInt(v, 10) || song.bpm, 40, 220); song.bpmCustom = true; renderHeader(); saveSoon(); };
   const bpm = el("input", { type: "number", class: "txt", min: 40, max: 220, value: song.bpm, style: "width:80px", oninput: e => { if (parseInt(e.target.value, 10) >= 40) { setBpm(e.target.value); bpmR.value = song.bpm; } }, onchange: e => { setBpm(e.target.value); e.target.value = song.bpm; bpmR.value = song.bpm; } });
   const bpmR = el("input", { type: "range", min: 40, max: 220, value: song.bpm, style: "flex:1", oninput: e => { setBpm(e.target.value); bpm.value = song.bpm; } });
   body.push(el("div", { class: "pLbl" }, "Key & time"));
   body.push(el("div", { class: "mrow" }, keySel, sigSeg));
   body.push(el("div", { class: "pLbl" }, "Pickup (a short first bar before beat 1)"));
-  const pk = el("div", { class: "seg sm" }); [[0, "None"], [0.5, "½ beat"], [1, "1 beat"], [2, "2 beats"]].forEach(([n, l]) => pk.append(el("button", { class: (song.pickup || 0) === n ? "on" : "", onclick: () => { applyPickup(n); openSongSetup(); } }, l))); body.push(el("div", { class: "mrow" }, pk, el("span", { class: "tiny" }, "In 4/4, 1 beat = one quarter, two eighths, four sixteenths…")));
+  const pk = el("div", { class: "seg sm" }); [[0, "None"], [0.5, "½ beat"], [1, "1 beat"], [2, "2 beats"], ["custom", "Custom"]].forEach(([n, l]) => pk.append(el("button", { class: (song.pickup || 0) === n ? "on" : "", onclick: () => { applyPickup(n); openSongSetup(); } }, l))); body.push(el("div", { class: "mrow" }, pk, el("span", { class: "tiny" }, "In 4/4, 1 beat = one quarter, two eighths, four sixteenths…")));
+  if (song.pickup === "custom" && song.bars[0] && song.bars[0].pickup) {
+    const B = barBeats(0), full = fullBarBeats();
+    body.push(el("div", { class: "pRow", id: "pickupTools" },
+      el("button", { class: "btn sm", onclick: () => { closeModal(); trimPickup(); } }, "Trim the unused end"),
+      el("button", { class: "btn sm ghost", disabled: B >= full - 1e-6, onclick: () => { closeModal(); openPickup(); } }, "Open to a full bar"),
+      el("span", { class: "tiny" }, `Pickup now: ${fracLabel(B)} of ${full} beats`)));
+    body.push(el("div", { class: "tiny", style: "margin-bottom:6px" }, `Build the pickup on the stave — it starts as a full bar of ${song.sig} (the most it can hold). Trim then cuts whatever is left unused after the last note, word or chord change; an empty pickup is removed. Open gives the full bar back to add more. Both are also in the bar's Rhythm menu.`));
+  }
   body.push(el("div", { class: "pLbl" }, "Tempo"));
   body.push(el("div", { class: "mrow" }, bpm, bpmR, el("button", { class: "btn sm ghost", title: "Tap along to set the tempo", onclick: () => { const t = performance.now(); const taps = (openSongSetup.taps = (openSongSetup.taps || []).filter(x => t - x < 3000)); taps.push(t); if (taps.length >= 3) { const iv = (taps[taps.length - 1] - taps[0]) / (taps.length - 1); setBpm(Math.round(60000 / iv)); bpm.value = song.bpm; bpmR.value = song.bpm; } } }, "Tap tempo")));
   body.push(el("div", { class: "pLbl" }, "Chords"));
@@ -8317,13 +8325,53 @@ function allocate() {
 }
 const sectionHasPickup = si => si === 0 && !!(S.song.bars[0] && S.song.bars[0].pickup);
 const barNo = bi => { const r = sectionRange(sectionOfBar(bi)); return bi - r.start + 1 - (sectionHasPickup(sectionOfBar(bi)) ? 1 : 0); };
-/* a pickup: a short bar before the first full bar, with its own beat count */
+/* a pickup: a short bar before the first full bar, with its own beat count — a fixed ½, 1 or 2 beats, or "custom": a full bar of the time signature the user builds on the stave and then trims to what was used */
+const fullBarBeats = () => TS_BEATS[S.song.sig] || 4;
+function fracLabel(x) { const w = Math.floor(x + 1e-6), f = r3(x - w), fr = { 0.25: "¼", 0.5: "½", 0.75: "¾" }[f]; return fr ? (w ? w + fr : fr) : String(Math.round(x * 100) / 100); }
+/* cut a bar down to n beats: everything at or past the new end goes, anything crossing it is shortened */
+function trimBarTo(bar, n) {
+  bar.beats = r3(n);
+  for (const p of ["melody", "bass", "accomp", "ensemble"]) { if (!bar.ev[p]) continue; bar.ev[p] = bar.ev[p].filter(e => e.t < n - 1e-6); bar.ev[p].forEach(e => { if (e.t + e.d > n) e.d = r3(n - e.t); }); }
+  bar.chips = (bar.chips || []).filter(c => c.t < n - 1e-6); bar.chips.forEach(c => { if (c.t + c.d > n) c.d = r3(n - c.t); });
+  bar.chords = barChords(bar).filter(c => c.t < n - 1e-6); syncBarChord(bar);
+  if (typeof syncNotesToChips === "function") syncNotesToChips(bar);
+}
+/* where the pickup's last sound ends — notes on any lane, words, a chord change — rounded up to the ¼ beat; 0 when nothing has been placed */
+function pickupUsedEnd(bar) {
+  let end = 0;
+  bar.ev.melody.forEach(e => { if (!e.rest && e.m != null) end = Math.max(end, e.t + e.d); });
+  ["bass", "accomp", "ensemble"].forEach(p => { if (bar.custom && bar.custom[p]) (bar.ev[p] || []).forEach(e => { if (!e.rest) end = Math.max(end, e.t + e.d); }); });
+  (bar.chips || []).forEach(c => { if (!c.rest) end = Math.max(end, c.t + Math.min(c.d || 0.25, 0.25)); });
+  barChords(bar).forEach(c => { if (c.t > 1e-6) end = Math.max(end, c.t + 0.25); });
+  return Math.min(fullBarBeats(), Math.ceil(end * 4 - 1e-6) / 4);
+}
+/* Trim: the custom pickup keeps only what was used; an empty one is removed altogether */
+function trimPickup() {
+  const song = S.song, bar = song.bars[0]; if (!bar || !bar.pickup) return;
+  const end = pickupUsedEnd(bar), B = barBeats(0);
+  if (end <= 0) { applyPickup(0); toast("Nothing was placed in the pickup — the bar has been removed"); return; }
+  if (end >= B - 1e-6) { toast("Nothing unused to trim — the pickup is full to its last note"); return; }
+  trimBarTo(bar, end); S.sel = null; S.ghost = null; S.active = null; renderAll();
+  toast(`Pickup trimmed to ${fracLabel(end)} ${end === 1 ? "beat" : "beats"}`);
+}
+/* Open: give the custom pickup its full bar back to add more */
+function openPickup() {
+  const bar = S.song.bars[0]; if (!bar || !bar.pickup) return;
+  const full = fullBarBeats(); if (barBeats(0) >= full - 1e-6) { toast("The pickup is already a full bar"); return; }
+  bar.beats = full; renderAll(); toast(`Pickup opened to a full bar of ${S.song.sig}`);
+}
 function applyPickup(n) {
-  const song = S.song, has = !!(song.bars[0] && song.bars[0].pickup);
-  if (n > 0 && !has) { const nb = newBar(chordSymAt(0, 0)); nb.pickup = true; nb.beats = n; song.bars.unshift(nb); song.sections[0].bars++; S.bi = 0; }
-  else if (n > 0 && has) { song.bars[0].beats = n; song.bars[0].ev.melody = song.bars[0].ev.melody.filter(e => e.t < n - 1e-6); song.bars[0].ev.melody.forEach(e => { if (e.t + e.d > n) e.d = r3(n - e.t); }); }
+  const song = S.song, has = !!(song.bars[0] && song.bars[0].pickup), full = fullBarBeats(), custom = n === "custom";
+  if (custom) {
+    if (!has) { const nb = newBar(chordSymAt(0, 0)); nb.pickup = true; nb.beats = full; song.bars.unshift(nb); song.sections[0].bars++; S.bi = 0; }
+    else if (song.pickup !== "custom") song.bars[0].beats = full;                      // from a fixed size: the whole bar to build in, notes kept
+    else if (barBeats(0) > full + 1e-6) trimBarTo(song.bars[0], full);                  // the time signature shrank under it
+    song.bars[0].pickupCustom = true;
+  }
+  else if (n > 0 && !has) { const nb = newBar(chordSymAt(0, 0)); nb.pickup = true; nb.beats = n; song.bars.unshift(nb); song.sections[0].bars++; S.bi = 0; }
+  else if (n > 0 && has) { trimBarTo(song.bars[0], n); delete song.bars[0].pickupCustom; }
   else if (!n && has) { song.bars.shift(); song.sections[0].bars--; S.bi = Math.max(0, S.bi - 1); }
-  song.pickup = n || 0; S.sel = null; S.ghost = null;
+  song.pickup = custom ? "custom" : n || 0; S.sel = null; S.ghost = null;
   if (typeof renderAll === "function" && $("melSvg")) renderAll();
 }
 function setFocus(win) {
@@ -8868,7 +8916,7 @@ function renderNav() {
     return null;
   })();
   const beatTag = focusBeat != null && !(S.viewSpan > 1 && inSec.length > 1) ? ` · beat ${focusBeat + 1}` : "";
-  $("barLabel").textContent = curBar().pickup ? `${sec.name}${rep} · pickup${beatTag}` : S.viewSpan > 1 && inSec.length > 1 ? `${sec.name}${rep} · bars ${barNo(inSec[0])}–${barNo(inSec[inSec.length - 1])} of ${nBars}` : `${sec.name}${rep} · bar ${barNo(S.bi)} of ${nBars}${beatTag}`;
+  $("barLabel").textContent = curBar().pickup ? `${sec.name}${rep} · pickup ${fracLabel(barBeats(S.bi))}${beatTag}` : S.viewSpan > 1 && inSec.length > 1 ? `${sec.name}${rep} · bars ${barNo(inSec[0])}–${barNo(inSec[inSec.length - 1])} of ${nBars}` : `${sec.name}${rep} · bar ${barNo(S.bi)} of ${nBars}${beatTag}`;
   $("prevBar").disabled = S.bi <= 0; $("nextBar").disabled = vb[vb.length - 1] >= song.bars.length - 1;
   const dots = $("barDots"); dots.replaceChildren();
   for (let bi = r.start; bi < r.end; bi++) {
@@ -9331,7 +9379,7 @@ function renderBeatRow() {
   for (let b = 0; b < Math.ceil(barBeats(bi)); b++) {
     const seg = segs.find(s => Math.abs(s.t - b) < 1e-6);
     const d = el("div", { class: "beat" + (S.active && S.active.bi === bi && S.active.beat === b ? " active" : ""), style: `left:${left + (g.x(bi, b) + g.x(bi, Math.min(barBeats(bi), b + 1))) / 2}px`, title: `Beat ${b + 1} — tap for the chord here`, onclick: () => openChordBuilder(bi, seg && !seg.carried ? seg.t : b) });
-    const pill = el("b", {}, pk ? (barBeats(bi) < 1 ? "Pickup ½" : `Pickup ${b + 1}`) : `Beat ${b + 1}`);
+    const pill = el("b", {}, pk ? (barBeats(bi) < 1 ? `Pickup ${fracLabel(barBeats(bi))}` : b + 1 > barBeats(bi) + 1e-6 ? `+${fracLabel(barBeats(bi) - b)} beat` : `Pickup ${b + 1}`) : `Beat ${b + 1}`);
     if (S.chordsDisp !== "off" && seg) pill.append(el("span", { class: "ch" + (seg.carried ? " carried" : "") }, S.chordsDisp === "roman" ? seg.ch.sym : chordName(seg.ch, keyObj(song.key))));
     d.append(el("i"), pill);
     row.append(d);
@@ -10790,7 +10838,9 @@ function openRhythmMenu() {
     item("⎘", "Copy rhythm from the previous bar", () => { if (bi === 0) return; const src = S.song.bars[bi - 1]; const keep = new Map(bar.ev.melody.map(e => [e.t, e.m])); bar.ev.melody = sortedEv(src).map(e => ({ id: uid(), t: e.t, d: e.d, rest: e.rest || undefined, tie: e.tie || undefined, m: e.rest ? undefined : (keep.get(e.t) != null ? keep.get(e.t) : null) })); syncNotesToChips(bar); renderAll(); }),
     item("⧉", "Copy this bar's rhythm to the rest of the section", () => { const { start, end } = curRange(); for (let i = start; i < end; i++) { if (i === bi) continue; const b = S.song.bars[i]; const keep = new Map(b.ev.melody.map(e => [e.t, e.m])); b.ev.melody = sortedEv(bar).map(e => ({ id: uid(), t: e.t, d: e.d, rest: e.rest || undefined, tie: e.tie || undefined, m: e.rest ? undefined : (keep.get(e.t) != null ? keep.get(e.t) : null) })); syncNotesToChips(b); } renderAll(); toast("Rhythm copied"); }),
     item("↔", "Words onto the rhythm (re-align)", () => { distributeChips(bar); renderAll(); }),
-    item("✕", "Clear this bar's rhythm", () => { bar.ev.melody = []; syncNotesToChips(bar); S.sel = null; renderAll(); })));
+    item("✕", "Clear this bar's rhythm", () => { bar.ev.melody = []; syncNotesToChips(bar); S.sel = null; renderAll(); }),
+    bar.pickup && bar.pickupCustom ? item("✂", `Trim the pickup's unused end (now ${fracLabel(B)} of ${fullBarBeats()} beats)`, trimPickup) : null,
+    bar.pickup && bar.pickupCustom && B < fullBarBeats() - 1e-6 ? item("⇤", "Open the pickup to a full bar", openPickup) : null));
 }
 function openChordsSheet() {
   const song = S.song, { start, end } = curRange(), B = TS_BEATS[song.sig] || 4, body = [];
@@ -11754,7 +11804,7 @@ function toggleFullscreen() {
 function openHelp() {
   const h = (t, d) => el("div", { style: "margin:8px 0" }, el("b", {}, t), el("div", { class: "tiny", style: "font-size:13px;color:#444" }, d));
   openModal("How it works", [
-    h("Pickup & repeats", "Setup → Pickup adds a short bar (½, 1 or 2 beats) before beat 1. Tap the bar name → Repeat this section to play a section several times."),
+    h("Pickup & repeats", "Setup → Pickup adds a short bar (½, 1 or 2 beats) before beat 1, or Custom: a full bar to build the pickup on the stave, then Trim cuts the unused end. Tap the bar name → Repeat this section to play a section several times."),
     h("Moving the keyboard", "Drag the grey bar at the top of the keyboard to put it anywhere; drop it near the bottom of the screen to dock it there again. It remembers where you left it."),
     h("Typing words", "Tap the Lyrics strip: the keyboard opens with the entry box at the left edge of the strip. Type a word and press ↵ — it becomes a chip at the first free spot, and the keyboard stays open for the next word. Close it with ✕ and the first word you typed is already selected."),
     h("Keyboard keys", "The tool panel under the letters (HIDE PANEL / SHOW PANEL folds it away; on a wide screen it is the bottom tool bar while the keyboard is open, one row from Multi-chip to NEW CHIP ANY SPACE): Multi-chip / Single chip choose whether what you type becomes one chip per word, or one chip in all. NEW CHIP – CURRENT BEAT makes the chip and keeps the box in this beat, just after it; NEW CHIP → NEXT BEAT makes it and moves to the next free beat; NEW CHIP ANY SPACE ↔ makes a blank spacer chip to drag into place. Under Single chip the chip fills the whole bar and the box moves on to the next bar. REST CHIP drops a rest chip — a chip like any other, for a beat with nothing sung. NUDGE LEFT / NUDGE RIGHT move the chip in hand (or the entry box for a new word) a sixteenth of a beat. SHORTEN and WIDEN size it — wider up to the room beside it. SPLIT breaks the chip in two at the cursor. SELECT CHIP(S) then taps on the strip pick chips, and the tools act on all of them; DELETE CHIP(S) removes them. SET CHIP sets whatever is in hand. The entry box only ever sits on free space, so nothing can be typed over a chip."),
