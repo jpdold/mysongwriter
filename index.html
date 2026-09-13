@@ -116,8 +116,8 @@ svg text { pointer-events: none; }
 #topTransport #saveBtn, #navRight #saveBtn { background: linear-gradient(#ff5a4e, #e5322d); color: #fff; border-color: #6e1712; display: grid; place-items: center; }   /* the floppy: save, beside the tempo */
 #topTransport #saveBtn .ico, #navRight #saveBtn .ico { width: 21px; height: 21px; display: block; }
 #topTransport #rangeBtn, #navRight #rangeBtn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; }
-#topTransport #rangeBtn .top, #navRight #rangeBtn .top { display: block; line-height: 15px; }
-#topTransport #rangeBtn .sub, #navRight #rangeBtn .sub { display: block; font-size: 6.5px; font-weight: 800; letter-spacing: .04em; line-height: 8px; font-family: var(--sans); margin-top: 1px; }
+#topTransport #rangeBtn .top, #navRight #rangeBtn .top, #topTransport #playBarBtn .top { display: block; line-height: 15px; }
+#topTransport #rangeBtn .sub, #navRight #rangeBtn .sub, #topTransport #playBarBtn .sub { display: block; font-size: 6.5px; font-weight: 800; letter-spacing: .04em; line-height: 8px; font-family: var(--sans); margin-top: 1px; }
 #tempo { display: flex; align-items: center; margin-left: 0; border: 1.5px solid #141414; border-radius: 4px; overflow: hidden; height: 34px; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
 #topTransport #tempo button, #navRight #tempo button { width: 20px; height: 34px; border: none; border-radius: 0; box-shadow: none; font-size: 18px; font-weight: 700; }
 #topTransport #tempo button#tempoLbl, #navRight #tempo button#tempoLbl { width: auto; min-width: 42px; padding: 0 2px; font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums; background: #111; color: #fff; }
@@ -184,6 +184,8 @@ svg text { pointer-events: none; }
 .win .chordBtn { width: 24px; height: 24px; padding: 0; border: 1px solid rgba(255,255,255,.35); border-radius: 4px; background: rgba(0,0,0,.25); color: var(--on-ground); display: grid; place-items: center; }
 .win .chordBtn .ico { width: 20px; height: 20px; display: block; }
 .win .chordBtn.on { background: linear-gradient(#ffd27a, #f5a623); color: #111; border-color: #a86d10; }
+@keyframes chordBlink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: .4; } }
+.win .chordBtn.on, #app.deck button.tplay#tChord.on { animation: chordBlink 1.4s step-end infinite; }   /* chord mode on: the button blinks, unhurried */
 .win.closed .chordBtn { display: none; }
 .win .pselClose { width: 24px; height: 24px; padding: 0; border: 1.5px solid #2f7fd6; border-radius: 4px; background: rgba(0,0,0,.25); color: #fff; font-size: 13px; font-weight: 700; line-height: 1; }
 .win .pselClose:active { background: #2f7fd6; }
@@ -916,7 +918,7 @@ body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the s
     <button class="iconBtn" id="menuBtn" title="Menu" aria-label="Menu">☰</button>
     <button class="iconBtn" id="reloadBtn" title="Refresh the app" aria-label="Refresh">⟳</button>
     <button id="partsBtn" title="Show or hide the part selectors">HIDE PARTS</button>
-    <div id="topTransport"><button id="playAllBtn" title="Play All — the whole song from the start">▶<span class="bar"></span></button><button id="rangeBtn" title="Play Range — bars and beats you type in"><span class="top">▶<span class="dots">…</span></span><span class="sub">RANGE</span></button><button id="stopBtn" title="Stop">■</button><div id="tempo" title="Tempo"><button id="tempoDn" aria-label="Slower">−</button><button id="tempoLbl" title="Tap to type a tempo">♩=120</button><button id="tempoUp" aria-label="Faster">+</button></div><button id="saveBtn" title="Save — the song library"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 3 h11 l3 3 v11 h-14 z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><rect x="6" y="3.6" width="7" height="4.4" fill="currentColor"/><rect x="5.5" y="11" width="9" height="5.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></button></div>
+    <div id="topTransport"><button id="playAllBtn" title="Play All — the whole song from the start">▶<span class="bar"></span></button><button id="playBarBtn" title="Play Bar — this part alone, this bar" hidden><span class="top">▶</span><span class="sub">BAR</span></button><button id="rangeBtn" title="Play Range — bars and beats you type in"><span class="top">▶<span class="dots">…</span></span><span class="sub">RANGE</span></button><button id="stopBtn" title="Stop">■</button><div id="tempo" title="Tempo"><button id="tempoDn" aria-label="Slower">−</button><button id="tempoLbl" title="Tap to type a tempo">♩=120</button><button id="tempoUp" aria-label="Faster">+</button></div><button id="saveBtn" title="Save — the song library"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 3 h11 l3 3 v11 h-14 z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><rect x="6" y="3.6" width="7" height="4.4" fill="currentColor"/><rect x="5.5" y="11" width="9" height="5.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></button></div>
     <button class="iconBtn" id="gearBtn" title="Settings" aria-label="Settings"><svg class="ico"><use href="#icoGear"/></svg></button>
   </header>
 
@@ -6259,23 +6261,16 @@ function clearActiveBeat() {
 /* chord mode: another pitch at the time of the note tapped, at the picked length — whatever is already there.
    The length is dealt out beat by beat: what fits the beat it starts in, then a beat at a time, each piece the largest note values
    that fill it, all tied on; so a dotted half dropped on a beat is three tied quarters, and a quarter dropped on the "and" is two tied eighths. */
-const CHORD_VALS = LENS.flatMap(l => [l[0] * 1.5, l[0]]).filter(v => v <= 1 + 1e-9).sort((a, b) => b - a);
-function chordPieces(bi, t, d, part) {
+function chordPieces(bi, t, d, part) {                                                    // chord mode: the same deal, whatever is already there
   const pieces = []; let left = r3(d), b = bi, at = t;
   while (left > 1e-6) {
     const bar = S.song.bars[b];
     if (!bar) return { deny: "Not enough space remaining — the song ends before this note would." };
-    const B = barBeats(b); if (at >= B - 1e-6) { b++; at = 0; continue; }
-    const edge = Math.min(B, Math.floor(at + 1e-6) + 1);                                   // the end of the beat this piece sits in
-    let room = r3(Math.min(left, edge - at));
-    while (room > 1e-6) {                                                                    // the largest values that fill the room, in turn
-      const v = CHORD_VALS.find(x => x <= room + 1e-9) || room;
-      pieces.push({ bi: b, t: at, d: r3(v) }); at = r3(at + v); room = r3(room - v); left = r3(left - v);
-    }
-    if (at >= B - 1e-6) { b++; at = 0; }
+    const room = r3(Math.min(left, barBeats(b) - at));
+    if (room > 1e-6) { pieces.push({ bi: b, t: at, d: room }); left = r3(left - room); }
+    b++; at = 0;
   }
-  pieces.forEach((pc, k) => { if (k < pieces.length - 1 && pc.t - Math.floor(pc.t + 1e-6) > 1e-6) pc.noBeam = true; });   // a tied piece starting mid-beat stands off the beam
-  return { pieces };
+  return { pieces: dealByBeat(pieces) };
 }
 function addChordNote(bi, chain, m, part) {
   const plan = chordPieces(bi, chain.t, noteLenBeats(), part);
@@ -6307,12 +6302,22 @@ function planSpan(bi, t, d, part = "melody") {
     }
     pieces.push({ bi: b, t: at, d: room }); left = r3(left - room); b++; at = 0;
   }
-  const p0 = pieces[0], edge = Math.floor(p0.t + 1e-6) + 1;
-  if (p0.t - Math.floor(p0.t + 1e-6) > 1e-6 && p0.t + p0.d > edge + 1e-6) {      // started mid-beat and runs over: what fits the beat stands alone, tied to the rest
-    const rest = r3(p0.t + p0.d - edge); p0.d = r3(edge - p0.t); p0.noBeam = true;
-    pieces.splice(1, 0, { bi: p0.bi, t: edge, d: rest });
+  return { pieces: dealByBeat(pieces) };
+}
+/* every note is dealt out beat by beat: what fits the beat it starts in, then a beat at a time, each piece the largest note values that fill it,
+   all tied on — a half note on a beat is two tied quarters, a quarter on the "and" two tied eighths; a tied piece starting mid-beat stands off the beam */
+const BEAT_VALS = LENS.flatMap(l => [l[0] * 1.5, l[0]]).filter(v => v <= 1 + 1e-9).sort((a, b) => b - a);
+function dealByBeat(barPieces) {
+  const out = [];
+  for (const p of barPieces) {
+    const B = barBeats(p.bi); let at = p.t, left = r3(p.d);
+    while (left > 1e-6) {
+      const edge = Math.min(B, Math.floor(at + 1e-6) + 1); let room = r3(Math.min(left, edge - at)); if (room <= 1e-6) break;
+      while (room > 1e-6) { const v = BEAT_VALS.find(x => x <= room + 1e-9) || room; out.push({ bi: p.bi, t: at, d: r3(v) }); at = r3(at + v); room = r3(room - v); left = r3(left - v); }
+    }
   }
-  return { pieces };
+  out.forEach((pc, k) => { if (k < out.length - 1 && pc.t - Math.floor(pc.t + 1e-6) > 1e-6) pc.noBeam = true; });
+  return out;
 }
 function placeSpan(pieces, part, m, artic) {
   let head = null;
@@ -6353,7 +6358,7 @@ function showBox(bi, part = "melody", quiet = false, at = null) {
   const bar = S.song.bars[bi]; if (!S.active || S.active.bi !== bi) return false;
   if (part !== "melody" && !S.song.parts[part].on) return false;
   const sp = at != null ? ftpSpot(bar, bi, part) : part === "melody" ? melodySpot(bar, bi) : (() => { const t = freeSpotInBeat(bar, bi, S.active.beat, part); return t == null ? null : { ts: t, d: noteLenBeats() }; })();
-  if (!sp) { if (!quiet) toast("This beat is full — tap another beat"); return false; }
+  if (!sp) { if (!quiet && !S.artic) toast("This beat is full — tap another beat"); return false; }
   let { ts, d } = sp;
   const rest = part === "melody" && S.restNext;
   if (rest) d = Math.min(d, freeSpan(bar, ts));
@@ -6386,7 +6391,7 @@ function dynAt(bar, t) { let d = null; for (const e of bar.ev.melody) if (e.dyn 
    ═══════════════════════════════════════════════════════════════════════ */
 /* the widescreen deck: on a wide screen one part is in view at a time; the checked parts (ADD to VIEW) make up the deck, and the
    up / down buttons beside the stave, named for the parts above and below, move between them */
-const deckMode = () => window.matchMedia("(min-width: 860px) and (min-aspect-ratio: 5/4), (max-height: 520px) and (min-aspect-ratio: 5/4)").matches;
+const deckMode = () => S.layout !== "stack" && window.matchMedia("(min-width: 860px) and (min-aspect-ratio: 5/4), (max-height: 520px) and (min-aspect-ratio: 5/4)").matches;   // the deck is the wide-screen form of Rolled up; Stacked staves stays stacked on any screen
 const DECK_NAME = { mel: "MELODY", acc: "ACCOMPANIMENT", bass: "BASS" };
 const gearIco = () => { const s = svgEl("svg", { class: "ico" }); s.append(svgEl("use", { href: "#icoGear" })); return s; };   // the shared gear symbol (svgEl's third argument is text, so the <use> must be appended)
 function deckActive() { const open = ["mel", "acc", "bass"].find(w => S.winState[w] !== "closed"); return S.deck.includes(open) ? open : S.deck[0]; }
@@ -6508,6 +6513,7 @@ function renderRollBar() {
   const pb = PARTS_BTN || (PARTS_BTN = $("partsBtn"));                                      // held: the row it lives in is rebuilt each render
   const bar = $("rollBar"); bar.replaceChildren(); const nav = $("deckNav"); nav.replaceChildren();
   const deck = deckMode(), app = $("app"); app.classList.toggle("deck", deck);
+  { const pb = $("playBarBtn"); pb.hidden = !deck; pb.classList.toggle("on", !!(deck && S.playing && S.solo === WIN_PART[deckActive()])); }   // on the deck, Play Bar sits beside Play All
   { const tr = $("topTransport"); if ($("tempo").parentNode !== tr) tr.append($("tempo")); if (deck) { if ($("saveBtn").parentNode !== $("head")) $("head").append($("saveBtn")); } else if ($("saveBtn").parentNode !== tr) tr.append($("saveBtn"));   // the tempo travels with the play buttons; on the deck the save button rides in the head
     if (deck) { if (tr.parentNode !== $("toolMScroll")) $("toolMScroll").prepend(tr); } else if (tr.parentNode !== $("head")) $("head").insertBefore(tr, $("gearBtn")); }   // on the deck the play buttons live in the middle third of the tool bar
   if (pb.parentNode !== $("head")) $("head").insertBefore(pb, deck ? $("gearBtn") : $("topTransport"));   // off the deck the parts button waits, hidden, in the head; on the deck it rides there too, beside the save button and the gear
@@ -6559,7 +6565,6 @@ function renderRollBar() {
       $("undoRow").hidden = $("mvRow").hidden = pitchG.hidden = itemG.hidden = flipL !== 0; blBtn.hidden = flipL !== 1;
       const flb = $("flipLBtn"); flb.replaceChildren(el("span", { class: "big" }, "⟳"), el("span", { class: "cap" }, "MORE")); flb.onclick = () => { S.deckFlipL = ((S.deckFlipL || 0) + 1) % 2; renderAll(); }; }
     if (!tm.querySelector(".tplay")) tm.append(
-      el("button", { class: "tplay", id: "tPlayBar", title: "Play Bar — this part alone, this bar", onclick: e => playSolo(deckActive(), e.currentTarget) }, el("span", { class: "tri" }, "▶"), " BAR"),
       el("button", { class: "tplay", id: "tPlaySel", title: "Play Select — choose the notes to hear", onclick: e => togglePlaySelect(deckActive(), e.currentTarget) }, el("span", { class: "tri" }, "▶"), " SELECT"),
       el("button", { class: "tplay", id: "tChord", title: "Chord mode: every tap stacks a note on the chord being built", onclick: () => toggleChordMode(deckActive()) }, "CHORD"));
     $("tPlaySel").classList.toggle("on", !!(typeof PSEL !== "undefined" && PSEL.on)); $("tChord").classList.toggle("on", !!(S.chordWin && S.chordWin[active]));
@@ -7386,7 +7391,7 @@ function tapMelody(bi, t, m) {
      After that, every tap in this beat places another note straight away, until another beat is tapped.
      A note longer than the room left runs on through the following beats and bars while they are empty; otherwise it is refused. */
   const sp = melodySpot(bar, bi);
-  if (!sp) { toast("This beat is full — tap another beat"); return; }
+  if (!sp) { if (!S.artic) toast("This beat is full — tap another beat"); return; }
   const gh = S.ghost, direct = !!(S.justEntered && S.justEntered.bi === bi && S.justEntered.beat === S.active.beat && S.justEntered.part === "melody");
   if (!direct && !(gh && gh.part === "melody" && gh.bi === bi && Math.abs(gh.t - sp.ts) < 1e-6)) { showBox(bi, "melody"); return; }
   let d = direct ? sp.d : gh.d; const ts = direct ? sp.ts : gh.t; S.ghost = null;
@@ -7405,7 +7410,7 @@ function tapBand(win, bi, t, m) {
   if (chordOn(part)) { const ch = chordChainAt(bar, t, part); if (ch) { addChordNote(bi, ch, m, part); return; } }
   const gh = S.ghost, direct = !!(S.justEntered && S.justEntered.bi === bi && S.justEntered.beat === S.active.beat && S.justEntered.part === part);
   const spot = freeSpotInBeat(bar, bi, S.active.beat, part);
-  if (spot == null) { toast("This beat is full for the " + PART_META[part].short.toLowerCase() + " — select a note to change it"); return; }
+  if (spot == null) { if (!S.artic) toast("This beat is full for the " + PART_META[part].short.toLowerCase() + " — select a note to change it"); return; }
   if (!direct && !(gh && gh.part === part && gh.bi === bi && beatOf(bi, gh.t) === S.active.beat)) { showBox(bi, part); return; }   // first tap: the box at the next free spot in this beat
   const ts = direct ? spot : gh.t, d = direct ? noteLenBeats() : gh.d; S.ghost = null;    // then: pitch from the tap, time from the box — or straight in, after the first note
   if (S.restNext) { S.restNext = false; const nx = (bar.ev[part] || []).filter(e => e.t > ts + 1e-6).sort((a, b) => a.t - b.t)[0]; const rd = Math.max(MIN_D, Math.min(d, r3((nx ? nx.t : B) - ts))); const rev = { id: uid(), t: ts, d: rd, rest: true }; bar.ev[part].push(rev); S.sel = { bi, part, id: rev.id }; S.justEntered = { bi, beat: S.active.beat, part }; renderAll(); return; }
@@ -7618,6 +7623,7 @@ function initPointer() {
       if (S.rep) { repTap(win, at.bi, at.t); return; }                                                                   // repeat mode: taps toggle the beat(s) to repeat
       if (S.cpy) { cpyTap(win, at.bi, at.t); return; }                                                                   // copy mode: taps toggle what to copy, or paste onto empty space
       if (d.ev && S.artic && !d.ev.rest && d.ev.m != null) { S.bi = d.bi; applyArtic(d.bi, d.part, d.ev); return; }   // slurs and marks may reach into locked beats
+      if (S.artic) { const ch = chordChainAt(S.song.bars[at.bi], at.t, WIN_PART[win]); if (ch && ch.head.m != null) { S.bi = at.bi; applyArtic(at.bi, WIN_PART[win], ch.head); return; } }   // a tap anywhere along a note marks it — the mark takes no room, so a full beat is no objection
       if (S.dynArm) { applyDynAt(d.ev ? d.bi : at.bi, d.part, d.ev, at.t); return; }        // an armed dynamic: on the note tapped, or the first note of the beat tapped
       if (d.locked) {
         if (d.ev) { activate(d.bi, d.ev.t, d.part); S.sel = { bi: d.bi, part: d.part, id: d.ev.id }; S.selAuto = false; pick(d.bi, d.part, d.ev.id); renderAll(); return; }
@@ -8435,7 +8441,8 @@ function openSettings() {
   if (S.theme === "custom") [["ground", "Body"], ["ground2", "Strips"], ["accent", "Buttons"], ["lyric", "Lyrics"], ["box", "Rhythm boxes"]].forEach(([k, l]) => colorRow.append(el("label", { class: "tiny", style: "display:inline-flex;align-items:center;gap:4px" }, el("input", { type: "color", value: custom[k], oninput: e => { custom[k] = e.target.value; S.custom = custom; applyTheme(); savePrefs(); } }), l)));
   openModal("Settings", [
     el("div", { class: "pLbl" }, "Theme"), seg([["auto", "Default"], ["dark", "Dark"], ["custom", "Custom"]], S.theme, v => { S.theme = v; if (v === "custom" && !S.custom) S.custom = custom; applyTheme(); savePrefs(); }), colorRow,
-    el("div", { class: "pLbl" }, "View"), seg([["stack", "Stacked staves"], ["rolled", "Rolled up (bars with + / −)"]], S.layout, v => { S.layout = v; if (v === "rolled") { S.focus = null; $("app").classList.remove("focused", "focus-mel", "focus-acc", "focus-bass"); } savePrefs(); renderAll(); }),
+    el("div", { class: "pLbl" }, "View"), seg([["stack", "Stacked staves"], ["rolled", "Rolled up · the deck"]], S.layout, v => { S.layout = v; if (v === "rolled") { S.focus = null; $("app").classList.remove("focused", "focus-mel", "focus-acc", "focus-bass"); } else ["mel", "acc", "bass"].forEach(w => { if (S.winState[w] === "closed") S.winState[w] = "open"; }); savePrefs(); renderAll(); }),   // Stacked: every stave opens
+    el("div", { class: "tiny" }, "Stacked staves shows all three staves at once, on any screen. Rolled up shows one bar with + / − on a phone and, on a wide screen, the deck: one part at a time with its buttons beside it."),
     el("div", { class: "pLbl" }, "Window shows"), seg([[1, "1 bar"], [2, "2 bars"], [3, "3 bars"], [4, "4 bars"]], S.viewSpan, v => { S.viewSpan = v; savePrefs(); renderAll(); }),
     el("div", { class: "tiny" }, "More bars make the staves proportionately wider — swipe sideways to move along them; every window and strip scrolls together."),
     el("div", { class: "pLbl" }, "Window sizing"), seg([["s", "Small"], ["m", "Medium"], ["l", "Large"]], S.winSize, v => { S.winSize = v; savePrefs(); renderAll(); }),
@@ -9512,7 +9519,7 @@ function openHelp() {
     h("Deleting notes", "Tap the beat a note is in, then tap the note itself: it is selected, and DEL — a red square at the foot of the stave's buttons (under the gear on the deck) — appears. Tap more notes, in any beat or on any stave, to pick them too; a picked note tapped again is let go. Tap DEL and answer Delete selected? — every picked note goes, a tied note as one. UNDO brings them back."),
     h("Clearing a beat", "Delete in the tools, then Run with the first and last beat, clears every note, rest or slot in that stretch for the part you picked it on. ↶ undoes it."),
     h("After an entry", "A note you have just placed stays selected, so the pitch arrows act on it at once; the length and dot buttons pick the length of the next note (tap the note itself to select it deliberately if you want to change its length), and a tap on another row in its column re-pitches it. A tap anywhere else on the stave lets it go: in the same beat that tap places the next note straight away at the next free spot, with the picked length; in another beat it activates that beat."),
-    h("Long notes", "A note longer than the room left in its beat runs on through the following beats, and into the next bars, tied — as long as those beats are empty. A note that starts part-way through a beat is written as the value that fills the rest of that beat, standing alone (never beamed to its neighbours), tied to the remainder in the next beat. The white band along the top and bottom of the stave runs from the note to where it ends. If something is already in the way, or the song ends first, the note is refused with a message saying there is not enough space."),
+    h("Long notes", "A note longer than the room left in its beat is dealt out beat by beat and tied on — what fits the beat it starts in, then a beat at a time, each piece the largest values that fill it: a half note on a beat is two tied quarters, a quarter on the \"and\" two tied eighths. It runs on through the following beats, and into the next bars, as long as those beats are empty; in chord mode it does not matter what is already there. A piece that starts part-way through a beat stands alone (never beamed to its neighbours). The white band along the top and bottom of the stave runs from the note to where it ends. If something is already in the way, or the song ends first, the note is refused with a message saying there is not enough space."),
     h("Full screen", "☰ → Full screen hides the browser bars (Android, desktop). On iPhone, use Share → Add to Home Screen; the icon then opens the app with no address bar at all."),
     h("Blank slate", "☰ → New song… opens Setup for name, genre, key, time signature and tempo (☰ → Song setup changes them later). You work one bar at a time — ← → or the dots move between bars; tap the bar name for sections. ▶ at the top plays from this bar; the small ▶ beside each window plays that part alone."),
     h("Rhythm", "Tap a note length in the palette to add it to the rhythm; each note becomes an orange box in the melody window. ⌒ ties a note to the next one (or into the next bar). Tap a box to select it, then change its length, dot it, move it or delete it. Tap the Rhythm strip to insert at a beat."),
@@ -9532,7 +9539,7 @@ function playSolo(win, btn) {
   if (S.playing && S.solo === part) { stopPlayback(); return; }
   if (!S.song.parts[part].on) { toast(`${PART_META[part].label} is off — turn it on in ⚙`); return; }
   startPlayback([S.bi]); S.solo = part;
-  document.querySelectorAll(".win .solo").forEach(b => b.classList.toggle("on", b === btn));
+  document.querySelectorAll(".win .solo").forEach(b => b.classList.toggle("on", b === btn)); $("playBarBtn").classList.toggle("on", btn === $("playBarBtn"));
 }
 /* ── undo: restore the last idle snapshot ── */
 function undo() {
@@ -9644,6 +9651,7 @@ async function boot() {
   $("undoBtn").addEventListener("click", undo); $("redoBtn").addEventListener("click", redo);
   $("moveBtn").addEventListener("click", moveAction); $("delBtn").addEventListener("click", delAction); $("selBtn").addEventListener("click", () => mvStart("delete")); $("repBtn").addEventListener("click", repAction); $("copyBtn").addEventListener("click", cpyStart); $("xhairBtn").addEventListener("click", () => { if (S.cpy) { S.cpy.crosshair = !S.cpy.crosshair; renderAll(); } }); $("setCopyBtn").addEventListener("click", setCopyAction);
   $("playAllBtn").addEventListener("click", playAll);
+  $("playBarBtn").addEventListener("click", e => playSolo(deckActive(), e.currentTarget));
   $("rangeBtn").addEventListener("click", openPlayRange);
   $("stopBtn").addEventListener("click", stopAll);
   document.querySelectorAll(".win .psel").forEach(b => b.addEventListener("click", () => togglePlaySelect(b.dataset.win, b)));
