@@ -6980,7 +6980,7 @@ const INSTRUMENTS = {
 const bankFor = part => part === "accomp" ? (S.song.parts.accomp.inst === "Piano" ? "piano" : "guitar") : PART_META[part].bank;
 
 function newBar(chord = null) {
-  return { id: uid(), chord, chords: chord ? [{ t: 0, sym: chord }] : [], lyric: "", chips: [], ev: { melody: [], bass: [], accomp: [], ensemble: [] }, custom: { bass: false, accomp: false, ensemble: false } };
+  return { id: uid(), chord, chords: chord ? [{ t: 0, sym: chord }] : [], lyric: "", chips: [], ev: { melody: [], bass: [], accomp: [], ensemble: [] }, custom: { bass: true, accomp: true, ensemble: false } };   // accompaniment and bass start as empty staves, like the melody: no prefabricated lines
 }
 /* chords live at beats: bar.chords = [{ t, sym }] sorted by t; bar.chord mirrors the one on beat 1 */
 const barChords = bar => bar.chords || (bar.chords = bar.chord ? [{ t: 0, sym: bar.chord }] : []);
@@ -11900,7 +11900,7 @@ function openHelp() {
     h("Words", "Tap the Lyrics strip at a beat and type straight into it (↵ moves to the next note; tapping elsewhere keeps what you typed). Tap the Lyrics tag to paste a whole section. Words sit on the rhythm's notes; drag one to line it up; tap one to nudge, split into letters, edit or delete it."),
     h("Articulation", "• staccato, ‒ tenuto, ◠ slur. With a note selected, tap a mark to apply it. Otherwise tap a mark to arm it: notes you enter carry it, and tapping existing notes marks them; tap the mark again to finish. For a slur, tap the first note then the last."),
     h("Chords", "Chord names sit in the beat row; tap a beat there or use Chords… in ☰ → Song setup to set the chord at any beat. A chord holds until the next change."),
-    h("Accompaniment & Bass", "Play genre patterns automatically; ⚙ on each window sets instrument, sound, pattern, volume, or Custom to place notes yourself."),
+    h("Accompaniment & Bass", "Empty staves to write on, like the melody — a new song and a genre load bring chords, structure and tempo, not band lines. ⚙ on each window sets instrument, sound and volume; switch Custom off there to have a genre pattern play the section instead, and Start from the pattern copies it in as notes to edit."),
     h("Settings ⚙", "View (stacked staves, or rolled up into three bars with + / −), theme, window sizing, chords display, note appearance (traditional, pills, circles), half steps on lines, metronome."),
     h("Menu ☰", "Share a link or per-musician parts, export/import files, save."),
   ]);
