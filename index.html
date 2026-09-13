@@ -726,7 +726,10 @@ body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the s
 /* Flat (Settings → Keyboard layout): square corners, the letter keys flush together, still clear of their half's edge; the space bars, BACKSPACE, ⇧, ?!’ and àéñ keep their spacing */
 #wordEdit.kb-flat .weKeys button { border-radius: 0; }
 #wordEdit.kb-flat .weKeys .krow:not(.bottom) { gap: 0; }
-#wordEdit.kb-flat .weKeys .krow:not(.bottom) button:not(.shiftk) + button { border-left: none; }   /* flush letters share one line between them */
+#wordEdit.kb-flat .weKeys .krow:not(.bottom) button:not(.shiftk):has(+ button) { border-right: none; }                                  /* flush letters: one thin line between each pair, not two borders — */
+#wordEdit.kb-flat .weKeys .krow:not(.bottom) button:not(.shiftk) + button { border-left: 1px solid rgba(0,0,0,.34); }                    /* — drawn dark on light keys… */
+#wordEdit.kb-flat.kbt-blue .weKeys .krow:not(.bottom) button:not(.shiftk) + button { border-left-color: rgba(255,255,255,.42); }         /* …light on the black keys… */
+#wordEdit.kb-flat.kbt-gray .weKeys .krow:not(.bottom) button:not(.shiftk) + button { border-left-color: rgba(0,0,0,.42); }               /* …and a shade darker on the light blue ones */
 #wordEdit.kb-flat .weKeys .krow:not(.bottom) button::before { inset: -1.5px 0; }              /* no gap left to bridge */
 #wordEdit.kb-flat .weKeys .krow:not(.bottom) button.shiftk { margin-right: 4px; }              /* the phone's ⇧, up on the third row, keeps its space from z */
 /* Keyboard themes (Settings → Keyboard theme): the box and each half, and every key on the rows */
