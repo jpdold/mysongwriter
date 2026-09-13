@@ -5945,14 +5945,20 @@ function allocateDuo() {
   const band = duoBandWin(), k = STEP_K[S.noteSize] || 1;
   const clampView = (w, rows) => { const key = WIN_LO[w], v = S.song && S.song.view ? viewOf(w) : null, [minV, topV] = viewLimits(w, rows); if (v != null && v + rows - 1 > topV) S.song.view[key] = Math.max(minV, topV + 1 - rows); };
   for (const w of ["mel", "acc", "bass"]) if (w !== "mel" && w !== band) { STEPS[w] = WIN[S.winSize][w][1]; DECK_ROWS[w] = 0; }
-  let bandH;                                                                              // the band part: about a third of the screen's height at its natural scale, flush on the tool bar
-  { const [rows0, lo, hi0] = WIN[S.winSize][band], hi = Math.max(hi0, WIN[S.winSize].mel[2]), target = Math.round(window.innerHeight / 3) - 16, fits = target >= rows0 * hi * k;
-    const rows = fits ? clamp(Math.floor(target / (hi * k)), rows0, 88) : rows0; DECK_ROWS[band] = rows; STEPS[band] = fits ? hi : Math.max(lo, target / rows0 / k); clampView(band, rows); bandH = rows * STEPS[band] * k + 16; }
-  { const [rows0, lo, hi] = WIN[S.winSize].mel;                                          // the melody: everything from its top down to the band, less the strips between — its row height stretched a whisker so the band lands flush
-    const tb = $("toolbar").getBoundingClientRect(), melFrame = $("melWin").querySelector(".frame"), strips = ["dynStrip", "rhyStrip", "lyrStrip"].map(id => $(id)).filter(e => e && e.offsetHeight > 0 && getComputedStyle(e).position !== "fixed");
-    const mr = melFrame.getBoundingClientRect(), top = mr.top, stripsH = strips.length ? Math.max(...strips.map(e => e.getBoundingClientRect().bottom)) - mr.bottom : 0;   // the strips' true span, fractions and all, measured from the frame they sit on
-    let target = tb.top - top - stripsH - bandH - 16;                                      // less the stave's own 10px of padding and the frame's 6px of border — not rounded, so the sum lands on the tool bar to the pixel
-    if (!(target > 40) || !melFrame.offsetHeight) target = rows0 * hi * k;                // nothing measured yet (the first pass): the natural size, corrected by the settle pass
+  /* the room the two staves share: from the melody's top to the tool bar, less the strips between them (their true span, fractions and all) */
+  const tb = $("toolbar").getBoundingClientRect(), melFrame = $("melWin").querySelector(".frame"), mr = melFrame.getBoundingClientRect();
+  const strips = ["dynStrip", "rhyStrip", "lyrStrip"].map(id => $(id)).filter(e => e && e.offsetHeight > 0 && getComputedStyle(e).position !== "fixed");
+  const stripsH = strips.length ? Math.max(...strips.map(e => e.getBoundingClientRect().bottom)) - mr.bottom : 0;
+  const measured = melFrame.offsetHeight > 0 && tb.top - mr.top - stripsH > 120, room = measured ? tb.top - mr.top - stripsH : 0;   // nothing measured yet (the first pass): natural sizes, corrected by the settle pass
+  let bandH;                                                                              // the band part: a third of that room at its natural scale, flush on the tool bar
+  { const [rows0, lo, hi0] = WIN[S.winSize][band], hi = Math.max(hi0, WIN[S.winSize].mel[2]), target = measured ? Math.round(room / 3) - 16 : rows0 * hi * k, fits = target >= rows0 * hi * k;
+    const rows = fits ? clamp(Math.floor(target / (hi * k)), rows0, 88) : rows0, h = fits ? Math.round(rows * hi * k) : Math.max(4 * rows0, Math.round(target));   // a whole number of pixels tall, so the sum below lands exactly
+    DECK_ROWS[band] = rows; STEPS[band] = h / rows / k; clampView(band, rows); bandH = h + 16; }
+  { const [rows0, lo, hi] = WIN[S.winSize].mel;                                          // the melody: the rest — its row height stretched a whisker so the lower stave lands on the tool bar to the pixel
+    const bandF = $(band + "Win").querySelector(".frame"), drawn = measured && bandF.offsetHeight > 0 && DECK_ROWS.mel > 0 && DECK_ROWS[band] > 0;
+    let target = drawn ? (mr.height - 16) + (tb.top - bandF.getBoundingClientRect().bottom)   // the duo already drawn: the melody takes up whatever the lower stave stops short of the tool bar by (or overshoots it by), as actually laid out
+      : measured ? room - bandH - 16 : rows0 * hi * k;                                     // less the stave's own 10px of padding and the frame's 6px of border
+    if (!(target > 40)) target = rows0 * hi * k;
     const rows = clamp(Math.floor(target / (hi * k)), 4, 88); DECK_ROWS.mel = rows; STEPS.mel = target / rows / k; clampView("mel", rows); }
 }
 function allocate() {
