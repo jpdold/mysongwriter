@@ -8352,7 +8352,7 @@ function trimPickup() {
   if (end <= 0) { applyPickup(0); toast("Nothing was placed in the pickup — the bar has been removed"); return; }
   if (end >= B - 1e-6) { toast("Nothing unused to trim — the pickup is full to its last note"); return; }
   trimBarTo(bar, end); S.sel = null; S.ghost = null; S.active = null; renderAll();
-  toast(`Pickup trimmed to ${fracLabel(end)} ${end === 1 ? "beat" : "beats"}`);
+  toast(`Pickup trimmed to ${fracLabel(end)} ${end <= 1 ? "beat" : "beats"}`);
 }
 /* Open: give the custom pickup its full bar back to add more */
 function openPickup() {
