@@ -29,7 +29,7 @@ The dots under the bar bracket show each bar of the section: green when every vo
 
 ## Chord mode
 
-The two-row button beside each stave turns chord mode on for that stave: every tap at a note's time stacks another note on it, the same pitch again gives a unison (marked with a red edge), and a tap on empty space starts the next chord. Chord-mode notes are drawn in the chord colour (white by default, changeable in Settings) with a thin black edge on head and stem. Rests enter as usual. Tap the button again for single notes.
+The two-row button beside each stave turns chord mode on for that stave: every tap at a note's time stacks another note on it **at the length picked in the palette**, whatever is already there (a quarter under two eighths stays a quarter, and the eighths keep their beam); the same pitch again gives a unison (marked with a red edge), and a tap on empty space starts the next chord. A stacked note longer than the rest of its beat is dealt out beat by beat, each piece the largest values that fill it, all tied on — a dotted half dropped on a beat is three tied quarters, a quarter dropped on the "and" is two tied eighths — running into the next bar when it must. Chord-mode notes are drawn in the chord colour (white by default, changeable in Settings) with a thin black edge on head and stem. Rests enter as usual. Tap the button again for single notes.
 
 ## Playing
 

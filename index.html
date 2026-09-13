@@ -8415,10 +8415,16 @@ const sortedEv = (bar, part = "melody") => [...((bar && bar.ev && bar.ev[part]) 
 /* chains of tied events within one bar (any part): [{ head, members, t, d, tieOut }] */
 function chains(bar, part = "melody") {
   if (!bar || !bar.ev) return [];
-  const evs = sortedEv(bar, part), out = [], B = barBeats(S.song.bars.indexOf(bar)); let cur = null;
-  for (const e of evs) {
-    if (cur && cur.last.tie && !cur.last.rest && !e.rest && Math.abs(cur.last.t + cur.last.d - e.t) < 1e-6) { cur.members.push(e); cur.d = r3(cur.d + e.d); cur.last = e; continue; }
-    cur = { head: e, members: [e], t: e.t, d: e.d, last: e }; out.push(cur);
+  const evs = sortedEv(bar, part), out = [], B = barBeats(S.song.bars.indexOf(bar)), used = new Set();
+  for (const e of evs) {                                                                  // a tie runs on to the note that starts where this one ends — the one of the same pitch when notes are stacked there
+    if (used.has(e)) continue;
+    const c = { head: e, members: [e], t: e.t, d: e.d, last: e }; out.push(c); used.add(e);
+    while (c.last.tie && !c.last.rest) {
+      const end = r3(c.last.t + c.last.d), cand = evs.filter(x => !used.has(x) && !x.rest && Math.abs(x.t - end) < 1e-6);
+      const nx = cand.find(x => x.m === c.last.m) || (c.last.m == null ? null : cand.find(x => x.m == null)) || cand[0];
+      if (!nx) break;
+      c.members.push(nx); c.d = r3(c.d + nx.d); c.last = nx; used.add(nx);
+    }
   }
   out.forEach(c => { c.tieOut = !!(c.last.tie && !c.last.rest && Math.abs(c.t + c.d - B) < 1e-6); c.rest = !!c.head.rest; });
   return out;
@@ -8579,14 +8585,36 @@ function clearActiveBeat() {
   if (part === "melody") syncNotesToChips(bar);
   S.sel = null; S.ghost = null; S.justEntered = null; renderAll(); refreshBox(); toast(`Beat ${beat + 1} cleared — UNDO brings it back`);
 }
-/* chord mode: another pitch at the same time as an existing note, with the same length (and ties) */
-function addChordNote(bi, chain, m, part) {
-  let first = null; const bar = S.song.bars[bi], copy = (e, into) => { const n = { id: uid(), t: e.t, d: e.d, m, chord: true }; if (e.tie) n.tie = true; if (e.artic) n.artic = e.artic; if (e.noBeam) n.noBeam = true; into.push(n); if (!first) first = n; };
-  chain.members.forEach(e => copy(e, bar.ev[part]));
-  if (chain.tieOut) { const nb = S.song.bars[bi + 1]; if (nb && (part === "melody" || nb.custom[part])) { const nc = chains(nb, part).find(c => c.t < 1e-6 && !c.rest); if (nc) nc.members.forEach(e => copy(e, nb.ev[part])); } }
-  if (part === "melody") syncNotesToChips(bar);
-  previewNote(m, part); S.sel = first ? { bi, part, id: first.id } : null; S.selAuto = true; S.ghost = null; S.justEntered = { bi, beat: beatOf(bi, chain.t), part }; renderAll();
+/* chord mode: another pitch at the time of the note tapped, at the picked length — whatever is already there.
+   The length is dealt out beat by beat: what fits the beat it starts in, then a beat at a time, each piece the largest note values
+   that fill it, all tied on; so a dotted half dropped on a beat is three tied quarters, and a quarter dropped on the "and" is two tied eighths. */
+const CHORD_VALS = LENS.flatMap(l => [l[0] * 1.5, l[0]]).filter(v => v <= 1 + 1e-9).sort((a, b) => b - a);
+function chordPieces(bi, t, d, part) {
+  const pieces = []; let left = r3(d), b = bi, at = t;
+  while (left > 1e-6) {
+    const bar = S.song.bars[b];
+    if (!bar) return { deny: "Not enough space remaining — the song ends before this note would." };
+    if (part !== "melody" && b !== bi && !bar.custom[part]) return { deny: `Not enough space remaining — bar ${barNo(b)} still follows its ${PART_META[part].label.toLowerCase()} pattern. Set that bar to Custom first.` };
+    const B = barBeats(b); if (at >= B - 1e-6) { b++; at = 0; continue; }
+    const edge = Math.min(B, Math.floor(at + 1e-6) + 1);                                   // the end of the beat this piece sits in
+    let room = r3(Math.min(left, edge - at));
+    while (room > 1e-6) {                                                                    // the largest values that fill the room, in turn
+      const v = CHORD_VALS.find(x => x <= room + 1e-9) || room;
+      pieces.push({ bi: b, t: at, d: r3(v) }); at = r3(at + v); room = r3(room - v); left = r3(left - v);
+    }
+    if (at >= B - 1e-6) { b++; at = 0; }
+  }
+  pieces.forEach((pc, k) => { if (k < pieces.length - 1 && pc.t - Math.floor(pc.t + 1e-6) > 1e-6) pc.noBeam = true; });   // a tied piece starting mid-beat stands off the beam
+  return { pieces };
 }
+function addChordNote(bi, chain, m, part) {
+  const plan = chordPieces(bi, chain.t, noteLenBeats(), part);
+  if (plan.deny) { renderAll(); noticeModal(plan.deny); return; }
+  const first = placeSpan(plan.pieces, part, m, S.artic && S.artic !== "slur" ? S.artic : null);
+  previewNote(m, part); S.sel = { bi, part, id: first.id }; S.selAuto = true; S.ghost = null; S.justEntered = { bi, beat: beatOf(bi, chain.t), part }; renderAll();
+}
+/* the chord a tap lands on: of the notes sounding at that time, the one that started last — so with a quarter under two eighths, the "and" is the second eighth's */
+const chordChainAt = (bar, t, part) => chains(bar, part).filter(c => !c.rest && t >= c.t - 1e-6 && t < c.t + c.d - 1e-6).sort((a, b) => b.t - a.t)[0] || null;
 const hasPitchAt = (bar, part, t, m) => chains(bar, part).some(c => !c.rest && Math.abs(c.t - t) < 1e-6 && c.head.m === m);
 const chordOn = part => !!S.chordWin[PART_WIN[part]];
 function toggleChordMode(win) { S.chordWin[win] = !S.chordWin[win]; S.sel = null; S.ghost = null; S.justEntered = null; renderAll(); toast(S.chordWin[win] ? "Chord mode: taps stack notes on the chord — unison too. Tap the button again for single notes." : "Single notes again"); refreshBox(); }
@@ -9114,10 +9142,13 @@ function drawSlur(svg, g, x1, m1, x2, m2, color, up) {
 const beamGroupLen = () => S.song.sig === "6/8" ? 1.5 : 1;
 function beamGroups(evs) {
   const gl = beamGroupLen(), out = []; let cur = null;
-  for (const e of [...evs].sort((a, b) => a.t - b.t)) {
+  for (const e of [...evs].sort((a, b) => a.t - b.t || b.d - a.d)) {
     const ok = !e.rest && e.m != null && !e.noBeam && baseLen(e.d) <= 0.5, grp = Math.floor((e.t + 1e-6) / gl);
-    if (ok && cur && cur.grp === grp && Math.abs(cur.end - e.t) < 1e-6) { cur.evs.push(e); cur.end = r3(e.t + e.d); continue; }
-    cur = ok ? { grp, evs: [e], end: r3(e.t + e.d) } : null; if (cur) out.push(cur);
+    if (cur && cur.grp === grp) {
+      if (ok && Math.abs(cur.end - e.t) < 1e-6) { cur.evs.push(e); cur.end = r3(e.t + e.d); cur.lastT = e.t; cur.lastD = e.d; continue; }
+      if (Math.abs(cur.lastT - e.t) < 1e-6) { if (ok && Math.abs(cur.lastD - e.d) < 1e-6) cur.evs.push(e); continue; }   // a chord note at the same time: on the beam when it is the same length, otherwise on its own, the beam unbroken
+    }
+    cur = ok ? { grp, evs: [e], end: r3(e.t + e.d), lastT: e.t, lastD: e.d } : null; if (cur) out.push(cur);
   }
   return out.filter(gp => gp.evs.length >= 2);
 }
@@ -9674,8 +9705,8 @@ function tapMelody(bi, t, m) {
   const chain = chains(bar).find(c => !c.rest && t >= c.t - 1e-6 && t < c.t + c.d - 1e-6);
   if (chain) {
     S.ghost = null;
+    if (chordOn("melody") && chain.head.m != null) { addChordNote(bi, chordChainAt(bar, t, "melody"), m, "melody"); return; }          // chord mode: stack it, unison included — wherever along the note the tap lands
     if (!inActive(bi, chain.t)) { activate(bi, chain.t); S.activePart = "melody"; S.sel = { bi, part: "melody", id: chain.head.id }; S.selAuto = false; renderAll(); return; }   // a tap along a long note: its own beat wakes and it is selected
-    if (chordOn("melody") && chain.head.m != null) { addChordNote(bi, chain, m, "melody"); return; }          // chord mode: stack it, unison included
     if (!(S.sel && S.sel.part === "melody" && chain.members.some(e => e.id === S.sel.id))) { S.sel = { bi, part: "melody", id: chain.head.id }; S.selAuto = false; renderAll(); return; }   // first tap: select the box
     if (chain.head.m === m) { S.sel = null; renderAll(); return; }                                                                                       // same pitch again: done
     setChainPitch(bar, chain, m); previewNote(m, "melody");
@@ -9706,7 +9737,7 @@ function tapBand(win, bi, t, m) {
   S.bi = bi;
   if (!P.on) { openWinSettings(win); return; }
   if (!bar.custom[part]) { toast(`${PART_META[part].label} follows its pattern — switch it to Custom in ⚙ to place notes`); return; }
-  if (chordOn(part)) { const ch = chains(bar, part).find(c => !c.rest && t >= c.t - 1e-6 && t < c.t + c.d - 1e-6); if (ch) { addChordNote(bi, ch, m, part); return; } }
+  if (chordOn(part)) { const ch = chordChainAt(bar, t, part); if (ch) { addChordNote(bi, ch, m, part); return; } }
   const gh = S.ghost, direct = !!(S.justEntered && S.justEntered.bi === bi && S.justEntered.beat === S.active.beat && S.justEntered.part === part);
   const spot = freeSpotInBeat(bar, bi, S.active.beat, part);
   if (spot == null) { toast("This beat is full for the " + PART_META[part].short.toLowerCase() + " — select a note to change it"); return; }
@@ -11810,7 +11841,7 @@ function openHelp() {
     h("Keyboard keys", "The tool panel under the letters (HIDE PANEL / SHOW PANEL folds it away; on a wide screen it is the bottom tool bar while the keyboard is open, one row from Multi-chip to NEW CHIP ANY SPACE): Multi-chip / Single chip choose whether what you type becomes one chip per word, or one chip in all. NEW CHIP – CURRENT BEAT makes the chip and keeps the box in this beat, just after it; NEW CHIP → NEXT BEAT makes it and moves to the next free beat; NEW CHIP ANY SPACE ↔ makes a blank spacer chip to drag into place. Under Single chip the chip fills the whole bar and the box moves on to the next bar. REST CHIP drops a rest chip — a chip like any other, for a beat with nothing sung. NUDGE LEFT / NUDGE RIGHT move the chip in hand (or the entry box for a new word) a sixteenth of a beat. SHORTEN and WIDEN size it — wider up to the room beside it. SPLIT breaks the chip in two at the cursor. SELECT CHIP(S) then taps on the strip pick chips, and the tools act on all of them; DELETE CHIP(S) removes them. SET CHIP sets whatever is in hand. The entry box only ever sits on free space, so nothing can be typed over a chip."),
     h("Placing words", "Words have no bearing on the notes; you line them up by eye. Drag a chip anywhere along the strip — it clicks onto a beat line when close, and never overlaps another chip. To spread a word so its syllables sit under their notes, edit it and put spaces inside it (the space bar, as many as you like); it stays one chip."),
     h("Tempo", "♩= in the top row shows the tempo. − and + change it by one (hold to keep going); tap the number to type one."),
-    h("Chord mode", "The two-row button beside each stave turns chord mode on for that stave. While it is on, a tap at a note's time stacks another note on it — the same pitch again gives a unison, marked with a red edge — and a tap on empty space starts the next chord at the next free spot. Notes entered in chord mode are drawn in the chord colour (white by default, changeable in Settings) with a thin black edge on head and stem. Rests enter as usual. Tap the button again to go back to single notes."),
+    h("Chord mode", "The two-row button beside each stave turns chord mode on for that stave. While it is on, a tap at a note's time stacks another note on it at the length picked in the palette, whatever is already there — the same pitch again gives a unison, marked with a red edge — and a tap on empty space starts the next chord at the next free spot. A stacked note longer than the rest of its beat is dealt out beat by beat and tied on: a dotted half on a beat becomes three tied quarters. Notes entered in chord mode are drawn in the chord colour (white by default, changeable in Settings) with a thin black edge on head and stem. Rests enter as usual. Tap the button again to go back to single notes."),
     h("Floating palette", "⧉ at the end of the tools pops them out into a small palette you can drag anywhere (the stave keeps its size). ← → step by the chosen note length (eighths step half a beat) and also stop at every note start — tap the label to step through bars instead. The yellow box shows the pitch; ↑ ↓ change it. Tap PITCH to flip the arrows to SELECT, which moves between the notes stacked at that spot; tap again to go back. Tap a note length once to choose it (the box takes that size); tap the chosen length again to enter the note at the box, or, when a note is selected, to give that note the length. M / A / B pick the window, 🗑 deletes, ▶ plays the bar, Rhythm and Lyrics open those tools, ⚙ sets its size and side, ⤶ pops it back in. While it is out, the stave and strips do not take taps."),
     h("Rests", "𝄽 in the tools: while you are entering (a box is showing, or the beat has just taken a note) it puts a rest at the next free spot, in the melody or in a Custom band bar. On a note you selected yourself it turns that note into a rest, and back again. With no beat active it arms a rest for your next tap on a stave or the Rhythm strip."),
     h("Swiping the staves", "Swipe up or down anywhere on a stave — melody, accompaniment or bass, in any beat, with the floating palette out or not — to slide its range; swipe sideways on empty space to turn the bar. A swipe is only ever a swipe: it never places, pitches or selects a note, and a tap that wanders a little still counts as a tap."),
