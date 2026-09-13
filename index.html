@@ -740,6 +740,18 @@ body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the s
 #wordEdit .weKeys .krow.slide { position: relative; display: block; height: 38px; }
 #wordEdit .weKeys .krow.slide button { position: absolute; top: 0; height: 38px; flex: none; z-index: 2; touch-action: none; }
 #wordEdit .weKeys .krow.slide button.backk { z-index: 3; }
+#wordEdit .weKeys .krow.slide button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; line-height: 1.05; }   /* the label, and "(moveable)" beneath it */
+#wordEdit .weKeys .krow.slide button .lbl1 { display: flex; align-items: center; gap: 1px; }
+#wordEdit .weKeys .krow.slide button .mv { font-size: 7px; font-weight: 600; letter-spacing: 0; opacity: .85; }
+#wordEdit .weKeys .krow.slide button.unseated { outline: 2px dashed #f5a623; outline-offset: 2px; box-shadow: 0 6px 14px rgba(0,0,0,.5); transform: translateY(-2px); z-index: 5; }   /* unseated: lifted, ready to slide — a tap sets it */
+#wordEdit .weKeys .krow.slide button.unseated:active { transform: translateY(-2px); }
+/* the tab at the right half's bottom right corner, and the ribbon it pulls out */
+#wordEdit .half.r .kbTip { position: absolute; right: -18px; bottom: 0; width: 16px; height: 28px; border: 2px solid var(--tag); border-left: none; border-radius: 0 8px 8px 0; background: #e9e9e9; color: #111; font-size: 12px; font-weight: 800; display: grid; place-items: center; cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none; z-index: 4; }
+#wordEdit .half.r .kbRibbon { position: absolute; left: calc(100% + 18px); bottom: 0; width: 250px; padding: 6px 10px; background: #fff7dc; color: #111; border: 2px solid var(--tag); border-left: none; border-radius: 0 8px 8px 0; font-size: 10px; font-weight: 700; line-height: 1.25; transform: scaleX(0); transform-origin: left center; transition: transform .25s ease; pointer-events: none; z-index: 4; }
+#wordEdit .half.r .kbRibbon.on { transform: scaleX(1); pointer-events: auto; }
+/* the dark grey theme: ⇧, ?!’, àéñ and BACKSPACE in beige with bold black letters */
+#wordEdit.kbt-gray .weKeys .krow button.wide, #wordEdit.kbt-gray .weKeys .krow button.shiftk, #wordEdit.kbt-gray .weKeys .krow button.backk { background: #f1e3c4; color: #111; font-weight: 800; border-color: #b9a77d; box-shadow: 0 1px 0 #8f7d55; }
+#wordEdit.kbt-gray .weKeys .krow button.wide:active, #wordEdit.kbt-gray .weKeys .krow button.shiftk:active, #wordEdit.kbt-gray .weKeys .krow button.backk:active, #wordEdit.kbt-gray .weKeys .krow button.shiftk.on { background: #ffd27a; }
 #wordEdit.kb-flat .weKeys .krow:not(.bottom) button::before { inset: -1.5px 0; }              /* no gap left to bridge */
 #wordEdit.kb-flat .weKeys .krow:not(.bottom) button.shiftk { margin-right: 4px; }              /* the phone's ⇧, up on the third row, keeps its space from z */
 /* Keyboard themes (Settings → Keyboard theme): the box and each half, and every key on the rows */
@@ -8237,7 +8249,7 @@ const setMode = () => {};                          // engine shims (the old mode
 const renderPanel = () => renderAll();
 function loadPrefs() {
   const p = readJSON(STORE.prefs, {});
-  S.theme = p.theme || "auto"; S.followWords = false; S.noteStyle = p.noteStyle || "trad"; S.noteSize = NOTE_SCALE[p.noteSize] ? p.noteSize : "m"; S.chordColor = p.chordColor || "#ffffff"; S.halfLines = p.halfLines == null ? true : !!p.halfLines; S.beatLines = p.beatLines == null ? true : !!p.beatLines; S.rangeLock = !!p.rangeLock; S.kbLayout = p.kbLayout === "flat" ? "flat" : "standard"; S.kbTheme = ["blue", "black", "gray"].includes(p.kbTheme) ? p.kbTheme : "classic"; S.kbSpace = Math.min(1, Math.max(0, +p.kbSpace || 0)); S.kbBackUp = p.kbBackUp ? 1 : 0; S.ftp = Object.assign({}, FTP_DEFAULT, p.ftp || {}); if (!FTP_ENABLED) S.ftp.on = false;
+  S.theme = p.theme || "auto"; S.followWords = false; S.noteStyle = p.noteStyle || "trad"; S.noteSize = NOTE_SCALE[p.noteSize] ? p.noteSize : "m"; S.chordColor = p.chordColor || "#ffffff"; S.halfLines = p.halfLines == null ? true : !!p.halfLines; S.beatLines = p.beatLines == null ? true : !!p.beatLines; S.rangeLock = !!p.rangeLock; S.kbLayout = p.kbLayout === "flat" ? "flat" : "standard"; S.kbTheme = ["blue", "black", "gray"].includes(p.kbTheme) ? p.kbTheme : "classic"; S.kbSpace = Math.min(1, Math.max(0, +p.kbSpace || 0)); S.kbBackUp = Math.min(1, Math.max(0, +p.kbBackUp || 0)); S.ftp = Object.assign({}, FTP_DEFAULT, p.ftp || {}); if (!FTP_ENABLED) S.ftp.on = false;
   S.winSize = WIN[p.winSize] ? p.winSize : "m"; S.chordsDisp = p.chordsDisp || "names"; S.metro = p.metro || "off"; S.custom = p.custom || null; S.len = p.len || 1;
   S.rhyShown = p.rhyShown !== false && p.stripsShown !== false; S.lyrShown = p.lyrShown !== false && p.stripsShown !== false; S.partsShown = p.partsShown !== false; S.dynShown = !!p.dynShown; 
   S.deck = Array.isArray(p.deck) && p.deck.length ? p.deck.filter(w => ["mel", "acc", "bass"].includes(w)) : ["mel", "acc", "bass"]; if (!S.deck.length) S.deck = ["mel"];
@@ -10273,7 +10285,8 @@ function renderWeKeys() {
   const cap = t => el("span", { class: "cap" }, t), ln = t => el("span", { class: "l" }, t);
   const symKey = () => key(wePage === "sym" ? "abc" : "?!’", () => { wePage = wePage === "sym" ? "abc" : "sym"; renderWeKeys(); }, "wide symk", "symbols");
   const accKey = () => key(wePage === "acc" ? "abc" : "àéñ", () => { wePage = wePage === "acc" ? "abc" : "acc"; renderWeKeys(); }, "wide", "accents");
-  const spaceKey = () => key("space", () => { if (!inp.value && !WE.chipId) { weSpaceChip(); return; } insert(" "); }, "space");
+  const spaceFn = () => { if (!inp.value && !WE.chipId) { weSpaceChip(); return; } insert(" "); };
+  const spaceKey = () => key("space", spaceFn, "space");
   const backKey = () => key([el("span", { class: "sarr" }, "←"), el("span", { class: "cap" }, "BACKSPACE")], back, "backk", "delete");   // on the bottom row now, beside the space bar
   const panelKey = () => key(wePanelHidden ? "SHOW PANEL" : "HIDE PANEL", () => box.querySelector(".weRow button.panelk").click(), "smallk", "Hide or show the tool panel");
   const deck = deckMode();
@@ -10288,7 +10301,9 @@ function renderWeKeys() {
     rows.forEach(r => { const a = el("div", { class: "krow" }), b = el("div", { class: "krow" });
       a.append(...five(r.slice(0, 5).map(k => isShift(k) ? (shiftKey = k, blank1()) : k)));   // ⇧ leaves the third row for the bottom one; its slot stays blank, so z x c v sit square under s d f g
       b.append(...five(r.slice(5))); L.append(a); R.append(b); });
-    const bl = el("div", { class: "krow bottom" }), br = el("div", { class: "krow bottom slide" }); if (shiftKey) bl.append(shiftKey); bl.append(symKey(), accKey(), spaceKey()); const spR = spaceKey(), bkR = backKey(); br.append(spR, bkR); L.append(bl); R.append(br);   // the left half's bottom row: ⇧ (letter-sized) beside ?!’, then àéñ and the space bar; the right half's: a space bar the same width as the left one, sliding left and right, and BACKSPACE, sliding up into the blank corner above — placed by weApplySlide; the chip tools are the tool bar
+    const bl = el("div", { class: "krow bottom" }), br = el("div", { class: "krow bottom slide" }); if (shiftKey) bl.append(shiftKey); bl.append(symKey(), accKey(), spaceKey()); const spR = key([el("span", {}, "space"), el("span", { class: "mv" }, "(moveable)")], spaceFn, "space"), bkR = key([el("span", { class: "lbl1" }, el("span", { class: "sarr" }, "←"), el("span", { class: "cap" }, "BACKSPACE")), el("span", { class: "mv" }, "(moveable)")], back, "backk", "delete"); br.append(spR, bkR); L.append(bl); R.append(br);
+    { const rib = el("div", { class: "kbRibbon" }, "2-sec tap / or double-click on spacebar / backspace to unseat them for positional adjustment."), tip = el("div", { class: "kbTip", title: "How to move the space bar and BACKSPACE" }, "?");   // a tab at the half's bottom right corner: tapped, a ribbon slides out with the how-to
+      tip.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); rib.classList.toggle("on"); }); rib.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); rib.classList.remove("on"); }); R.append(tip, rib); }   // the left half's bottom row: ⇧ (letter-sized) beside ?!’, then àéñ and the space bar; the right half's: a space bar the same width as the left one, sliding left and right, and BACKSPACE, sliding up into the blank corner above — placed by weApplySlide; the chip tools are the tool bar
     const gripFor = side => { const gp = el("div", { class: "grip", title: "Pull this half of the keyboard apart, and drop it where you like" });
       gp.addEventListener("pointerdown", e => {                                            // the drag follows the pointer anywhere on the screen, and a re-drawn keyboard does not end it
         e.preventDefault(); e.stopPropagation(); const st = { id: e.pointerId, x: e.clientX, from: WE.split[side] };
@@ -10300,7 +10315,7 @@ function renderWeKeys() {
       return gp; };
     L.prepend(gripFor("l")); R.prepend(gripFor("r"));
     const split = el("div", { class: "kbSplit" }); split.append(L, R); k.append(split); weApplySplit(L, R);
-    weApplySlide(R); weSlideWire(spR, "x", R); weSlideWire(bkR, "y", R);                  // the right half's space bar and BACKSPACE take their slid positions, and can be slid again
+    weApplySlide(R); weSlideWire(spR, "x", R, spaceFn); weSlideWire(bkR, "y", R, back);   // the right half's space bar and BACKSPACE take their slid positions, and can be unseated and slid again
   }
   if (wePanelHidden && !deck) return;
   /* the tool panel: four columns — the modes, SPLIT and UNDO on the left; DELETE / SELECT, the nudges, SHORTEN / WIDEN and REDO in the middle; the NEW CHIP keys and SET CHIP on the right */
@@ -10339,7 +10354,7 @@ function renderWeKeys() {
 /* the right half's bottom row: a space bar the width of the left one, slid left or right, and BACKSPACE, two slots wide at the row's right
    end, slid up into the blank corner of the third row (its left half under l) or down onto the bottom row. They never overlap: the space
    bar may reach the bottom right corner only once BACKSPACE is fully up; with BACKSPACE down it stops a gap short of it */
-const KB_GAP = 4, KB_ROW_GAP = 3;                                                             // the keys' gap within a row, and the rows' gap, as the CSS sets them
+const KB_GAP = 4, KB_ROW_GAP = 3, KB_UP = 0.97;                                               // the keys' gap within a row, the rows' gap (as the CSS sets them), and how far up its track BACKSPACE counts as fully up
 function weSlideGeo(row) {                                                                   // read off the rows themselves, so Flat (no gaps) and Standard alike come out square
   const half = row.parentElement, rows = [...half.querySelectorAll(".krow:not(.slide)")], slot4 = rows[1] && rows[1].children[3], W = row.clientWidth;
   const backX = slot4 ? slot4.offsetLeft - row.offsetLeft : 3 * ((W - 4 * KB_GAP) / 5 + KB_GAP), backW = W - backX;   // BACKSPACE: from slot four's edge (under l) to the row's end
@@ -10348,24 +10363,42 @@ function weSlideGeo(row) {                                                      
 }
 function weApplySlide(R) {
   const row = R.querySelector(".krow.slide"); if (!row) return; const sp = row.querySelector(".space"), bk = row.querySelector(".backk"); if (!sp || !bk) return;
-  const g = weSlideGeo(row), up = S.kbBackUp ? 1 : 0;
+  const g = weSlideGeo(row), up = clamp(S.kbBackUp || 0, 0, 1);                                     // BACKSPACE anywhere along its track: 0 down on the bottom row, 1 fully up in the corner above
   sp.style.width = g.spaceW + "px"; bk.style.width = g.backW + "px";
-  sp.style.left = Math.round(clamp((S.kbSpace || 0) * g.maxUp, 0, up ? g.maxUp : g.maxDown)) + "px";   // with BACKSPACE down the space bar stops short of it
+  sp.style.left = Math.round(clamp((S.kbSpace || 0) * g.maxUp, 0, up >= KB_UP ? g.maxUp : g.maxDown)) + "px";   // unless BACKSPACE is fully up the space bar stops short of it
   bk.style.left = g.backX + "px"; bk.style.top = -Math.round(up * g.lift) + "px";                    // exactly slot four's edge: its left half under l
 }
-function weSlideWire(btn, axis, R) {
-  let st = null; const box = $("wordEdit");
-  btn.addEventListener("pointerdown", e => { st = { id: e.pointerId, x: e.clientX, y: e.clientY, x0: parseFloat(btn.style.left) || 0, y0: parseFloat(btn.style.top) || 0, moved: false }; });
-  const move = e => { if (!st || e.pointerId !== st.id) return; const scale = box.getBoundingClientRect().width / box.offsetWidth || 1, dx = (e.clientX - st.x) / scale, dy = (e.clientY - st.y) / scale;
-    if (!st.moved) { if (Math.hypot(dx, dy) < 6) return; st.moved = true; btn.dispatchEvent(new PointerEvent("pointerleave")); try { btn.setPointerCapture(st.id); } catch (x) {} }   // past a nudge it is a slide, not a key press: the key lets go
-    const g = weSlideGeo(btn.parentElement);
-    if (axis === "x") btn.style.left = clamp(st.x0 + dx, 0, S.kbBackUp ? g.maxUp : g.maxDown) + "px"; else btn.style.top = clamp(st.y0 + dy, -g.lift, 0) + "px";
-    e.preventDefault(); };
-  const done = e => { if (!st || e.pointerId !== st.id) return; const was = st; st = null; if (!was.moved) return;
-    const g = weSlideGeo(btn.parentElement);
-    if (axis === "y") S.kbBackUp = -(parseFloat(btn.style.top) || 0) > g.lift / 2 ? 1 : 0;                                    // BACKSPACE settles up or down, whichever is nearer
+/* unseat, slide, set: a two-second hold (or, with a mouse, a double click) unseats the key — it lifts, and from then on a press drags it and a
+   release leaves it where it was dropped, unseated still; one plain tap on it then sets it in place. Seated, it types or deletes as ever
+   (with a mouse a lone click fires once the double-click window has passed). BACKSPACE may stop anywhere along its track; the space bar
+   gives way as BACKSPACE comes down, so the two never overlap */
+function weSlideWire(btn, axis, R, fn) {
+  const box = $("wordEdit"), LONG = 2000, DBL = 320; let st = null, hold = null, clickT = null, lastUp = 0;
+  const geo = () => weSlideGeo(btn.parentElement), unseated = () => btn.classList.contains("unseated");
+  const cancelKey = () => btn.dispatchEvent(new PointerEvent("pointerleave"));                    // the key helper lets go: this release types or deletes nothing
+  const unseat = () => { btn.classList.add("unseated"); cancelKey(); if (st) { st.moving = true; st.justUnseated = true; try { btn.setPointerCapture(st.id); } catch (x) {} } };
+  const seat = () => { btn.classList.remove("unseated"); const g = geo();
+    if (axis === "y") { S.kbBackUp = clamp(-(parseFloat(btn.style.top) || 0) / g.lift, 0, 1); if (S.kbBackUp < KB_UP) S.kbSpace = Math.min(S.kbSpace || 0, g.maxDown / g.maxUp); }
     else S.kbSpace = clamp((parseFloat(btn.style.left) || 0) / g.maxUp, 0, 1);
     savePrefs(); weApplySlide(R); };
+  btn.addEventListener("contextmenu", e => e.preventDefault());
+  btn.addEventListener("pointerdown", e => {
+    st = { id: e.pointerId, x: e.clientX, y: e.clientY, x0: parseFloat(btn.style.left) || 0, y0: parseFloat(btn.style.top) || 0, moved: false, moving: unseated(), justUnseated: false, mouse: e.pointerType === "mouse" };
+    if (st.moving) { cancelKey(); try { btn.setPointerCapture(e.pointerId); } catch (x) {} return; }   // already unseated: this press drags it, or taps it home
+    clearTimeout(hold); hold = setTimeout(() => { if (st && !st.moved) unseat(); }, LONG);            // a two-second hold unseats it
+    if (st.mouse) cancelKey();                                                                         // a mouse: the key fires on a settled single click, so a double click can unseat instead
+  });
+  const move = e => { if (!st || e.pointerId !== st.id) return; const scale = box.getBoundingClientRect().width / box.offsetWidth || 1, dx = (e.clientX - st.x) / scale, dy = (e.clientY - st.y) / scale;
+    if (!st.moving) { if (Math.hypot(dx, dy) > 6) { st.moved = true; clearTimeout(hold); } return; }   // seated: a slip only cancels the hold
+    if (Math.hypot(dx, dy) > 4) st.moved = true; const g = geo();
+    if (axis === "x") btn.style.left = clamp(st.x0 + dx, 0, (S.kbBackUp || 0) >= KB_UP ? g.maxUp : g.maxDown) + "px";
+    else { const top = clamp(st.y0 + dy, -g.lift, 0); btn.style.top = top + "px"; const sp = btn.parentElement.querySelector(".space"); if (-top / g.lift < KB_UP && sp && (parseFloat(sp.style.left) || 0) > g.maxDown) sp.style.left = g.maxDown + "px"; }   // coming down: the space bar gives way, never under it
+    e.preventDefault(); };
+  const done = e => { if (!st || e.pointerId !== st.id) return; const was = st; st = null; clearTimeout(hold);
+    if (was.moving) { if (!was.moved && !was.justUnseated) seat(); return; }                          // unseated: a plain tap sets it; a drop leaves it unseated where it is
+    if (was.moved) return;
+    if (was.mouse) { const now = performance.now(); if (now - lastUp < DBL) { clearTimeout(clickT); lastUp = 0; btn.classList.add("unseated"); return; } lastUp = now; clearTimeout(clickT); clickT = setTimeout(fn, DBL); }   // the second click of a double unseats; a lone click fires the key once the window has passed
+  };
   btn.addEventListener("pointermove", move); btn.addEventListener("pointerup", done); btn.addEventListener("pointercancel", done);
 }
 function weApplySplit(L, R) {
