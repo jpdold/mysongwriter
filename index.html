@@ -5971,11 +5971,13 @@ function loadPrefs() {
   S.duoBars = p.duoBars === 8 ? 8 : 4; S.duoBand = p.duoBand === "bass" ? "bass" : "acc"; S.beatDividers = p.beatDividers !== false;
   S.focusBand = Object.assign({ mel: { on: false, lo: 64 }, acc: { on: false, lo: 52 }, bass: { on: false, lo: 40 } }, p.focusBand || {}); for (const w of ["mel", "acc", "bass"]) { if (!S.focusBand[w]) S.focusBand[w] = { on: false, lo: { mel: 64, acc: 52, bass: 40 }[w] }; S.focusBand[w].lo = clamp(Math.round((S.focusBand[w].lo != null ? S.focusBand[w].lo : { mel: 64, acc: 52, bass: 40 }[w]) / 2) * 2, 24, 96); }
   S.doors = Object.assign({ mel: true, acc: true, bass: true }, p.doors || {});
-  S.clef = Object.assign({ on: false, kind: "treble" }, p.clef || {}); if (!CLEFS[S.clef.kind]) S.clef.kind = "treble";
+  S.clefs = Object.assign({ mel: { on: false, kind: "treble" }, acc: { on: false, kind: "treble" }, bass: { on: false, kind: "bass" } }, p.clefs || {});
+  if (p.clef && p.clef.on && !p.clefs) ["mel", "acc", "bass"].forEach(w => { S.clefs[w] = { on: true, kind: p.clef.kind }; });   // an older setting: one clef for all
+  for (const w of ["mel", "acc", "bass"]) if (!S.clefs[w] || !CLEFS[S.clefs[w].kind]) S.clefs[w] = { on: false, kind: w === "bass" ? "bass" : "treble" };
   S.lyricFont = p.lyricFont || "sans"; S.chipMode = "multi"; S.keepAwake = p.keepAwake !== false; S.paper = Object.assign({ mel: "default", acc: "default", bass: "default" }, p.paper || {}); S.quick = Object.assign({ cells: QUICK_DEFAULT.slice(), locked: true, float: false, x: null, y: null }, p.quick || {}); if (!Array.isArray(S.quick.cells) || S.quick.cells.join() === QUICK_OLD.join()) S.quick.cells = QUICK_DEFAULT.slice(); if (S.quick.cells.length === 8) S.quick.cells.push("sl", "ti", "gh", "dt"); if (S.quick.cells.length !== 12) S.quick.cells = QUICK_DEFAULT.slice();   // a third row joined: slur, tie, ghost note, dot S.winState = Object.assign({ mel: "open", acc: "closed", bass: "closed" }, p.winState || {}); S.zoomWin = Object.assign({ mel: 1, acc: 1, bass: 1 }, p.zoomWin || {}); S.midi = p.midi || {}; S.viewSpan = [1, 2, 3, 4].includes(p.viewSpan) ? p.viewSpan : 1; if (p.softKb != null) S.softKb = p.softKb2 == null ? true : !!p.softKb2; S.kbPos = p.kbPos || null;   // the app keyboard, on unless switched off S.layout = p.layout === "stack" ? "stack" : "rolled";
   applyTheme();
 }
-function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, deck: S.deck, rhyShown: S.rhyShown, lyrShown: S.lyrShown, partsShown: S.partsShown, dynShown: S.dynShown, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, beatLines: S.beatLines, rangeLock: S.rangeLock, kbLayout: S.kbLayout, kbTheme: S.kbTheme, kbSpace: S.kbSpace, kbBackUp: S.kbBackUp, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, keepAwake: S.keepAwake, paper: S.paper, quick: S.quick, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout, duoBars: S.duoBars, duoBand: S.duoBand, beatDividers: S.beatDividers, focusBand: S.focusBand, doors: S.doors, clef: S.clef }); }
+function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, deck: S.deck, rhyShown: S.rhyShown, lyrShown: S.lyrShown, partsShown: S.partsShown, dynShown: S.dynShown, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, beatLines: S.beatLines, rangeLock: S.rangeLock, kbLayout: S.kbLayout, kbTheme: S.kbTheme, kbSpace: S.kbSpace, kbBackUp: S.kbBackUp, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, keepAwake: S.keepAwake, paper: S.paper, quick: S.quick, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout, duoBars: S.duoBars, duoBand: S.duoBand, beatDividers: S.beatDividers, focusBand: S.focusBand, doors: S.doors, clefs: S.clefs }); }
 function applyTheme() {
   const r = document.documentElement;
   if (S.theme === "dark") r.setAttribute("data-theme", "dark"); else r.removeAttribute("data-theme");
@@ -6062,7 +6064,7 @@ function allocate() {
     const kids = [...side.children].filter(k => k.offsetHeight > 0 && !k.hidden), cs = getComputedStyle(side), gap = parseFloat(cs.rowGap) || parseFloat(cs.gap) || 0;
     const need = kids.reduce((a, k) => a + k.offsetHeight + (parseFloat(getComputedStyle(k).marginTop) || 0), 0) + Math.max(0, kids.length - 1) * gap + (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
     const [rows0] = WIN[S.winSize][w], step = Math.round(STEPS[w] * (STEP_K[S.noteSize] || 1) * 10) / 10; let rows = rows0;
-    if (clefOn()) { const [a, b] = focusRange(w); rows = Math.max(rows, b - a + 1 + 4); }                 // a clef's whole span in view, the Grand Stave's two staves and their gap included
+    if (clefOn(w)) { const [a, b] = focusRange(w); rows = Math.max(rows, b - a + 1 + 4); }                 // a clef's whole span in view, the Grand Stave's two staves and their gap included
     rows = Math.max(rows, Math.ceil((need - 13) / step));                                                // and enough rows for the column beside the stave (the frame: 10px of padding and 3px of border)
     PHONE_ROWS[w] = rows;
   }
@@ -6138,7 +6140,7 @@ const viewBars = () => { const f = viewFirst(), out = []; for (let i = 0; i < sp
 let GEO = {};
 function geo(win) {
   const svg = $(win + "Svg"), B = barBeats(), { rows, step } = rowsOf(win), lo = viewOf(win), hi = lo + rows - 1;
-  const n = spanNow(), first = viewFirst(), W1 = Math.max(120, svg.parentNode.clientWidth || $("rhyStrip").querySelector(".body").clientWidth || 300), padL = clefNow() ? Math.min(Math.round(W1 * 0.42), Math.round(step * (clefNow().bands ? 8.8 : 6.6))) : 0, padR = 0, padT = 5, padB = 5;   // padL: room for the clef   // no pad at the ends: every beat, first and last, is exactly one share of the width
+  const n = spanNow(), first = viewFirst(), W1 = Math.max(120, svg.parentNode.clientWidth || $("rhyStrip").querySelector(".body").clientWidth || 300), padL = clefNow(win) ? Math.min(Math.round(W1 * 0.42), Math.round(step * (clefNow(win).bands ? 8.8 : 6.6))) : 0, padR = 0, padT = 5, padB = 5;   // padL: room for the clef   // no pad at the ends: every beat, first and last, is exactly one share of the width
   const bars = viewBars(), starts = {}; let accB = 0;
   for (const b of bars) { starts[b] = accB; accB += barBeats(b); }
   const beatPx = (W1 - padL - padR) / (noteSizeNow() === "x" || duoMode() ? Math.max(accB, B) : B);   // a bar to the window's width — or, at Micro, every bar in view across it side by side, nothing to scroll
@@ -6802,12 +6804,14 @@ const FOCUS_LO = { mel: 64, acc: 52, bass: 40 };
 /* the Clef view: the same five-line grid slid to a clef's own place — its bottom line's pitch — with the clef's symbol at the stave's head; the Grand Stave is two
    of them, treble over bass, a brace joining them and the bar lines running through the gap where middle C lives (never drawn: a ledger line from either staff) */
 const CLEFS = { grand: { name: "Grand Stave", bands: [43, 64] }, treble: { name: "Treble", lo: 64, glyph: "𝄞", line: 2 }, alto: { name: "Alto", lo: 53, glyph: "𝄡", line: 3 }, tenor: { name: "Tenor", lo: 50, glyph: "𝄡", line: 4 }, bass: { name: "Bass", lo: 43, glyph: "𝄢", line: 4 } };
-const clefOn = () => !!(S.clef && S.clef.on && CLEFS[S.clef.kind]);
-const clefNow = () => clefOn() ? CLEFS[S.clef.kind] : null;
-const focusOn = win => { if (clefOn()) return true; if (!deckMode()) return true; const f = focusOf(win); return !!(f && f.on); };   // on the phone every stave shows its five middle lines, the rest behind doors; in the Clef view every stave has its clef's lines
+const clefOf = win => (S.clefs && S.clefs[win]) || { on: false, kind: "treble" };            // each stave chooses its own clef
+const clefOn = win => { const c = clefOf(win); return !!(c.on && CLEFS[c.kind]); };
+const clefNow = win => clefOn(win) ? CLEFS[clefOf(win).kind] : null;
+const anyClef = () => ["mel", "acc", "bass"].some(clefOn);
+const focusOn = win => { if (clefOn(win)) return true; if (!deckMode()) return true; const f = focusOf(win); return !!(f && f.on); };   // on the phone every stave shows its five middle lines, the rest behind doors; in the Clef view a stave has its clef's lines
 /* the five-line bands of a stave, bottom to top: one (its own range, or the clef's) — or two for the Grand Stave */
 function focusBands(win) {
-  const c = clefNow();
+  const c = clefNow(win);
   if (c) return (c.bands || [c.lo]).map(lo => [lo, lo + 8]);
   const f = focusOf(win), lo = f && f.lo != null ? f.lo : (FOCUS_LO[win] || 64); return [[lo, lo + 8]];
 }
@@ -6815,7 +6819,7 @@ const focusRange = win => { const b = focusBands(win); return [b[0][0], b[b.leng
 const inBands = (win, m) => focusBands(win).some(([lo, hi]) => m >= lo && m <= hi);
 function bandFor(win, m) { const b = focusBands(win); let best = b[0], d0 = Infinity; for (const x of b) { const d = m < x[0] ? x[0] - m : m > x[1] ? m - x[1] : 0; if (d < d0) { d0 = d; best = x; } } return best; }   // the band a row belongs to, else the nearest
 const lineRow = (win, m) => focusOn(win) ? (((m - bandFor(win, m)[0]) % 2) + 2) % 2 === 0 : m % 2 === 0;   // Lines and spaces: a line every other row — counted from the band's bottom line when a band is set
-const clefPad = g => { const c = clefNow(); return c ? Math.min(Math.round((g.W1 || 300) * 0.42), Math.round(g.step * (c.bands ? 8.8 : 6.6))) : 0; };   // room at the stave's head for the clef (and the brace): about three staff spaces, never more than two fifths of the stave
+const clefPad = g => { const c = clefNow(g.win); return c ? Math.min(Math.round((g.W1 || 300) * 0.42), Math.round(g.step * (c.bands ? 8.8 : 6.6))) : 0; };   // room at the stave's head for the clef (and the brace): about three staff spaces, never more than two fifths of the stave
 function focusHome(win) { const { rows } = rowsOf(win), [minV, , maxV] = viewLimits(win, rows), [blo, bhi] = focusRange(win); return clamp(blo - Math.floor((rows - (bhi - blo + 1)) / 2), minV, maxV); }
 function focusReturn(win) { S.song.view[WIN_LO[win]] = focusHome(win); S.sel = null; S.ghost = null; renderAll(); }
 function focusCaps(g) {                                                                 // the y of the first (top) and fifth (bottom) lines, as drawStaff draws them
@@ -6837,23 +6841,29 @@ function drawFocusCover(svg, g) {
 }
 /* the clef at the stave's head: the treble's curl on the second line, the C clef's centre on the third (alto) or fourth (tenor), the bass's dots about the fourth;
    the Grand Stave a brace joining its two staves. Drawn in the music glyphs the device has; sized to the rows, so they scale with the spacing and the note size */
-const CLEF_FONT = "Bravura, 'Noto Music', 'Segoe UI Symbol', 'Apple Symbols', 'Noto Sans Symbols2', Georgia, serif";
-const CLEF_BOX = {};
-function clefBox(svg, glyph, font) {                                                    // the glyph's ink box at 100px, measured once: the device's own font decides its shape
-  const key = glyph + "|" + font; if (CLEF_BOX[key]) return CLEF_BOX[key];
-  const t = svgEl("text", { x: 0, y: 0, "font-size": 100, "font-family": font }, glyph); svg.append(t); const b = t.getBBox(); t.remove();
-  return CLEF_BOX[key] = { y: b.y, h: b.height || 100, w: b.width || 60 };
-}
-const CLEF_SPAN = { treble: [-5.39, 1.63], bass: [-4.05, -0.46], alto: [-4.02, 0.02], tenor: [-4.02, 0.02] };   // ink top and bottom in staff spaces from the bottom line (up is negative): the engraver's boxes
+/* the clef shapes, drawn in staff spaces (x across, y down, the bottom line at 0, the top line at −4) and scaled alike in both directions to the
+   rows, so they grow and shrink with the spacing but never lean; each is a stroke with a filled ball or dots, after the engraved forms */
+const CLEF_SHAPES = {
+  treble: { w: 2.7, top: -5.4, bot: 1.75, strokes: [{ d: "M 1.55 -5.15 C 1.05 -4.7 0.85 -3.9 1.4 -3.05 C 1.95 -2.35 2.5 -1.85 2.4 -1.05 C 2.3 -0.2 1.45 0.25 0.85 -0.15 C 0.3 -0.55 0.35 -1.5 1.05 -1.75 C 1.6 -1.95 2.05 -1.45 1.85 -0.95 C 1.7 -0.6 1.25 -0.55 1.15 -0.85", w: 0.3 }, { d: "M 1.55 -5.15 C 1.9 -4.5 1.8 -3.6 1.55 -2.7 L 1.15 0.6 C 1.05 1.25 0.6 1.55 0.35 1.2", w: 0.24 }], dots: [[0.55, 1.4, 0.28]] },
+  bass:   { w: 2.95, top: -4.15, bot: -0.15, strokes: [{ d: "M 0.55 -2.95 C 0.7 -3.75 1.6 -4.15 2.1 -3.75 C 2.55 -3.35 2.5 -2.5 2.0 -1.75 C 1.55 -1.1 0.9 -0.55 0.3 -0.25", w: 0.32 }], dots: [[0.55, -2.95, 0.33], [2.7, -3.45, 0.2], [2.7, -2.55, 0.2]] },
+  cclef:  { w: 2.55, top: -4.15, bot: 0.15, strokes: [{ d: "M 0.35 0 L 0.35 -4", w: 0.36 }, { d: "M 0.9 0 L 0.9 -4", w: 0.12 }, { d: "M 1.05 -2 C 1.55 -2.0 2.35 -2.15 2.4 -2.85 C 2.45 -3.55 2.0 -4.05 1.5 -3.85 C 1.25 -3.75 1.2 -3.45 1.4 -3.35", w: 0.26 }, { d: "M 1.05 -2 C 1.55 -2.0 2.35 -1.85 2.4 -1.15 C 2.45 -0.45 2.0 0.05 1.5 -0.15 C 1.25 -0.25 1.2 -0.55 1.4 -0.65", w: 0.26 }], dots: [[1.35, -3.25, 0.16], [1.35, -0.75, 0.16]] },
+};
+const CLEF_SHAPE = { treble: "treble", bass: "bass", alto: "cclef", tenor: "cclef" };
+const CLEF_LIFT = { treble: 0, bass: 0, alto: 0, tenor: 1 };                                 // the tenor's C clef sits one space higher: its centre on the fourth line
 function drawClefs(svg, g) {
-  const c = clefNow(); if (!c) return;
-  const bands = focusBands(g.win), pad = clefPad(g), sp = g.step * 2, lineY = m => S.halfLines ? g.y(m) : g.y(m) - g.step / 2;
-  const glyph = (kind, lo) => { const k = CLEFS[kind], [a, b] = CLEF_SPAN[kind], y1 = lineY(lo), top = y1 + a * sp, bot = y1 + b * sp, box = clefBox(svg, k.glyph, CLEF_FONT), f = (bot - top) / box.h * 100;
-    svg.append(svgEl("text", { class: "clef", x: pad - g.step * 0.6, y: top - box.y * f / 100, "text-anchor": "end", "font-size": f, "font-family": CLEF_FONT, fill: css("--line"), "pointer-events": "none" }, k.glyph)); };
+  const c = clefNow(g.win); if (!c) return;
+  const bands = focusBands(g.win), pad = clefPad(g), sp = g.step * 2, lineY = m => S.halfLines ? g.y(m) : g.y(m) - g.step / 2, ink = css("--line");
+  const glyph = (kind, lo) => {
+    const sh = CLEF_SHAPES[CLEF_SHAPE[kind]], x0 = pad - g.step * 0.5 - sh.w * sp, y0 = lineY(lo) - CLEF_LIFT[kind] * sp;   // its right edge half a row before beat 1; its bottom line on the staff's
+    const grp = svgEl("g", { class: "clef", transform: `translate(${x0} ${y0}) scale(${sp})`, "pointer-events": "none" });
+    for (const st of sh.strokes) grp.append(svgEl("path", { d: st.d, fill: "none", stroke: ink, "stroke-width": st.w, "stroke-linecap": "round", "stroke-linejoin": "round" }));
+    for (const [cx, cy, r] of sh.dots) grp.append(svgEl("circle", { cx, cy, r, fill: ink }));
+    svg.append(grp);
+  };
   if (c.bands) { glyph("bass", bands[0][0]); glyph("treble", bands[1][0]);
     const top = lineY(bands[1][1]) - sp * 0.15, bot = lineY(bands[0][0]) + sp * 0.15, h = bot - top, x0 = g.step * 0.35, w = g.step * 1.1, mid = top + h / 2;   // the brace: a thin curly path the height of both staves, at the far left
-    svg.append(svgEl("path", { class: "clef brace", d: `M ${x0 + w} ${top} C ${x0 + w * 0.15} ${top + h * 0.1}, ${x0 + w} ${mid - h * 0.12}, ${x0} ${mid} C ${x0 + w} ${mid + h * 0.12}, ${x0 + w * 0.15} ${bot - h * 0.1}, ${x0 + w} ${bot}`, fill: "none", stroke: css("--line"), "stroke-width": Math.max(1.5, g.step * 0.28), "stroke-linecap": "round", "pointer-events": "none" })); }
-  else glyph(S.clef.kind, bands[0][0]);
+    svg.append(svgEl("path", { class: "clef brace", d: `M ${x0 + w} ${top} C ${x0 + w * 0.15} ${top + h * 0.1}, ${x0 + w} ${mid - h * 0.12}, ${x0} ${mid} C ${x0 + w} ${mid + h * 0.12}, ${x0 + w * 0.15} ${bot - h * 0.1}, ${x0 + w} ${bot}`, fill: "none", stroke: ink, "stroke-width": Math.max(1.5, g.step * 0.28), "stroke-linecap": "round", "pointer-events": "none" })); }
+  else glyph(clefOf(g.win).kind, bands[0][0]);
 }
 function drawLedgers(svg, g, bi, bar, ink, part = "melody") {
   const { rx } = headGeom(g), w = rx * 2.6, hl = S.halfLines;
@@ -8749,7 +8759,7 @@ function openSettings() {
     el("div", { class: "pLbl" }, "Window sizing"), seg([["s", "Small"], ["m", "Medium"], ["l", "Large"]], S.winSize, v => { S.winSize = v; savePrefs(); renderAll(); }, okWin),
     el("div", { class: "mrow" }, el("button", { class: "btn sm", onclick: () => { S.zoomWin = { mel: 1, acc: 1, bass: 1 }; S.winState = S.layout === "rolled" ? { mel: "open", acc: "closed", bass: "closed" } : { mel: "open", acc: "open", bass: "open" }; savePrefs(); renderAll(); openSettings(); } }, "Reset windows"), el("span", { class: "tiny" }, "Windows share the screen: melody gets the most. The button under each ⚙ shrinks, closes and reopens a window; pinch a window to zoom it.")),
     sec("Staves"),
-    el("div", { class: "mrow" }, el("button", { class: "btn sm" + (clefOn() ? " acc" : ""), onclick: () => { closeModal(); openClefChooser(); } }, clefOn() ? `Clef view: ${clefNow().name} — change…` : "Switch to Clef…"), el("span", { class: "tiny" }, "Grand Stave, Treble, Alto, Tenor or Bass: every stave slides its five lines to the clef's place, the clef at its head")),
+    el("div", { class: "mrow" }, el("button", { class: "btn sm" + (anyClef() ? " acc" : ""), onclick: () => { closeModal(); openClefChooser(null); } }, anyClef() ? "Clef view: " + ["mel", "acc", "bass"].filter(clefOn).map(w => DECK_NAME[w].charAt(0) + DECK_NAME[w].slice(1).toLowerCase() + " " + clefNow(w).name).join(", ") + " — change…" : "Switch to Clef…"), el("span", { class: "tiny" }, "Grand Stave, Treble, Alto, Tenor or Bass for every stave at once; each stave's own clef from its ⚙")),
     el("div", { class: "mrow" }, toggle("Beat lines inside the bars (the bar lines stay, and so does the spacing)", S.beatDividers !== false, v => { S.beatDividers = v; savePrefs(); renderAll(); })),
     el("div", { class: "mrow" }, toggle("Note boxes — the solid orange box drawn around each melody note, at its own duration", S.beatLines, v => { S.beatLines = v; savePrefs(); renderAll(); openSettings(); })),
     el("div", { class: "mrow" }, toggle("Lines and spaces (half steps alternate line, space, line, space; off = one half step per space)", S.halfLines, v => { S.halfLines = v; savePrefs(); renderAll(); openSettings(); })),
@@ -8799,18 +8809,20 @@ function foldable(items, key, reopen) {
 }
 /* the five-line focus row of a stave's settings: the switch (on the deck; on the phone the five lines are always on) and the range the five lines show */
 /* the Clef view's chooser: pick a clef, and every stave takes its lines; Leave puts the staves back as they were */
-function openClefChooser() {
-  const body = [el("div", { class: "tiny" }, "Every stave slides its five-line grid to the clef's own place, the clef at its head; the Grand Stave is treble over bass, joined by a brace, middle C in the gap.")];
+function openClefChooser(win = null) {
+  const wins = win ? [win] : ["mel", "acc", "bass"], who = win ? DECK_NAME[win].charAt(0) + DECK_NAME[win].slice(1).toLowerCase() : "every stave", cur = clefOf(win || "mel");
+  const body = [el("div", { class: "tiny" }, `${who.charAt(0).toUpperCase() + who.slice(1)} slides its five-line grid to the clef's own place, the clef at its head; the Grand Stave is treble over bass, joined by a brace, middle C in the gap.${win ? " Each stave has its own clef." : ""}`)];
   const grid = el("div", { class: "menuList" });
-  for (const [k, c] of Object.entries(CLEFS)) grid.append(el("button", { class: S.clef.on && S.clef.kind === k ? "on" : "", onclick: () => { S.clef = { on: true, kind: k }; if (c.bands) ["mel", "acc", "bass"].forEach(w => { S.zoomWin[w] = Math.min(S.zoomWin[w] || 1, deckMode() ? 0.8 : 0.55); }); /* the Grand Stave needs thirty rows: it starts tighter, so both staves are in view */ savePrefs(); closeModal(); renderAll(); ["mel", "acc", "bass"].forEach(w => { S.song.view[WIN_LO[w]] = focusHome(w); }); renderAll(); toast(`Clef view: ${c.name}`); } }, el("span", { class: "ic" }, c.glyph || "𝄞𝄢"), c.name + (c.bands ? " — treble over bass" : ` — bottom line ${noteName(c.lo, keyObj(S.song.key))}`)));
-  if (S.clef.on) grid.append(el("button", { onclick: () => { S.clef.on = false; savePrefs(); ["mel", "acc", "bass"].forEach(w => { S.song.view[WIN_LO[w]] = focusHome(w); }); closeModal(); renderAll(); toast("Clef view off"); } }, el("span", { class: "ic" }, "✕"), "Leave the Clef view"));
-  body.push(grid); openModal("Switch to Clef", body);
+  const apply = (on, kind) => { wins.forEach(w => { S.clefs[w] = { on, kind }; if (on && CLEFS[kind].bands) S.zoomWin[w] = Math.min(S.zoomWin[w] || 1, deckMode() ? 0.8 : 0.55); }); savePrefs(); closeModal(); renderAll(); wins.forEach(w => { S.song.view[WIN_LO[w]] = focusHome(w); }); renderAll(); };
+  for (const [k, c] of Object.entries(CLEFS)) grid.append(el("button", { class: win && cur.on && cur.kind === k ? "on" : "", onclick: () => { apply(true, k); toast(`${who.charAt(0).toUpperCase() + who.slice(1)}: ${c.name} clef`); } }, el("span", { class: "ic" }, c.glyph || "𝄞𝄢"), c.name + (c.bands ? " — treble over bass" : ` — bottom line ${noteName(c.lo, keyObj(S.song.key))}`)));
+  if (wins.some(clefOn)) grid.append(el("button", { onclick: () => { apply(false, cur.kind); toast(win ? `${who}: clef view off` : "Clef view off on every stave"); } }, el("span", { class: "ic" }, "✕"), win ? "Leave the Clef view on this stave" : "Leave the Clef view on every stave"));
+  body.push(grid); openModal(win ? `Switch to Clef — ${who}` : "Switch to Clef — every stave", body);
 }
 function focusSettings(body, win) {
   const song = S.song, fb = S.focusBand[win], k = keyObj(song.key), phone = !deckMode(), key = WIN_LO[win];
   body.push(el("div", { class: "pLbl" }, "Five-line focus"));
-  body.push(el("div", { class: "mrow" }, el("button", { class: "btn sm" + (clefOn() ? " acc" : ""), onclick: () => { closeModal(); openClefChooser(); } }, clefOn() ? `Clef view: ${clefNow().name} — change…` : "Switch to Clef…"), el("span", { class: "tiny" }, "every stave on its clef's lines, the clef at its head")));
-  if (clefOn()) return;
+  body.push(el("div", { class: "mrow" }, el("button", { class: "btn sm" + (clefOn(win) ? " acc" : ""), onclick: () => { closeModal(); openClefChooser(win); } }, clefOn(win) ? `Clef view: ${clefNow(win).name} — change…` : "Switch to Clef…"), el("span", { class: "tiny" }, "this stave on its clef's lines, the clef at its head — each stave has its own")));
+  if (clefOn(win)) return;
   if (phone) body.push(el("div", { class: "tiny" }, "On the phone the stave shows its five middle lines, the rest behind two doors in the page's own colour — COVER beside the stave slides them open and closed."));
   else if (win === "mel" && fb.on) body.push(el("div", { class: "tiny" }, "The covers sit behind two doors in the page's own colour; COVER in the column beside the stave slides them open and closed."));
   else body.push(el("div", { class: "mrow" }, toggle("A white cover outside the five middle lines", !!fb.on, v => { fb.on = v; savePrefs(); if (v) song.view[key] = focusHome(win); renderAll(); openWinSettings(win); })));
@@ -9876,7 +9888,7 @@ function openHelp() {
     h("After an entry", "A note you have just placed stays selected, so the pitch arrows act on it at once; the length and dot buttons pick the length of the next note (tap the note itself to select it deliberately if you want to change its length), and a tap on another row in its column re-pitches it. A tap anywhere else on the stave lets it go: in the same beat that tap places the next note straight away at the next free spot, with the picked length; in another beat it activates that beat."),
     h("Five-line focus", "Each stave's ⚙ → Five-line focus covers the stave white outside the five middle lines (choose the pitch the bottom line shows). The rest of the register is still there to scroll to; notes written above or below sit on the cover with ledger lines, and the ↩ LINES button that appears on the cover brings the five lines back. The register lock still holds if it is on. On the phone every stave shows its five lines from the start, the covers behind two doors in the page's own colour — COVER beside the stave slides both open at once, one up and one down, and closed again; scroll off the five lines and they stand open. On a wide screen the melody has the same doors whenever its five-line focus is on, COVER in the column beside it."),
     h("Beside the stave", "Under each stave's gear: ⌫ takes back the last note entered on that stave (the words untouched), UNDO undoes; |<>| and >|< set the lines further apart or closer together a step at a time, the notes and the clef scaling with them, between the legible least and the widest; on the phone the SELECT, DELETE, REPEAT, COPY and MOVE tools stack beneath them, and ▶ BAR, ▶ SELECT and CHORD sit on the palette's rests row. The play buttons and the tempo live in the pallet at the foot of the page."),
-    h("Clef view", "Settings → Staves → Switch to Clef (or a stave's ⚙): Grand Stave, Treble, Alto, Tenor or Bass. Every stave slides its five-line grid to the clef's own place — Treble's bottom line E4, Alto's F3, Tenor's D3, Bass's G2 — with the clef at its head, ledger lines out to any note beyond; the Grand Stave is treble over bass, joined by a brace, the bar lines running through the gap where middle C sits on a ledger line from either staff. Leave the Clef view from the same chooser."),
+    h("Clef view", "Settings → Staves → Switch to Clef sets a clef for every stave at once; each stave's ⚙ sets its own, independently of the others: Grand Stave, Treble, Alto, Tenor or Bass. A stave slides its five-line grid to the clef's own place — Treble's bottom line E4, Alto's F3, Tenor's D3, Bass's G2 — with the clef at its head, ledger lines out to any note beyond; the Grand Stave is treble over bass, joined by a brace, the bar lines running through the gap where middle C sits on a ledger line from either staff. Leave the Clef view from the same chooser."),
     h("Long notes", "A note longer than the room left in its beat is dealt out beat by beat and tied on — what fits the beat it starts in, then a beat at a time, each piece the largest values that fill it: a half note on a beat is two tied quarters, a quarter on the \"and\" two tied eighths. It runs on through the following beats, and into the next bars, as long as those beats are empty; in chord mode it does not matter what is already there. A piece that starts part-way through a beat stands alone (never beamed to its neighbours). The white band along the top and bottom of the stave runs from the note to where it ends. If something is already in the way, or the song ends first, the note is refused with a message saying there is not enough space."),
     h("Full screen", "☰ → Full screen hides the browser bars (Android, desktop). On iPhone, use Share → Add to Home Screen; the icon then opens the app with no address bar at all."),
     h("Blank slate", "☰ → New song… opens Setup for name, genre, key, time signature and tempo (☰ → Song setup changes them later). You work one bar at a time — ← → or the dots move between bars; tap the bar name for sections. ▶ at the top plays from this bar; the small ▶ beside each window plays that part alone."),
