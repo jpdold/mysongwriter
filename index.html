@@ -195,7 +195,7 @@ svg text { pointer-events: none; }
 .win .chordBtn .ico { width: 20px; height: 20px; display: block; }
 .win .chordBtn.on { background: linear-gradient(#ffd27a, #f5a623); color: #111; border-color: #a86d10; }
 @keyframes chordBlink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: .4; } }
-.win .chordBtn.on, #app.deck button.tplay#tChord.on { animation: chordBlink 1.4s step-end infinite; }   /* chord mode on: the button blinks, unhurried */
+.win .chordBtn.on, #app.deck button.tplay#tChord.on, #palette .prow button.tplay.chord.on { animation: chordBlink 1.4s step-end infinite; }   /* chord mode on: the button blinks, unhurried */
 .win.closed .chordBtn { display: none; }
 .win .pselClose { width: 24px; height: 24px; padding: 0; border: 1.5px solid #2f7fd6; border-radius: 4px; background: rgba(0,0,0,.25); color: #fff; font-size: 13px; font-weight: 700; line-height: 1; }
 .win .pselClose:active { background: #2f7fd6; }
@@ -226,6 +226,10 @@ svg text { pointer-events: none; }
 #app.deck #accWin .doors, #app.deck #bassWin .doors, #app.deck .side .doorBtn { display: none !important; }   /* the deck: doors on the melody only, toggled from the column beside it */
 .win .side .doorBtn { width: 30px; height: 24px; padding: 0; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #cfcfcf); color: #111; font: 800 6.5px/1 system-ui, sans-serif; letter-spacing: .03em; }
 .win .side .doorBtn.on { background: linear-gradient(#6fb3ff, #2f7fd6); color: #fff; }
+.win .side .spBtn { width: 30px; height: 20px; padding: 0; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); color: #111; font: 800 9px/1 system-ui, sans-serif; letter-spacing: -.02em; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); }   /* |<>| wider, >|< tighter: the rows' spacing */
+.win .side .spBtn:active { background: linear-gradient(#ffd27a, #f5a623); }
+#app.deck .win .side .spBtn { display: none; }
+text.clef { user-select: none; }
 .win .side .doorBtn[hidden] { display: none; }
 .retBtn { position: absolute; z-index: 4; width: 40px; height: 30px; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); color: #111; font: 800 7px/1 system-ui, sans-serif; letter-spacing: .04em; box-shadow: 0 2px 4px rgba(0,0,0,.35); }   /* ↩ LINES on the white cover */
 .retBtn .big { font-size: 13px; line-height: 1; }
@@ -991,7 +995,7 @@ body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the s
   <section class="win" id="melWin">
     <div class="gutter"><button class="rArr up" data-win="mel" data-dir="1" title="Higher">︿</button><svg id="melGut"></svg><button class="rArr dn" data-win="mel" data-dir="-1" title="Lower">﹀</button></div>
     <div class="frame"><svg id="melSvg"></svg></div>
-    <div class="side"><button class="gear" data-win="mel" title="Melody settings"><svg class="ico"><use href="#icoGear"/></svg></button><button class="bsBtn" data-win="mel" title="Backspace: take back the last note entered on this stave">⌫</button><button class="unBtn" title="Undo">UNDO</button><button class="sizer" data-win="mel" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="mel" title="Play Bar — the melody alone, this bar">▶</button><button class="psel" data-win="mel" title="Play Select — choose the melody notes to hear">▶</button><button class="chordBtn" data-win="mel" title="Chord mode: every tap stacks a note on the chord being built"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="2.5" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.2"/><line x1="2.5" y1="10" x2="17.5" y2="10" stroke="currentColor" stroke-width="1.2"/><ellipse cx="9.4" cy="6.4" rx="2.3" ry="1.55" fill="currentColor" transform="rotate(-20 9.4 6.4)"/><line x1="11.5" y1="6.1" x2="11.5" y2="3.6" stroke="currentColor" stroke-width="1.1"/><ellipse cx="10.6" cy="13.6" rx="2.3" ry="1.55" fill="currentColor" transform="rotate(-20 10.6 13.6)"/><line x1="8.5" y1="13.9" x2="8.5" y2="16.4" stroke="currentColor" stroke-width="1.1"/></svg></button><button class="pselClose" data-win="mel" title="Leave Play Select" hidden>✕</button><button class="focus" data-win="mel" title="Give this window the whole screen">⛶</button><button class="delBtn" data-win="mel" title="Delete the selected notes" hidden>DEL</button></div>
+    <div class="side"><button class="gear" data-win="mel" title="Melody settings"><svg class="ico"><use href="#icoGear"/></svg></button><button class="bsBtn" data-win="mel" title="Backspace: take back the last note entered on this stave">⌫</button><button class="unBtn" title="Undo">UNDO</button><button class="sizer" data-win="mel" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="mel" title="Play Bar — the melody alone, this bar">▶</button><button class="psel" data-win="mel" title="Play Select — choose the melody notes to hear">▶</button><button class="spBtn wider" data-win="mel" title="Wider: the lines further apart, notes and clef with them, up to the widest">|&lt;&gt;|</button><button class="spBtn tighter" data-win="mel" title="Tighter: the lines closer together, notes and clef with them, down to the legible least">&gt;|&lt;</button><button class="pselClose" data-win="mel" title="Leave Play Select" hidden>✕</button><button class="focus" data-win="mel" title="Give this window the whole screen">⛶</button><button class="delBtn" data-win="mel" title="Delete the selected notes" hidden>DEL</button></div>
   </section>
 
   <div class="strip" id="dynStrip">
@@ -1029,14 +1033,14 @@ body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the s
     <button class="winHead" data-win="acc">Accompaniment</button>
     <div class="gutter"><button class="rArr up" data-win="acc" data-dir="1" title="Higher">︿</button><svg id="accGut"></svg><button class="rArr dn" data-win="acc" data-dir="-1" title="Lower">﹀</button></div>
     <div class="frame"><svg id="accSvg"></svg></div>
-    <div class="side"><button class="gear" data-win="acc" title="Accompaniment settings"><svg class="ico"><use href="#icoGear"/></svg></button><button class="bsBtn" data-win="acc" title="Backspace: take back the last note entered on this stave">⌫</button><button class="unBtn" title="Undo">UNDO</button><button class="sizer" data-win="acc" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="acc" title="Play Bar — the accompaniment alone, this bar">▶</button><button class="psel" data-win="acc" title="Play Select — choose the accompaniment notes to hear">▶</button><button class="chordBtn" data-win="acc" title="Chord mode: every tap stacks a note on the chord being built"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="2.5" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.2"/><line x1="2.5" y1="10" x2="17.5" y2="10" stroke="currentColor" stroke-width="1.2"/><ellipse cx="9.4" cy="6.4" rx="2.3" ry="1.55" fill="currentColor" transform="rotate(-20 9.4 6.4)"/><line x1="11.5" y1="6.1" x2="11.5" y2="3.6" stroke="currentColor" stroke-width="1.1"/><ellipse cx="10.6" cy="13.6" rx="2.3" ry="1.55" fill="currentColor" transform="rotate(-20 10.6 13.6)"/><line x1="8.5" y1="13.9" x2="8.5" y2="16.4" stroke="currentColor" stroke-width="1.1"/></svg></button><button class="pselClose" data-win="acc" title="Leave Play Select" hidden>✕</button><button class="focus" data-win="acc" title="Give this window the whole screen">⛶</button><button class="delBtn" data-win="acc" title="Delete the selected notes" hidden>DEL</button></div>
+    <div class="side"><button class="gear" data-win="acc" title="Accompaniment settings"><svg class="ico"><use href="#icoGear"/></svg></button><button class="bsBtn" data-win="acc" title="Backspace: take back the last note entered on this stave">⌫</button><button class="unBtn" title="Undo">UNDO</button><button class="sizer" data-win="acc" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="acc" title="Play Bar — the accompaniment alone, this bar">▶</button><button class="psel" data-win="acc" title="Play Select — choose the accompaniment notes to hear">▶</button><button class="spBtn wider" data-win="acc" title="Wider: the lines further apart, notes and clef with them, up to the widest">|&lt;&gt;|</button><button class="spBtn tighter" data-win="acc" title="Tighter: the lines closer together, notes and clef with them, down to the legible least">&gt;|&lt;</button><button class="pselClose" data-win="acc" title="Leave Play Select" hidden>✕</button><button class="focus" data-win="acc" title="Give this window the whole screen">⛶</button><button class="delBtn" data-win="acc" title="Delete the selected notes" hidden>DEL</button></div>
   </section>
 
   <section class="win" id="bassWin">
     <button class="winHead" data-win="bass">Bass</button>
     <div class="gutter"><button class="rArr up" data-win="bass" data-dir="1" title="Higher">︿</button><svg id="bassGut"></svg><button class="rArr dn" data-win="bass" data-dir="-1" title="Lower">﹀</button></div>
     <div class="frame"><svg id="bassSvg"></svg></div>
-    <div class="side"><button class="gear" data-win="bass" title="Bass settings"><svg class="ico"><use href="#icoGear"/></svg></button><button class="bsBtn" data-win="bass" title="Backspace: take back the last note entered on this stave">⌫</button><button class="unBtn" title="Undo">UNDO</button><button class="sizer" data-win="bass" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="bass" title="Play Bar — the bass alone, this bar">▶</button><button class="psel" data-win="bass" title="Play Select — choose the bass notes to hear">▶</button><button class="chordBtn" data-win="bass" title="Chord mode: every tap stacks a note on the chord being built"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="2.5" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.2"/><line x1="2.5" y1="10" x2="17.5" y2="10" stroke="currentColor" stroke-width="1.2"/><ellipse cx="9.4" cy="6.4" rx="2.3" ry="1.55" fill="currentColor" transform="rotate(-20 9.4 6.4)"/><line x1="11.5" y1="6.1" x2="11.5" y2="3.6" stroke="currentColor" stroke-width="1.1"/><ellipse cx="10.6" cy="13.6" rx="2.3" ry="1.55" fill="currentColor" transform="rotate(-20 10.6 13.6)"/><line x1="8.5" y1="13.9" x2="8.5" y2="16.4" stroke="currentColor" stroke-width="1.1"/></svg></button><button class="pselClose" data-win="bass" title="Leave Play Select" hidden>✕</button><button class="focus" data-win="bass" title="Give this window the whole screen">⛶</button><button class="delBtn" data-win="bass" title="Delete the selected notes" hidden>DEL</button></div>
+    <div class="side"><button class="gear" data-win="bass" title="Bass settings"><svg class="ico"><use href="#icoGear"/></svg></button><button class="bsBtn" data-win="bass" title="Backspace: take back the last note entered on this stave">⌫</button><button class="unBtn" title="Undo">UNDO</button><button class="sizer" data-win="bass" title="Shrink / close / open this window"><span class="sz"></span></button><button class="solo" data-win="bass" title="Play Bar — the bass alone, this bar">▶</button><button class="psel" data-win="bass" title="Play Select — choose the bass notes to hear">▶</button><button class="spBtn wider" data-win="bass" title="Wider: the lines further apart, notes and clef with them, up to the widest">|&lt;&gt;|</button><button class="spBtn tighter" data-win="bass" title="Tighter: the lines closer together, notes and clef with them, down to the legible least">&gt;|&lt;</button><button class="pselClose" data-win="bass" title="Leave Play Select" hidden>✕</button><button class="focus" data-win="bass" title="Give this window the whole screen">⛶</button><button class="delBtn" data-win="bass" title="Delete the selected notes" hidden>DEL</button></div>
   </section>
 
 
@@ -5961,10 +5965,11 @@ function loadPrefs() {
   S.duoBars = p.duoBars === 8 ? 8 : 4; S.duoBand = p.duoBand === "bass" ? "bass" : "acc"; S.beatDividers = p.beatDividers !== false;
   S.focusBand = Object.assign({ mel: { on: false, lo: 64 }, acc: { on: false, lo: 52 }, bass: { on: false, lo: 40 } }, p.focusBand || {}); for (const w of ["mel", "acc", "bass"]) { if (!S.focusBand[w]) S.focusBand[w] = { on: false, lo: { mel: 64, acc: 52, bass: 40 }[w] }; S.focusBand[w].lo = clamp(Math.round((S.focusBand[w].lo != null ? S.focusBand[w].lo : { mel: 64, acc: 52, bass: 40 }[w]) / 2) * 2, 24, 96); }
   S.doors = Object.assign({ mel: true, acc: true, bass: true }, p.doors || {});
+  S.clef = Object.assign({ on: false, kind: "treble" }, p.clef || {}); if (!CLEFS[S.clef.kind]) S.clef.kind = "treble";
   S.lyricFont = p.lyricFont || "sans"; S.chipMode = "multi"; S.keepAwake = p.keepAwake !== false; S.paper = Object.assign({ mel: "default", acc: "default", bass: "default" }, p.paper || {}); S.quick = Object.assign({ cells: QUICK_DEFAULT.slice(), locked: true, float: false, x: null, y: null }, p.quick || {}); if (!Array.isArray(S.quick.cells) || S.quick.cells.join() === QUICK_OLD.join()) S.quick.cells = QUICK_DEFAULT.slice(); if (S.quick.cells.length === 8) S.quick.cells.push("sl", "ti", "gh", "dt"); if (S.quick.cells.length !== 12) S.quick.cells = QUICK_DEFAULT.slice();   // a third row joined: slur, tie, ghost note, dot S.winState = Object.assign({ mel: "open", acc: "closed", bass: "closed" }, p.winState || {}); S.zoomWin = Object.assign({ mel: 1, acc: 1, bass: 1 }, p.zoomWin || {}); S.midi = p.midi || {}; S.viewSpan = [1, 2, 3, 4].includes(p.viewSpan) ? p.viewSpan : 1; if (p.softKb != null) S.softKb = p.softKb2 == null ? true : !!p.softKb2; S.kbPos = p.kbPos || null;   // the app keyboard, on unless switched off S.layout = p.layout === "stack" ? "stack" : "rolled";
   applyTheme();
 }
-function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, deck: S.deck, rhyShown: S.rhyShown, lyrShown: S.lyrShown, partsShown: S.partsShown, dynShown: S.dynShown, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, beatLines: S.beatLines, rangeLock: S.rangeLock, kbLayout: S.kbLayout, kbTheme: S.kbTheme, kbSpace: S.kbSpace, kbBackUp: S.kbBackUp, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, keepAwake: S.keepAwake, paper: S.paper, quick: S.quick, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout, duoBars: S.duoBars, duoBand: S.duoBand, beatDividers: S.beatDividers, focusBand: S.focusBand, doors: S.doors }); }
+function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, deck: S.deck, rhyShown: S.rhyShown, lyrShown: S.lyrShown, partsShown: S.partsShown, dynShown: S.dynShown, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, beatLines: S.beatLines, rangeLock: S.rangeLock, kbLayout: S.kbLayout, kbTheme: S.kbTheme, kbSpace: S.kbSpace, kbBackUp: S.kbBackUp, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, keepAwake: S.keepAwake, paper: S.paper, quick: S.quick, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout, duoBars: S.duoBars, duoBand: S.duoBand, beatDividers: S.beatDividers, focusBand: S.focusBand, doors: S.doors, clef: S.clef }); }
 function applyTheme() {
   const r = document.documentElement;
   if (S.theme === "dark") r.setAttribute("data-theme", "dark"); else r.removeAttribute("data-theme");
@@ -5985,13 +5990,13 @@ const gridStep = () => S.song.snap ? 0.5 : 0.25;
 const snapT = t => Math.round(t / gridStep()) * gridStep();
 const curBar = () => S.song.bars[S.bi];
 function viewOf(win) { const v = S.song.view; if (v.bassLo == null) v.bassLo = 36; return v[WIN_LO[win]]; }
-const DECK_ROWS = { mel: 0, acc: 0, bass: 0 }; let DECK_TOP = 17; const DECK_FIX = { px: 0 };   // DECK_FIX: what the tool bar was found to miss the screen's foot by once drawn — the stave takes it up next time                        // the beat labels' height above the stave, as last seen                                          // on the deck the stave shows as many rows as fill the screen (computed by allocate)
-function rowsOf(win) { const deck = deckMode() && DECK_ROWS[win]; const rows = deck ? DECK_ROWS[win] : WIN[S.winSize][win][0]; return { rows, step: deck ? STEPS[win] * (STEP_K[S.noteSize] || 1) : Math.round(STEPS[win] * (STEP_K[S.noteSize] || 1) * 10) / 10 }; }
+const DECK_ROWS = { mel: 0, acc: 0, bass: 0 }, PHONE_ROWS = { mel: 0, acc: 0, bass: 0 }; /* PHONE_ROWS: more rows than the window size says when the buttons beside the stave, or a clef's span, need them */ let DECK_TOP = 17; const DECK_FIX = { px: 0 };   // DECK_FIX: what the tool bar was found to miss the screen's foot by once drawn — the stave takes it up next time                        // the beat labels' height above the stave, as last seen                                          // on the deck the stave shows as many rows as fill the screen (computed by allocate)
+function rowsOf(win) { const deck = deckMode() && DECK_ROWS[win]; const rows = deck ? DECK_ROWS[win] : (PHONE_ROWS[win] || WIN[S.winSize][win][0]); return { rows, step: deck ? STEPS[win] * (STEP_K[S.noteSize] || 1) * (S.zoomWin && S.zoomWin[win] || 1) : Math.round(STEPS[win] * (STEP_K[S.noteSize] || 1) * 10) / 10 }; }
 /* share the screen among the open windows: melody weighs most; half windows count half; closed ones show a bar */
 /* the duo: the melody about a third of the screen's height at its natural scale; the band part in view fills exactly what is left
    between the last strip (or the melody) and the tool bar, edge to edge — its row height stretched a whisker so it lands flush */
 function allocateDuo() {
-  const band = duoBandWin(), k = STEP_K[S.noteSize] || 1;
+  const band = duoBandWin(), k0 = STEP_K[S.noteSize] || 1, kOf = w => k0 * (S.zoomWin[w] || 1);   // the spacing buttons' factor rides with the note size
   const clampView = (w, rows) => { const key = WIN_LO[w], v = S.song && S.song.view ? viewOf(w) : null, [minV, topV] = viewLimits(w, rows); if (v != null && v + rows - 1 > topV) S.song.view[key] = Math.max(minV, topV + 1 - rows); };
   for (const w of ["mel", "acc", "bass"]) if (w !== "mel" && w !== band) { STEPS[w] = WIN[S.winSize][w][1]; DECK_ROWS[w] = 0; }
   /* the room the two staves share: from the melody's top to the tool bar, less the strips between them (their true span, fractions and all) */
@@ -6000,10 +6005,10 @@ function allocateDuo() {
   const stripsH = strips.length ? Math.max(...strips.map(e => e.getBoundingClientRect().bottom)) - mr.bottom : 0;
   const measured = melFrame.offsetHeight > 0 && tb.top - mr.top - stripsH > 120, room = measured ? tb.top - mr.top - stripsH : 0;   // nothing measured yet (the first pass): natural sizes, corrected by the settle pass
   let bandH;                                                                              // the band part: a third of that room at its natural scale, flush on the tool bar
-  { const [rows0, lo, hi0] = WIN[S.winSize][band], hi = Math.max(hi0, WIN[S.winSize].mel[2]), target = measured ? Math.round(room / 3) - 16 : rows0 * hi * k, fits = target >= rows0 * hi * k;
+  { const [rows0, lo, hi0] = WIN[S.winSize][band], hi = Math.max(hi0, WIN[S.winSize].mel[2]), k = kOf(band), target = measured ? Math.round(room / 3) - 16 : rows0 * hi * k, fits = target >= rows0 * hi * k;
     const rows = fits ? clamp(Math.floor(target / (hi * k)), rows0, 88) : rows0, h = fits ? Math.round(rows * hi * k) : Math.max(4 * rows0, Math.round(target));   // a whole number of pixels tall, so the sum below lands exactly
     DECK_ROWS[band] = rows; STEPS[band] = h / rows / k; clampView(band, rows); bandH = h + 16; }
-  { const [rows0, lo, hi] = WIN[S.winSize].mel;                                          // the melody: the rest — its row height stretched a whisker so the lower stave lands on the tool bar to the pixel
+  { const [rows0, lo, hi] = WIN[S.winSize].mel, k = kOf("mel");                        // the melody: the rest — its row height stretched a whisker so the lower stave lands on the tool bar to the pixel
     const bandF = $(band + "Win").querySelector(".frame"), drawn = measured && bandF.offsetHeight > 0 && DECK_ROWS.mel > 0 && DECK_ROWS[band] > 0;
     let target = drawn ? (mr.height - 16) + (tb.top - bandF.getBoundingClientRect().bottom)   // the duo already drawn: the melody takes up whatever the lower stave stops short of the tool bar by (or overshoots it by), as actually laid out
       : measured ? room - bandH - 16 : rows0 * hi * k;                                     // less the stave's own 10px of padding and the frame's 6px of border
@@ -6020,7 +6025,7 @@ function allocate() {
       if (w !== active) { STEPS[w] = lo; DECK_ROWS[w] = 0; continue; }
       let target = window.innerHeight - 12 - h("head") - h("rollBar") - 6 - (h("rollBar") ? 1 : 0) - (rhyOn ? h("rhyStrip") : 0) - (lyrOn ? h("lyrStrip") : 0) - (S.dynShown && !app.classList.contains("kbUp") ? (h("dynStrip") || 32) : 0) - Math.max(h("toolbar"), 30) - topExtra - 16 + DECK_FIX.px;   // the strips, when shown, sit flush between the stave and the tool bar
       { const side = $(w + "Win").querySelector(".side"); if (side && side.offsetHeight > 0) { const kids = [...side.children].filter(k => k.offsetHeight > 0), cs = getComputedStyle(side); const need = kids.reduce((a, k) => a + k.offsetHeight, 0) + Math.max(0, kids.length - 1) * (parseFloat(cs.rowGap) || 0) + (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0); target = Math.max(target, need - 16); } }   // never shorter than the buttons beside it need: they would hold the stave's row open and leave a gap   // the stave's drawing height: the screen less the rows above and below, the three 6px margins, the tool bar's 6px when the strips show, the frame's borders and pads
-      const k = STEP_K[S.noteSize] || 1, fitsAtFullScale = target >= rows0 * hi * k;   // room for at least the usual row count at the stave's natural scale?
+      const k = (STEP_K[S.noteSize] || 1) * (S.zoomWin[w] || 1), fitsAtFullScale = target >= rows0 * hi * k;   // room for at least the usual row count at the stave's natural scale (the spacing buttons' factor in k)?
       const rows = fitsAtFullScale ? clamp(Math.floor(target / (hi * k)), rows0, 88) : rows0;
       DECK_ROWS[w] = rows; STEPS[w] = fitsAtFullScale ? target / rows / k : Math.max(lo, target / rows0 / k);   // the usual case: the row COUNT adapts at the stave's natural scale, each row stretched a whisker so the strips land on the tool bar exactly; the old note: row height fixed at the stave's natural scale, only the row COUNT adapts, so spacing never fluctuates — too little room even for that (a short screen): shrink the rows themselves just enough to keep the tool bar on screen, never smaller than the usual minimum
       { const key = WIN_LO[w], v = S.song && S.song.view ? viewOf(w) : null, [minV, topV] = viewLimits(w, rows); if (v != null && v + rows - 1 > topV) S.song.view[key] = Math.max(minV, topV + 1 - rows); }   // more rows than fit above: the range reaches lower instead
@@ -6043,15 +6048,19 @@ function allocate() {
     const bandAvail = vh - h("head") - h("nav") - 7 * 5 - 44;
     const share = wide && w !== "mel" ? Math.max(120, bandAvail * WIN_WEIGHT[w] * f(w) / (wins.filter(x => x !== "mel").reduce((a, x) => a + WIN_WEIGHT[x] * f(x), 0) || 1))
       : wide ? Math.max(160, vh - chromeMel) : avail * WIN_WEIGHT[w] * f(w) / sum;
-    STEPS[w] = clamp(Math.floor((share - 12) / rows * S.zoomWin[w] * WIN_K[S.winSize] * 10) / 10, lo, hi);
+    const base = clamp(Math.floor((share - 12) / rows * WIN_K[S.winSize] * 10) / 10, lo, hi);   // the natural row height, then the spacing buttons' factor, between the legible least and the widest
+    STEPS[w] = clamp(Math.round(base * (S.zoomWin[w] || 1) * 10) / 10, Math.round(lo * 0.7 * 10) / 10, Math.round(hi * 1.5 * 10) / 10);
   }
   if (!deckMode()) for (const w of wins) {                                              // the phone: the stave at least as tall as the column of buttons beside it, so the column never pushes the strips down
     if (!f(w)) continue; const side = $(w + "Win").querySelector(".side"); if (!side) continue;
     const kids = [...side.children].filter(k => k.offsetHeight > 0 && !k.hidden), cs = getComputedStyle(side), gap = parseFloat(cs.rowGap) || parseFloat(cs.gap) || 0;
     const need = kids.reduce((a, k) => a + k.offsetHeight + (parseFloat(getComputedStyle(k).marginTop) || 0), 0) + Math.max(0, kids.length - 1) * gap + (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
-    const [rows] = WIN[S.winSize][w], k = STEP_K[S.noteSize] || 1, minStep = (need - 13) / rows / k;   // the frame around the rows: 10px of padding and 3px of border
-    if (STEPS[w] < minStep) STEPS[w] = Math.ceil(minStep * 10) / 10;
+    const [rows0] = WIN[S.winSize][w], step = Math.round(STEPS[w] * (STEP_K[S.noteSize] || 1) * 10) / 10; let rows = rows0;
+    if (clefOn()) { const [a, b] = focusRange(w); rows = Math.max(rows, b - a + 1 + 4); }                 // a clef's whole span in view, the Grand Stave's two staves and their gap included
+    rows = Math.max(rows, Math.ceil((need - 13) / step));                                                // and enough rows for the column beside the stave (the frame: 10px of padding and 3px of border)
+    PHONE_ROWS[w] = rows;
   }
+  if (!deckMode()) for (const w of wins) if (!f(w)) PHONE_ROWS[w] = 0;
 }
 const sectionHasPickup = si => si === 0 && !!(S.song.bars[0] && S.song.bars[0].pickup);
 const barNo = bi => { const r = sectionRange(sectionOfBar(bi)); return bi - r.start + 1 - (sectionHasPickup(sectionOfBar(bi)) ? 1 : 0); };
@@ -6123,7 +6132,7 @@ const viewBars = () => { const f = viewFirst(), out = []; for (let i = 0; i < sp
 let GEO = {};
 function geo(win) {
   const svg = $(win + "Svg"), B = barBeats(), { rows, step } = rowsOf(win), lo = viewOf(win), hi = lo + rows - 1;
-  const n = spanNow(), first = viewFirst(), W1 = Math.max(120, svg.parentNode.clientWidth || $("rhyStrip").querySelector(".body").clientWidth || 300), padL = 0, padR = 0, padT = 5, padB = 5;   // no pad at the ends: every beat, first and last, is exactly one share of the width
+  const n = spanNow(), first = viewFirst(), W1 = Math.max(120, svg.parentNode.clientWidth || $("rhyStrip").querySelector(".body").clientWidth || 300), padL = clefNow() ? Math.min(Math.round(W1 * 0.42), Math.round(step * (clefNow().bands ? 8.8 : 6.6))) : 0, padR = 0, padT = 5, padB = 5;   // padL: room for the clef   // no pad at the ends: every beat, first and last, is exactly one share of the width
   const bars = viewBars(), starts = {}; let accB = 0;
   for (const b of bars) { starts[b] = accB; accB += barBeats(b); }
   const beatPx = (W1 - padL - padR) / (noteSizeNow() === "x" || duoMode() ? Math.max(accB, B) : B);   // a bar to the window's width — or, at Micro, every bar in view across it side by side, nothing to scroll
@@ -6293,6 +6302,8 @@ function deletePicked() {
   toast(`${n} ${n === 1 ? "note" : "notes"} deleted — UNDO brings ${n === 1 ? "it" : "them"} back`);
 }
 /* ⌫ beside a stave: takes back the last note entered on it (or, failing that, the last note of the awake bar), the words untouched */
+/* |<>| and >|<: the rows further apart or closer together, a step at a time, the notes and the clef scaling with them — between the legible least and the widest */
+function zoomRows(win, dir) { const z = S.zoomWin[win] || 1, nz = clamp(Math.round(z * (dir > 0 ? 1.15 : 1 / 1.15) * 100) / 100, 0.6, 2.5); if (nz === z) { toast(dir > 0 ? "As wide as it goes" : "As tight as it goes"); return; } S.zoomWin[win] = nz; savePrefs(); renderAll(); }
 function backspaceNote(part) {
   const le = S.lastEntered; let bi = null, ev = null;
   if (le && le.part === part && S.song.bars[le.bi]) { ev = (S.song.bars[le.bi].ev[part] || []).find(e => e.id === le.id) || null; if (ev) bi = le.bi; }
@@ -6669,14 +6680,15 @@ function renderRollBar() {
     const delB = el("button", { class: "delBtn", "data-win": "deck", title: "Delete the selected notes", hidden: true, onclick: e => delAskOpen(e.currentTarget) }, "DEL");
     const colBs = w => el("button", { class: "colBtn", title: "Backspace: take back the last note entered on this stave", onclick: () => backspaceNote(WIN_PART[deckActive()]) }, el("span", { class: "big" }, "⌫"), el("span", {}, "BACK"));   // under the gear: ⌫ then UNDO
     const colUn = () => el("button", { class: "colBtn", title: "Undo", onclick: undo }, el("span", { class: "big" }, "↶"), el("span", {}, "UNDO"));
+    const colSp = w => [el("button", { class: "colBtn", title: "Wider: the lines further apart, notes and clef with them, up to the widest", onclick: () => zoomRows(w, 1) }, el("span", { class: "big" }, "|<>|"), el("span", {}, "WIDER")), el("button", { class: "colBtn", title: "Tighter: the lines closer together, notes and clef with them, down to the legible least", onclick: () => zoomRows(w, -1) }, el("span", { class: "big" }, ">|<"), el("span", {}, "TIGHTER"))];
     const colCover = () => focusOn("mel") ? [el("button", { class: "colBtn" + (S.doors.mel !== false ? " on" : ""), title: "Open or close the doors over the rest of the melody stave", onclick: () => { S.doors.mel = S.doors.mel === false; savePrefs(); renderAll(); } }, el("span", { class: "big" }, "⇕"), el("span", {}, "COVER"))] : [];   // with the five-line focus on: the doors' switch
     if (duo) {                                                                            // the duo's column: DEL and the melody's gear at the top, the strip buttons beside their strips, and at the foot ⇄ (swap the band part) and that part's gear
       const bw = duoBandWin(), other = bw === "acc" ? "bass" : "acc";
       const swap = el("button", { class: "part", title: "Swap: the " + DECK_NAME[other].toLowerCase() + " here instead", onclick: () => { S.duoBand = other; if (S.activePart !== "melody") S.activePart = WIN_PART[other]; S.sel = null; S.active = null; S.picked = []; savePrefs(); renderAll(); } }, el("span", { class: "big" }, "⇄"), el("span", { class: "name" }, SHORT[other]));
       const gearM = el("button", { class: "gearBtn", title: "Melody settings", onclick: () => openWinSettings("mel") }, gearIco());
       const gearB = el("button", { class: "gearBtn", title: DECK_NAME[bw].charAt(0) + DECK_NAME[bw].slice(1).toLowerCase() + " settings", onclick: () => openWinSettings(bw) }, gearIco());
-      nav.append(delB, gearM, colBs("mel"), colUn(), ...colCover(), kc, lb, rb, db, el("div", { class: "spacer" }), swap, gearB);
-    } else nav.append(arrow(-1, up), arrow(1, dn), el("div", { class: "spacer" }), delB, gear, colBs(active), colUn(), ...(active === "mel" ? colCover() : []), kc, lb, rb, db);   // ▲ flush with the stave's top; the gear at the foot; LYRICS, RHYTHM, DYN stacked below that, flush with the stave's bottom
+      nav.append(delB, gearM, colBs("mel"), colUn(), ...colCover(), ...colSp("mel"), kc, lb, rb, db, el("div", { class: "spacer" }), swap, gearB);
+    } else nav.append(arrow(-1, up), arrow(1, dn), el("div", { class: "spacer" }), delB, gear, colBs(active), colUn(), ...(active === "mel" ? colCover() : []), ...colSp(active), kc, lb, rb, db);   // ▲ flush with the stave's top; the gear at the foot; LYRICS, RHYTHM, DYN stacked below that, flush with the stave's bottom
     /* the tool bar: the left third flips too now — its tools, or the staff-lines switch — and the middle and right thirds flip as before */
     const tr = $("toolR"), tm = $("toolMScroll");
     { const tls = $("toolLScroll"), flipL = S.deckFlipL || 0;
@@ -6780,9 +6792,24 @@ function viewLimits(win, rows) {
    ↩ button on the cover, once the view has left its home, brings the five lines back */
 const focusOf = win => (S.focusBand && S.focusBand[win]) || null;
 const FOCUS_LO = { mel: 64, acc: 52, bass: 40 };
-const focusOn = win => { if (!deckMode()) return true; const f = focusOf(win); return !!(f && f.on); };   // on the phone every stave shows its five middle lines, the rest behind doors
-const focusRange = win => { const f = focusOf(win), lo = f && f.lo != null ? f.lo : (FOCUS_LO[win] || 64); return [lo, lo + 8]; };
-function focusHome(win) { const { rows } = rowsOf(win), [minV, , maxV] = viewLimits(win, rows), [blo] = focusRange(win); return clamp(blo - Math.floor((rows - 9) / 2), minV, maxV); }
+/* the Clef view: the same five-line grid slid to a clef's own place — its bottom line's pitch — with the clef's symbol at the stave's head; the Grand Stave is two
+   of them, treble over bass, a brace joining them and the bar lines running through the gap where middle C lives (never drawn: a ledger line from either staff) */
+const CLEFS = { grand: { name: "Grand Stave", bands: [43, 64] }, treble: { name: "Treble", lo: 64, glyph: "𝄞", line: 2 }, alto: { name: "Alto", lo: 53, glyph: "𝄡", line: 3 }, tenor: { name: "Tenor", lo: 50, glyph: "𝄡", line: 4 }, bass: { name: "Bass", lo: 43, glyph: "𝄢", line: 4 } };
+const clefOn = () => !!(S.clef && S.clef.on && CLEFS[S.clef.kind]);
+const clefNow = () => clefOn() ? CLEFS[S.clef.kind] : null;
+const focusOn = win => { if (clefOn()) return true; if (!deckMode()) return true; const f = focusOf(win); return !!(f && f.on); };   // on the phone every stave shows its five middle lines, the rest behind doors; in the Clef view every stave has its clef's lines
+/* the five-line bands of a stave, bottom to top: one (its own range, or the clef's) — or two for the Grand Stave */
+function focusBands(win) {
+  const c = clefNow();
+  if (c) return (c.bands || [c.lo]).map(lo => [lo, lo + 8]);
+  const f = focusOf(win), lo = f && f.lo != null ? f.lo : (FOCUS_LO[win] || 64); return [[lo, lo + 8]];
+}
+const focusRange = win => { const b = focusBands(win); return [b[0][0], b[b.length - 1][1]]; };   // the outermost span
+const inBands = (win, m) => focusBands(win).some(([lo, hi]) => m >= lo && m <= hi);
+function bandFor(win, m) { const b = focusBands(win); let best = b[0], d0 = Infinity; for (const x of b) { const d = m < x[0] ? x[0] - m : m > x[1] ? m - x[1] : 0; if (d < d0) { d0 = d; best = x; } } return best; }   // the band a row belongs to, else the nearest
+const lineRow = (win, m) => focusOn(win) ? (((m - bandFor(win, m)[0]) % 2) + 2) % 2 === 0 : m % 2 === 0;   // Lines and spaces: a line every other row — counted from the band's bottom line when a band is set
+const clefPad = g => { const c = clefNow(); return c ? Math.min(Math.round((g.W1 || 300) * 0.42), Math.round(g.step * (c.bands ? 8.8 : 6.6))) : 0; };   // room at the stave's head for the clef (and the brace): about three staff spaces, never more than two fifths of the stave
+function focusHome(win) { const { rows } = rowsOf(win), [minV, , maxV] = viewLimits(win, rows), [blo, bhi] = focusRange(win); return clamp(blo - Math.floor((rows - (bhi - blo + 1)) / 2), minV, maxV); }
 function focusReturn(win) { S.song.view[WIN_LO[win]] = focusHome(win); S.sel = null; S.ghost = null; renderAll(); }
 function focusCaps(g) {                                                                 // the y of the first (top) and fifth (bottom) lines, as drawStaff draws them
   const [blo, bhi] = focusRange(g.win);
@@ -6792,16 +6819,44 @@ function drawFocusCover(svg, g) {
   const [ct, cb] = focusCaps(g), top = ct - 1, bot = cb + 1;                                 // the cover meets the lines' own edges: bar and beat lines end at the first and fifth lines
   if (top > 0) svg.append(svgEl("rect", { class: "focusCover", x: 0, y: 0, width: g.W, height: Math.min(g.H, top), fill: "#fff", "pointer-events": "none" }));
   if (bot < g.H) svg.append(svgEl("rect", { class: "focusCover", x: 0, y: Math.max(0, bot), width: g.W, height: g.H - Math.max(0, bot), fill: "#fff", "pointer-events": "none" }));
+  const bands = focusBands(g.win);
+  for (let i = 0; i + 1 < bands.length; i++) {                                              // the Grand Stave's gap: white, its middle line never drawn, the bar lines running through
+    const lineY = m => S.halfLines ? Math.round(g.y(m)) + 0.5 : Math.round(g.y(m) - g.step / 2) + 0.5;
+    const gTop = lineY(bands[i + 1][0]) + 1, gBot = (S.halfLines ? Math.round(g.y(bands[i][1])) + 0.5 : Math.round(g.y(bands[i][1]) + g.step / 2) + 0.5) - 1;
+    if (gBot > gTop) { svg.append(svgEl("rect", { class: "focusCover", x: 0, y: gTop, width: g.W, height: gBot - gTop, fill: "#fff", "pointer-events": "none" }));
+      g.bars.forEach((bi, k) => { if (k > 0) { const bx = g.x(bi, 0); svg.append(svgEl("line", { class: "stl", x1: bx, x2: bx, y1: gTop, y2: gBot, stroke: css("--beat"), "stroke-width": 3.5 })); } }); }
+  }
+  drawClefs(svg, g);
+}
+/* the clef at the stave's head: the treble's curl on the second line, the C clef's centre on the third (alto) or fourth (tenor), the bass's dots about the fourth;
+   the Grand Stave a brace joining its two staves. Drawn in the music glyphs the device has; sized to the rows, so they scale with the spacing and the note size */
+const CLEF_FONT = "Bravura, 'Noto Music', 'Segoe UI Symbol', 'Apple Symbols', 'Noto Sans Symbols2', Georgia, serif";
+const CLEF_BOX = {};
+function clefBox(svg, glyph, font) {                                                    // the glyph's ink box at 100px, measured once: the device's own font decides its shape
+  const key = glyph + "|" + font; if (CLEF_BOX[key]) return CLEF_BOX[key];
+  const t = svgEl("text", { x: 0, y: 0, "font-size": 100, "font-family": font }, glyph); svg.append(t); const b = t.getBBox(); t.remove();
+  return CLEF_BOX[key] = { y: b.y, h: b.height || 100, w: b.width || 60 };
+}
+const CLEF_SPAN = { treble: [-5.39, 1.63], bass: [-4.05, -0.46], alto: [-4.02, 0.02], tenor: [-4.02, 0.02] };   // ink top and bottom in staff spaces from the bottom line (up is negative): the engraver's boxes
+function drawClefs(svg, g) {
+  const c = clefNow(); if (!c) return;
+  const bands = focusBands(g.win), pad = clefPad(g), sp = g.step * 2, lineY = m => S.halfLines ? g.y(m) : g.y(m) - g.step / 2;
+  const glyph = (kind, lo) => { const k = CLEFS[kind], [a, b] = CLEF_SPAN[kind], y1 = lineY(lo), top = y1 + a * sp, bot = y1 + b * sp, box = clefBox(svg, k.glyph, CLEF_FONT), f = (bot - top) / box.h * 100;
+    svg.append(svgEl("text", { class: "clef", x: pad - g.step * 0.6, y: top - box.y * f / 100, "text-anchor": "end", "font-size": f, "font-family": CLEF_FONT, fill: css("--line"), "pointer-events": "none" }, k.glyph)); };
+  if (c.bands) { glyph("bass", bands[0][0]); glyph("treble", bands[1][0]);
+    const top = lineY(bands[1][1]) - sp * 0.15, bot = lineY(bands[0][0]) + sp * 0.15, h = bot - top, x0 = g.step * 0.35, w = g.step * 1.1, mid = top + h / 2;   // the brace: a thin curly path the height of both staves, at the far left
+    svg.append(svgEl("path", { class: "clef brace", d: `M ${x0 + w} ${top} C ${x0 + w * 0.15} ${top + h * 0.1}, ${x0 + w} ${mid - h * 0.12}, ${x0} ${mid} C ${x0 + w} ${mid + h * 0.12}, ${x0 + w * 0.15} ${bot - h * 0.1}, ${x0 + w} ${bot}`, fill: "none", stroke: css("--line"), "stroke-width": Math.max(1.5, g.step * 0.28), "stroke-linecap": "round", "pointer-events": "none" })); }
+  else glyph(S.clef.kind, bands[0][0]);
 }
 function drawLedgers(svg, g, bi, bar, ink, part = "melody") {
-  const [blo, bhi] = focusRange(g.win), { rx } = headGeom(g), w = rx * 2.6, hl = S.halfLines;
+  const { rx } = headGeom(g), w = rx * 2.6, hl = S.halfLines;
   /* Lines and spaces: a line on every even row, so ledger lines sit on the even rows from the five lines out to the note (a note on a line gets one through it).
      One half step per space: every row is a space with a line above it, so ledger lines sit on the row boundaries between the five lines and the note. */
   const at = y => { if (y < -1 || y > g.H + 1) return; svg.append(svgEl("line", { x1: 0, x2: 0, y1: y, y2: y, stroke: ink, "stroke-width": 2, "pointer-events": "none" })); };
   const lines = [];
   for (const e of bar.ev[part] || []) {
-    if (e.rest || e.m == null || (e.m >= blo && e.m <= bhi)) continue;
-    const x = g.x(bi, e.t) + 2 + rx + 1;
+    if (e.rest || e.m == null || inBands(g.win, e.m)) continue;
+    const x = g.x(bi, e.t) + 2 + rx + 1, [blo, bhi] = bandFor(g.win, e.m);                 // from the nearest five lines out to the note
     if (hl) { if (e.m > bhi) for (let r = bhi + 2; r <= e.m; r += 2) lines.push([x, Math.round(g.y(r)) + 0.5]); else for (let r = blo - 2; r >= e.m; r -= 2) lines.push([x, Math.round(g.y(r)) + 0.5]); }
     else { if (e.m > bhi) for (let r = bhi + 1; r < e.m; r++) lines.push([x, Math.round(g.y(r) - g.step / 2) + 0.5]); else for (let r = blo - 1; r > e.m; r--) lines.push([x, Math.round(g.y(r) + g.step / 2) + 0.5]); }
   }
@@ -6849,7 +6904,7 @@ function drawStaff(svg, g, key) {
     const y = g.y(m), nat = !isBlack(m), pc = ((m % 12) + 12) % 12;
     if (pc === key.pc) svg.append(svgEl("rect", { x: 0, y: y - g.step / 2, width: g.W, height: g.step, fill: css("--box-soft"), opacity: 0.1 }));
     if (S.halfLines) {                                                    // lines and spaces: every other half step sits on a line, the rest in the spaces between
-      if (m % 2 === 0) { const ly = Math.round(y) + 0.5; svg.append(svgEl("line", { class: "stl", x1: 0, x2: g.W, y1: ly, y2: ly, stroke: css("--line"), "stroke-width": 2 })); }
+      if (lineRow(g.win, m)) { const ly = Math.round(y) + 0.5; svg.append(svgEl("line", { class: "stl", x1: 0, x2: g.W, y1: ly, y2: ly, stroke: css("--line"), "stroke-width": 2 })); }
       continue;
     }
     const ly = Math.round(y + g.step / 2) + 0.5;
@@ -6970,12 +7025,12 @@ function drawGhost(svg, g, bi, ghost, color) {
 }
 /* staccato dot / tenuto line on the notehead side away from the stem */
 /* the middle line: the five-line focus's own when it is on, else the middle of the register in view */
-function stemMiddle(g) { if (g.win && focusOn(g.win)) { const [blo] = focusRange(g.win); return blo + 4; } return (g.lo + g.hi) / 2; }
+function stemMiddle(g, m) { if (g.win && focusOn(g.win)) { const [blo] = bandFor(g.win, m != null ? m : (g.lo + g.hi) / 2); return blo + 4; } return (g.lo + g.hi) / 2; }
 /* a single note: below the middle line the stem goes up (on the head's right), above it down (on the left), on it down */
-const stemUpFor = (g, m) => m < stemMiddle(g);
+const stemUpFor = (g, m) => m < stemMiddle(g, m);
 /* a beamed group: the note farthest from the middle line decides, a tie going to the majority, then down; every stem in the group the same way */
 function beamUp(g, evs) {
-  const mid = stemMiddle(g); let below = 0, above = 0, nb = 0, na = 0;
+  const mid = stemMiddle(g, evs.reduce((a, e) => a + e.m, 0) / (evs.length || 1)); let below = 0, above = 0, nb = 0, na = 0;
   for (const e of evs) { const d = e.m - mid; if (d < 0) { nb++; below = Math.max(below, -d); } else if (d > 0) { na++; above = Math.max(above, d); } }
   if (below !== above) return below > above; if (nb !== na) return nb > na; return false;
 }
@@ -7301,7 +7356,8 @@ function renderPalette() {
   { const evR = selChipObj() ? null : selEv(), ownR = evR && !S.selAuto;                  // the top row's upper left: whole, half, eighth, 16th and 32nd rests (the quarter rest lives on the quick palette)
     if (!deckMode()) { const pw = (() => { const w = PART_WIN[S.activePart || "melody"]; return S.winState[w] !== "closed" ? w : leadWin(); })();   // ▶ BAR and ▶ SELECT: for the stave in use
       r1.append(el("button", { class: "gn tplay" + (S.playing && S.solo === WIN_PART[pw] ? " on" : ""), title: "Play Bar — this part alone, this bar", onclick: e => playSolo(pw, e.currentTarget) }, el("span", { class: "top" }, "▶"), el("span", { class: "sub" }, "BAR")),
-        el("button", { class: "gn tplay" + (typeof PSEL !== "undefined" && PSEL.on ? " on" : ""), title: "Play Select — choose the notes to hear", onclick: e => togglePlaySelect(pw, e.currentTarget) }, el("span", { class: "top" }, "▶"), el("span", { class: "sub" }, "SEL"))); }
+        el("button", { class: "gn tplay" + (typeof PSEL !== "undefined" && PSEL.on ? " on" : ""), title: "Play Select — choose the notes to hear", onclick: e => togglePlaySelect(pw, e.currentTarget) }, el("span", { class: "top" }, "▶"), el("span", { class: "sub" }, "SEL")),
+        el("button", { class: "gn tplay chord" + (S.chordWin[pw] ? " on" : ""), title: "Chord mode: every tap stacks a note on the chord being built", onclick: () => toggleChordMode(pw) }, el("span", { class: "sub" }, "CHORD"))); }
     if (!deckMode()) [4, 2, 0.5, 0.25, 0.125].forEach(v => r1.append(el("button", { onclick: () => tapRestLen(v), class: "gn" + ((ownR ? evR.rest && Math.abs(baseLen(evR.d) - v) < 1e-9 : S.restNext && (S.restLen || S.len) === v) ? " on" : ""), title: ownR ? `Make it a ${REST_NAME[v]} rest` : `${REST_NAME[v]} rest: goes in at the next free spot, or arms one for your next tap` }, restIcon(v)))); }
   let p = r1;
   const ev = selEv(), bar = curBar();
@@ -8665,6 +8721,7 @@ function openSettings() {
     el("div", { class: "pLbl" }, "Window sizing"), seg([["s", "Small"], ["m", "Medium"], ["l", "Large"]], S.winSize, v => { S.winSize = v; savePrefs(); renderAll(); }),
     el("div", { class: "mrow" }, el("button", { class: "btn sm", onclick: () => { S.zoomWin = { mel: 1, acc: 1, bass: 1 }; S.winState = S.layout === "rolled" ? { mel: "open", acc: "closed", bass: "closed" } : { mel: "open", acc: "open", bass: "open" }; savePrefs(); renderAll(); openSettings(); } }, "Reset windows"), el("span", { class: "tiny" }, "Windows share the screen: melody gets the most. The button under each ⚙ shrinks, closes and reopens a window; pinch a window to zoom it.")),
     sec("Staves"),
+    el("div", { class: "mrow" }, el("button", { class: "btn sm" + (clefOn() ? " acc" : ""), onclick: () => { closeModal(); openClefChooser(); } }, clefOn() ? `Clef view: ${clefNow().name} — change…` : "Switch to Clef…"), el("span", { class: "tiny" }, "Grand Stave, Treble, Alto, Tenor or Bass: every stave slides its five lines to the clef's place, the clef at its head")),
     el("div", { class: "mrow" }, toggle("Beat lines inside the bars (the bar lines stay, and so does the spacing)", S.beatDividers !== false, v => { S.beatDividers = v; savePrefs(); renderAll(); })),
     el("div", { class: "mrow" }, toggle("Note boxes — the solid orange box drawn around each melody note, at its own duration", S.beatLines, v => { S.beatLines = v; savePrefs(); renderAll(); openSettings(); })),
     el("div", { class: "mrow" }, toggle("Lines and spaces (half steps alternate line, space, line, space; off = one half step per space)", S.halfLines, v => { S.halfLines = v; savePrefs(); renderAll(); openSettings(); })),
@@ -8690,9 +8747,19 @@ function openSettings() {
   ]);
 }
 /* the five-line focus row of a stave's settings: the switch (on the deck; on the phone the five lines are always on) and the range the five lines show */
+/* the Clef view's chooser: pick a clef, and every stave takes its lines; Leave puts the staves back as they were */
+function openClefChooser() {
+  const body = [el("div", { class: "tiny" }, "Every stave slides its five-line grid to the clef's own place, the clef at its head; the Grand Stave is treble over bass, joined by a brace, middle C in the gap.")];
+  const grid = el("div", { class: "menuList" });
+  for (const [k, c] of Object.entries(CLEFS)) grid.append(el("button", { class: S.clef.on && S.clef.kind === k ? "on" : "", onclick: () => { S.clef = { on: true, kind: k }; if (c.bands) ["mel", "acc", "bass"].forEach(w => { S.zoomWin[w] = Math.min(S.zoomWin[w] || 1, deckMode() ? 0.8 : 0.55); }); /* the Grand Stave needs thirty rows: it starts tighter, so both staves are in view */ savePrefs(); closeModal(); renderAll(); ["mel", "acc", "bass"].forEach(w => { S.song.view[WIN_LO[w]] = focusHome(w); }); renderAll(); toast(`Clef view: ${c.name}`); } }, el("span", { class: "ic" }, c.glyph || "𝄞𝄢"), c.name + (c.bands ? " — treble over bass" : ` — bottom line ${noteName(c.lo, keyObj(S.song.key))}`)));
+  if (S.clef.on) grid.append(el("button", { onclick: () => { S.clef.on = false; savePrefs(); ["mel", "acc", "bass"].forEach(w => { S.song.view[WIN_LO[w]] = focusHome(w); }); closeModal(); renderAll(); toast("Clef view off"); } }, el("span", { class: "ic" }, "✕"), "Leave the Clef view"));
+  body.push(grid); openModal("Switch to Clef", body);
+}
 function focusSettings(body, win) {
   const song = S.song, fb = S.focusBand[win], k = keyObj(song.key), phone = !deckMode(), key = WIN_LO[win];
   body.push(el("div", { class: "pLbl" }, "Five-line focus"));
+  body.push(el("div", { class: "mrow" }, el("button", { class: "btn sm" + (clefOn() ? " acc" : ""), onclick: () => { closeModal(); openClefChooser(); } }, clefOn() ? `Clef view: ${clefNow().name} — change…` : "Switch to Clef…"), el("span", { class: "tiny" }, "every stave on its clef's lines, the clef at its head")));
+  if (clefOn()) return;
   if (phone) body.push(el("div", { class: "tiny" }, "On the phone the stave shows its five middle lines, the rest behind two doors in the page's own colour — COVER beside the stave slides them open and closed."));
   else if (win === "mel" && fb.on) body.push(el("div", { class: "tiny" }, "The covers sit behind two doors in the page's own colour; COVER in the column beside the stave slides them open and closed."));
   else body.push(el("div", { class: "mrow" }, toggle("A white cover outside the five middle lines", !!fb.on, v => { fb.on = v; savePrefs(); if (v) song.view[key] = focusHome(win); renderAll(); openWinSettings(win); })));
@@ -9757,7 +9824,8 @@ function openHelp() {
     h("Clearing a beat", "Delete in the tools, then Run with the first and last beat, clears every note, rest or slot in that stretch for the part you picked it on. ↶ undoes it."),
     h("After an entry", "A note you have just placed stays selected, so the pitch arrows act on it at once; the length and dot buttons pick the length of the next note (tap the note itself to select it deliberately if you want to change its length), and a tap on another row in its column re-pitches it. A tap anywhere else on the stave lets it go: in the same beat that tap places the next note straight away at the next free spot, with the picked length; in another beat it activates that beat."),
     h("Five-line focus", "Each stave's ⚙ → Five-line focus covers the stave white outside the five middle lines (choose the pitch the bottom line shows). The rest of the register is still there to scroll to; notes written above or below sit on the cover with ledger lines, and the ↩ LINES button that appears on the cover brings the five lines back. The register lock still holds if it is on. On the phone every stave shows its five lines from the start, the covers behind two doors in the page's own colour — COVER beside the stave slides both open at once, one up and one down, and closed again; scroll off the five lines and they stand open. On a wide screen the melody has the same doors whenever its five-line focus is on, COVER in the column beside it."),
-    h("Beside the stave", "Under each stave's gear: ⌫ takes back the last note entered on that stave (the words untouched), UNDO undoes; on the phone the SELECT, DELETE, REPEAT, COPY and MOVE tools stack beneath them, and ▶ BAR and ▶ SELECT sit on the palette's rests row. The play buttons and the tempo live in the pallet at the foot of the page."),
+    h("Beside the stave", "Under each stave's gear: ⌫ takes back the last note entered on that stave (the words untouched), UNDO undoes; |<>| and >|< set the lines further apart or closer together a step at a time, the notes and the clef scaling with them, between the legible least and the widest; on the phone the SELECT, DELETE, REPEAT, COPY and MOVE tools stack beneath them, and ▶ BAR, ▶ SELECT and CHORD sit on the palette's rests row. The play buttons and the tempo live in the pallet at the foot of the page."),
+    h("Clef view", "Settings → Staves → Switch to Clef (or a stave's ⚙): Grand Stave, Treble, Alto, Tenor or Bass. Every stave slides its five-line grid to the clef's own place — Treble's bottom line E4, Alto's F3, Tenor's D3, Bass's G2 — with the clef at its head, ledger lines out to any note beyond; the Grand Stave is treble over bass, joined by a brace, the bar lines running through the gap where middle C sits on a ledger line from either staff. Leave the Clef view from the same chooser."),
     h("Long notes", "A note longer than the room left in its beat is dealt out beat by beat and tied on — what fits the beat it starts in, then a beat at a time, each piece the largest values that fill it: a half note on a beat is two tied quarters, a quarter on the \"and\" two tied eighths. It runs on through the following beats, and into the next bars, as long as those beats are empty; in chord mode it does not matter what is already there. A piece that starts part-way through a beat stands alone (never beamed to its neighbours). The white band along the top and bottom of the stave runs from the note to where it ends. If something is already in the way, or the song ends first, the note is refused with a message saying there is not enough space."),
     h("Full screen", "☰ → Full screen hides the browser bars (Android, desktop). On iPhone, use Share → Add to Home Screen; the icon then opens the app with no address bar at all."),
     h("Blank slate", "☰ → New song… opens Setup for name, genre, key, time signature and tempo (☰ → Song setup changes them later). You work one bar at a time — ← → or the dots move between bars; tap the bar name for sections. ▶ at the top plays from this bar; the small ▶ beside each window plays that part alone."),
@@ -9896,7 +9964,7 @@ async function boot() {
   $("rangeBtn").addEventListener("click", openPlayRange);
   $("stopBtn").addEventListener("click", stopAll);
   document.querySelectorAll(".win .psel").forEach(b => b.addEventListener("click", () => togglePlaySelect(b.dataset.win, b)));
-  document.querySelectorAll(".win .chordBtn").forEach(b => b.addEventListener("click", () => toggleChordMode(b.dataset.win)));
+  document.querySelectorAll(".win .spBtn").forEach(b => b.addEventListener("click", () => zoomRows(b.dataset.win, b.classList.contains("wider") ? 1 : -1)));
   document.querySelectorAll(".win .pselClose").forEach(b => b.addEventListener("click", leavePlaySelect));
   midiInit();
   $("overlay").addEventListener("click", e => { if (e.target === $("overlay")) closeModal(); });

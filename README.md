@@ -33,9 +33,13 @@ Each stave's ⚙ → **Five-line focus** covers the stave white outside the five
 
 Stems follow the engraving rule on every stave: below the middle line up, on the head's right; above it down, on the left; on it down. A beamed group follows its note farthest from the middle line, a tie going to the majority, every stem in the group the same way.
 
+## Clef view
+
+Settings → Staves → **Switch to Clef** (or any stave's ⚙) offers the **Grand Stave, Treble, Alto, Tenor** and **Bass** clefs. Every stave slides its five-line grid to the clef's own place — the bottom line E4 for the treble, F3 for the alto, D3 for the tenor, G2 for the bass — with the clef drawn at its head, sized to the lines (it scales with the spacing and the note size); notes beyond the five lines get ledger lines out from the nearest staff. The Grand Stave is treble over bass, joined by a brace at the far left, the bar lines running through the gap between them where middle C sits on a ledger line from either staff. Leave the Clef view from the same chooser and the staves go back as they were.
+
 ## Beside the stave
 
-Under each stave's gear: **⌫** takes back the last note entered on that stave (or the last note of the awake bar), the words untouched, and **UNDO** undoes. On the phone the **SELECT, DELETE, REPEAT, COPY** and **MOVE** tools stack beneath them, all one size; **▶ BAR** and **▶ SELECT** sit on the palette's rests row; the play buttons and the tempo live in a pallet at the foot of the page; every note is drawn Micro; the pitch-range arrows ↑ ↓ sit together at the gutter's middle, snug by the pitch marks; and in the rolled-up view the last part in view stays (its − greyed) until another is opened.
+Under each stave's gear: **⌫** takes back the last note entered on that stave (or the last note of the awake bar), the words untouched, and **UNDO** undoes. **|<>|** and **>|<** set the lines further apart or closer together a step at a time — notes and clef scaling with them, the window's rows growing as they close up — between the legible least and the widest; on the phone they stand where the chord button was, and **CHORD** now sits on the palette's rests row beside ▶ BAR and ▶ SELECT. On the phone the **SELECT, DELETE, REPEAT, COPY** and **MOVE** tools stack beneath them, all one size; **▶ BAR** and **▶ SELECT** sit on the palette's rests row; the play buttons and the tempo live in a pallet at the foot of the page; every note is drawn Micro; the pitch-range arrows ↑ ↓ sit together at the gutter's middle, snug by the pitch marks; and in the rolled-up view the last part in view stays (its − greyed) until another is opened.
 
 ## Deleting notes
 
