@@ -693,6 +693,12 @@ body.xhairOn #melSvg, body.xhairOn #accSvg, body.xhairOn #bassSvg { cursor: cros
 .pLbl { font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: #555; font-weight: 700; margin: 10px 0 4px; }
 .pSec { font-size: 13px; font-weight: 800; color: #111; margin: 16px 0 0; padding-top: 10px; border-top: 1px solid rgba(0,0,0,.14); }   /* a section of Settings */
 .pSec:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+.pSec, .pLbl { display: flex; align-items: center; gap: 8px; }
+.fold { width: 20px; height: 20px; flex: 0 0 auto; padding: 0; border: 1.5px solid #333; border-radius: 50%; background: linear-gradient(#fff, #d9d9d9); color: #111; font: 800 14px/1 system-ui, sans-serif; display: grid; place-items: center; cursor: pointer; }   /* + opens, − closes */
+.pLbl .fold { width: 16px; height: 16px; font-size: 12px; margin-left: 2px; }
+.secBody[hidden] { display: none; }
+.secBody { padding-left: 2px; }
+.seg button:disabled { opacity: .35; cursor: not-allowed; }
 .pRow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 4px 0; }
 .pRow.tight { gap: 4px; }
 .pHead { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
@@ -6643,6 +6649,7 @@ function renderRollBar() {
   if (deck) {
     if (!S.deck || !S.deck.length) S.deck = ["mel"];
     const duo = duoMode(); app.classList.toggle("duo", duo);
+    if (!duo && fixCombo()) { savePrefs(); toast("Notes set to Micro for this view — the other sizes do not fit these bars and window"); }
     const active = deckActive(); S.focus = null; app.classList.remove("focused", "focus-mel", "focus-acc", "focus-bass");
     const shown = duo && !kbUpNow() ? ["mel", duoBandWin()] : [active];                    // the duo: the melody and the band part below it, both in view
     ["mel", "acc", "bass"].forEach(x => { S.winState[x] = shown.includes(x) ? "open" : "closed"; });
@@ -8700,13 +8707,29 @@ function keepStripClear() {
 /* ═══════════════════════════════════════════════════════════════════════
    SECTION 13 · SHEETS — settings, window settings, words, rhythm, chords, library, menu
    ═══════════════════════════════════════════════════════════════════════ */
+/* the wide screen's rolled-up view (the deck): the combinations of bars in view, window sizing, note size and note look that display cleanly —
+   one bar: everything but Traditional notes in a Small window; two bars: Micro (but not Micro circles in a Large window), plus Small Traditional
+   notes in a Small window; three and four bars: Micro only. Settings greys out any choice that would make a combination outside the list. */
+function comboOK(bars, win, size, look) {
+  if (bars <= 1) return !(win === "s" && look === "trad");
+  if (bars === 2) { if (size === "x") return !(win === "l" && look === "circle"); return win === "s" && size === "s" && look === "trad"; }
+  return size === "x";
+}
+const comboGate = () => deckMode() && !duoMode();                                          // the list is for the wide screen's rolled-up view only
+const comboNow = () => !comboGate() || comboOK(S.viewSpan, S.winSize, S.noteSize, S.noteStyle);
+function fixCombo() {                                                                       // a saved combination outside the list: the nearest allowed one, Micro first
+  if (comboNow()) return false;
+  if (!comboOK(S.viewSpan, S.winSize, "x", S.noteStyle)) { if (comboOK(S.viewSpan, S.winSize, "x", "pill")) S.noteStyle = "pill"; else { S.viewSpan = 1; if (!comboOK(1, S.winSize, S.noteSize, S.noteStyle)) S.noteStyle = "pill"; return true; } }
+  S.noteSize = "x"; return true;
+}
 function openSettings() {
-  const seg = (opts, cur, fn) => { const s = el("div", { class: "seg sm" }); opts.forEach(([v, l]) => s.append(el("button", { class: cur === v ? "on" : "", onclick: () => { fn(v); openSettings(); } }, l))); return s; };
+  const seg = (opts, cur, fn, ok) => { const s = el("div", { class: "seg sm" }); opts.forEach(([v, l]) => { const bad = !!(ok && !ok(v)); s.append(el("button", { class: cur === v ? "on" : "", disabled: bad, title: bad ? "Not with the current bars, window and notes on the wide screen's rolled-up view" : null, onclick: () => { fn(v); openSettings(); } }, l)); }); return s; };
+  const gate = comboGate(), okBars = v => !gate || comboOK(v, S.winSize, S.noteSize, S.noteStyle), okWin = v => !gate || comboOK(S.viewSpan, v, S.noteSize, S.noteStyle), okSize = v => !gate || comboOK(S.viewSpan, S.winSize, v, S.noteStyle), okLook = v => !gate || comboOK(S.viewSpan, S.winSize, S.noteSize, v);
   const custom = S.custom || { ground: "#3b4a5a", ground2: "#2d3945", accent: "#3b8bd6", lyric: "#3f8fd0", box: "#f0a63c" };
   const colorRow = el("div", { class: "pRow tight" });
   if (S.theme === "custom") [["ground", "Body"], ["ground2", "Strips"], ["accent", "Buttons"], ["lyric", "Lyrics"], ["box", "Rhythm boxes"]].forEach(([k, l]) => colorRow.append(el("label", { class: "tiny", style: "display:inline-flex;align-items:center;gap:4px" }, el("input", { type: "color", value: custom[k], oninput: e => { custom[k] = e.target.value; S.custom = custom; applyTheme(); savePrefs(); }, onchange: () => renderAll() }), l)));
   const sec = t => el("div", { class: "pSec" }, t), wide = deckMode();
-  openModal("Settings", [
+  openModal("Settings", foldable([
     sec("Look"),
     el("div", { class: "pLbl" }, "Theme"), seg([["auto", "Default"], ["dark", "Dark"], ["custom", "Custom"]], S.theme, v => { S.theme = v; if (v === "custom" && !S.custom) S.custom = custom; applyTheme(); savePrefs(); renderAll(); }), colorRow,   // the staves are painted at render time: redrawn at once, not on the next load
     sec("Layout"),
@@ -8716,9 +8739,9 @@ function openSettings() {
       el("div", { class: "pLbl" }, "Stacked staves on a wide screen"), el("div", { class: "mrow" }, seg([[4, "4 bars"], [8, "8 bars"]], S.duoBars === 8 ? 8 : 4, v => { S.duoBars = v; savePrefs(); renderAll(); }), seg([["acc", "Accompaniment below"], ["bass", "Bass below"]], duoBandWin(), v => { S.duoBand = v; savePrefs(); renderAll(); })),
       el("div", { class: "tiny" }, "This many bars across the width, nothing to scroll. The accompaniment or the bass sits below the strips at about a third of the height, flush on the tool bar; the melody takes the rest. ⇄ beside the lower stave swaps the two."),
     ] : []),
-    el("div", { class: "pLbl" }, S.layout === "stack" ? "Window shows (on a phone, and the deck)" : "Window shows"), seg([[1, "1 bar"], [2, "2 bars"], [3, "3 bars"], [4, "4 bars"]], S.viewSpan, v => { S.viewSpan = v; savePrefs(); renderAll(); }),
+    el("div", { class: "pLbl" }, S.layout === "stack" ? "Window shows (on a phone, and the deck)" : "Window shows"), seg([[1, "1 bar"], [2, "2 bars"], [3, "3 bars"], [4, "4 bars"]], S.viewSpan, v => { S.viewSpan = v; savePrefs(); renderAll(); }, okBars),
     el("div", { class: "tiny" }, "More bars make the staves proportionately wider — swipe sideways to move along them; every window and strip scrolls together. Note size Micro (below) fits them all across instead."),
-    el("div", { class: "pLbl" }, "Window sizing"), seg([["s", "Small"], ["m", "Medium"], ["l", "Large"]], S.winSize, v => { S.winSize = v; savePrefs(); renderAll(); }),
+    el("div", { class: "pLbl" }, "Window sizing"), seg([["s", "Small"], ["m", "Medium"], ["l", "Large"]], S.winSize, v => { S.winSize = v; savePrefs(); renderAll(); }, okWin),
     el("div", { class: "mrow" }, el("button", { class: "btn sm", onclick: () => { S.zoomWin = { mel: 1, acc: 1, bass: 1 }; S.winState = S.layout === "rolled" ? { mel: "open", acc: "closed", bass: "closed" } : { mel: "open", acc: "open", bass: "open" }; savePrefs(); renderAll(); openSettings(); } }, "Reset windows"), el("span", { class: "tiny" }, "Windows share the screen: melody gets the most. The button under each ⚙ shrinks, closes and reopens a window; pinch a window to zoom it.")),
     sec("Staves"),
     el("div", { class: "mrow" }, el("button", { class: "btn sm" + (clefOn() ? " acc" : ""), onclick: () => { closeModal(); openClefChooser(); } }, clefOn() ? `Clef view: ${clefNow().name} — change…` : "Switch to Clef…"), el("span", { class: "tiny" }, "Grand Stave, Treble, Alto, Tenor or Bass: every stave slides its five lines to the clef's place, the clef at its head")),
@@ -8728,8 +8751,9 @@ function openSettings() {
     el("div", { class: "mrow" }, toggle("Lock the register scroll at the edge of each sound's range (top and bottom alike, on every stave)", S.rangeLock, v => { S.rangeLock = v; if (v) ["mel", "acc", "bass"].forEach(w => { const { rows } = rowsOf(w), [minV, , maxV] = viewLimits(w, rows); S.song.view[WIN_LO[w]] = clamp(viewOf(w), minV, maxV); }); savePrefs(); renderAll(); openSettings(); })),   // switched on, every stave's view is pulled inside its range at once
     el("div", { class: "tiny" }, "Locks to: " + ["mel", "acc", "bass"].map(w => { const [lo, hi] = soundRange(w), P = S.song.parts[WIN_PART[w]], k = keyObj(S.song.key); return `${DECK_NAME[w].charAt(0) + DECK_NAME[w].slice(1).toLowerCase()} ${noteName(lo, k)}–${noteName(hi, k)} (${P.bank || P.inst})`; }).join(" · ") + ". A piano or a sample library that spans the keyboard leaves nothing to lock."),
     el("div", { class: "pLbl" }, "Chords displayed"), seg([["names", "Names (C, G7)"], ["roman", "Roman (I, V7)"], ["off", "Hidden"]], S.chordsDisp, v => { S.chordsDisp = v; S.song.showRoman = v === "roman"; savePrefs(); renderAll(); }),
-    el("div", { class: "pLbl" }, "Notes appearance"), seg([["trad", "Traditional"], ["pill", "Pills"], ["circle", "Circles"]], S.noteStyle, v => { S.noteStyle = v; savePrefs(); renderAll(); }),
-    el("div", { class: "pLbl" }, "Note size"), seg([["x", "Micro"], ["s", "Small"], ["m", "Medium"], ["l", "Large"]], S.noteSize, v => { S.noteSize = v; savePrefs(); renderAll(); }),
+    el("div", { class: "pLbl" }, "Notes appearance"), seg([["trad", "Traditional"], ["pill", "Pills"], ["circle", "Circles"]], S.noteStyle, v => { S.noteStyle = v; savePrefs(); renderAll(); }, okLook),
+    el("div", { class: "pLbl" }, "Note size"), seg([["x", "Micro"], ["s", "Small"], ["m", "Medium"], ["l", "Large"]], S.noteSize, v => { S.noteSize = v; savePrefs(); renderAll(); }, okSize),
+    ...(gate ? [el("div", { class: "tiny" }, "On the wide screen's rolled-up view only some combinations of bars, window sizing, note size and note look display cleanly; a greyed choice would make one that does not. Micro goes with everything.")] : []),
     el("div", { class: "tiny" }, "Micro: notes small enough that every bar the window shows fits across it side by side, with nothing to scroll — set Window shows to 2, 3 or 4 bars to see and edit several at once, upright or widescreen."),
     el("div", { class: "pLbl" }, "Chord-mode notes"), seg([["#ffffff", "White"], ["#ffd23f", "Gold"], ["#6fb3ff", "Sky"], ["#8fd14f", "Green"], ["#f4a0c8", "Pink"]], S.chordColor, v => { S.chordColor = v; savePrefs(); renderAll(); }),
     sec("Lyrics & keyboard"),
@@ -8744,7 +8768,29 @@ function openSettings() {
     sec("Device"),
     el("div", { class: "mrow" }, toggle("Keep the screen awake while the app is open" + ("wakeLock" in navigator ? "" : " (this browser cannot)"), S.keepAwake, v => { S.keepAwake = v; savePrefs(); if (v) wakeAcquire(); else wakeRelease(); })),
     el("div", { class: "mrow" }, el("button", { class: "btn sm", onclick: () => { closeModal(); openSampler(); } }, "♪ Sounds & samples"), el("button", { class: "btn sm", onclick: () => { closeModal(); openHelp(); } }, "How it works")),
-  ]);
+  ], "settings", openSettings));
+}
+/* Settings and the staves' ⚙ fold: each section (a header) closed by default and opened with +, closed with −; each hint (the small explanatory text)
+   hidden under the header it follows, shown with + and hidden with −. What was opened stays open while the app is open. */
+function foldable(items, key, reopen) {
+  const openSet = S.uiOpen || (S.uiOpen = {}), out = [];
+  const toggle = (open, fn) => el("button", { class: "fold" + (open ? " open" : ""), title: open ? "Close" : "Open", onclick: e => { e.preventDefault(); e.stopPropagation(); fn(); } }, open ? "−" : "+");
+  let body = null, sec = "", lbl = null, lblId = "";
+  const put = it => { if (body) body.append(it); else out.push(it); };
+  for (const it of items) {
+    if (!it) continue;
+    const cls = it.classList;
+    if (cls && cls.contains("pSec")) { const title = it.textContent, id = key + "|" + title, open = !!openSet[id]; body = el("div", { class: "secBody" }); body.hidden = !open; it.prepend(toggle(open, () => { openSet[id] = !open; reopen(); })); it.classList.toggle("open", open); out.push(it, body); sec = title; lbl = null; continue; }
+    if (cls && cls.contains("pLbl")) { lbl = it; lblId = key + "|" + sec + "|" + it.textContent; put(it); continue; }
+    if (cls && cls.contains("tiny") && it.tagName === "DIV") {                            // a hint: under the header it follows, hidden until asked for
+      const id = lbl ? lblId : key + "|" + sec + "|top", open = !!openSet[id]; it.hidden = !open;
+      const host = lbl || (body ? body.previousSibling : null);
+      if (host && !host.querySelector(".fold")) host.append(toggle(open, () => { openSet[id] = !open; reopen(); }));
+      put(it); continue;
+    }
+    put(it);
+  }
+  return out;
 }
 /* the five-line focus row of a stave's settings: the switch (on the deck; on the phone the five lines are always on) and the range the five lines show */
 /* the Clef view's chooser: pick a clef, and every stave takes its lines; Leave puts the staves back as they were */
@@ -8812,7 +8858,7 @@ function openWinSettings(win) {
   const paperSeg = el("div", { class: "seg sm" });                                       // the paper shade of this stave
   [["default", "Default"], ["aged", "Aged"], ["eggshell", "Light eggshell"], ["white", "Plain white"]].forEach(([v, l]) => paperSeg.append(el("button", { class: (S.paper[win] || "default") === v ? "on" : "", onclick: () => { S.paper[win] = v; savePrefs(); renderAll(); openWinSettings(win); } }, l)));
   body.push(el("div", { class: "pLbl" }, "Paper"), el("div", { class: "pRow" }, paperSeg));
-  openModal(PART_META[part].label, body);
+  openModal(PART_META[part].label, foldable(body, "win:" + win, () => openWinSettings(win)));
 }
 function openWords() {
   const song = S.song, { start, end } = curRange(), sec = curSection(), body = [];

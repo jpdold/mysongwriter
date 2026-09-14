@@ -33,6 +33,10 @@ Each stave's ⚙ → **Five-line focus** covers the stave white outside the five
 
 Stems follow the engraving rule on every stave: below the middle line up, on the head's right; above it down, on the left; on it down. A beamed group follows its note farthest from the middle line, a tie going to the majority, every stem in the group the same way.
 
+## Settings
+
+Settings and each stave's ⚙ fold: every section is closed until its **+** opens it (**−** closes it), and every hint sits hidden under the header it explains until its **+** shows it. On the wide screen's rolled-up view only some combinations of bars in view, window sizing, note size and note look display cleanly — one bar: everything but Traditional notes in a Small window; two bars: Micro (but not Micro circles in a Large window), plus Small Traditional notes in a Small window; three and four bars: Micro only — so a choice that would make any other combination is greyed until the other settings permit it, and a saved combination outside the list is set to Micro when the deck opens. Stacked staves and the phone are not limited.
+
 ## Clef view
 
 Settings → Staves → **Switch to Clef** (or any stave's ⚙) offers the **Grand Stave, Treble, Alto, Tenor** and **Bass** clefs. Every stave slides its five-line grid to the clef's own place — the bottom line E4 for the treble, F3 for the alto, D3 for the tenor, G2 for the bass — with the clef drawn at its head, sized to the lines (it scales with the spacing and the note size); notes beyond the five lines get ledger lines out from the nearest staff. The Grand Stave is treble over bass, joined by a brace at the far left, the bar lines running through the gap between them where middle C sits on a ledger line from either staff. Leave the Clef view from the same chooser and the staves go back as they were.
