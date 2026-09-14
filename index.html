@@ -202,7 +202,7 @@ svg text { pointer-events: none; }
 .win.closed .pselClose { display: none; }
 .win .focus { display: none; width: 24px; height: 24px; padding: 0; border: 1px solid rgba(255,255,255,.35); border-radius: 4px; background: rgba(0,0,0,.25); color: var(--on-ground); font-size: 13px; }
 .win .focus.on { background: linear-gradient(#ffd27a, #f5a623); color: #111; }
-.win .side .bsBtn, .win .side .unBtn { width: 30px; height: 24px; padding: 0; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #cfcfcf); color: #111; font: 800 8px/1 system-ui, sans-serif; letter-spacing: .04em; display: grid; place-items: center; }   /* ⌫ and UNDO under the stave's gear */
+.win .side .bsBtn, .win .side .unBtn { width: 30px; height: 24px; padding: 0; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); color: #111; font: 800 7px/1 system-ui, sans-serif; letter-spacing: .04em; display: grid; place-items: center; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); }   /* ⌫ and UNDO under the stave's gear: the strip buttons' own silver */
 .win .side .bsBtn { font-size: 15px; }
 #app:not(.deck) .win .side { gap: 3px; }                                                     /* the column beside the stave: compact, so it never outgrows the stave and pushes the strips down */
 #app:not(.deck) .win .side #mvRow { display: flex; flex-direction: column; gap: 3px; width: 30px; margin-top: 6px; justify-self: auto; }   /* a small gap under UNDO, then the tools, all the one size */
@@ -213,8 +213,9 @@ svg text { pointer-events: none; }
 #app:not(.deck) .win .side #mvRow #xhairBtn, #app:not(.deck) .win .side #mvRow #setCopyBtn, #app:not(.deck) .win .side #mvRow #cancelBtn { order: 6; }
 #app:not(.deck) .win .side #mvRow #delBtn { color: var(--danger); }
 .win .side .bsBtn:active, .win .side .unBtn:active { background: linear-gradient(#ffd27a, #f5a623); }
-#deckNav button.colBtn { height: 26px; }
+#deckNav button.colBtn { height: 28px; gap: 1px; background: linear-gradient(#fff, #d9d9d9); color: #111; border: 1.5px solid #141414; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); font-size: 7px; }   /* ⌫ BACK, ↶ UNDO, ⇕ COVER: the strip buttons' own silver */
 #deckNav button.colBtn .big { font-size: 12px; line-height: 1; }
+#deckNav button.colBtn:active { filter: none; background: linear-gradient(#ffd27a, #f5a623); }
 #deckNav button.colBtn.on { background: linear-gradient(#6fb3ff, #2f7fd6); color: #fff; }
 .doors { position: absolute; z-index: 2; overflow: hidden; pointer-events: none; }   /* under the deck's MELODY tag (3) and the ↩ LINES button (4) */
 .doors[hidden] { display: none; }
