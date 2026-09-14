@@ -215,13 +215,14 @@ svg text { pointer-events: none; }
 .win .side .bsBtn:active, .win .side .unBtn:active { background: linear-gradient(#ffd27a, #f5a623); }
 #deckNav button.colBtn { height: 26px; }
 #deckNav button.colBtn .big { font-size: 12px; line-height: 1; }
-.doors { position: absolute; z-index: 3; overflow: hidden; pointer-events: none; }
+#deckNav button.colBtn.on { background: linear-gradient(#6fb3ff, #2f7fd6); color: #fff; }
+.doors { position: absolute; z-index: 2; overflow: hidden; pointer-events: none; }   /* under the deck's MELODY tag (3) and the ↩ LINES button (4) */
 .doors[hidden] { display: none; }
 .doors .door { position: absolute; left: 0; right: 0; box-sizing: border-box; background: var(--ground); pointer-events: auto; transition: transform .38s ease; }
 .doors .door.top { top: 0; border-bottom: 4px solid rgba(255,255,255,.3); box-shadow: 0 2px 6px rgba(0,0,0,.4); }   /* the lip where each door ends */
 .doors .door.bot { border-top: 4px solid rgba(255,255,255,.3); box-shadow: 0 -2px 6px rgba(0,0,0,.4); }
 .doors.open .door.top { transform: translateY(-100%); } .doors.open .door.bot { transform: translateY(100%); }   /* both slide at once: one up, one down */
-#app.deck .doors, #app.deck .doorBtn { display: none !important; }
+#app.deck #accWin .doors, #app.deck #bassWin .doors, #app.deck .side .doorBtn { display: none !important; }   /* the deck: doors on the melody only, toggled from the column beside it */
 .win .side .doorBtn { width: 30px; height: 24px; padding: 0; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #cfcfcf); color: #111; font: 800 6.5px/1 system-ui, sans-serif; letter-spacing: .03em; }
 .win .side .doorBtn.on { background: linear-gradient(#6fb3ff, #2f7fd6); color: #fff; }
 .win .side .doorBtn[hidden] { display: none; }
@@ -6667,13 +6668,14 @@ function renderRollBar() {
     const delB = el("button", { class: "delBtn", "data-win": "deck", title: "Delete the selected notes", hidden: true, onclick: e => delAskOpen(e.currentTarget) }, "DEL");
     const colBs = w => el("button", { class: "colBtn", title: "Backspace: take back the last note entered on this stave", onclick: () => backspaceNote(WIN_PART[deckActive()]) }, el("span", { class: "big" }, "⌫"), el("span", {}, "BACK"));   // under the gear: ⌫ then UNDO
     const colUn = () => el("button", { class: "colBtn", title: "Undo", onclick: undo }, el("span", { class: "big" }, "↶"), el("span", {}, "UNDO"));
+    const colCover = () => focusOn("mel") ? [el("button", { class: "colBtn" + (S.doors.mel !== false ? " on" : ""), title: "Open or close the doors over the rest of the melody stave", onclick: () => { S.doors.mel = S.doors.mel === false; savePrefs(); renderAll(); } }, el("span", { class: "big" }, "⇕"), el("span", {}, "COVER"))] : [];   // with the five-line focus on: the doors' switch
     if (duo) {                                                                            // the duo's column: DEL and the melody's gear at the top, the strip buttons beside their strips, and at the foot ⇄ (swap the band part) and that part's gear
       const bw = duoBandWin(), other = bw === "acc" ? "bass" : "acc";
       const swap = el("button", { class: "part", title: "Swap: the " + DECK_NAME[other].toLowerCase() + " here instead", onclick: () => { S.duoBand = other; if (S.activePart !== "melody") S.activePart = WIN_PART[other]; S.sel = null; S.active = null; S.picked = []; savePrefs(); renderAll(); } }, el("span", { class: "big" }, "⇄"), el("span", { class: "name" }, SHORT[other]));
       const gearM = el("button", { class: "gearBtn", title: "Melody settings", onclick: () => openWinSettings("mel") }, gearIco());
       const gearB = el("button", { class: "gearBtn", title: DECK_NAME[bw].charAt(0) + DECK_NAME[bw].slice(1).toLowerCase() + " settings", onclick: () => openWinSettings(bw) }, gearIco());
-      nav.append(delB, gearM, colBs("mel"), colUn(), kc, lb, rb, db, el("div", { class: "spacer" }), swap, gearB);
-    } else nav.append(arrow(-1, up), arrow(1, dn), el("div", { class: "spacer" }), delB, gear, colBs(active), colUn(), kc, lb, rb, db);   // ▲ flush with the stave's top; the gear at the foot; LYRICS, RHYTHM, DYN stacked below that, flush with the stave's bottom
+      nav.append(delB, gearM, colBs("mel"), colUn(), ...colCover(), kc, lb, rb, db, el("div", { class: "spacer" }), swap, gearB);
+    } else nav.append(arrow(-1, up), arrow(1, dn), el("div", { class: "spacer" }), delB, gear, colBs(active), colUn(), ...(active === "mel" ? colCover() : []), kc, lb, rb, db);   // ▲ flush with the stave's top; the gear at the foot; LYRICS, RHYTHM, DYN stacked below that, flush with the stave's bottom
     /* the tool bar: the left third flips too now — its tools, or the staff-lines switch — and the middle and right thirds flip as before */
     const tr = $("toolR"), tm = $("toolMScroll");
     { const tls = $("toolLScroll"), flipL = S.deckFlipL || 0;
@@ -6820,7 +6822,7 @@ function placeDoors(win) {
   const w = $(win + "Win"), frame = w.querySelector(".frame"), g = GEO[win]; let box = w.querySelector(".doors"), btn = w.querySelector(".side .doorBtn");
   const side = w.querySelector(".side");
   if (!btn && side) { btn = el("button", { class: "doorBtn", title: "Open or close the covers over the rest of the stave", onclick: () => { S.doors[win] = S.doors[win] === false; savePrefs(); renderAll(); } }, "COVER"); const ch = side.querySelector(".chordBtn"); if (ch) ch.after(btn); else side.append(btn); }
-  const show = !deckMode() && focusOn(win) && S.winState[win] !== "closed" && !!g;
+  const show = focusOn(win) && S.winState[win] !== "closed" && !!g && (!deckMode() || win === "mel");   // on a wide screen the melody alone has doors, and only with its five-line focus on
   if (btn) { btn.hidden = !show; btn.classList.toggle("on", show && S.doors[win] !== false); }
   if (!box) { box = el("div", { class: "doors" }, el("div", { class: "door top" }), el("div", { class: "door bot" })); w.append(box); }
   box.hidden = !show; if (!show) return;
@@ -8691,6 +8693,7 @@ function focusSettings(body, win) {
   const song = S.song, fb = S.focusBand[win], k = keyObj(song.key), phone = !deckMode(), key = WIN_LO[win];
   body.push(el("div", { class: "pLbl" }, "Five-line focus"));
   if (phone) body.push(el("div", { class: "tiny" }, "On the phone the stave shows its five middle lines, the rest behind two doors in the page's own colour — COVER beside the stave slides them open and closed."));
+  else if (win === "mel" && fb.on) body.push(el("div", { class: "tiny" }, "The covers sit behind two doors in the page's own colour; COVER in the column beside the stave slides them open and closed."));
   else body.push(el("div", { class: "mrow" }, toggle("A white cover outside the five middle lines", !!fb.on, v => { fb.on = v; savePrefs(); if (v) song.view[key] = focusHome(win); renderAll(); openWinSettings(win); })));
   if (phone || fb.on) {
     const sel = el("select", { class: "sel", onchange: e => { fb.lo = parseInt(e.target.value, 10); savePrefs(); song.view[key] = focusHome(win); renderAll(); openWinSettings(win); } });
@@ -9752,7 +9755,7 @@ function openHelp() {
     h("Deleting notes", "Tap the beat a note is in, then tap the note itself: it is selected, and DEL — a red square at the foot of the stave's buttons (under the gear on the deck) — appears. Tap more notes, in any beat or on any stave, to pick them too; a picked note tapped again is let go. Tap DEL and answer Delete selected? — every picked note goes, a tied note as one. UNDO brings them back."),
     h("Clearing a beat", "Delete in the tools, then Run with the first and last beat, clears every note, rest or slot in that stretch for the part you picked it on. ↶ undoes it."),
     h("After an entry", "A note you have just placed stays selected, so the pitch arrows act on it at once; the length and dot buttons pick the length of the next note (tap the note itself to select it deliberately if you want to change its length), and a tap on another row in its column re-pitches it. A tap anywhere else on the stave lets it go: in the same beat that tap places the next note straight away at the next free spot, with the picked length; in another beat it activates that beat."),
-    h("Five-line focus", "Each stave's ⚙ → Five-line focus covers the stave white outside the five middle lines (choose the pitch the bottom line shows). The rest of the register is still there to scroll to; notes written above or below sit on the cover with ledger lines, and the ↩ LINES button that appears on the cover brings the five lines back. The register lock still holds if it is on. On the phone every stave shows its five lines from the start, the covers behind two doors in the page's own colour — COVER beside the stave slides both open at once, one up and one down, and closed again; scroll off the five lines and they stand open."),
+    h("Five-line focus", "Each stave's ⚙ → Five-line focus covers the stave white outside the five middle lines (choose the pitch the bottom line shows). The rest of the register is still there to scroll to; notes written above or below sit on the cover with ledger lines, and the ↩ LINES button that appears on the cover brings the five lines back. The register lock still holds if it is on. On the phone every stave shows its five lines from the start, the covers behind two doors in the page's own colour — COVER beside the stave slides both open at once, one up and one down, and closed again; scroll off the five lines and they stand open. On a wide screen the melody has the same doors whenever its five-line focus is on, COVER in the column beside it."),
     h("Beside the stave", "Under each stave's gear: ⌫ takes back the last note entered on that stave (the words untouched), UNDO undoes; on the phone the SELECT, DELETE, REPEAT, COPY and MOVE tools stack beneath them, and ▶ BAR and ▶ SELECT sit on the palette's rests row. The play buttons and the tempo live in the pallet at the foot of the page."),
     h("Long notes", "A note longer than the room left in its beat is dealt out beat by beat and tied on — what fits the beat it starts in, then a beat at a time, each piece the largest values that fill it: a half note on a beat is two tied quarters, a quarter on the \"and\" two tied eighths. It runs on through the following beats, and into the next bars, as long as those beats are empty; in chord mode it does not matter what is already there. A piece that starts part-way through a beat stands alone (never beamed to its neighbours). The white band along the top and bottom of the stave runs from the note to where it ends. If something is already in the way, or the song ends first, the note is refused with a message saying there is not enough space."),
     h("Full screen", "☰ → Full screen hides the browser bars (Android, desktop). On iPhone, use Share → Add to Home Screen; the icon then opens the app with no address bar at all."),
