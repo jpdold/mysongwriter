@@ -6826,6 +6826,7 @@ function keyAcc(key) { const n = keySig(key), a = [0, 0, 0, 0, 0, 0, 0]; if (n >
 const stepPitch = (st, key) => { const o = Math.floor(st / 7), L = ((st % 7) + 7) % 7; return 12 * (o + 1) + NAT[L] + keyAcc(key)[L]; };   // the pitch of a letter row in the key
 const SPELL_CACHE = new Map();
 function spell(m, key) {                                                                   // a pitch's letter row and accidental in the key; no glyph when the key already carries it
+  m = Math.round(Number(m)); if (!isFinite(m)) m = 60;                                     // a half-way or missing pitch (the view's middle, an unpitched slot) still gets a row
   const ck = m + "|" + key.name; if (SPELL_CACHE.has(ck)) return SPELL_CACHE.get(ck);
   const ka = keyAcc(key), pc = ((m % 12) + 12) % 12, sharpKey = keySig(key) >= 0; let best = null;
   for (let L = 0; L < 7; L++) for (const a of [-1, 0, 1]) {
@@ -6833,6 +6834,7 @@ function spell(m, key) {                                                        
     const glyph = a === ka[L] ? "" : a === 0 ? "♮" : a === 1 ? "♯" : "♭", score = glyph === "" ? 0 : a === 0 ? 1 : 1.5 + ((a === 1) === sharpKey ? 0 : 0.5);   // the key's own letter first, then a natural, then a sharp or flat the way the key leans
     if (!best || score < best.score) { let o = Math.floor(m / 12) - 1; if (NAT[L] + a >= 12) o -= 1; else if (NAT[L] + a < 0) o += 1; best = { L, a, glyph, score, step: o * 7 + L }; }
   }
+  if (!best) best = { L: 0, a: 0, glyph: "", score: 9, step: (Math.floor(m / 12) - 1) * 7 };
   SPELL_CACHE.set(ck, best); return best;
 }
 const stepName = st => LET[((st % 7) + 7) % 7] + (Math.floor(st / 7));
