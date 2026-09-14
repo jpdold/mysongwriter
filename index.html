@@ -6649,7 +6649,7 @@ function renderRollBar() {
   if (deck) {
     if (!S.deck || !S.deck.length) S.deck = ["mel"];
     const duo = duoMode(); app.classList.toggle("duo", duo);
-    if (!duo && fixCombo()) { savePrefs(); toast("Notes set to Micro for this view — the other sizes do not fit these bars and window"); }
+    if (fixCombo()) { savePrefs(); toast("Notes set to Micro for this view — the other sizes do not fit these bars and window"); }
     const active = deckActive(); S.focus = null; app.classList.remove("focused", "focus-mel", "focus-acc", "focus-bass");
     const shown = duo && !kbUpNow() ? ["mel", duoBandWin()] : [active];                    // the duo: the melody and the band part below it, both in view
     ["mel", "acc", "bass"].forEach(x => { S.winState[x] = shown.includes(x) ? "open" : "closed"; });
@@ -8715,16 +8715,21 @@ function comboOK(bars, win, size, look) {
   if (bars === 2) { if (size === "x") return !(win === "l" && look === "circle"); return win === "s" && size === "s" && look === "trad"; }
   return size === "x";
 }
-const comboGate = () => deckMode() && !duoMode();                                          // the list is for the wide screen's rolled-up view only
-const comboNow = () => !comboGate() || comboOK(S.viewSpan, S.winSize, S.noteSize, S.noteStyle);
+/* Stacked staves on the wide screen: Micro only — four bars in any window and look; eight bars only in a Small window with Traditional notes */
+function comboOKDuo(bars, win, size, look) { if (size !== "x") return false; return bars === 8 ? (win === "s" && look === "trad") : true; }
+const comboGate = () => deckMode();                                                        // the lists are for the wide screen: one for the rolled-up view, one for Stacked staves
+const comboOKNow = (bars, win, size, look) => duoMode() ? comboOKDuo(bars, win, size, look) : comboOK(bars, win, size, look);
+const barsNow = () => duoMode() ? (S.duoBars === 8 ? 8 : 4) : S.viewSpan;
+const comboNow = () => !comboGate() || comboOKNow(barsNow(), S.winSize, S.noteSize, S.noteStyle);
 function fixCombo() {                                                                       // a saved combination outside the list: the nearest allowed one, Micro first
   if (comboNow()) return false;
+  if (duoMode()) { S.noteSize = "x"; if (!comboOKDuo(barsNow(), S.winSize, "x", S.noteStyle)) S.duoBars = 4; return true; }
   if (!comboOK(S.viewSpan, S.winSize, "x", S.noteStyle)) { if (comboOK(S.viewSpan, S.winSize, "x", "pill")) S.noteStyle = "pill"; else { S.viewSpan = 1; if (!comboOK(1, S.winSize, S.noteSize, S.noteStyle)) S.noteStyle = "pill"; return true; } }
   S.noteSize = "x"; return true;
 }
 function openSettings() {
   const seg = (opts, cur, fn, ok) => { const s = el("div", { class: "seg sm" }); opts.forEach(([v, l]) => { const bad = !!(ok && !ok(v)); s.append(el("button", { class: cur === v ? "on" : "", disabled: bad, title: bad ? "Not with the current bars, window and notes on the wide screen's rolled-up view" : null, onclick: () => { fn(v); openSettings(); } }, l)); }); return s; };
-  const gate = comboGate(), okBars = v => !gate || comboOK(v, S.winSize, S.noteSize, S.noteStyle), okWin = v => !gate || comboOK(S.viewSpan, v, S.noteSize, S.noteStyle), okSize = v => !gate || comboOK(S.viewSpan, S.winSize, v, S.noteStyle), okLook = v => !gate || comboOK(S.viewSpan, S.winSize, S.noteSize, v);
+  const gate = comboGate(), duo = duoMode(), okBars = v => !gate || duo || comboOK(v, S.winSize, S.noteSize, S.noteStyle), okDuoBars = v => !duo || comboOKDuo(v, S.winSize, S.noteSize, S.noteStyle), okWin = v => !gate || comboOKNow(barsNow(), v, S.noteSize, S.noteStyle), okSize = v => !gate || comboOKNow(barsNow(), S.winSize, v, S.noteStyle), okLook = v => !gate || comboOKNow(barsNow(), S.winSize, S.noteSize, v);
   const custom = S.custom || { ground: "#3b4a5a", ground2: "#2d3945", accent: "#3b8bd6", lyric: "#3f8fd0", box: "#f0a63c" };
   const colorRow = el("div", { class: "pRow tight" });
   if (S.theme === "custom") [["ground", "Body"], ["ground2", "Strips"], ["accent", "Buttons"], ["lyric", "Lyrics"], ["box", "Rhythm boxes"]].forEach(([k, l]) => colorRow.append(el("label", { class: "tiny", style: "display:inline-flex;align-items:center;gap:4px" }, el("input", { type: "color", value: custom[k], oninput: e => { custom[k] = e.target.value; S.custom = custom; applyTheme(); savePrefs(); }, onchange: () => renderAll() }), l)));
@@ -8736,7 +8741,7 @@ function openSettings() {
     el("div", { class: "pLbl" }, "View"), seg([["stack", "Stacked staves"], ["rolled", "Rolled up"]], S.layout, v => { S.layout = v; if (v === "rolled") { S.focus = null; $("app").classList.remove("focused", "focus-mel", "focus-acc", "focus-bass"); } else ["mel", "acc", "bass"].forEach(w => { if (S.winState[w] === "closed") S.winState[w] = "open"; }); savePrefs(); renderAll(); }),   // Stacked: every stave opens
     el("div", { class: "tiny" }, wide ? "On this wide screen — Stacked staves: the melody over its strips, with the accompaniment or the bass filling the rest. Rolled up: the deck, one part at a time with its buttons beside it." : "On a phone — Stacked staves: all three staves, one above the other. Rolled up: one bar at a time, the parts as three bars with + / − to open and close each. (On a wide screen, Stacked is the melody over the accompaniment or bass; Rolled up is the deck, one part at a time.)"),
     ...(S.layout === "stack" ? [
-      el("div", { class: "pLbl" }, "Stacked staves on a wide screen"), el("div", { class: "mrow" }, seg([[4, "4 bars"], [8, "8 bars"]], S.duoBars === 8 ? 8 : 4, v => { S.duoBars = v; savePrefs(); renderAll(); }), seg([["acc", "Accompaniment below"], ["bass", "Bass below"]], duoBandWin(), v => { S.duoBand = v; savePrefs(); renderAll(); })),
+      el("div", { class: "pLbl" }, "Stacked staves on a wide screen"), el("div", { class: "mrow" }, seg([[4, "4 bars"], [8, "8 bars"]], S.duoBars === 8 ? 8 : 4, v => { S.duoBars = v; savePrefs(); renderAll(); }, okDuoBars), seg([["acc", "Accompaniment below"], ["bass", "Bass below"]], duoBandWin(), v => { S.duoBand = v; savePrefs(); renderAll(); })),
       el("div", { class: "tiny" }, "This many bars across the width, nothing to scroll. The accompaniment or the bass sits below the strips at about a third of the height, flush on the tool bar; the melody takes the rest. ⇄ beside the lower stave swaps the two."),
     ] : []),
     el("div", { class: "pLbl" }, S.layout === "stack" ? "Window shows (on a phone, and the deck)" : "Window shows"), seg([[1, "1 bar"], [2, "2 bars"], [3, "3 bars"], [4, "4 bars"]], S.viewSpan, v => { S.viewSpan = v; savePrefs(); renderAll(); }, okBars),
@@ -8753,7 +8758,7 @@ function openSettings() {
     el("div", { class: "pLbl" }, "Chords displayed"), seg([["names", "Names (C, G7)"], ["roman", "Roman (I, V7)"], ["off", "Hidden"]], S.chordsDisp, v => { S.chordsDisp = v; S.song.showRoman = v === "roman"; savePrefs(); renderAll(); }),
     el("div", { class: "pLbl" }, "Notes appearance"), seg([["trad", "Traditional"], ["pill", "Pills"], ["circle", "Circles"]], S.noteStyle, v => { S.noteStyle = v; savePrefs(); renderAll(); }, okLook),
     el("div", { class: "pLbl" }, "Note size"), seg([["x", "Micro"], ["s", "Small"], ["m", "Medium"], ["l", "Large"]], S.noteSize, v => { S.noteSize = v; savePrefs(); renderAll(); }, okSize),
-    ...(gate ? [el("div", { class: "tiny" }, "On the wide screen's rolled-up view only some combinations of bars, window sizing, note size and note look display cleanly; a greyed choice would make one that does not. Micro goes with everything.")] : []),
+    ...(gate ? [el("div", { class: "tiny" }, duo ? "With Stacked staves on the wide screen only Micro notes display cleanly: four bars in any window and look, eight bars only in a Small window with Traditional notes; a greyed choice would make another combination." : "On the wide screen's rolled-up view only some combinations of bars, window sizing, note size and note look display cleanly; a greyed choice would make one that does not. Micro goes with everything.")] : []),
     el("div", { class: "tiny" }, "Micro: notes small enough that every bar the window shows fits across it side by side, with nothing to scroll — set Window shows to 2, 3 or 4 bars to see and edit several at once, upright or widescreen."),
     el("div", { class: "pLbl" }, "Chord-mode notes"), seg([["#ffffff", "White"], ["#ffd23f", "Gold"], ["#6fb3ff", "Sky"], ["#8fd14f", "Green"], ["#f4a0c8", "Pink"]], S.chordColor, v => { S.chordColor = v; savePrefs(); renderAll(); }),
     sec("Lyrics & keyboard"),

@@ -35,7 +35,7 @@ Stems follow the engraving rule on every stave: below the middle line up, on the
 
 ## Settings
 
-Settings and each stave's ⚙ fold: every section is closed until its **+** opens it (**−** closes it), and every hint sits hidden under the header it explains until its **+** shows it. On the wide screen's rolled-up view only some combinations of bars in view, window sizing, note size and note look display cleanly — one bar: everything but Traditional notes in a Small window; two bars: Micro (but not Micro circles in a Large window), plus Small Traditional notes in a Small window; three and four bars: Micro only — so a choice that would make any other combination is greyed until the other settings permit it, and a saved combination outside the list is set to Micro when the deck opens. Stacked staves and the phone are not limited.
+Settings and each stave's ⚙ fold: every section is closed until its **+** opens it (**−** closes it), and every hint sits hidden under the header it explains until its **+** shows it. On the wide screen's rolled-up view only some combinations of bars in view, window sizing, note size and note look display cleanly — one bar: everything but Traditional notes in a Small window; two bars: Micro (but not Micro circles in a Large window), plus Small Traditional notes in a Small window; three and four bars: Micro only — so a choice that would make any other combination is greyed until the other settings permit it, and a saved combination outside the list is set to Micro when the deck opens. With Stacked staves on the wide screen only Micro notes are allowed — four bars in any window and look, eight bars only in a Small window with Traditional notes. The phone is not limited.
 
 ## Clef view
 
