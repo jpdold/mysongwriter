@@ -204,7 +204,9 @@ svg text { pointer-events: none; }
 .win .focus.on { background: linear-gradient(#ffd27a, #f5a623); color: #111; }
 .win .side .bsBtn, .win .side .unBtn { width: 30px; height: 24px; padding: 0; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #cfcfcf); color: #111; font: 800 8px/1 system-ui, sans-serif; letter-spacing: .04em; display: grid; place-items: center; }   /* ⌫ and UNDO under the stave's gear */
 .win .side .bsBtn { font-size: 15px; }
-#app:not(.deck) .win .side #mvRow { display: flex; flex-direction: column; gap: 4px; width: 30px; margin-top: 8px; justify-self: auto; }   /* a small gap under UNDO, then the tools, all the one size */
+#app:not(.deck) .win .side { gap: 3px; }                                                     /* the column beside the stave: compact, so it never outgrows the stave and pushes the strips down */
+#app:not(.deck) .win .side #mvRow { display: flex; flex-direction: column; gap: 3px; width: 30px; margin-top: 6px; justify-self: auto; }   /* a small gap under UNDO, then the tools, all the one size */
+#app:not(.deck) .win .side .bsBtn, #app:not(.deck) .win .side .unBtn, #app:not(.deck) .win .side .doorBtn, #app:not(.deck) .win .side #mvRow button { height: 20px; }
 #app:not(.deck) .win .side #mvRow.armed { width: 30px; }
 #app:not(.deck) .win .side #mvRow button { width: 30px; height: 24px; padding: 0; border: 1.5px solid #141414 !important; border-radius: 4px !important; background: linear-gradient(#fff, #cfcfcf); color: #111; font: 800 6.5px/1 system-ui, sans-serif; letter-spacing: .02em; }
 #app:not(.deck) .win .side #mvRow #selBtn { order: 1; } #app:not(.deck) .win .side #mvRow #delBtn { order: 2; } #app:not(.deck) .win .side #mvRow #repBtn { order: 3; } #app:not(.deck) .win .side #mvRow #copyBtn { order: 4; } #app:not(.deck) .win .side #mvRow #moveBtn { order: 5; }
@@ -6041,6 +6043,13 @@ function allocate() {
       : wide ? Math.max(160, vh - chromeMel) : avail * WIN_WEIGHT[w] * f(w) / sum;
     STEPS[w] = clamp(Math.floor((share - 12) / rows * S.zoomWin[w] * WIN_K[S.winSize] * 10) / 10, lo, hi);
   }
+  if (!deckMode()) for (const w of wins) {                                              // the phone: the stave at least as tall as the column of buttons beside it, so the column never pushes the strips down
+    if (!f(w)) continue; const side = $(w + "Win").querySelector(".side"); if (!side) continue;
+    const kids = [...side.children].filter(k => k.offsetHeight > 0 && !k.hidden), cs = getComputedStyle(side), gap = parseFloat(cs.rowGap) || parseFloat(cs.gap) || 0;
+    const need = kids.reduce((a, k) => a + k.offsetHeight + (parseFloat(getComputedStyle(k).marginTop) || 0), 0) + Math.max(0, kids.length - 1) * gap + (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+    const [rows] = WIN[S.winSize][w], k = STEP_K[S.noteSize] || 1, minStep = (need - 13) / rows / k;   // the frame around the rows: 10px of padding and 3px of border
+    if (STEPS[w] < minStep) STEPS[w] = Math.ceil(minStep * 10) / 10;
+  }
 }
 const sectionHasPickup = si => si === 0 && !!(S.song.bars[0] && S.song.bars[0].pickup);
 const barNo = bi => { const r = sectionRange(sectionOfBar(bi)); return bi - r.start + 1 - (sectionHasPickup(sectionOfBar(bi)) ? 1 : 0); };
@@ -6713,6 +6722,7 @@ function renderAll() {
   S.si = sectionOfBar(S.bi); S.siLast = S.si;
   renderHeader(); renderNav(); renderRollBar(); renderPalette(); allocate(); renderWindows(); renderStrips(); renderBeatRow(); placeDeckLabels();
   if (deckMode()) { const r0 = Object.assign({}, DECK_ROWS), s0 = Object.assign({}, STEPS); allocate(); if (["mel", "acc", "bass"].some(w => DECK_ROWS[w] !== r0[w] || Math.abs(STEPS[w] - s0[w]) > 1e-6)) { renderWindows(); renderStrips(); renderBeatRow(); placeDeckLabels(); } }
+  if (!deckMode()) { const s0 = Object.assign({}, STEPS); allocate(); if (["mel", "acc", "bass"].some(w => Math.abs(STEPS[w] - s0[w]) > 1e-6)) { renderWindows(); renderStrips(); renderBeatRow(); } }   // the phone: the column beside the stave is only whole once drawn (COVER is made then) — size the stave to it and draw again
   if (deckMode() && !kbUpNow()) {                                                         // the tool bar must end on the screen's foot, the stave and strips flush above it: measured as drawn, any miss (a load before the page had settled, a browser bar coming or going) is taken up by the stave at once
     const tb = $("toolbar").getBoundingClientRect(), fr = $(deckActive() + "Win").querySelector(".frame").getBoundingClientRect();
     const strips = ["dynStrip", "rhyStrip", "lyrStrip"].map(id => $(id)).filter(e => e && e.offsetHeight > 0 && getComputedStyle(e).position !== "fixed"), above = Math.max(fr.bottom, ...strips.map(e => e.getBoundingClientRect().bottom));
