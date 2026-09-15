@@ -5967,7 +5967,7 @@ const setMode = () => {};                          // engine shims (the old mode
 const renderPanel = () => renderAll();
 function loadPrefs() {
   const p = readJSON(STORE.prefs, {});
-  S.theme = p.theme || "auto"; S.followWords = false; S.noteStyle = p.noteStyle || "trad"; S.noteSize = NOTE_SCALE[p.noteSize] ? p.noteSize : "m"; S.chordColor = p.chordColor || "#ffffff"; S.halfLines = p.halfLines == null ? true : !!p.halfLines; S.beatLines = p.beatLines == null ? true : !!p.beatLines; S.rangeLock = !!p.rangeLock; S.kbLayout = p.kbLayout === "flat" ? "flat" : "standard"; S.kbTheme = ["blue", "black", "gray"].includes(p.kbTheme) ? p.kbTheme : "classic"; S.kbSpace = Math.min(1, Math.max(0, +p.kbSpace || 0)); S.kbBackUp = Math.min(1, Math.max(0, +p.kbBackUp || 0)); S.ftp = Object.assign({}, FTP_DEFAULT, p.ftp || {}); if (!FTP_ENABLED) S.ftp.on = false;
+  S.theme = p.theme || "auto"; S.followWords = false; S.noteStyle = p.noteStyle || "trad"; S.noteSize = NOTE_SCALE[p.noteSize] ? p.noteSize : "m"; S.chordColor = p.chordColor || "#ffffff"; S.halfLines = p.halfLines == null ? true : !!p.halfLines; S.beatLines = p.beatLines == null ? true : !!p.beatLines; S.barHi = p.barHi in BAR_HI ? p.barHi : "default"; S.rangeLock = !!p.rangeLock; S.kbLayout = p.kbLayout === "flat" ? "flat" : "standard"; S.kbTheme = ["blue", "black", "gray"].includes(p.kbTheme) ? p.kbTheme : "classic"; S.kbSpace = Math.min(1, Math.max(0, +p.kbSpace || 0)); S.kbBackUp = Math.min(1, Math.max(0, +p.kbBackUp || 0)); S.ftp = Object.assign({}, FTP_DEFAULT, p.ftp || {}); if (!FTP_ENABLED) S.ftp.on = false;
   S.winSize = WIN[p.winSize] ? p.winSize : "m"; S.chordsDisp = p.chordsDisp || "names"; S.metro = p.metro || "off"; S.custom = p.custom || null; S.len = p.len || 1;
   S.rhyShown = p.rhyShown !== false && p.stripsShown !== false; S.lyrShown = p.lyrShown !== false && p.stripsShown !== false; S.partsShown = p.partsShown !== false; S.dynShown = !!p.dynShown; 
   S.deck = Array.isArray(p.deck) && p.deck.length ? p.deck.filter(w => ["mel", "acc", "bass"].includes(w)) : ["mel", "acc", "bass"]; if (!S.deck.length) S.deck = ["mel"];
@@ -5980,7 +5980,7 @@ function loadPrefs() {
   S.lyricFont = p.lyricFont || "sans"; S.chipMode = "multi"; S.keepAwake = p.keepAwake !== false; S.paper = Object.assign({ mel: "default", acc: "default", bass: "default" }, p.paper || {}); S.quick = Object.assign({ cells: QUICK_DEFAULT.slice(), locked: true, float: false, x: null, y: null }, p.quick || {}); if (!Array.isArray(S.quick.cells) || S.quick.cells.join() === QUICK_OLD.join()) S.quick.cells = QUICK_DEFAULT.slice(); if (S.quick.cells.length === 8) S.quick.cells.push("sl", "ti", "gh", "dt"); if (S.quick.cells.length !== 12) S.quick.cells = QUICK_DEFAULT.slice();   // a third row joined: slur, tie, ghost note, dot S.winState = Object.assign({ mel: "open", acc: "closed", bass: "closed" }, p.winState || {}); S.zoomWin = Object.assign({ mel: 1, acc: 1, bass: 1 }, p.zoomWin || {}); S.midi = p.midi || {}; S.viewSpan = [1, 2, 3, 4].includes(p.viewSpan) ? p.viewSpan : 1; if (p.softKb != null) S.softKb = p.softKb2 == null ? true : !!p.softKb2; S.kbPos = p.kbPos || null;   // the app keyboard, on unless switched off S.layout = p.layout === "stack" ? "stack" : "rolled";
   applyTheme();
 }
-function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, deck: S.deck, rhyShown: S.rhyShown, lyrShown: S.lyrShown, partsShown: S.partsShown, dynShown: S.dynShown, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, beatLines: S.beatLines, rangeLock: S.rangeLock, kbLayout: S.kbLayout, kbTheme: S.kbTheme, kbSpace: S.kbSpace, kbBackUp: S.kbBackUp, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, keepAwake: S.keepAwake, paper: S.paper, quick: S.quick, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout, duoBars: S.duoBars, duoBand: S.duoBand, beatDividers: S.beatDividers, focusBand: S.focusBand, doors: S.doors, clefs: S.clefs }); }
+function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, deck: S.deck, rhyShown: S.rhyShown, lyrShown: S.lyrShown, partsShown: S.partsShown, dynShown: S.dynShown, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, beatLines: S.beatLines, barHi: S.barHi, rangeLock: S.rangeLock, kbLayout: S.kbLayout, kbTheme: S.kbTheme, kbSpace: S.kbSpace, kbBackUp: S.kbBackUp, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, keepAwake: S.keepAwake, paper: S.paper, quick: S.quick, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout, duoBars: S.duoBars, duoBand: S.duoBand, beatDividers: S.beatDividers, focusBand: S.focusBand, doors: S.doors, clefs: S.clefs }); }
 function applyTheme() {
   const r = document.documentElement;
   if (S.theme === "dark") r.setAttribute("data-theme", "dark"); else r.removeAttribute("data-theme");
@@ -6290,6 +6290,18 @@ const beatOf = (bi, t) => Math.min(Math.floor(t + 1e-6), Math.max(0, Math.ceil(b
 const inActive = (bi, t) => !!S.active && S.active.bi === bi;                          // the whole bar is awake: any beat of it takes taps
 /* a tap inside the awake bar aims the entry at the beat tapped: the box and the next note go there */
 function aimBeat(bi, t) { if (!S.active || S.active.bi !== bi) return; const b = beatOf(bi, t); if (b !== S.active.beat) { S.active.beat = b; S.ghost = null; S.justEntered = null; } }
+/* inside the awake bar a tap on empty space lands at the marked beat wherever along the bar it falls: the time returned is the next free spot in that beat,
+   so the tap only gives the pitch; when the marked beat is full the next beat of the bar with room takes it, and failing that the tap's own beat */
+function aimEntry(bi, t, part = "melody") {
+  if (!S.active || S.active.bi !== bi) return t;
+  const bar = S.song.bars[bi], B = Math.ceil(barBeats(bi));
+  for (let b = S.active.beat; b < B; b++) {
+    const ts = freeSpotInBeat(bar, bi, b, part); if (ts == null) continue;
+    if (b !== S.active.beat) { const je = S.justEntered; aimBeat(bi, b); if (je && je.bi === bi && je.part === part) S.justEntered = { bi, beat: b, part }; }   // moved on by itself: the run of entry carries on, the next tap going straight in
+    return ts;
+  }
+  aimBeat(bi, t); return t;
+}
 /* a different song is now in front: nothing may still point at the old one */
 function freshSongState() {
   S.bi = 0; S.si = 0; S.sel = null; S.selChip = null; S.active = null; S.ghost = null; S.justEntered = null; S.lastEntered = null; S.cursor = null; S.slurFrom = null; S.artic = null; S.playPos = null;
@@ -7138,6 +7150,18 @@ function drawNote(svg, g, x, m, d, color, attrs, opts = {}) {
 }
 /* where the next note will land: shown on the first tap, filled on the second */
 /* two small green arrows, top and bottom at the far right of the bar: this runs on into the next bar */
+/* the awake bar — Settings → Bar select highlight: tinted and framed in the theme's box colour (default), light blue or gray; boxed only, a medium black
+   frame and no tint; or none, the dashed entry box alone marking the beat. At either end of the view it runs to the edge, so no sliver of paper shows */
+const BAR_HI = { default: null, blue: "#7fc4ff", gray: "#9a9a9a", boxed: null, none: null };
+function drawAwake(svg, g, bi) {
+  if (!S.active || S.active.bi !== bi || S.barHi === "none") return;
+  const first = bi === g.bars[0], last = bi === g.bars[g.bars.length - 1];
+  const ax = first ? 0 : g.x(bi, 0), ax1 = last ? g.W : g.x(bi, barBeats(bi)), aw = ax1 - ax;                                                     // the awake bar, edge to edge
+  if (S.barHi === "boxed") { svg.append(svgEl("rect", { x: ax + 1.5, y: 1.5, width: aw - 3, height: g.H - 3, fill: "none", stroke: "#111", "stroke-width": 3, "pointer-events": "none" })); return; }
+  const c = BAR_HI[S.barHi] || css("--box");
+  { const bx = g.x(bi, S.active.beat), bw = g.x(bi, Math.min(barBeats(bi), S.active.beat + 1)) - bx; svg.append(svgEl("rect", { x: bx, y: 0, width: bw, height: g.H, fill: c, opacity: 0.16, "pointer-events": "none" })); }   // the beat aimed at, a shade deeper
+  svg.append(svgEl("rect", { x: ax, y: 0, width: aw, height: g.H, fill: c, opacity: 0.28, "pointer-events": "none" }), svgEl("rect", { x: ax + 1, y: 1, width: aw - 2, height: g.H - 2, fill: "none", stroke: c, "stroke-width": 2, opacity: 0.9, "pointer-events": "none" }));
+}
 function drawSpillArrows(svg, g, bi) {
   const xe = g.x(bi, barBeats(bi)) - 3;
   [4, g.H - 12].forEach(y => svg.append(svgEl("path", { d: `M ${xe - 9} ${y} l 9 4 l -9 4 z`, fill: "#8fd14f", stroke: "#fff", "stroke-width": 1, "stroke-linejoin": "round", "pointer-events": "none" })));
@@ -7255,12 +7279,7 @@ function renderWindows() {
     const groups = S.noteStyle === "trad" ? beamGroups(bar.ev.melody.filter(e => e.m != null && e.m >= g.lo && e.m <= g.hi)) : [], beamed = new Set(groups.flatMap(gp => gp.evs.map(e => e.id)));
     const cur = S.cursor && S.cursor.bi === bi ? bar.chips.find(c => c.id === S.cursor.chipId) : null;
     if (cur && S.followWords) svg.append(svgEl("rect", { x: g.x(bi, cur.t), y: 0, width: Math.max(6, cur.d * g.beatPx), height: g.H, fill: box, opacity: 0.12, "pointer-events": "none" }));
-    if (S.active && S.active.bi === bi) {                                                   // the active beat: tinted and framed; at either end of the view it runs to the edge, so no sliver of paper shows
-      const first = bi === g.bars[0], last = bi === g.bars[g.bars.length - 1];
-      const ax = first ? 0 : g.x(bi, 0), ax1 = last ? g.W : g.x(bi, barBeats(bi)), aw = ax1 - ax;                                                   // the awake bar, edge to edge
-      { const bx = g.x(bi, S.active.beat), bw = g.x(bi, Math.min(barBeats(bi), S.active.beat + 1)) - bx; svg.append(svgEl("rect", { x: bx, y: 0, width: bw, height: g.H, fill: css("--box"), opacity: 0.16, "pointer-events": "none" })); }   // the beat aimed at, a shade deeper
-      svg.append(svgEl("rect", { x: ax, y: 0, width: aw, height: g.H, fill: css("--box"), opacity: 0.28, "pointer-events": "none" }), svgEl("rect", { x: ax + 1, y: 1, width: aw - 2, height: g.H - 2, fill: "none", stroke: css("--box"), "stroke-width": 2, opacity: 0.9, "pointer-events": "none" }));
-    }
+    drawAwake(svg, g, bi);
     drawMoveSel(svg, g, bi, "melody"); drawRepeatSel(svg, g, bi, "melody"); drawCopySel(svg, g, bi, "melody"); drawSpanBands(svg, g, bi, "melody");
     if (S.ghost && S.ghost.part === "melody" && S.ghost.bi === bi) drawGhost(svg, g, bi, S.ghost, box);
     for (const c of chains(bar)) {
@@ -7311,12 +7330,7 @@ function renderWindows() {
     if (!P.on) { svg.append(svgEl("text", { x: g.W / 2, y: g.H / 2 + 4, "text-anchor": "middle", "font-size": 11, fill: css("--ink2"), "font-family": "system-ui, sans-serif" }, "off — tap ⚙ to turn on")); continue; }
     for (const bi of viewBars()) {
     const bar = song.bars[bi], sel = S.sel && S.sel.bi === bi && S.sel.part === part ? S.sel.id : null;
-    if (S.active && S.active.bi === bi) {                                                   // the active beat: tinted and framed; at either end of the view it runs to the edge, so no sliver of paper shows
-      const first = bi === g.bars[0], last = bi === g.bars[g.bars.length - 1];
-      const ax = first ? 0 : g.x(bi, 0), ax1 = last ? g.W : g.x(bi, barBeats(bi)), aw = ax1 - ax;                                                   // the awake bar, edge to edge
-      { const bx = g.x(bi, S.active.beat), bw = g.x(bi, Math.min(barBeats(bi), S.active.beat + 1)) - bx; svg.append(svgEl("rect", { x: bx, y: 0, width: bw, height: g.H, fill: css("--box"), opacity: 0.16, "pointer-events": "none" })); }   // the beat aimed at, a shade deeper
-      svg.append(svgEl("rect", { x: ax, y: 0, width: aw, height: g.H, fill: css("--box"), opacity: 0.28, "pointer-events": "none" }), svgEl("rect", { x: ax + 1, y: 1, width: aw - 2, height: g.H - 2, fill: "none", stroke: css("--box"), "stroke-width": 2, opacity: 0.9, "pointer-events": "none" }));
-    }
+    drawAwake(svg, g, bi);
     drawMoveSel(svg, g, bi, part); drawSpanBands(svg, g, bi, part);
     if (S.ghost && S.ghost.part === part && S.ghost.bi === bi) drawGhost(svg, g, bi, S.ghost, color);
     {
@@ -7762,8 +7776,8 @@ function ensureVisible(part, m) {
 }
 function shiftView(win, delta) { const { rows } = rowsOf(win), key = WIN_LO[win], [minV, , maxV] = viewLimits(win, rows); S.song.view[key] = clamp(rowsUp(win, viewOf(win), delta), minV, maxV); renderAll(); }
 /* a tap on the melody window: pitch a slot, or make a slot with a pitch */
-function tapMelody(bi, t, m) {
-  if (!inActive(bi, t)) activate(bi, t); else aimBeat(bi, t); S.activePart = "melody";        // one tap: the bar wakes and the box appears; inside it, the tapped beat takes the entry
+function tapMelody(bi, t, m, onNote = false) {
+  if (!inActive(bi, t)) activate(bi, t); else if (onNote) aimBeat(bi, t); else t = aimEntry(bi, t); S.activePart = "melody";   // one tap: the bar wakes and the box appears; inside it, a tap on a note aims at that note's beat, a tap on empty space enters at the marked beat
   S.bi = bi;
   const bar = S.song.bars[bi], B = barBeats(bi);
   const chain = chains(bar).find(c => !c.rest && t >= c.t - 1e-6 && t < c.t + c.d - 1e-6);
@@ -7795,9 +7809,9 @@ function tapMelody(bi, t, m) {
   if (S.followWords) S.cursor = nextUnpitchedChip(bi, ev.chip || null);
   renderAll();
 }
-function tapBand(win, bi, t, m) {
+function tapBand(win, bi, t, m, onNote = false) {
   const part = WIN_PART[win], bar = S.song.bars[bi], P = S.song.parts[part], B = barBeats(bi);
-  if (!inActive(bi, t)) activate(bi, t, part); else aimBeat(bi, t); S.activePart = part;      // one tap: the bar wakes and the box appears; inside it, the tapped beat takes the entry
+  if (!inActive(bi, t)) activate(bi, t, part); else if (onNote) aimBeat(bi, t); else t = aimEntry(bi, t, part); S.activePart = part;   // one tap: the bar wakes and the box appears; inside it, a tap on a note aims at that note's beat, a tap on empty space enters at the marked beat
   S.bi = bi;
   if (!P.on) { openWinSettings(win); return; }
   if (chordOn(part)) { const ch = chordChainAt(bar, t, part); if (ch) { addChordNote(bi, ch, m, part); return; } }
@@ -8023,7 +8037,7 @@ function initPointer() {
         if (win === "mel") { const ch = chordChainAt(S.song.bars[at.bi], at.t, "melody"); if (ch && beatOf(at.bi, ch.t) !== beatOf(at.bi, at.t)) { activate(at.bi, ch.t); S.sel = { bi: at.bi, part: "melody", id: ch.head.id }; S.selAuto = false; pick(at.bi, "melody", ch.head.id); renderAll(); return; } }   // a tap along a tied or long note, in a later beat than it starts: its own beat wakes and it is selected
         activate(at.bi, at.t, WIN_PART[win]); showBox(at.bi, WIN_PART[win]); return;
       }
-      if (d.ev && d.part === "melody" && !d.ev.rest) { tapMelody(d.bi, at.t, g.m(p.y)); return; }
+      if (d.ev && d.part === "melody" && !d.ev.rest) { tapMelody(d.bi, at.t, g.m(p.y), true); return; }
       if (d.ev) { S.bi = d.bi; const again = !!(S.sel && S.sel.id === d.ev.id); if (again) unpick(d.bi, d.part, d.ev.id); else pick(d.bi, d.part, d.ev.id); select(d.bi, d.part, again ? null : d.ev.id); if (d.ev.m != null && !d.ev.rest && S.sel && S.sel.id === d.ev.id) previewNote(d.ev.m, d.part); return; }
       if (win === "mel") tapMelody(at.bi, at.t, g.m(p.y)); else tapBand(win, at.bi, at.t, g.m(p.y));
     };
@@ -8875,6 +8889,8 @@ function openSettings() {
     el("div", { class: "mrow" }, el("button", { class: "btn sm" + (anyClef() ? " acc" : ""), onclick: () => { closeModal(); openClefChooser(null); } }, anyClef() ? "Clef view: " + ["mel", "acc", "bass"].filter(clefOn).map(w => DECK_NAME[w].charAt(0) + DECK_NAME[w].slice(1).toLowerCase() + " " + clefNow(w).name).join(", ") + " — change…" : "Switch to Clef…"), el("span", { class: "tiny" }, "Grand Stave, Treble, Alto, Tenor or Bass for every stave at once; each stave's own clef from its ⚙")),
     el("div", { class: "mrow" }, toggle("Beat lines inside the bars (the bar lines stay, and so does the spacing)", S.beatDividers !== false, v => { S.beatDividers = v; savePrefs(); renderAll(); })),
     el("div", { class: "mrow" }, toggle("Note boxes — the solid orange box drawn around each melody note, at its own duration", S.beatLines, v => { S.beatLines = v; savePrefs(); renderAll(); openSettings(); })),
+    el("div", { class: "pLbl" }, "Bar select highlight"), seg([["default", "Default"], ["blue", "Light blue"], ["gray", "Gray"], ["boxed", "Boxed only"], ["none", "None"]], S.barHi, v => { S.barHi = v; savePrefs(); renderAll(); }),
+    el("div", { class: "tiny" }, "The tint and frame on the bar that is awake, on every stave. Boxed only: a medium black frame and no tint. None: nothing but the dashed entry box."),
     el("div", { class: "mrow" }, toggle("Lines and spaces (half steps alternate line, space, line, space; off = one half step per space)", S.halfLines, v => { S.halfLines = v; savePrefs(); renderAll(); openSettings(); })),
     el("div", { class: "mrow" }, toggle("Lock the register scroll at the edge of each sound's range (top and bottom alike, on every stave)", S.rangeLock, v => { S.rangeLock = v; if (v) ["mel", "acc", "bass"].forEach(w => { const { rows } = rowsOf(w), [minV, , maxV] = viewLimits(w, rows); S.song.view[WIN_LO[w]] = clamp(viewOf(w), minV, maxV); }); savePrefs(); renderAll(); openSettings(); })),   // switched on, every stave's view is pulled inside its range at once
     el("div", { class: "tiny" }, "Locks to: " + ["mel", "acc", "bass"].map(w => { const [lo, hi] = soundRange(w), P = S.song.parts[WIN_PART[w]], k = keyObj(S.song.key); return `${DECK_NAME[w].charAt(0) + DECK_NAME[w].slice(1).toLowerCase()} ${noteName(lo, k)}–${noteName(hi, k)} (${P.bank || P.inst})`; }).join(" · ") + ". A piano or a sample library that spans the keyboard leaves nothing to lock."),
@@ -10001,7 +10017,7 @@ function openHelp() {
     h("Swiping the staves", "Swipe up or down anywhere on a stave — melody, accompaniment or bass, in any beat, with the floating palette out or not — to slide its range; swipe sideways on empty space to turn the bar. A swipe is only ever a swipe: it never places, pitches or selects a note, and a tap that wanders a little still counts as a tap."),
     h("Notes that run on", "A note that runs on past its beat marks the beats it covers with a white band along the top and bottom of the stave. Tap anywhere along it and it is selected, with its own beat woken."),
     h("Playing", "Top row: |▶ Play All plays the whole song from the start; ▶ Play Bar All plays this bar with every part; ▶… Play Range asks for a start and end bar and beat and plays that stretch in every part; ■ stops. Beside each stave, ▶ plays that part alone for this bar, and the ▶ in the blue box is Play Select: tap it, tap the note heads you want to hear (a blue box appears round every head), then tap it again — only the chosen notes sound, the rest are greyed, and it stops when they are done, or with the same button or ■. ✕ in the tools leaves Play Select."),
-    h("Entering notes", "Tap anywhere in a bar once: the whole bar wakes (tinted) and the dashed box appears at the beat you tapped, sized to the picked length. Tap the pitch you want and the note is placed at the box. Every beat of the awake bar takes taps — tap another beat of it to aim there, or tap a note to select it; other bars wait for their own tap."),
+    h("Entering notes", "Tap anywhere in a bar once: the whole bar wakes (tinted) and the dashed box appears at the beat you tapped, sized to the picked length. Tap the pitch you want and the note is placed at the box — anywhere along the awake bar, the tap need not fall inside the marked beat: it gives the pitch, the box gives the time. When that beat is full the next beat of the bar with room takes the note. Tap a note to select it (and aim at its beat); other bars wait for their own tap. Settings → Bar select highlight chooses the tint on the awake bar."),
     h("Time signature calculator", "☰ → Time signature calculator. Tap note and rest values onto a free strip one at a time — dots, double dots and ties apply to the selected or last entry. − + set the tempo (the song's own), ▶ Hear rhythm taps it out, and Calculate ranks the time signatures that fit, showing how the rhythm falls into bars for each; green lines are bar lines between entries, orange ones cut through a note that would be tied over. Separately, Send to song as melody slots writes the rhythm into the melody from the current bar on as pitch-less boxes, cut by the song's own bars, asking first if it would replace anything."),
     h("Deleting", "Tap Delete in the tools. Then either tap the first and last beat of a run (tap either again to open it into quarters and pick the exact start or end) and press Run, or press Bar or Section to clear the whole current bar or section. The part button chooses the window you picked on only, or all parts plus the words. UNDO brings anything back; REDO puts it away again."),
     h("Moving beats", "Tap Move in the tools, then tap the first beat of the run and the last beat; a tap takes the whole beat. Tap the first beat again and it opens into quarters — tap the quarter the run should start on. Tap the last beat again for its quarters and the run ends there. The run must be one unbroken stretch. ← → shift everything in it (in the window you picked it on) a beat earlier or later, staying inside the section and only into empty space; notes that cross a bar line are tied over it. Tap the group once to lock it in. ✕ leaves move mode."),
