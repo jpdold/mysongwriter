@@ -6886,8 +6886,18 @@ function soundRange(win) {
 }
 /* how far the register may scroll: the whole keyboard normally, or — with the setting on — no further than where each
    sound's own haze begins, top and bottom alike. [min view-start, top note allowed, max view-start] */
+/* the register's bottom row that centres the staves in a window of so many rows — a clef view's in letter steps, a five-line focus's in the rows of
+   its register — before any limit is applied */
+function centredLo(win, rows) {
+  if (clefOn(win)) { const k = keyObj(S.song.key), bs = focusBandSteps(win), a = bs[0][0], b = bs[bs.length - 1][1]; return stepPitch(a - Math.floor((rows - (b - a + 1)) / 2), k); }
+  const [blo, bhi] = focusRange(win); return blo - Math.floor((rows - (bhi - blo + 1)) / 2);
+}
 function viewLimits(win, rows) {
-  const [lo, hi] = S.rangeLock ? soundRange(win) : [21, 108];
+  let [lo, hi] = S.rangeLock ? soundRange(win) : [21, 108];
+  if (S.rangeLock && focusOn(win)) {                                                     // the lock never keeps the staves from sitting centred: where the rows in view outreach the sound's range, it widens to the centred view
+    const k = keyObj(S.song.key), cl = centredLo(win, rows), ch = clefOn(win) ? stepPitch(spell(cl, k).step + rows - 1, k) : cl + rows - 1;
+    lo = Math.max(21, Math.min(lo, cl)); hi = Math.min(108, Math.max(hi, ch));
+  }
   if (clefOn(win)) { const k = keyObj(S.song.key); return [lo, hi, Math.max(lo, stepPitch(spell(hi, k).step - rows + 1, k))]; }   // the Clef view: the rows are letter steps
   return [lo, hi, Math.max(lo, hi - rows + 1)];
 }
@@ -6953,9 +6963,7 @@ function bandStepFor(win, st) { return nearest(focusBandSteps(win), st); }      
 const lineRow = (win, m) => focusOn(win) ? (((m - bandFor(win, m)[0]) % 2) + 2) % 2 === 0 : m % 2 === 0;   // Lines and spaces: a line every other row — counted from the band's bottom line when a band is set
 const lineStep = (win, st) => (((st - bandStepFor(win, st)[0]) % 2) + 2) % 2 === 0;        // the Clef view: a line every other letter step, counted from the staff's bottom line
 const clefPad = g => g.padL || 0;                                                          // the room at the stave's head for the clef, the key signature and the time signature: set in geo()
-function focusHome(win) { const { rows } = rowsOf(win), [minV, , maxV] = viewLimits(win, rows), [blo, bhi] = focusRange(win);
-  if (clefOn(win)) { const k = keyObj(S.song.key), bs = focusBandSteps(win), a = bs[0][0], b = bs[bs.length - 1][1]; return clamp(stepPitch(a - Math.floor((rows - (b - a + 1)) / 2), k), minV, maxV); }
-  return clamp(blo - Math.floor((rows - (bhi - blo + 1)) / 2), minV, maxV); }
+function focusHome(win) { const { rows } = rowsOf(win), [minV, , maxV] = viewLimits(win, rows); return clamp(centredLo(win, rows), minV, maxV); }   // the staves centred in the window (the limits give way to it)
 function focusReturn(win) { S.song.view[WIN_LO[win]] = focusHome(win); S.sel = null; S.ghost = null; renderAll(); }
 function focusCaps(g) {                                                                 // the y of the first (top) and fifth (bottom) lines, as drawStaff draws them
   const [blo, bhi] = focusRange(g.win);
