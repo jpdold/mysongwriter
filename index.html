@@ -4976,7 +4976,7 @@ function saveNow() {
   writeJSON(STORE.songs, all);
 }
 function listSongs() { return Object.values(readJSON(STORE.songs, {})).sort((a, b) => (b.updated || 0) - (a.updated || 0)); }
-function loadSong(id) { const s = readJSON(STORE.songs, {})[id]; if (s) { S.song = upgradeSong(s); S.si = 0; S.sel = null; S.cursor = null; S.homeNext = true; writeJSON(STORE.cur, id); } return !!s; }   // a song loads with its staves centred
+function loadSong(id) { const s = readJSON(STORE.songs, {})[id]; if (s) { S.song = upgradeSong(s); S.si = 0; S.sel = null; S.cursor = null; S.homeNext = { mel: true, acc: true, bass: true }; writeJSON(STORE.cur, id); } return !!s; }   // a song loads with its staves centred
 function deleteSong(id) { const all = readJSON(STORE.songs, {}); delete all[id]; writeJSON(STORE.songs, all); }
 function upgradeSong(s) {
   const base = newSong();
@@ -6392,7 +6392,7 @@ function deletePicked() {
 }
 /* ⌫ beside a stave: takes back the last note entered on it (or, failing that, the last note of the awake bar), the words untouched */
 /* |<>| and >|<: the rows further apart or closer together, a step at a time, the notes and the clef scaling with them — between the legible least and the widest */
-function zoomRows(win, dir) { const z = S.zoomWin[win] || 1, nz = clamp(Math.round(z * (dir > 0 ? 1.15 : 1 / 1.15) * 100) / 100, 0.6, 2.5); if (nz === z) { toast(dir > 0 ? "As wide as it goes" : "As tight as it goes"); return; } S.zoomWin[win] = nz; S.homeNext = true; savePrefs(); renderAll(); }   // wider or tighter, the staves are centred again
+function zoomRows(win, dir) { const z = S.zoomWin[win] || 1, nz = clamp(Math.round(z * (dir > 0 ? 1.15 : 1 / 1.15) * 100) / 100, 0.6, 2.5); if (nz === z) { toast(dir > 0 ? "As wide as it goes" : "As tight as it goes"); return; } S.zoomWin[win] = nz; S.homeNext = Object.assign(S.homeNext || {}, { [win]: true }); savePrefs(); renderAll(); }   // wider or tighter, the staves are centred again
 function backspaceNote(part) {
   const le = S.lastEntered; let bi = null, ev = null;
   if (le && le.part === part && S.song.bars[le.bi]) { ev = (S.song.bars[le.bi].ev[part] || []).find(e => e.id === le.id) || null; if (ev) bi = le.bi; }
@@ -6836,7 +6836,10 @@ function renderAll() {
   if (S.si !== S.siLast && S.si !== sectionOfBar(S.bi) && S.song.sections[S.si]) S.bi = sectionRange(S.si).start;   // a section op moved us
   S.si = sectionOfBar(S.bi); S.siLast = S.si;
   renderHeader(); renderNav(); renderRollBar(); renderPalette(); allocate();
-  if (S.homeNext) { S.homeNext = false; for (const w of ["mel", "acc", "bass"]) if (focusOn(w)) S.song.view[WIN_LO[w]] = focusHome(w); }   // on load, on a song's load and after WIDER / TIGHTER: every stave's staves centred exactly in its window, the rows just allotted
+  if (S.homeNext) {                                                                        // on load, on a song's load and after WIDER / TIGHTER: a stave's staves centred exactly in its window, once its rows are allotted — on the deck, when it comes into view
+    for (const w of ["mel", "acc", "bass"]) { if (!S.homeNext[w] || !focusOn(w) || (deckMode() && !DECK_ROWS[w])) continue; S.song.view[WIN_LO[w]] = focusHome(w); delete S.homeNext[w]; }
+    if (!Object.keys(S.homeNext).length) S.homeNext = null;
+  }
   renderWindows(); renderStrips(); renderBeatRow(); placeDeckLabels();
   if (deckMode()) { const r0 = Object.assign({}, DECK_ROWS), s0 = Object.assign({}, STEPS); allocate(); if (["mel", "acc", "bass"].some(w => DECK_ROWS[w] !== r0[w] || Math.abs(STEPS[w] - s0[w]) > 1e-6)) { renderWindows(); renderStrips(); renderBeatRow(); placeDeckLabels(); } }
   if (!deckMode()) { const s0 = Object.assign({}, STEPS); allocate(); if (["mel", "acc", "bass"].some(w => Math.abs(STEPS[w] - s0[w]) > 1e-6)) { renderWindows(); renderStrips(); renderBeatRow(); } }   // the phone: the column beside the stave is only whole once drawn (COVER is made then) — size the stave to it and draw again
@@ -10243,7 +10246,7 @@ async function boot() {
   loadPrefs();
   const fromLink = await importFromHash();
   if (!fromLink) { const cur = readJSON(STORE.cur, null); if (!cur || !loadSong(cur)) { S.song = newSong(); saveNow(); } }
-  S.homeNext = true;                                                                       // the app loads with every stave's staves centred in its window
+  S.homeNext = { mel: true, acc: true, bass: true };                                       // the app loads with every stave's staves centred in its window (each as it comes into view on the deck)
   upgradeTies(S.song); S.chordsDisp = S.song.showRoman ? "roman" : S.chordsDisp;
   loadSampleMeta().then(loadSongBanks);
   $("songTitle").addEventListener("input", e => { S.song.title = e.target.value; saveSoon(); });
