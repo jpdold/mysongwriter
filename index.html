@@ -12,6 +12,9 @@
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%235a5c5f'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='white' font-family='Georgia'%3E%E2%99%AA%3C/text%3E%3C/svg%3E">
 <style>
+/* the engraved music glyphs: a subset of Bravura (Steinberg Media Technologies, SIL Open Font License 1.1 — see BRAVURA-LICENSE.txt), the SMuFL glyphs the staves
+   use, embedded here so they are there offline on every device whatever fonts it has; renamed, as the licence asks of a modified version */
+@font-face { font-family: "MSW Music"; src: url(data:font/woff2;base64,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) format("woff2"); font-display: block; }
 /* ═══════════════════════════════════════════════════════════════════════
    1. TOKENS — the mock: graphite ground, white paper windows, green tags,
       blue lyric strip, orange rhythm boxes. Dark and custom themes retint.
@@ -40,9 +43,9 @@
   --melody: #111; --sub: #d99a2b; --backup: #9b7bc6; --bass: #2e4a9e; --accomp: #1f7a70; --ensemble: #4d8f3a;
   --green: #4caf7d; --yellow: #e6b422;
   --bezel: 18px;
-  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
-  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --music: "Bravura", "Noto Music", "Segoe UI Symbol", "Apple Symbols", "DejaVu Sans", serif;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "MSW Music", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "MSW Music", sans-serif;
+  --music: "MSW Music", "Bravura", "Noto Music", "Segoe UI Symbol", "Apple Symbols", "DejaVu Sans", serif;   /* MSW Music: the embedded engraved glyphs, with the tools' and text's note, rest, clef and accidental symbols on a text baseline */
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
@@ -229,7 +232,7 @@ svg text { pointer-events: none; }
 .win .side .spBtn { width: 30px; height: 20px; padding: 0; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); color: #111; font: 800 9px/1 system-ui, sans-serif; letter-spacing: -.02em; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); }   /* |<>| wider, >|< tighter: the rows' spacing */
 .win .side .spBtn:active { background: linear-gradient(#ffd27a, #f5a623); }
 #app.deck .win .side .spBtn { display: none; }
-text.clef { user-select: none; }
+text.clef, text.smufl { user-select: none; }
 .win .side .doorBtn[hidden] { display: none; }
 .retBtn { position: absolute; z-index: 4; width: 40px; height: 30px; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); color: #111; font: 800 7px/1 system-ui, sans-serif; letter-spacing: .04em; box-shadow: 0 2px 4px rgba(0,0,0,.35); }   /* ↩ LINES on the white cover */
 .retBtn .big { font-size: 13px; line-height: 1; }
@@ -5989,7 +5992,7 @@ const RESTS = [8, 4, 2, 1, 0.5, 0.25, 0.125, 0.0625, 0.03125, 0.015625];        
 const PAL_MIN = 0.125;                                                                      // the palette shows down to a 32nd; 64th, 128th and 256th are drawn, played and kept exact, but their buttons wait for a later day
 const PAL_LENS = () => LENS.filter(l => l[0] >= PAL_MIN), PAL_RESTS = () => RESTS.filter(v => v >= PAL_MIN);
 const fmtB = x => parseFloat((+x).toFixed(4));                                          // beats for reading: no long tails
-const LENS = [[8, "𝅜"], [4, "𝅝"], [2, "𝅗𝅥"], [1, "♩"], [0.5, "♪"], [0.25, "𝅘𝅥𝅯"], [0.125, "𝅘𝅥𝅰"], [0.0625, "𝅘𝅥𝅱"], [0.03125, "𝅘𝅥𝅲"], [0.015625, "𝅘𝅥𝅳"]];   // the palette's lengths, in beats
+const LENS = [[8, "𝅜"], [4, "𝅝"], [2, "𝅗𝅥"], [1, "♩"], [0.5, "♪"], [0.25, "𝅘𝅥𝅮"], [0.125, "𝅘𝅥𝅯"], [0.0625, "𝅘𝅥𝅰"], [0.03125, "𝅘𝅥𝅱"], [0.015625, "𝅘𝅥𝅲"]];   // the palette's lengths, in beats
 const LEN_NAME = { 8: "double whole", 4: "whole", 2: "half", 1: "quarter", 0.5: "eighth", 0.25: "16th", 0.125: "32nd", 0.0625: "64th", 0.03125: "128th", 0.015625: "256th" };
 const REST_NAME = LEN_NAME;
 const durGlyph = d => { for (const [v, gl] of LENS) { if (Math.abs(d - v) < 1e-9) return gl; if (Math.abs(d - v * 1.5) < 1e-9) return gl + "."; } return `${fmtB(d)}b`; };
@@ -6881,52 +6884,84 @@ function drawFocusCover(svg, g) {
 }
 /* the clef at the stave's head: the treble's curl on the second line, the C clef's centre on the third (alto) or fourth (tenor), the bass's dots about the fourth;
    the Grand Stave a brace joining its two staves. Drawn in the music glyphs the device has; sized to the rows, so they scale with the spacing and the note size */
-/* the clef shapes, drawn in staff spaces (x across, y down, the bottom line at 0, the top line at −4) and scaled alike in both directions to the
-   rows, so they grow and shrink with the spacing but never lean; each is a stroke with a filled ball or dots, after the engraved forms */
-const CLEF_SHAPES = {
-  treble: { w: 2.75, strokes: [{ d: "M 1.62 -5.35 C 1.15 -4.85 0.9 -4.05 1.45 -3.15 C 1.95 -2.35 2.6 -1.9 2.5 -1.05 C 2.4 -0.15 1.55 0.3 0.85 -0.1 C 0.25 -0.5 0.3 -1.5 1.0 -1.8 C 1.6 -2.05 2.15 -1.5 1.95 -0.95 C 1.8 -0.55 1.3 -0.5 1.15 -0.85", w: 0.31 }, { d: "M 1.62 -5.35 C 2.0 -4.6 1.9 -3.7 1.62 -2.7 L 1.18 0.65 C 1.08 1.3 0.6 1.6 0.35 1.25", w: 0.24 }], dots: [[0.55, 1.42, 0.29]] },
-  bass:   { w: 2.95, strokes: [{ d: "M 0.55 -2.95 C 0.65 -3.8 1.6 -4.2 2.1 -3.8 C 2.6 -3.4 2.55 -2.5 2.05 -1.75 C 1.6 -1.1 0.9 -0.55 0.3 -0.25", w: 0.34 }], dots: [[0.58, -2.95, 0.34], [2.72, -3.45, 0.2], [2.72, -2.55, 0.2]] },
-  cclef:  { w: 2.6, strokes: [{ d: "M 0.38 0 L 0.38 -4", w: 0.4 }, { d: "M 0.95 0 L 0.95 -4", w: 0.12 }, { d: "M 1.1 -2.05 C 1.6 -2.05 2.4 -2.2 2.45 -2.9 C 2.5 -3.6 2.05 -4.08 1.55 -3.88 C 1.28 -3.78 1.22 -3.45 1.42 -3.35", w: 0.27 }, { d: "M 1.1 -1.95 C 1.6 -1.95 2.4 -1.8 2.45 -1.1 C 2.5 -0.4 2.05 0.08 1.55 -0.12 C 1.28 -0.22 1.22 -0.55 1.42 -0.65", w: 0.27 }], dots: [[1.38, -3.28, 0.17], [1.38, -0.72, 0.17]] },
-};
-const CLEF_SHAPE = { treble: "treble", bass: "bass", alto: "cclef", tenor: "cclef" };
-const CLEF_LIFT = { treble: 0, bass: 0, alto: 0, tenor: 1 };                                 // the tenor's C clef sits one space higher: its centre on the fourth line
+/* the engraved glyphs (the SMuFL standard, in the embedded MSW Music font — a subset of Bravura). An em is four staff spaces, and a glyph's origin is its
+   engraved anchor: a clef's on the line it names, a notehead's on the note's own line, an accidental's on that line too, a flag's at the end of its stem,
+   a rest's on the line it hangs from or sits on, a time signature figure's at its middle; all are placed at this app's own positions */
+const SM_FONT = "MSW Music";
+const SM = { brace: 0xE000, gClef: 0xE050, cClef: 0xE05C, fClef: 0xE062,
+  noteheadDoubleWhole: 0xE0A0, noteheadWhole: 0xE0A2, noteheadHalf: 0xE0A3, noteheadBlack: 0xE0A4, noteheadXBlack: 0xE0A9, augmentationDot: 0xE1E7,
+  accidentalFlat: 0xE260, accidentalNatural: 0xE261, accidentalSharp: 0xE262,
+  timeSig0: 0xE080, timeSig1: 0xE081, timeSig2: 0xE082, timeSig3: 0xE083, timeSig4: 0xE084, timeSig5: 0xE085, timeSig6: 0xE086, timeSig7: 0xE087, timeSig8: 0xE088, timeSig9: 0xE089,
+  restDoubleWhole: 0xE4E2, restWhole: 0xE4E3, restHalf: 0xE4E4, restQuarter: 0xE4E5, rest8th: 0xE4E6, rest16th: 0xE4E7, rest32nd: 0xE4E8, rest64th: 0xE4E9, rest128th: 0xE4EA, rest256th: 0xE4EB,
+  flag8thUp: 0xE240, flag8thDown: 0xE241, flag16thUp: 0xE242, flag16thDown: 0xE243, flag32ndUp: 0xE244, flag32ndDown: 0xE245, flag64thUp: 0xE246, flag64thDown: 0xE247, flag128thUp: 0xE248, flag128thDown: 0xE249, flag256thUp: 0xE24A, flag256thDown: 0xE24B,
+  dynamicPiano: 0xE520, dynamicMezzo: 0xE521, dynamicForte: 0xE522, dynamicRinforzando: 0xE523, dynamicSforzando: 0xE524, dynamicZ: 0xE525, dynamicNiente: 0xE526,
+  articAccentAbove: 0xE4A0, articAccentBelow: 0xE4A1, articStaccatoAbove: 0xE4A2, articStaccatoBelow: 0xE4A3, articTenutoAbove: 0xE4A4, articTenutoBelow: 0xE4A5,
+  articStaccatissimoAbove: 0xE4A6, articStaccatissimoBelow: 0xE4A7, articMarcatoAbove: 0xE4AC, articMarcatoBelow: 0xE4AD };
+const smChar = name => String.fromCodePoint(SM[name]);
+const smDigits = s => String(s).replace(/\d/g, d => String.fromCodePoint(SM.timeSig0 + +d));   // a time signature figure in the engraved digits
+/* a glyph with its origin at (x, y), sized to a staff space; returns the element */
+function smGlyph(parent, name, x, y, space, attrs = {}) {
+  const t = svgEl("text", Object.assign({ class: "smufl", x, y, "font-size": space * 4, "font-family": SM_FONT, "pointer-events": "none" }, attrs), smChar(name));
+  parent.append(t); return t;
+}
+const SM_W = { gClef: 2.684, fClef: 2.736, cClef: 2.796, accidentalSharp: 0.996, accidentalFlat: 0.904, accidentalNatural: 0.672, timeSigDigit: 1.8,   // the glyphs' widths, in staff spaces
+  restDoubleWhole: 0.5, restWhole: 1.128, restHalf: 1.128, restQuarter: 1.08, rest8th: 1.0, rest16th: 1.28, rest32nd: 1.45, rest64th: 1.69, rest128th: 1.94, rest256th: 2.16 };
+/* the clefs: the line the glyph's origin sits on, the bottom line being 0 — the G clef's curl on the second line, the F clef between its dots on the fourth,
+   the C clef's centre on the third (alto) or the fourth (tenor) */
+const CLEF_GLYPH = { treble: { name: "gClef", line: 1 }, bass: { name: "fClef", line: 3 }, alto: { name: "cClef", line: 2 }, tenor: { name: "cClef", line: 3 } };
+const FLAG_NAMES = ["8th", "16th", "32nd", "64th", "128th", "256th"], FLAG_H = [3.24, 3.25, 3.85, 4.64, 5.38, 6.06];   // one flag for an eighth, one more for each halving; the flag glyphs' heights in spaces
+const REST_NAMES = { 8: "restDoubleWhole", 4: "restWhole", 2: "restHalf", 1: "restQuarter", 0.5: "rest8th", 0.25: "rest16th", 0.125: "rest32nd", 0.0625: "rest64th", 0.03125: "rest128th", 0.015625: "rest256th" };
+const writtenValue = d => { const VALS = LENS.map(l => l[0]); return VALS.find(v => Math.abs(d - v) < 1e-9 || Math.abs(d - v * 1.5) < 1e-9) || VALS.find(v => v <= d + 1e-9) || VALS[VALS.length - 1]; };   // the written value: exact, or dotted, else the largest that fits
+const restName = d => REST_NAMES[writtenValue(d)];
+const restLift = name => name === "restWhole" ? -0.25 : name === "restHalf" ? 0.28 : name === "restDoubleWhole" ? 0.5 : 0;   // where a rest's origin goes, in spaces below a point, for the glyph's ink to centre on it
+const staffSpace = g => (S.halfLines || g.dia) ? 2 * g.step : g.step;                     // the distance between two lines: two rows in Lines and spaces and the Clef view, one otherwise
+/* a rest at its place on the staff: the whole rest hangs from the fourth line, the half sits on the middle line, the others centre on it — the five-line
+   focus's own lines when they are in view, else the middle of the register; sized like the notes, and a dot after it in the space above the middle line */
+function restMidY(g, low) {                                                              // the middle line of the staff a rest belongs to: on a Grand Stave the treble's, or the bass's for the bass part
+  if (g.win && (g.dia || focusOn(g.win))) { const bs = g.dia ? focusBandSteps(g.win) : focusBands(g.win), b = low ? bs[0] : bs[bs.length - 1]; return g.dia ? g.yS(b[0] + 4) : g.y(b[0] + 4); }
+  const mid = stemMiddle(g, null); return g.dia ? g.yS(mid) : g.y(mid);
+}
+function drawRest(parent, g, xc, d, ink, attrs = {}, part = "melody") {
+  const name = restName(d), ns = Math.max(2 * headGeom(g).ry, 3.5), sp = staffSpace(g);
+  let midY = restMidY(g, part === "bass"); if (!(midY > ns * 1.5 && midY < g.H - ns * 1.5)) midY = g.H / 2;
+  smGlyph(parent, name, xc, name === "restWhole" ? midY - sp : midY, ns, Object.assign({ "text-anchor": "middle", fill: ink }, attrs));
+  if (Math.abs(d - writtenValue(d) * 1.5) < 1e-9) smGlyph(parent, "augmentationDot", xc + (SM_W[name] / 2 + 0.3) * ns, midY - sp / 2, ns, Object.assign({ fill: ink }, attrs));
+}
 /* a note outside the key: its sharp, flat or natural before the head */
 function drawAccidental(svg, g, xHead, m, ink) {
   if (!g.dia) return; const sp = spell(m, g.dia); if (!sp.glyph) return;
-  const { rx, ry } = headGeom(g);
-  svg.append(svgEl("text", { x: xHead - rx - 2, y: g.y(m) + ry * 0.95, "text-anchor": "end", "font-size": Math.max(9, g.step * 2.2), "font-family": "Georgia, 'Segoe UI Symbol', 'Apple Symbols', serif", fill: ink, "pointer-events": "none" }, sp.glyph));
+  const ns = Math.max(2 * headGeom(g).ry, 5), name = sp.glyph === "♯" ? "accidentalSharp" : sp.glyph === "♭" ? "accidentalFlat" : "accidentalNatural";
+  smGlyph(svg, name, xHead + 1 - ns * 0.2, g.y(m), ns, { "text-anchor": "end", fill: ink });   // its right edge a fifth of a space before the head
 }
 /* the key signature's sharps or flats on their engraved steps for each clef, then the time signature, at the head of the stave after the clef */
 const KEYSIG_STEPS = { treble: { sharp: [38, 35, 39, 36, 33, 37, 34], flat: [34, 37, 33, 36, 32, 35, 31] }, bass: { sharp: [24, 21, 25, 22, 19, 23, 20], flat: [20, 23, 19, 22, 18, 21, 17] }, alto: { sharp: [31, 28, 32, 29, 26, 30, 27], flat: [27, 30, 26, 29, 25, 28, 24] }, tenor: { sharp: [31, 28, 25, 29, 26, 30, 27], flat: [27, 30, 26, 29, 25, 28, 24] } };
 function drawKeyAndTime(svg, g, kind, lo, x, hs = 1) {                                     // x: where the clef ends; hs: the head's fit factor on a narrow stave; returns where the signatures end
   if (!g.dia) return x;
-  const n = keySig(g.dia), sp = g.step * 2 * hs, steps = KEYSIG_STEPS[kind][n >= 0 ? "sharp" : "flat"], ink = css("--line"), font = "Georgia, 'Segoe UI Symbol', 'Apple Symbols', serif";
+  const n = keySig(g.dia), sp = g.step * 2 * hs, steps = KEYSIG_STEPS[kind][n >= 0 ? "sharp" : "flat"], ink = css("--line"), acc = n > 0 ? "accidentalSharp" : "accidentalFlat";
   let xx = x + sp * 0.25;
-  for (let i = 0; i < Math.abs(n); i++) { svg.append(svgEl("text", { class: "clef", x: xx, y: g.yS(steps[i]) + g.step * 0.85 * hs, "font-size": sp * 2.3, "font-family": font, fill: ink, "pointer-events": "none" }, n > 0 ? "♯" : "♭")); xx += sp * 0.78; }
-  const sig = String(S.song.sig || "4/4").split("/"), midY = g.yS(lo + 4), fs = sp * 2.05;
-  svg.append(svgEl("text", { class: "clef", x: xx + sp * 0.4 + sp * 0.55, y: midY - g.step * 0.15, "text-anchor": "middle", "font-size": fs, "font-weight": 700, "font-family": "Georgia, serif", fill: ink, "pointer-events": "none" }, sig[0]),
-             svgEl("text", { class: "clef", x: xx + sp * 0.4 + sp * 0.55, y: midY + sp * 2 - g.step * 0.15, "text-anchor": "middle", "font-size": fs, "font-weight": 700, "font-family": "Georgia, serif", fill: ink, "pointer-events": "none" }, sig[1] || "4"));
-  return xx + sp * 1.6;
+  for (let i = 0; i < Math.abs(n); i++) { smGlyph(svg, acc, xx, g.yS(steps[i]), sp, { class: "clef smufl", fill: ink }); xx += sp * (SM_W[acc] + 0.05); }
+  const sig = String(S.song.sig || "4/4").split("/"), num = sig[0], den = sig[1] || "4", w = sp * SM_W.timeSigDigit * Math.max(num.length, den.length), cx = xx + sp * 0.5 + w / 2;
+  const fig = (s, y) => svg.append(svgEl("text", { class: "clef smufl", x: cx, y, "text-anchor": "middle", "font-size": sp * 4, "font-family": SM_FONT, fill: ink, "pointer-events": "none" }, smDigits(s)));
+  fig(num, g.yS(lo + 6)); fig(den, g.yS(lo + 2));                                          // the upper figure centred on the fourth line, the lower on the second
+  return cx + w / 2 + sp * 0.5;
 }
+const sigSpaces = g => { if (!g.dia) return 0; const n = keySig(g.dia), sig = String(S.song.sig || "4/4").split("/"); return 0.25 + Math.abs(n) * ((n > 0 ? SM_W.accidentalSharp : SM_W.accidentalFlat) + 0.05) + 0.5 + SM_W.timeSigDigit * Math.max(sig[0].length, (sig[1] || "4").length) + 0.5; };   // the signatures' room, in spaces
 function drawClefs(svg, g) {
   const c = clefNow(g.win); if (!c) return;
   const bands = focusBands(g.win), pad = clefPad(g), sp0 = g.step * 2, lineY = m => (S.halfLines || g.dia) ? g.y(m) : g.y(m) - g.step / 2, ink = css("--line");
-  const need = sp0 * (3.3 + (g.dia ? Math.abs(keySig(g.dia)) : 0) * 0.78 + (g.dia ? 2.4 : 0)) + (c.bands ? g.step * 2.4 : 0), hs = Math.min(1, pad / need), sp = sp0 * hs;   // a narrow stave: the whole head shrinks alike to fit its room, nothing leaning
+  const need = sp0 * (3.3 + sigSpaces(g)) + (c.bands ? g.step * 2.4 : 0), hs = Math.min(1, pad / need), sp = sp0 * hs;   // a narrow stave: the whole head shrinks alike to fit its room, nothing leaning
   const glyph = (kind, lo) => {
-    const sh = CLEF_SHAPES[CLEF_SHAPE[kind]], sigW = g.dia ? sp * (0.25 + Math.abs(keySig(g.dia)) * 0.78 + 1.6) : 0, x0 = pad - g.step * 0.5 - sigW - sh.w * sp, y0 = lineY(lo) - CLEF_LIFT[kind] * sp0;   // the clef, then the signatures, ending half a row before beat 1
-    if (g.dia) drawKeyAndTime(svg, g, kind, g.stepOf(lo), x0 + sh.w * sp, hs);
-    const grp = svgEl("g", { class: "clef", transform: `translate(${x0} ${y0}) scale(${sp})`, "pointer-events": "none" });
-    for (const st of sh.strokes) grp.append(svgEl("path", { d: st.d, fill: "none", stroke: ink, "stroke-width": st.w, "stroke-linecap": "round", "stroke-linejoin": "round" }));
-    for (const [cx, cy, r] of sh.dots) grp.append(svgEl("circle", { cx, cy, r, fill: ink }));
-    svg.append(grp);
+    const cg = CLEF_GLYPH[kind], sigW = sp * sigSpaces(g), x0 = pad - g.step * 0.5 - sigW - SM_W[cg.name] * sp;   // the clef, then the signatures, ending half a row before beat 1
+    if (g.dia) drawKeyAndTime(svg, g, kind, g.stepOf(lo), x0 + SM_W[cg.name] * sp, hs);
+    smGlyph(svg, cg.name, x0, lineY(lo) - cg.line * sp0, sp, { class: "clef smufl", fill: ink });   // its origin on the line it names, whatever its size
   };
   if (c.bands) { glyph("bass", bands[0][0]); glyph("treble", bands[1][0]);
-    const top = lineY(bands[1][1]) - sp0 * 0.15, bot = lineY(bands[0][0]) + sp0 * 0.15, h = bot - top, x0 = g.step * 0.35 * hs, w = g.step * 1.1 * hs, mid = top + h / 2;   // the brace: a thin curly path the height of both staves, at the far left
-    svg.append(svgEl("path", { class: "clef brace", d: `M ${x0 + w} ${top} C ${x0 + w * 0.15} ${top + h * 0.1}, ${x0 + w} ${mid - h * 0.12}, ${x0} ${mid} C ${x0 + w} ${mid + h * 0.12}, ${x0 + w * 0.15} ${bot - h * 0.1}, ${x0 + w} ${bot}`, fill: "none", stroke: ink, "stroke-width": Math.max(1.5, g.step * 0.28), "stroke-linecap": "round", "pointer-events": "none" })); }
+    const top = lineY(bands[1][1]) - sp0 * 0.15, bot = lineY(bands[0][0]) + sp0 * 0.15, h = bot - top, x0 = g.step * 0.35 * hs, w = g.step * 1.1 * hs;   // the brace: the engraved glyph stretched to the height of both staves, at the far left
+    svg.append(svgEl("text", { class: "clef brace smufl", x: 0, y: 0, "font-size": h, "font-family": SM_FONT, fill: ink, "pointer-events": "none", transform: `translate(${x0} ${bot}) scale(${w / (0.07 * h)} 1)` }, smChar("brace"))); }
   else glyph(clefOf(g.win).kind, bands[0][0]);
 }
 function drawLedgers(svg, g, bi, bar, ink, part = "melody") {
-  const { rx } = headGeom(g), w = rx * 2.6, hl = S.halfLines;
+  const { rx, ry } = headGeom(g), w = rx + ry * 0.8, hl = S.halfLines;                     // a ledger line reaches four tenths of a space beyond the head each side
   if (g.dia) {                                                                              // the Clef view: ledger lines every other letter step out from the nearest staff, as engraved
     const lines = [], bs = focusBandSteps(g.win);
     for (const e of bar.ev[part] || []) {
@@ -7056,7 +7091,7 @@ const PAPER = { default: null, aged: "#e6d2a6", eggshell: "#fffcf4", white: "#ff
 const paperFill = win => (win && S.paper && PAPER[S.paper[win]]) || css("--paper");
 function headGeom(g) {
   const st = g.step, k = NS() * ((S.halfLines || g.dia) ? 1.55 : 1);                     // lines-and-spaces, and the Clef view's letter grid: heads grow to fill a space (two rows)
-  const ry = Math.min(st * 0.40 * k, st * 0.78), rx = Math.min(st * 0.55 * k, st * 1.02);
+  const ry = Math.min(st * 0.40 * k, st * 0.78), rx = ry * 1.18;                          // the engraved head: 1.18 spaces wide for one high
   return { st, rx, ry, stem: Math.max(st * 1.9, ry * 6.4) };
 }
 function drawNote(svg, g, x, m, d, color, attrs, opts = {}) {
@@ -7076,25 +7111,26 @@ function drawNote(svg, g, x, m, d, color, attrs, opts = {}) {
     else { grp.append(svgEl("circle", { cx, cy: y, r, fill: color, opacity: opts.auto ? 0.5 : 1 }));
       if (d < 0.5) grp.append(svgEl("circle", { cx, cy: y, r: r * 0.48, fill: paperFill(g.win) })); }
   } else {
-    /* traditional: hollow for half and longer, two bars for a double whole, stem + flags by value, dot for dotted */
-    const VALS = LENS.map(l => l[0]);                                                              // the written value: exact, or dotted, else the largest that fits
-    const base = VALS.find(v => Math.abs(d - v) < 1e-9 || Math.abs(d - v * 1.5) < 1e-9) || VALS.find(v => v <= d + 1e-9) || VALS[VALS.length - 1];
-    const dotted = Math.abs(d - base * 1.5) < 1e-9;
-    const { rx, ry, stem } = headGeom(g), hx = x + rx + 1, hollow = base >= 2, up = opts.up != null ? opts.up : stemUpFor(g, m), lw = Math.max(1, ry * 0.3);
-    if (opts.ghostNote) xHead(hx, y, rx, ry, opts.auto ? 0.55 : 1);
-    else grp.append(svgEl("ellipse", { cx: hx, cy: y, rx, ry, fill: hollow ? paperFill(g.win) : color, stroke: edge || color, "stroke-width": edge ? edgeW : hollow ? Math.max(1.2, ry * 0.36) : 0, transform: `rotate(-22 ${hx} ${y})`, opacity: opts.auto ? 0.55 : 1 }));
-    if (base >= 8) [-1, 1].forEach(s => grp.append(svgEl("line", { x1: hx + s * (rx + 1.6), x2: hx + s * (rx + 1.6), y1: y - ry * 1.5, y2: y + ry * 1.5, stroke: color, "stroke-width": Math.max(1.2, ry * 0.32), opacity: opts.auto ? 0.55 : 1 })));
+    /* traditional: the engraved head for the written value — hollow for half and longer, the double whole with its bars, an X for a ghost note —
+       the stem and flags by value, a dot for dotted; each glyph's origin on the note's own line, sized to the head's height as one space */
+    const base = writtenValue(d), dotted = Math.abs(d - base * 1.5) < 1e-9;
+    const { rx, ry, stem } = headGeom(g), ns = ry * 2, hx = x + rx + 1, up = opts.up != null ? opts.up : stemUpFor(g, m), lw = Math.max(1, ry * 0.3), op = opts.auto ? 0.55 : 1;
+    const head = opts.ghostNote ? "noteheadXBlack" : base >= 8 ? "noteheadDoubleWhole" : base >= 4 ? "noteheadWhole" : base >= 2 ? "noteheadHalf" : "noteheadBlack";
+    smGlyph(grp, head, hx, y, ns, { "text-anchor": "middle", fill: color, opacity: op, stroke: edge, "stroke-width": edge ? edgeW : null, "paint-order": edge ? "stroke" : null });
     if (base < 4 && !opts.noStem) {
-      const k = NS(), flags = base <= 0.5 ? Math.round(Math.log2(0.5 / base)) + 1 : 0;              // one flag for an eighth, one more for each halving
-      const fixed = opts.stem ? st * opts.stem * k : stem;
-      const fsp = opts.stem ? Math.min(ry * 1.8, fixed * 0.75 / Math.max(1, flags)) : ry * 1.8;    // on a short fixed stem the flags close up
-      const stemLen = fixed + (opts.stem ? 0 : Math.max(0, flags - 2) * fsp);                    // on the stave extra flags lengthen the stem
-      const sx = up ? hx + rx - 0.6 : hx - rx + 0.6, sy2 = up ? y - stemLen : y + stemLen, fw = ry * 2.1, fh = ry * 3.6;
-      if (edge) grp.append(svgEl("line", { x1: sx, x2: sx, y1: y, y2: sy2, stroke: opts.outline || edge, "stroke-width": lw + 2, opacity: opts.auto ? 0.55 : 1 }));
-      grp.append(svgEl("line", { x1: sx, x2: sx, y1: y, y2: sy2, stroke: color, "stroke-width": lw, opacity: opts.auto ? 0.55 : 1 }));
-      for (let f = 0; f < flags; f++) { const fy = sy2 + (up ? f * fsp : -f * fsp), dir = up ? 1 : -1; grp.append(svgEl("path", { d: `M ${sx} ${fy} q ${fw} ${dir * fh * 0.3} ${fw * 0.6} ${dir * fh}`, fill: "none", stroke: color, "stroke-width": Math.max(1.2, ry * 0.36), "stroke-linecap": "round", opacity: opts.auto ? 0.55 : 1 })); }
+      const k = NS(), flags = base <= 0.5 ? Math.round(Math.log2(0.5 / base)) + 1 : 0, fi = Math.min(flags, FLAG_NAMES.length) - 1;
+      const fixed = opts.stem ? st * opts.stem * k : Math.max(stem, flags ? ns * 3.5 : 0);   // a flagged note's stem reaches three and a half spaces, so the flag clears the head
+      const fsp = flags ? (opts.stem ? Math.min(ns, fixed * 0.92 / FLAG_H[fi]) : ns) : ns;   // on a short fixed stem the flag shrinks to fit
+      const stemLen = fixed + (opts.stem || !flags ? 0 : Math.max(0, flags - 2) * ns * 0.8);   // on the stave extra flags lengthen the stem
+      const sx = up ? hx + rx - lw / 2 : hx - rx + lw / 2, sy2 = up ? y - stemLen : y + stemLen;   // the stem on the head's right going up, its left going down
+      if (edge) grp.append(svgEl("line", { x1: sx, x2: sx, y1: y, y2: sy2, stroke: opts.outline || edge, "stroke-width": lw + 2, opacity: op }));
+      grp.append(svgEl("line", { x1: sx, x2: sx, y1: y, y2: sy2, stroke: color, "stroke-width": lw, opacity: op }));
+      if (flags) smGlyph(grp, "flag" + FLAG_NAMES[fi] + (up ? "Up" : "Down"), sx - lw / 2, sy2, fsp, { fill: color, opacity: op });   // the flag's origin at the end of the stem, on its left edge
     }
-    if (dotted) grp.append(svgEl("circle", { cx: hx + rx + Math.max(3, ry * 0.8), cy: y - Math.max(1.5, ry * 0.4), r: Math.max(1.4, ry * 0.4), fill: color }));
+    if (dotted) {
+      const sp = staffSpace(g), onLine = g.win ? (g.dia ? lineStep(g.win, g.stepOf(m)) : S.halfLines ? lineRow(g.win, m) : false) : false;   // a note on a line: its dot in the space above
+      smGlyph(grp, "augmentationDot", hx + rx + ns * 0.3, onLine ? y - Math.min(sp / 2, ns * 0.5) : y, Math.max(ns, 3.5), { fill: color, opacity: op });
+    }
   }
   if (opts.label && g.step >= 12) grp.append(svgEl("text", { x: x + 2 * headGeom(g).rx + 5, y: y + 3, "font-size": 8, fill: css("--ink2"), "font-family": "system-ui, sans-serif" }, opts.label));
   svg.append(grp);
@@ -7117,7 +7153,7 @@ function drawGhost(svg, g, bi, ghost, color) {
   const x0 = g.x(bi, ghost.t) + 1, x1 = g.x(bi, ghost.t + ghost.d) - 1;                  // inset the same on both sides, so a half-beat box is exactly half
   if (ghost.t + ghost.d > barBeats(bi) + 1e-6) drawSpillArrows(svg, g, bi);
   svg.append(svgEl("rect", { x: x0, y: 2, width: Math.max(4, x1 - x0), height: g.H - 4, rx: 2, fill: color, "fill-opacity": 0.18, stroke: color, "stroke-width": 2.2, "stroke-dasharray": "6 3", "pointer-events": "none" }));
-  if (ghost.rest) svg.append(svgEl("text", { x: (x0 + x1) / 2, y: g.H / 2 + 6, "text-anchor": "middle", "font-size": Math.min(18, g.step * 1.4), fill: color, opacity: 0.7, "font-family": "Georgia, serif", "pointer-events": "none" }, "𝄽"));
+  if (ghost.rest) drawRest(svg, g, (x0 + x1) / 2, ghost.d, color, { opacity: 0.7 }, ghost.part);
   else if (S.ftp && S.ftp.on && ghost.part === ftpPart()) { const m = S.ftp.m; if (m >= g.lo && m <= g.hi) svg.append(svgEl("rect", { x: x0, y: g.y(m) - g.step / 2 + 1, width: Math.max(4, x1 - x0), height: g.step - 2, rx: 3, fill: color, opacity: 0.5, "pointer-events": "none" })); }
 }
 /* staccato dot / tenuto line on the notehead side away from the stem */
@@ -7141,19 +7177,18 @@ function stemUp(g, m, groups, e) {
   return stemUpFor(g, m);
 }
 function drawArtic(svg, g, x, m, artic, color, up) {
-  const st = g.step, rx = headGeom(g).rx, hx = x + rx + 1, y = g.y(m), ay = up ? y + st * 0.8 : y - st * 0.8;   // stem up → mark below; stem down → mark above
-  const h = Math.max(3, st * 0.45), w = Math.max(3, rx), sw = Math.max(1.4, st * 0.11);
-  if (artic === "staccato") svg.append(svgEl("circle", { cx: hx, cy: ay, r: Math.max(1.6, st * 0.14), fill: color, "pointer-events": "none" }));
-  else if (artic === "tenuto") svg.append(svgEl("line", { x1: hx - rx, x2: hx + rx, y1: ay, y2: ay, stroke: color, "stroke-width": 1.8, "stroke-linecap": "round", "pointer-events": "none" }));
-  else if (artic === "accent") svg.append(svgEl("path", { d: `M ${hx - w} ${ay - h / 2} L ${hx + w} ${ay} L ${hx - w} ${ay + h / 2}`, fill: "none", stroke: color, "stroke-width": sw, "stroke-linejoin": "round", "stroke-linecap": "round", "pointer-events": "none" }));   // >
-  else if (artic === "marcato") { const s = up ? 1 : -1; svg.append(svgEl("path", { d: `M ${hx - w} ${ay - s * h / 2} L ${hx} ${ay + s * h / 2} L ${hx + w} ${ay - s * h / 2}`, fill: "none", stroke: color, "stroke-width": sw * 1.3, "stroke-linejoin": "round", "stroke-linecap": "round", "pointer-events": "none" })); }   // ^ (pointing away from the head)
-  else if (artic === "staccatissimo") { const s = up ? 1 : -1, ww = Math.max(2, rx * 0.5); svg.append(svgEl("path", { d: `M ${hx - ww} ${ay + s * h / 2} L ${hx + ww} ${ay + s * h / 2} L ${hx} ${ay - s * h / 2} Z`, fill: color, "pointer-events": "none" })); }   // a wedge, its point toward the head
+  const st = g.step, { rx, ry } = headGeom(g), hx = x + rx + 1, y = g.y(m), ns = Math.max(2 * ry, 5), a = ARTIC_GLYPH[artic]; if (!a) return;
+  const gap = Math.max(2, Math.min(st * 0.8 - ry, ns * 0.35));                            // the mark clear of the head: a third of a space beyond its edge (no more than the old row-based lift)
+  smGlyph(svg, a.name + (up ? "Below" : "Above"), hx, up ? y + ry + gap : y - ry - gap, ns, { "text-anchor": "middle", fill: color });   // stem up → the mark below the head, its origin at the top; stem down → above, its origin at the foot
 }
+const ARTIC_GLYPH = { staccato: { name: "articStaccato", h: 0.34 }, tenuto: { name: "articTenuto", h: 0.19 }, accent: { name: "articAccent", h: 0.98 }, marcato: { name: "articMarcato", h: 1.01 }, staccatissimo: { name: "articStaccatissimo", h: 1.17 } };   // h: the mark's height in spaces
 /* a dynamic under the stave at its note; a hairpin from its note to the next dynamic or the bar line */
 function drawDyn(svg, g, bi, e, color) {
-  const x = g.x(bi, e.t) + 2, fs = Math.max(10, Math.min(14, g.step * 0.9));
-  svg.append(svgEl("text", { x, y: g.H - 2, "font-size": fs, "font-family": "Georgia, 'Times New Roman', serif", "font-style": "italic", "font-weight": 700, fill: color, "paint-order": "stroke", stroke: "rgba(255,255,255,.75)", "stroke-width": 3, "pointer-events": "none" }, e.dyn));
+  const x = g.x(bi, e.t) + 2, fs = Math.max(10, Math.min(14, g.step * 0.9)), halo = { "paint-order": "stroke", stroke: "rgba(255,255,255,.75)", "stroke-width": 3, "pointer-events": "none" };
+  if (/^[pmfrszn]+$/.test(e.dyn)) { const ns = fs * 0.4; svg.append(svgEl("text", Object.assign({ x, y: g.H - 2 - ns * 0.6, "font-size": ns * 4, "font-family": SM_FONT, fill: color }, halo), [...e.dyn].map(ch => smChar(DYN_GLYPH[ch])).join(""))); return; }   // the engraved letters, their descenders clear of the foot
+  svg.append(svgEl("text", Object.assign({ x, y: g.H - 2, "font-size": fs, "font-family": "Georgia, 'Times New Roman', serif", "font-style": "italic", "font-weight": 700, fill: color }, halo), e.dyn));
 }
+const DYN_GLYPH = { p: "dynamicPiano", m: "dynamicMezzo", f: "dynamicForte", r: "dynamicRinforzando", s: "dynamicSforzando", z: "dynamicZ", n: "dynamicNiente" };
 function drawHair(svg, g, bi, e, evs, color) {
   const x1 = g.x(bi, e.t) + 2, next = evs.filter(o => o !== e && (o.dyn || o.hair) && o.t > e.t + 1e-6).sort((a, b) => a.t - b.t)[0];
   const x2 = (next ? g.x(bi, next.t) - 4 : g.x(bi, barBeats(bi)) - 6), y = g.H - 6, h = Math.max(3.5, g.step * 0.35);
@@ -7232,7 +7267,7 @@ function renderWindows() {
       const x0 = g.x(bi, c.t) + 1, x1 = g.x(bi, c.t + c.d) - 1, selected = c.members.some(e => e.id === sel || pickedM.has(e.id));
       { const showSub = S.beatLines || c.rest || selected;   // the per-note solid outline, at that note's own duration: off in Settings or from the toolbar, unless the chain is a rest or selected
       svg.append(svgEl("rect", { class: "slot", x: x0, y: 2, width: Math.max(4, x1 - x0), height: g.H - 4, rx: 2, fill: selected ? box : "none", "fill-opacity": 0.14, stroke: showSub ? (c.rest ? css("--ink2") : box) : "none", "stroke-width": selected ? 2.8 : 2, "stroke-dasharray": c.rest ? "3 3" : "", "data-ev": c.head.id, "data-part": "melody", "data-bi": bi })); }
-      if (c.rest) { svg.append(svgEl("text", { x: (x0 + x1) / 2, y: g.H / 2 + 6, "text-anchor": "middle", "font-size": Math.min(18, g.step * 1.4), fill: css("--ink2"), "font-family": "Georgia, serif" }, "𝄽")); continue; }
+      if (c.rest) { drawRest(svg, g, (x0 + x1) / 2, c.d, css("--ink2")); continue; }
       if (c.head.m == null && spanNow() === 4) { /* unpitched: nothing to draw */ }
       if (c.head.m == null) continue;
       const m = c.head.m;
@@ -7290,7 +7325,7 @@ function renderWindows() {
       groups.forEach(gp => drawBeamed(svg, g, gp, color, e => g.x(bi, e.t) + 2));
       if (focusOn(win)) drawLedgers(svg, g, bi, bar, color, part);
       for (const c of chains(bar, part)) {
-        if (c.rest) { const rx0 = g.x(bi, c.t) + 3, ry = g.H / 2, sel = S.sel && S.sel.part === part && S.sel.id === c.head.id; svg.append(svgEl("rect", { class: "noteEl", x: rx0, y: ry - 12, width: Math.max(10, c.d * g.beatPx - 6), height: 24, rx: 4, fill: sel ? color : "none", "fill-opacity": sel ? 0.25 : 0, stroke: color, "stroke-width": 1.2, "stroke-dasharray": "3 3", "data-ev": c.head.id, "data-part": part, "data-bi": bi, style: "pointer-events:all" }), svgEl("text", { x: rx0 + 4, y: ry + 6, "font-size": 16, fill: color, "font-family": "Georgia, serif", "pointer-events": "none" }, "𝄽")); continue; }
+        if (c.rest) { const rx0 = g.x(bi, c.t) + 3, ry = g.H / 2, sel = S.sel && S.sel.part === part && S.sel.id === c.head.id; svg.append(svgEl("rect", { class: "noteEl", x: rx0, y: ry - 12, width: Math.max(10, c.d * g.beatPx - 6), height: 24, rx: 4, fill: sel ? color : "none", "fill-opacity": sel ? 0.25 : 0, stroke: color, "stroke-width": 1.2, "stroke-dasharray": "3 3", "data-ev": c.head.id, "data-part": part, "data-bi": bi, style: "pointer-events:all" })); drawRest(svg, g, rx0 + Math.max(10, c.d * g.beatPx - 6) / 2, c.d, color, {}, part); continue; }
         if (c.head.m == null) continue;
         const m = clamp(c.head.m, g.lo, g.hi);
         c.members.forEach((e, k) => { if (e.tie) { const nx = k < c.members.length - 1 ? g.x(bi, c.members[k + 1].t) + 2 + headGeom(g).rx : g.x(bi, barBeats(bi)) + (g.bars.includes(bi + 1) ? 2 + headGeom(g).rx : 0); tieArcAt(svg, g.x(bi, e.t) + 2 + headGeom(g).rx, nx, g.y(m) + g.step * 0.5, color); } });
@@ -7305,7 +7340,7 @@ function renderWindows() {
       }
       for (const e of [...bar.ev[part]].sort((a, b) => a.t - b.t)) {
         const x0 = g.x(bi, e.t) + 1, x1 = g.x(bi, e.t + Math.min(e.d, g.B - e.t)) - 1;
-        if (e.rest) { svg.append(svgEl("rect", { class: "noteEl", x: x0, y: 2, width: Math.max(4, x1 - x0), height: g.H - 4, rx: 2, fill: "none", stroke: css("--ink2"), "stroke-dasharray": "3 3", "data-ev": e.id, "data-part": part, "data-bi": bi })); continue; }
+        if (e.rest) { svg.append(svgEl("rect", { class: "noteEl", x: x0, y: 2, width: Math.max(4, x1 - x0), height: g.H - 4, rx: 2, fill: "none", stroke: css("--ink2"), "stroke-dasharray": "3 3", "data-ev": e.id, "data-part": part, "data-bi": bi })); drawRest(svg, g, (x0 + x1) / 2, e.d, css("--ink2"), {}, part); continue; }
         if (e.m < g.lo || e.m > g.hi) { svg.append(svgEl("text", { class: "noteEl", x: x0 + 2, y: e.m > g.hi ? 9 : g.H - 3, "font-size": 8, "font-weight": 700, fill: color, "data-ev": e.id, "data-part": part, "data-bi": bi, style: "pointer-events:all" }, (e.m > g.hi ? "▲" : "▼") + noteName(e.m, key))); continue; }
         drawNote(svg, g, x0 + 1, e.m, e.d, e.chord ? S.chordColor : color, { "data-ev": e.id, "data-part": part, "data-bi": bi }, { noStem: beamed.has(e.id), outline: e.chord ? "#111" : null, uni: unison.has(e.id), ghostNote: !!e.ghost });
         drawAccidental(svg, g, x0 + 1, e.m, color);
@@ -7368,7 +7403,7 @@ function renderStrips() {
       for (const c of chains(bar)) {
         const x0 = g.x(bi, c.t), x1 = g.x(bi, c.t + c.d);
         svg.append(svgEl("rect", { class: "noteEl", x: x0 + 1, y: 1, width: Math.max(4, x1 - x0 - 2), height: HR - 2, rx: 3, fill: c.members.some(e => e.id === sel) ? "rgba(245,166,35,.35)" : "transparent", "data-ev": c.head.id, "data-part": "melody", "data-bi": bi }));
-        if (c.rest) { svg.append(svgEl("text", { x: x0 + 5, y: HR / 2 + 6, "font-size": 14, fill: "#111", "font-family": "Georgia, serif" }, "𝄽")); continue; }
+        if (c.rest) { const rn = restName(c.d); smGlyph(svg, rn, x0 + 4, HR / 2 + 4 + restLift(rn) * 3.5, 3.5, { fill: "#111" }); continue; }
         c.members.forEach((e, k) => {
           const saved = S.noteStyle; S.noteStyle = "trad";
           drawNote(svg, mini, g.x(bi, e.t) + 2, 0.5, e.d, "#111", { "data-ev": e.id, "data-part": "melody", "pointer-events": "none" }, { stem: 1.8, noStem: beamed.has(e.id), ghostNote: !!e.ghost });
@@ -7551,24 +7586,21 @@ function tapLength(v) {
 }
 /* the length buttons are drawn, not typed: six flags on a 256th stay readable at button size */
 function lenIcon(v) {
-  const s = svgEl("svg", { viewBox: "0 0 24 26", width: 22, height: 24, "aria-hidden": "true" }), c = "currentColor";
-  const hollow = v >= 2, stem = v < 4, cx = stem ? 9 : 12, cy = stem ? 20 : 14, rx = 4.3, ry = 3;
-  s.append(svgEl("ellipse", { cx, cy, rx: hollow ? rx - 0.6 : rx, ry: hollow ? ry - 0.6 : ry, fill: hollow ? "none" : c, stroke: c, "stroke-width": hollow ? 2.4 : 0, transform: `rotate(-22 ${cx} ${cy})` }));
-  if (v >= 8) [-1, 1].forEach(k => s.append(svgEl("line", { x1: cx + k * 6.8, x2: cx + k * 6.8, y1: cy - 5, y2: cy + 5, stroke: c, "stroke-width": 1.9 })));
+  const s = svgEl("svg", { viewBox: "0 0 24 26", width: 22, height: 24, "aria-hidden": "true" }), c = "currentColor", ns = 5;   // the engraved glyphs at five pixels a space
+  const stem = v < 4, cx = stem ? 8.5 : 12, cy = stem ? 20.5 : 14, head = v >= 8 ? "noteheadDoubleWhole" : v >= 4 ? "noteheadWhole" : v >= 2 ? "noteheadHalf" : "noteheadBlack";
+  smGlyph(s, head, cx, cy, ns, { "text-anchor": "middle", fill: c });
   if (stem) {
-    const sx = cx + rx - 0.5, top = 2.5;
-    s.append(svgEl("line", { x1: sx, x2: sx, y1: cy, y2: top, stroke: c, "stroke-width": 1.5 }));
-    const flags = v <= 0.5 ? Math.round(Math.log2(0.5 / v)) + 1 : 0, gap = flags > 3 ? 2.4 : 3.4;
-    for (let f = 0; f < flags; f++) s.append(svgEl("path", { d: `M ${sx} ${top + f * gap} q 6.5 2.5 4.5 8`, fill: "none", stroke: c, "stroke-width": 1.5, "stroke-linecap": "round" }));
+    const sx = cx + 0.59 * ns - 0.6, top = 3, flags = v <= 0.5 ? Math.round(Math.log2(0.5 / v)) + 1 : 0, fi = Math.min(flags, FLAG_NAMES.length) - 1;
+    s.append(svgEl("line", { x1: sx, x2: sx, y1: cy, y2: top, stroke: c, "stroke-width": 1.2 }));
+    if (flags) smGlyph(s, "flag" + FLAG_NAMES[fi] + "Up", sx - 0.6, top, Math.min(ns, (cy - top) * 0.92 / FLAG_H[fi]), { fill: c });
   }
   return s;
 }
 /* the ghost-note button: an X head with a stem */
 function ghostIcon() {
-  const s = svgEl("svg", { viewBox: "0 0 24 26", width: 22, height: 24, "aria-hidden": "true" }), c = "currentColor", cx = 9, cy = 20, dx = 4, dy = 3.6;
-  s.append(svgEl("line", { x1: cx - dx, y1: cy - dy, x2: cx + dx, y2: cy + dy, stroke: c, "stroke-width": 2, "stroke-linecap": "round" }),
-           svgEl("line", { x1: cx - dx, y1: cy + dy, x2: cx + dx, y2: cy - dy, stroke: c, "stroke-width": 2, "stroke-linecap": "round" }),
-           svgEl("line", { x1: cx + dx - 0.2, x2: cx + dx - 0.2, y1: cy - dy + 0.5, y2: 2.5, stroke: c, "stroke-width": 1.5 }));
+  const s = svgEl("svg", { viewBox: "0 0 24 26", width: 22, height: 24, "aria-hidden": "true" }), c = "currentColor", ns = 5, cx = 8.5, cy = 20.5, sx = cx + 0.58 * ns - 0.6;
+  smGlyph(s, "noteheadXBlack", cx, cy, ns, { "text-anchor": "middle", fill: c });
+  s.append(svgEl("line", { x1: sx, x2: sx, y1: cy, y2: 3, stroke: c, "stroke-width": 1.2 }));
   return s;
 }
 /* a ghost note (an X head): played softly, barely heard. On a note you tapped yourself it toggles; otherwise it arms the next note. */
@@ -7636,17 +7668,11 @@ function tapRestLen(v) {
 }
 /* the rest buttons are drawn on a few stave lines, since a whole rest hangs from a line and a half rest sits on one */
 function restIcon(v) {
-  const s = svgEl("svg", { viewBox: "0 0 24 26", width: 22, height: 24, "aria-hidden": "true" }), c = "currentColor";
+  const s = svgEl("svg", { viewBox: "0 0 24 26", width: 22, height: 24, "aria-hidden": "true" }), c = "currentColor", name = restName(v);
+  const H = { restDoubleWhole: 1, restWhole: 0.6, restHalf: 0.6, restQuarter: 3, rest8th: 1.7, rest16th: 2.72, rest32nd: 3.7, rest64th: 4.73, rest128th: 5.76, rest256th: 6.78 }[name];   // the glyph's height in spaces
   if (v >= 2) [5, 9.5, 14, 18.5, 23].forEach(y => s.append(svgEl("line", { x1: 1, x2: 23, y1: y, y2: y, stroke: c, "stroke-width": 0.8, opacity: 0.35 })));   // lines only where the rest needs one to read (it hangs from or sits on a line)
-  if (v >= 8) s.append(svgEl("rect", { x: 9, y: 9.5, width: 6, height: 4.5, fill: c }));
-  else if (v >= 4) s.append(svgEl("rect", { x: 7.5, y: 9.5, width: 9, height: 2.9, fill: c }));
-  else if (v >= 2) s.append(svgEl("rect", { x: 7.5, y: 11.1, width: 9, height: 2.9, fill: c }));
-  else if (v >= 1) s.append(svgEl("path", { d: "M 9.5 4.5 L 14 9.8 L 11 13 L 15 18 Q 11 16.2 10.6 20.4 Q 7.8 16.6 12 15.6 L 8.3 11 L 11.6 7.8 Z", fill: c }));
-  else {
-    const n = Math.round(Math.log2(0.5 / v)) + 1, top = Math.max(2, 12 - (n - 1) * 2), gap = n > 4 ? 2.6 : 3, xb = 8.5, xt = xb + (23 - top) * 0.3;
-    s.append(svgEl("line", { x1: xb, y1: 23, x2: xt, y2: top, stroke: c, "stroke-width": 1.5, "stroke-linecap": "round" }));
-    for (let k = 0; k < n; k++) { const ys = top + k * gap, xs = xt - (ys - top) * 0.3; s.append(svgEl("path", { d: `M ${xs} ${ys} q -1.5 3 -4.5 2.2`, fill: "none", stroke: c, "stroke-width": 1.3, "stroke-linecap": "round" }), svgEl("circle", { cx: xs - 4.5, cy: ys + 2.2, r: 1.5, fill: c })); }
-  }
+  const ns = v >= 2 ? 4.5 : Math.min(5, 23 / H);                                          // on the lines, a space is their spacing; the longest rests shrink to fit the button
+  smGlyph(s, name, 12, v >= 4 && v < 8 ? 9.5 : 14, ns, { "text-anchor": "middle", fill: c });   // the whole rest hangs from the fourth line, the rest sit on or centre on the middle one
   return s;
 }
 /* rhythm strip: add a box (or a rest) at the ▶ cursor of the current bar */
@@ -8054,7 +8080,8 @@ function initPointer() {
   lyr.addEventListener("pointercancel", () => { ld = null; });
   window.addEventListener("resize", () => { if (S.song) renderAll(); });
   window.addEventListener("load", () => setTimeout(() => { if (S.song) renderAll(); }, 350));                 // once more after the load has settled: the first measurements can be taken before the page has its final size
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (S.song) renderAll(); });   // and again once the fonts are in, since the head and tool bar are measured by their text
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (S.song) renderAll(); });
+  if (document.fonts && document.fonts.load) document.fonts.load(`20px "${SM_FONT}"`).then(() => { if (S.song) renderAll(); }).catch(() => {});   // and once the engraved glyphs are in   // and again once the fonts are in, since the head and tool bar are measured by their text
   if (window.visualViewport) window.visualViewport.addEventListener("resize", () => { if (S.song && !WE.on) renderAll(); });
 }
 /* register arrows and window gears/sizers */
@@ -9230,10 +9257,10 @@ function buildFtp() {
   box.append(el("div", { class: "row" }, P.prev, P.lbl, P.next, P.play));
   const grid = el("div", { class: "grid" }); P.g = {};
   const cell = (key, label, fn, cls, title) => { P.g[key] = el("button", { class: cls || "", onclick: fn, title }, label); grid.append(P.g[key]); };
-  cell("rest", "𝄽", ftpRest, "", "Rest"); cell("staccato", ARTIC.staccato.glyph, () => { tapArtic("staccato"); renderFtp(); }, "art", "Staccato"); cell("2", "𝅗𝅥", () => ftpDuration(2), "", "Half note");
+  cell("rest", "𝄽", ftpRest, "", "Rest"); cell("staccato", ARTIC.staccato.glyph, () => { tapArtic("staccato"); renderFtp(); }, "art", "Staccato"); cell("2", "𝅗𝅥", () => ftpDuration(2), "", "Half note");
   cell("dot", "·", () => { tapDot(); renderFtp(); }, "", "Dotted"); cell("tenuto", ARTIC.tenuto.glyph, () => { tapArtic("tenuto"); renderFtp(); }, "art", "Tenuto"); cell("0.5", "♪", () => ftpDuration(0.5), "", "Eighth note");
   cell("slur", ARTIC.slur.glyph, () => { tapArtic("slur"); renderFtp(); }, "art", "Slur"); cell("tie", "⌒", () => { tapTie(); renderFtp(); }, "", "Tie to the next note"); cell("1", "♩", () => ftpDuration(1), "", "Quarter note");
-  cell("4", "𝅝", () => ftpDuration(4), "", "Whole note"); cell("0.25", "𝅘𝅥𝅯", () => ftpDuration(0.25), "", "Sixteenth note"); cell("undo", "↶", () => { undo(); ftpRefreshBox(); }, "undo", "Undo");
+  cell("4", "𝅝", () => ftpDuration(4), "", "Whole note"); cell("0.25", "𝅘𝅥𝅮", () => ftpDuration(0.25), "", "Sixteenth note"); cell("undo", "↶", () => { undo(); ftpRefreshBox(); }, "undo", "Undo");
   const pitch = el("div", { class: "pitch" });
   P.up = el("button", { class: "pBtn", title: "Pitch up a half step (hold to keep going)" }, "↑"); P.dn = el("button", { class: "pBtn", title: "Pitch down a half step (hold to keep going)" }, "↓");
   P.cur = el("div", { class: "pCur" }, "C4");
@@ -9704,7 +9731,7 @@ function drawMoveSel(svg, g, bi, part) {
    hear it at the song's tempo, then let the app rank the time signatures that fit it.
    ═══════════════════════════════════════════════════════════════════════ */
 const TSC = { entries: [], sel: null, result: null, pick: 0, playing: false };
-const TSC_VALUES = [["whole", 4, "𝅝", "1"], ["half", 2, "𝅗𝅥", "½"], ["quarter", 1, "♩", "¼"], ["eighth", 0.5, "♪", "⅛"], ["16th", 0.25, "𝅘𝅥𝅯", "16"], ["32nd", 0.125, "𝅘𝅥𝅰", "32"], ["64th", 0.0625, "𝅘𝅥𝅱", "64"], ["128th", 0.03125, "𝅘𝅥𝅲", "128"]];
+const TSC_VALUES = [["whole", 4, "𝅝", "1"], ["half", 2, "𝅗𝅥", "½"], ["quarter", 1, "♩", "¼"], ["eighth", 0.5, "♪", "⅛"], ["16th", 0.25, "𝅘𝅥𝅮", "16"], ["32nd", 0.125, "𝅘𝅥𝅯", "32"], ["64th", 0.0625, "𝅘𝅥𝅰", "64"], ["128th", 0.03125, "𝅘𝅥𝅱", "128"]];
 const TSC_RESTS = ["𝄻", "𝄼", "𝄽", "𝄾", "𝄿", "𝅀", "𝅁", "𝅂"];
 const tscDur = e => TSC_VALUES[e.v][1] * (e.dots === 2 ? 1.75 : e.dots === 1 ? 1.5 : 1);
 const tscGlyph = e => (e.rest ? TSC_RESTS[e.v] : TSC_VALUES[e.v][2]) + (e.dots ? "·".repeat(e.dots) : "");
