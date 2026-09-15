@@ -293,7 +293,7 @@ text.clef, text.smufl { user-select: none; }
    column on the right; the whole screen, nothing scrolls ── */
 #app.deck { max-width: none !important; height: 100vh; height: 100dvh; box-sizing: border-box; overflow: hidden; padding: 6px 4px 6px 2px; gap: 0 6px;   /* slim side margins: the width goes to the staves */   /* no row gaps: the spacing is explicit, so the stave can be sized to sit flush */
   grid-template-columns: 118px 108px 108px minmax(330px, 1fr) minmax(0, 1fr) var(--deckW, 44px) !important; grid-template-rows: auto auto auto auto auto auto minmax(0, 1fr) auto;
-  grid-template-areas: "head head head head head head" "rollbar rollbar rollbar rollbar rollbar addv" "stage stage stage stage stage deck" "dyn dyn dyn dyn dyn deck" "rhy rhy rhy rhy rhy deck" "lyr lyr lyr lyr lyr deck" ". . . . . deck" "t t t t t deck" !important; }
+  grid-template-areas: "head head head head head head" "rollbar rollbar rollbar rollbar rollbar addv" "stage stage stage stage stage deck" "dyn dyn dyn dyn dyn deck" "rhy rhy rhy rhy rhy deck" "lyr lyr lyr lyr lyr deck" ". . . . . deck" "t t t t t t" !important; }
 /* the head: a small title at the top left; the play buttons move to the left of the bar bracket */
 #app.deck #head { grid-template-columns: 44px 36px auto 1fr 44px; grid-template-rows: auto; }   /* ☰, the refresh button beside it, the tempo, the bracket, the gear */
 #app.deck #menuBtn { grid-column: 1; grid-row: 1; } #app.deck #reloadBtn { grid-column: 2; grid-row: 1; } #app.deck #gearBtn { grid-column: 5; grid-row: 1; }
@@ -324,7 +324,9 @@ text.clef, text.smufl { user-select: none; }
 #app.deck.noparts #addView { display: none; }
 #app.deck #beatRow { display: none !important; }                                            /* no beat labels on the deck: the stave takes the room */
 #app.deck #topTransport { justify-self: start; flex: 1 1 0; min-width: 0; gap: 1px; }
-#app.deck #topTransport { justify-content: flex-end; }                                      /* the play buttons packed to the right, stop almost flush with the tempo's − */
+#app.deck #topTransport { justify-content: flex-start; }                                    /* the play buttons packed to the left of their third */
+#app.deck #toolL, #app.deck #toolM { flex: 0 0 auto; min-width: 0; }                        /* the left and middle thirds only as wide as their tools; the notes palette takes the rest, shifted left to meet them */
+#app.deck #toolR { flex: 1 1 0; }
 #app.deck #topTransport #tempo { margin-left: 1px; margin-right: 2px; }                 /* the tempo at the far end, almost flush with the flip button */
 #app.deck #topTransport button { width: 28px; height: 26px; font-size: 13px; box-shadow: none; }
 #app.deck #tempo, #app.deck #topTransport #tempo button { height: 26px; }
@@ -341,6 +343,12 @@ text.clef, text.smufl { user-select: none; }
 #app.deck #pitchArrows, #app.deck #itemArrows { width: 48px; flex: 0 0 auto; margin-top: 0; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 8px 18px; align-self: center; }
 #app.deck #pitchArrows::before, #app.deck #itemArrows::before { grid-column: 1 / -1; grid-row: 1; display: block; height: 8px; line-height: 8px; text-align: center; font-size: 5.5px; font-weight: 800; letter-spacing: .18em; color: #fff; background: #111; border: 1.5px solid #141414; border-bottom: none; border-radius: 5px 5px 0 0; box-sizing: border-box; }
 #app.deck #pitchArrows::before { content: "PITCH"; } #app.deck #itemArrows::before { content: "ITEM"; }
+#app.deck #staveCtl { width: 52px; flex: 0 0 auto; margin-left: auto; margin-right: 4px; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 8px 18px; align-self: center; }   /* WIDER and TIGHTER under a STAVE cap, at the tool bar's right end before its flip button */
+#app.deck #staveCtl::before { content: "STAVE"; grid-column: 1 / -1; grid-row: 1; display: block; height: 8px; line-height: 8px; text-align: center; font-size: 5.5px; font-weight: 800; letter-spacing: .18em; color: #fff; background: #111; border: 1.5px solid #141414; border-bottom: none; border-radius: 5px 5px 0 0; box-sizing: border-box; }
+#app.deck #staveCtl button { grid-row: 2; height: 18px; padding: 0; border: 1.5px solid #141414; border-top: 1.5px solid #141414; border-radius: 0; background: linear-gradient(#fff, #d9d9d9); color: #111; font-size: 7.5px; font-weight: 800; letter-spacing: 0; line-height: 1; box-shadow: none; }
+#app.deck #staveCtl button:first-child { border-radius: 0 0 0 4px; } #app.deck #staveCtl button:last-child { border-radius: 0 0 4px 0; border-left: none; }
+#app.deck #staveCtl button:active { background: linear-gradient(#ffd27a, #f5a623); }
+#app.deck #flipBtn { margin-left: 0; }
 #app.deck #toolL #pitchArrows button, #app.deck #toolL #itemArrows button { grid-row: 2; height: 18px; font-size: 8px; border-top: 1.5px solid #141414; }
 #app.deck #pitchArrows button:first-child, #app.deck #itemArrows button:first-child { border-radius: 0 0 0 4px; } #app.deck #pitchArrows button:last-child, #app.deck #itemArrows button:last-child { border-radius: 0 0 4px 0; }
 #app.deck #pitchArrows .aico, #app.deck #itemArrows .aico { width: 13px; height: 13px; }
@@ -438,7 +446,7 @@ body.kbOpen #app.deck { padding-bottom: 6px; }
 #app.deck #rollBar { margin-top: 1px; }                                                    /* the selectors close under the bracket row (its own padding keeps them clear); the room goes to the Dynamics strip */
 #app.deck .win:not(.deckOn) { display: none !important; }
 /* the duo (Stacked staves on a wide screen): the melody in the stage row, the band part in view in its own row filling the rest, flush on the tool bar; no part selectors */
-#app.deck.duo { grid-template-areas: "head head head head head head" "rollbar rollbar rollbar rollbar rollbar addv" "stage stage stage stage stage deck" "dyn dyn dyn dyn dyn deck" "rhy rhy rhy rhy rhy deck" "lyr lyr lyr lyr lyr deck" "band band band band band deck" "t t t t t deck" !important; }
+#app.deck.duo { grid-template-areas: "head head head head head head" "rollbar rollbar rollbar rollbar rollbar addv" "stage stage stage stage stage deck" "dyn dyn dyn dyn dyn deck" "rhy rhy rhy rhy rhy deck" "lyr lyr lyr lyr lyr deck" "band band band band band deck" "t t t t t t" !important; }
 #app.deck.duo #rollBar, #app.deck.duo #partsBtn, #app.deck.duo #addView { display: none !important; }
 #app.deck.duo #accWin.deckOn, #app.deck.duo #bassWin.deckOn { grid-area: band; margin-top: 0 !important; align-self: start; }
 #app.deck.duo.kbUp #accWin, #app.deck.duo.kbUp #bassWin { display: none !important; }
@@ -6654,7 +6662,7 @@ function placeDeckLabels() {
     if (!deckMode() || !win.classList.contains("deckOn")) continue;
     const x = frame.offsetLeft + frame.offsetWidth / 2;
     for (const id of ["nav", "rollBar"]) { const e = $(id); if (!e || !e.offsetWidth) continue; e.style.position = "relative"; const cur = parseFloat(e.style.left) || 0, fr = frame.getBoundingClientRect(), eb = e.getBoundingClientRect(); const ar = $("app").getBoundingClientRect(), mid = duoMode() && id === "nav" ? (ar.left + ar.right) / 2 : (fr.left + fr.right) / 2; let eMid = (eb.left + eb.right) / 2; if (id === "rollBar") { const items = e.querySelectorAll(".rollItem"); if (items.length && items[0].offsetWidth > 0) eMid = (items[0].getBoundingClientRect().left + items[items.length - 1].getBoundingClientRect().right) / 2; } else { const a = $("prevBar"), b = $("nextBar"); if (a && b) eMid = (a.getBoundingClientRect().left + b.getBoundingClientRect().right) / 2; } /* the bracket itself (← to →) over the part label, the parts button riding beside it */ e.style.left = Math.round(cur + mid - eMid) + "px"; }   // the bracket and the selectors centred on the stave's frame
-    { const nav = $("deckNav"), duo = duoMode() && !kbUpNow(), fTop = duo ? $("melWin").querySelector(".frame") : frame, fBot = duo ? $(duoBandWin() + "Win").querySelector(".frame") : frame, rowTop = nav.getBoundingClientRect().top - (parseFloat(nav.style.marginTop) || 0); nav.style.marginTop = Math.max(0, fTop.getBoundingClientRect().top - rowTop) + "px"; const tb = $("toolbar"), foot = tb && tb.offsetHeight ? tb.getBoundingClientRect().bottom : fBot.getBoundingClientRect().bottom; nav.style.height = Math.round(foot - fTop.getBoundingClientRect().top) + "px"; }   // the column: level with the (top) frame, running down beside the tool bar to its foot
+    { const nav = $("deckNav"), duo = duoMode() && !kbUpNow(), fTop = duo ? $("melWin").querySelector(".frame") : frame, fBot = duo ? $(duoBandWin() + "Win").querySelector(".frame") : frame, rowTop = nav.getBoundingClientRect().top - (parseFloat(nav.style.marginTop) || 0); nav.style.marginTop = Math.max(0, fTop.getBoundingClientRect().top - rowTop) + "px"; nav.style.height = Math.round(fBot.getBoundingClientRect().bottom - fTop.getBoundingClientRect().top) + "px"; }   // the column: level with the (top) frame, as tall as the staves in view
     { const nav = $("deckNav"), navTop = nav.getBoundingClientRect().top, kbUp = $("app").classList.contains("kbUp");
       /* the keyboard open: CLOSE floats level with the Lyrics strip (centred on the strip's height); otherwise it stays in the stack under the gear.
          The strips' own SHOW / HIDE buttons live in the gutter beside the stave, placed by the style sheet */
@@ -6725,15 +6733,16 @@ function renderRollBar() {
     const colUn = () => el("button", { class: "colBtn", title: "Undo", onclick: undo }, el("span", { class: "big" }, "↶"), el("span", {}, "UNDO"));
     const colRe = () => el("button", { class: "colBtn", title: "Redo", onclick: redo }, el("span", { class: "big" }, "↷"), el("span", {}, "REDO"));
     const bulk = () => ["selBtn", "delBtn", "repBtn", "copyBtn"].map(id => { const b = $(id); b.classList.add("colBtn"); return b; });   // SELECT, DELETE, REPEAT, COPY: the tool bar's own buttons, in the column while the deck is up
-    const colSp = w => [el("button", { class: "colBtn", title: "Wider: the lines further apart, notes and clef with them, up to the widest", onclick: () => zoomRows(w, 1) }, el("span", { class: "big" }, "|<>|"), el("span", {}, "WIDER")), el("button", { class: "colBtn", title: "Tighter: the lines closer together, notes and clef with them, down to the legible least", onclick: () => zoomRows(w, -1) }, el("span", { class: "big" }, ">|<"), el("span", {}, "TIGHTER"))];
     const colCover = () => focusOn("mel") ? [el("button", { class: "colBtn" + (S.doors.mel !== false ? " on" : ""), title: "Open or close the doors over the rest of the melody stave", onclick: () => { S.doors.mel = S.doors.mel === false; savePrefs(); renderAll(); } }, el("span", { class: "big" }, "⇕"), el("span", {}, "COVER"))] : [];   // with the five-line focus on: the doors' switch
     if (duo) {                                                                            // the duo's column: DEL and the melody's gear at the top, the strip buttons beside their strips, and at the foot ⇄ (swap the band part) and that part's gear
       const bw = duoBandWin(), other = bw === "acc" ? "bass" : "acc";
       const swap = el("button", { class: "part", title: "Swap: the " + DECK_NAME[other].toLowerCase() + " here instead", onclick: () => { S.duoBand = other; if (S.activePart !== "melody") S.activePart = WIN_PART[other]; S.sel = null; S.active = null; S.picked = []; savePrefs(); renderAll(); } }, el("span", { class: "big" }, "⇄"), el("span", { class: "name" }, SHORT[other]));
       const gearM = el("button", { class: "gearBtn", title: "Melody settings", onclick: () => openWinSettings("mel") }, gearIco());
       const gearB = el("button", { class: "gearBtn", title: DECK_NAME[bw].charAt(0) + DECK_NAME[bw].slice(1).toLowerCase() + " settings", onclick: () => openWinSettings(bw) }, gearIco());
-      nav.append(delB, gearM, colBs("mel"), colUn(), colRe(), ...colCover(), ...bulk(), kc, el("div", { class: "spacer" }), ...colSp("mel"), swap, gearB);
-    } else nav.append(arrow(-1, up), arrow(1, dn), delB, gear, colBs(active), colUn(), colRe(), ...(active === "mel" ? colCover() : []), ...bulk(), kc, el("div", { class: "spacer" }), ...colSp(active));   // ▲ ▼ at the top with the gear close under them, then BACK, UNDO, REDO, COVER, SELECT, DELETE, REPEAT, COPY; WIDER and TIGHTER at the foot, beside the tool bar
+      nav.append(delB, gearM, colBs("mel"), colUn(), colRe(), ...colCover(), ...bulk(), kc, el("div", { class: "spacer" }), swap, gearB);
+    } else nav.append(arrow(-1, up), arrow(1, dn), delB, gear, colBs(active), colUn(), colRe(), ...(active === "mel" ? colCover() : []), ...bulk(), kc);   // ▲ ▼ at the top with the gear close under them, then BACK, UNDO, REDO, COVER, SELECT, DELETE, REPEAT, COPY
+    { let sc = $("staveCtl"); if (!sc) sc = el("div", { id: "staveCtl" }); if (sc.parentNode !== $("toolR")) $("toolR").insertBefore(sc, $("flipBtn"));   // WIDER and TIGHTER: under a STAVE cap at the tool bar's right end, acting on the stave in view
+      sc.replaceChildren(el("button", { title: "Wider: the lines further apart, notes and clef with them, up to the widest", onclick: () => zoomRows(deckActive(), 1) }, "|<>|"), el("button", { title: "Tighter: the lines closer together, notes and clef with them, down to the legible least", onclick: () => zoomRows(deckActive(), -1) }, ">|<")); }
     { let sbx = $("stripBtns"); if (!sbx) sbx = el("div", { id: "stripBtns" }); if (sbx.parentNode !== $("toolL")) $("toolL").prepend(sbx); sbx.replaceChildren(db, rb, lb); }   // the strips' SHOW / HIDE buttons: a fixed set at the far left of the tool bar, DYN then RHYTHM then LYRICS as the strips lie — never flipped or scrolled
     /* the tool bar: the left third flips too now — its tools, or the staff-lines switch — and the middle and right thirds flip as before */
     const tr = $("toolR"), tm = $("toolMScroll");
