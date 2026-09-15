@@ -5975,6 +5975,11 @@ const WIN_K = { s: 0.72, m: 0.84, l: 1 };         // window size also sets how m
 const WIN_WEIGHT = { mel: 1.5, acc: 1, bass: 1 };
 const STEPS = { mel: 14, acc: 8, bass: 8 };      // computed by allocate()
 const WIN_PART = { mel: "melody", acc: "accomp", bass: "bass" };
+/* the Grand Stave: the treble staff is the melody, the bass staff carries the Bass part — its own voice, drawn in the melody's window on the lower
+   staff and played together with the melody; a tap on the lower staff enters, selects and edits that part (its own window shows the same notes) */
+const GRAND_LOWER = "bass";
+const grandLower = win => (win === "mel" && clefNow("mel") && clefNow("mel").bands) ? GRAND_LOWER : null;   // the part the lower staff carries, when the melody's window is a Grand Stave
+const onLowerStaff = (g, m) => { if (!g.dia || g.win !== "mel" || !grandLower("mel")) return false; const bs = focusBandSteps("mel"); return g.stepOf(m) < (bs[0][1] + bs[1][0]) / 2; };   // a pitch below the middle of the gap between the staves belongs to the lower one
 const WIN_LO = { mel: "melLo", acc: "accLo", bass: "bassLo" };
 const NOTE_SCALE = { x: 0.42, s: 0.55, m: 0.72, l: 0.92 }; const noteSizeNow = () => (typeof deckMode === "function" && deckMode()) ? S.noteSize : "x"; const NS = () => NOTE_SCALE[noteSizeNow()] || 1;   // on the phone every note is drawn Micro   // x is Micro: notes small enough that every bar the window shows fits across it, side by side, with no sideways scrolling   // note size: heads, stems and flags; the stave never changes
 const HK = () => S.halfLines ? 1.55 : 1;         // lines-and-spaces: heads grow to fill a space (two rows)
@@ -7311,6 +7316,37 @@ function drawBeamed(svg, g, group, color, xOf, opts = {}) {
 }
 function tieArcAt(svg, x1, x2, y, color) { svg.append(svgEl("path", { d: `M ${x1} ${y} Q ${(x1 + x2) / 2} ${y + 10} ${x2} ${y}`, fill: "none", stroke: color, "stroke-width": 1.6, "pointer-events": "none" })); }
 
+/* one bar of a part — the accompaniment or the bass in its own window, or the Bass part on the Grand Stave's lower staff in the melody's window:
+   its beams, ledger lines, ties, marks, dynamics, slurs, rests and notes, the selected and picked ones framed */
+function drawPartBar(svg, g, bi, part, color, win) {
+  const bar = S.song.bars[bi], key = keyObj(S.song.key), sel = S.sel && S.sel.bi === bi && S.sel.part === part ? S.sel.id : null;
+  const unison = unisonIds(bar.ev[part] || []), pickedP = pickedIn(bi, part);
+  const groups = S.noteStyle === "trad" ? beamGroups(bar.ev[part].filter(e => e.m >= g.lo && e.m <= g.hi)) : [], beamed = new Set(groups.flatMap(gp => gp.evs.map(e => e.id)));
+  groups.forEach(gp => drawBeamed(svg, g, gp, color, e => g.x(bi, e.t) + 2));
+  if (focusOn(win)) drawLedgers(svg, g, bi, bar, color, part);
+  for (const c of chains(bar, part)) {
+    if (c.rest) { const rx0 = g.x(bi, c.t) + 3, ry = g.H / 2, sel = S.sel && S.sel.part === part && S.sel.id === c.head.id; svg.append(svgEl("rect", { class: "noteEl", x: rx0, y: ry - 12, width: Math.max(10, c.d * g.beatPx - 6), height: 24, rx: 4, fill: sel ? color : "none", "fill-opacity": sel ? 0.25 : 0, stroke: color, "stroke-width": 1.2, "stroke-dasharray": "3 3", "data-ev": c.head.id, "data-part": part, "data-bi": bi, style: "pointer-events:all" })); drawRest(svg, g, rx0 + Math.max(10, c.d * g.beatPx - 6) / 2, c.d, color, {}, part); continue; }
+    if (c.head.m == null) continue;
+    const m = clamp(c.head.m, g.lo, g.hi);
+    c.members.forEach((e, k) => { if (e.tie) { const nx = k < c.members.length - 1 ? g.x(bi, c.members[k + 1].t) + 2 + headGeom(g).rx : g.x(bi, barBeats(bi)) + (g.bars.includes(bi + 1) ? 2 + headGeom(g).rx : 0); tieArcAt(svg, g.x(bi, e.t) + 2 + headGeom(g).rx, nx, g.y(m) + g.step * 0.5, color); } });
+    if (tiedFromPrev(bi, c, part) && bi === g.first) tieArcAt(svg, 0, g.x(bi, c.t) + 1 + headGeom(g).rx, g.y(m) + g.step * 0.5, color);
+  }
+  for (const e of bar.ev[part]) {
+    if (e.rest || e.m < g.lo || e.m > g.hi) continue;
+    const up = stemUp(g, e.m, groups, e);
+    if (e.artic) drawArtic(svg, g, g.x(bi, e.t) + 2, e.m, e.artic, color, up);
+    if (e.dyn) drawDyn(svg, g, bi, e, color); if (e.hair) drawHair(svg, g, bi, e, bar.ev[part], color);
+    if (e.slur) { const end = bar.ev[part].find(x => x.id === e.slur); if (end) drawSlur(svg, g, g.x(bi, e.t) + 2, e.m, g.x(bi, end.t) + 2, clamp(end.m, g.lo, g.hi), color, up); }
+  }
+  for (const e of [...bar.ev[part]].sort((a, b) => a.t - b.t)) {
+    const x0 = g.x(bi, e.t) + 1, x1 = g.x(bi, e.t + Math.min(e.d, g.B - e.t)) - 1;
+    if (e.rest) { svg.append(svgEl("rect", { class: "noteEl", x: x0, y: 2, width: Math.max(4, x1 - x0), height: g.H - 4, rx: 2, fill: "none", stroke: css("--ink2"), "stroke-dasharray": "3 3", "data-ev": e.id, "data-part": part, "data-bi": bi })); drawRest(svg, g, (x0 + x1) / 2, e.d, css("--ink2"), {}, part); continue; }
+    if (e.m < g.lo || e.m > g.hi) { svg.append(svgEl("text", { class: "noteEl", x: x0 + 2, y: e.m > g.hi ? 9 : g.H - 3, "font-size": 8, "font-weight": 700, fill: color, "data-ev": e.id, "data-part": part, "data-bi": bi, style: "pointer-events:all" }, (e.m > g.hi ? "▲" : "▼") + noteName(e.m, key))); continue; }
+    drawNote(svg, g, x0 + 1, e.m, e.d, e.chord ? S.chordColor : color, { "data-ev": e.id, "data-part": part, "data-bi": bi }, { noStem: beamed.has(e.id), outline: e.chord ? "#111" : null, uni: unison.has(e.id), ghostNote: !!e.ghost, w: x1 - x0 + 2 });
+    drawAccidental(svg, g, x0 + 1, e.m, color);
+    if (e.id === sel || pickedP.has(e.id)) drawSelFrame(svg, x0 - 1, g.y(e.m) - g.step, Math.max(6, x1 - x0 + 2), g.step * 2, 3);
+  }
+}
 function renderWindows() {
   const song = S.song, key = keyObj(song.key), bar = curBar(), bi = S.bi;
   for (const w of ["mel", "acc", "bass"]) { const elw = $(w + "Win"); elw.classList.toggle("closed", S.winState[w] === "closed"); elw.classList.toggle("half", S.winState[w] === "half"); }
@@ -7355,6 +7391,10 @@ function renderWindows() {
       if (e.dyn) drawDyn(svg, g, bi, e, ink); if (e.hair) drawHair(svg, g, bi, e, bar.ev.melody, ink);
       if (e.slur) { const end = bar.ev.melody.find(x => x.id === e.slur); if (end && end.m != null) drawSlur(svg, g, g.x(bi, e.t) + 2, e.m, g.x(bi, end.t) + 2, clamp(end.m, g.lo, g.hi), ink, up); }
     }
+    { const lower = grandLower("mel"); if (lower && song.parts[lower].on) {                  // the Grand Stave: the Bass part on the lower staff, in its own colour
+        const lc = css("--" + lower); drawMoveSel(svg, g, bi, lower); drawSpanBands(svg, g, bi, lower);
+        if (S.ghost && S.ghost.part === lower && S.ghost.bi === bi) drawGhost(svg, g, bi, S.ghost, lc);
+        drawPartBar(svg, g, bi, lower, lc, "mel"); } }
     if (S.slurFrom && S.slurFrom.bi === bi && S.slurFrom.part === "melody") { const f = bar.ev.melody.find(x => x.id === S.slurFrom.id); if (f && f.m != null) svg.append(svgEl("circle", { cx: g.x(bi, f.t) + 2 + headGeom(g).rx + 1, cy: g.y(clamp(f.m, g.lo, g.hi)), r: g.step * 0.9, fill: "none", stroke: css("--box"), "stroke-width": 2, "stroke-dasharray": "3 2", "pointer-events": "none" })); }
     /* other voices, faint */
     if (song.parts.sub.on) for (const e of partEvents("sub", bi)) if (e.m >= g.lo && e.m <= g.hi) svg.append(svgEl("rect", { x: g.x(bi, e.t) + 2, y: g.y(e.m) - 2, width: Math.max(4, g.x(bi, e.t + e.d) - g.x(bi, e.t) - 4), height: 4, rx: 2, fill: css("--sub"), opacity: 0.7, "pointer-events": "none" }));
@@ -7380,34 +7420,7 @@ function renderWindows() {
     drawAwake(svg, g, bi);
     drawMoveSel(svg, g, bi, part); drawSpanBands(svg, g, bi, part);
     if (S.ghost && S.ghost.part === part && S.ghost.bi === bi) drawGhost(svg, g, bi, S.ghost, color);
-    {
-      const unison = unisonIds(bar.ev[part] || []), pickedP = pickedIn(bi, part);
-      const groups = S.noteStyle === "trad" ? beamGroups(bar.ev[part].filter(e => e.m >= g.lo && e.m <= g.hi)) : [], beamed = new Set(groups.flatMap(gp => gp.evs.map(e => e.id)));
-      groups.forEach(gp => drawBeamed(svg, g, gp, color, e => g.x(bi, e.t) + 2));
-      if (focusOn(win)) drawLedgers(svg, g, bi, bar, color, part);
-      for (const c of chains(bar, part)) {
-        if (c.rest) { const rx0 = g.x(bi, c.t) + 3, ry = g.H / 2, sel = S.sel && S.sel.part === part && S.sel.id === c.head.id; svg.append(svgEl("rect", { class: "noteEl", x: rx0, y: ry - 12, width: Math.max(10, c.d * g.beatPx - 6), height: 24, rx: 4, fill: sel ? color : "none", "fill-opacity": sel ? 0.25 : 0, stroke: color, "stroke-width": 1.2, "stroke-dasharray": "3 3", "data-ev": c.head.id, "data-part": part, "data-bi": bi, style: "pointer-events:all" })); drawRest(svg, g, rx0 + Math.max(10, c.d * g.beatPx - 6) / 2, c.d, color, {}, part); continue; }
-        if (c.head.m == null) continue;
-        const m = clamp(c.head.m, g.lo, g.hi);
-        c.members.forEach((e, k) => { if (e.tie) { const nx = k < c.members.length - 1 ? g.x(bi, c.members[k + 1].t) + 2 + headGeom(g).rx : g.x(bi, barBeats(bi)) + (g.bars.includes(bi + 1) ? 2 + headGeom(g).rx : 0); tieArcAt(svg, g.x(bi, e.t) + 2 + headGeom(g).rx, nx, g.y(m) + g.step * 0.5, color); } });
-        if (tiedFromPrev(bi, c, part) && bi === g.first) tieArcAt(svg, 0, g.x(bi, c.t) + 1 + headGeom(g).rx, g.y(m) + g.step * 0.5, color);
-      }
-      for (const e of bar.ev[part]) {
-        if (e.rest || e.m < g.lo || e.m > g.hi) continue;
-        const up = stemUp(g, e.m, groups, e);
-        if (e.artic) drawArtic(svg, g, g.x(bi, e.t) + 2, e.m, e.artic, color, up);
-        if (e.dyn) drawDyn(svg, g, bi, e, color); if (e.hair) drawHair(svg, g, bi, e, bar.ev[part], color);
-        if (e.slur) { const end = bar.ev[part].find(x => x.id === e.slur); if (end) drawSlur(svg, g, g.x(bi, e.t) + 2, e.m, g.x(bi, end.t) + 2, clamp(end.m, g.lo, g.hi), color, up); }
-      }
-      for (const e of [...bar.ev[part]].sort((a, b) => a.t - b.t)) {
-        const x0 = g.x(bi, e.t) + 1, x1 = g.x(bi, e.t + Math.min(e.d, g.B - e.t)) - 1;
-        if (e.rest) { svg.append(svgEl("rect", { class: "noteEl", x: x0, y: 2, width: Math.max(4, x1 - x0), height: g.H - 4, rx: 2, fill: "none", stroke: css("--ink2"), "stroke-dasharray": "3 3", "data-ev": e.id, "data-part": part, "data-bi": bi })); drawRest(svg, g, (x0 + x1) / 2, e.d, css("--ink2"), {}, part); continue; }
-        if (e.m < g.lo || e.m > g.hi) { svg.append(svgEl("text", { class: "noteEl", x: x0 + 2, y: e.m > g.hi ? 9 : g.H - 3, "font-size": 8, "font-weight": 700, fill: color, "data-ev": e.id, "data-part": part, "data-bi": bi, style: "pointer-events:all" }, (e.m > g.hi ? "▲" : "▼") + noteName(e.m, key))); continue; }
-        drawNote(svg, g, x0 + 1, e.m, e.d, e.chord ? S.chordColor : color, { "data-ev": e.id, "data-part": part, "data-bi": bi }, { noStem: beamed.has(e.id), outline: e.chord ? "#111" : null, uni: unison.has(e.id), ghostNote: !!e.ghost, w: x1 - x0 + 2 });
-        drawAccidental(svg, g, x0 + 1, e.m, color);
-        if (e.id === sel || pickedP.has(e.id)) drawSelFrame(svg, x0 - 1, g.y(e.m) - g.step, Math.max(6, x1 - x0 + 2), g.step * 2, 3);
-      }
-    }
+    drawPartBar(svg, g, bi, part, color, win);
     }
     svg.append(svgEl("line", { id: win + "Head", x1: -5, x2: -5, y1: 0, y2: g.H, stroke: css("--accent"), "stroke-width": 2, "pointer-events": "none" }));
   }
@@ -8071,22 +8084,23 @@ function initPointer() {
       if (d.ftpOn && !d.moved) { if (typeof WE !== "undefined" && WE.on) { if (!weSetChip()) weBlink(); } return; }   // a tap on the stave: nothing — with the keyboard open it sets the chip in hand, else the keyboard blinks
       if (d.moved) { if (d.locked && d.ev) return; if (!d.ev && d.swipe === "h" && !(typeof WE !== "undefined" && WE.on)) { const dx = e.clientX - d.x0; if (Math.abs(dx) > 50) { S.bi = clamp(S.bi + (dx < 0 ? 1 : -1), 0, S.song.bars.length - 1); S.sel = null; S.ghost = null; } } renderAll(); return; }   // a swipe ends as a swipe: no tap, no entry
       const p = svgPoint(svg, e), g = GEO[win], at = g.at(p.x);
+      const partAt = win === "mel" && onLowerStaff(g, g.m(p.y)) ? GRAND_LOWER : WIN_PART[win], winAt = PART_WIN[partAt];   // the Grand Stave's lower staff: the Bass part's tap
       S.selChip = null;
       if (PSEL.on) { if (d.ev && !d.ev.rest && d.ev.m != null) { const key = d.part + ":" + d.ev.id; if (PSEL.ids.has(key)) PSEL.ids.delete(key); else PSEL.ids.add(key); renderWindows(); } return; }   // Play Select: taps only choose notes
       if (S.mv) { mvTap(win, at.bi, at.t); return; }                                                                    // move mode: taps pick the run, or lock it in
       if (S.rep) { repTap(win, at.bi, at.t); return; }                                                                   // repeat mode: taps toggle the beat(s) to repeat
       if (S.cpy) { cpyTap(win, at.bi, at.t); return; }                                                                   // copy mode: taps toggle what to copy, or paste onto empty space
       if (d.ev && S.artic && !d.ev.rest && d.ev.m != null) { S.bi = d.bi; applyArtic(d.bi, d.part, d.ev); return; }   // slurs and marks may reach into locked beats
-      if (S.artic) { const ch = chordChainAt(S.song.bars[at.bi], at.t, WIN_PART[win]); if (ch && ch.head.m != null) { S.bi = at.bi; applyArtic(at.bi, WIN_PART[win], ch.head); return; } }   // a tap anywhere along a note marks it — the mark takes no room, so a full beat is no objection
+      if (S.artic) { const ch = chordChainAt(S.song.bars[at.bi], at.t, partAt); if (ch && ch.head.m != null) { S.bi = at.bi; applyArtic(at.bi, partAt, ch.head); return; } }   // a tap anywhere along a note marks it — the mark takes no room, so a full beat is no objection
       if (S.dynArm) { applyDynAt(d.ev ? d.bi : at.bi, d.part, d.ev, at.t); return; }        // an armed dynamic: on the note tapped, or the first note of the beat tapped
       if (d.locked) {
         if (d.ev) { activate(d.bi, d.ev.t, d.part); S.sel = { bi: d.bi, part: d.part, id: d.ev.id }; S.selAuto = false; pick(d.bi, d.part, d.ev.id); renderAll(); return; }
         if (win === "mel") { const ch = chordChainAt(S.song.bars[at.bi], at.t, "melody"); if (ch && beatOf(at.bi, ch.t) !== beatOf(at.bi, at.t)) { activate(at.bi, ch.t); S.sel = { bi: at.bi, part: "melody", id: ch.head.id }; S.selAuto = false; pick(at.bi, "melody", ch.head.id); renderAll(); return; } }   // a tap along a tied or long note, in a later beat than it starts: its own beat wakes and it is selected
-        activate(at.bi, at.t, WIN_PART[win]); showBox(at.bi, WIN_PART[win]); return;
+        activate(at.bi, at.t, partAt); showBox(at.bi, partAt); return;
       }
       if (d.ev && d.part === "melody" && !d.ev.rest) { tapMelody(d.bi, at.t, g.m(p.y), true); return; }
       if (d.ev) { S.bi = d.bi; const again = !!(S.sel && S.sel.id === d.ev.id); if (again) unpick(d.bi, d.part, d.ev.id); else pick(d.bi, d.part, d.ev.id); select(d.bi, d.part, again ? null : d.ev.id); if (d.ev.m != null && !d.ev.rest && S.sel && S.sel.id === d.ev.id) previewNote(d.ev.m, d.part); return; }
-      if (win === "mel") tapMelody(at.bi, at.t, g.m(p.y)); else tapBand(win, at.bi, at.t, g.m(p.y));
+      if (winAt === "mel") tapMelody(at.bi, at.t, g.m(p.y)); else tapBand(winAt, at.bi, at.t, g.m(p.y));   // the lower staff of a Grand Stave: the Bass part
     };
     svg.addEventListener("pointerup", up); svg.addEventListener("pointercancel", () => { dragCtx = null; xhairCancel(); });
     svg.addEventListener("wheel", e => { e.preventDefault(); if (e.ctrlKey) { S.zoomWin[win] = clamp(S.zoomWin[win] * (e.deltaY > 0 ? 0.92 : 1.08), 0.5, 2.5); savePrefs(); renderAll(); } else shiftView(win, e.deltaY > 0 ? -1 : 1); }, { passive: false });
