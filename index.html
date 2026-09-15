@@ -446,9 +446,24 @@ body.kbOpen #app.deck { padding-bottom: 6px; }
 #app.deck #rollBar { margin-top: 1px; }                                                    /* the selectors close under the bracket row (its own padding keeps them clear); the room goes to the Dynamics strip */
 #app.deck .win:not(.deckOn) { display: none !important; }
 /* the duo (Stacked staves on a wide screen): the melody in the stage row, the band part in view in its own row filling the rest, flush on the tool bar; no part selectors */
-#app.deck.duo { grid-template-areas: "head head head head head head" "rollbar rollbar rollbar rollbar rollbar addv" "stage stage stage stage stage deck" "dyn dyn dyn dyn dyn deck" "rhy rhy rhy rhy rhy deck" "lyr lyr lyr lyr lyr deck" "band band band band band deck" "t t t t t t" !important; }
-#app.deck.duo #rollBar, #app.deck.duo #partsBtn, #app.deck.duo #addView { display: none !important; }
-#app.deck.duo #accWin.deckOn, #app.deck.duo #bassWin.deckOn { grid-area: band; margin-top: 0 !important; align-self: start; }
+#app.deck.duo { grid-template-areas: "head head head head head head" "rollbar rollbar rollbar rollbar rollbar addv" "stage stage stage stage stage deck" "dyn dyn dyn dyn dyn deck" "rhy rhy rhy rhy rhy deck" "lyr lyr lyr lyr lyr deck" "acc acc acc acc acc deck" "bass bass bass bass bass deck" ". . . . . deck" "t t t t t t" !important; grid-template-rows: auto auto auto auto auto auto auto auto minmax(0, 1fr) auto; }   /* any room left over gathers above the tool bar, never between the rows */
+#app.deck.duo #partsBtn, #app.deck.duo #addView { display: none !important; }
+#app.deck.duo #rollBar { display: flex !important; }                                           /* Stacked staves: the part selectors stay, each with its gear, ⇕ cover and − / + fold */
+#app.deck.duo #accWin.deckOn { grid-area: acc; margin-top: 0 !important; align-self: start; }
+#app.deck.duo #bassWin.deckOn { grid-area: bass; margin-top: 0 !important; align-self: start; }
+#app.deck.duo #rollBar .rollItem { flex: 0 0 200px; }
+#app.deck.duo #rollBar .rollGear { flex: 0 0 auto; width: 26px; margin-left: auto; }
+#app.deck.duo #rollBar .rollCover, #app.deck.duo #rollBar .rollFold { flex: 0 0 auto; width: 22px; height: 20px; padding: 0; border: none; border-radius: 4px; background: none; box-shadow: none; color: #fff; font-size: 14px; font-weight: 900; line-height: 1; display: grid; place-items: center; cursor: pointer; }
+#app.deck.duo #rollBar .rollCover.on { background: #2f7fd6; }
+#app.deck.duo #rollBar .rollCover:active, #app.deck.duo #rollBar .rollFold:active { filter: brightness(1.4); }
+/* a stave folded to a bar: a quarter inch (an eighth on a short screen) in the part's colour, its name centred, + at the right edge — the whole bar restores it */
+.partBar { display: none; }
+#app.deck.duo .win.collapsed .frame, #app.deck.duo .win.collapsed .gutter, #app.deck.duo .win.collapsed .deckLbl, #app.deck.duo .win.collapsed .doors, #app.deck.duo .win.collapsed .retBtn, #app.deck.duo .win.collapsed .winHead { display: none !important; }
+#app.deck.duo .win.collapsed { display: block !important; }
+#app.deck.duo .win.collapsed .partBar { display: flex; align-items: center; justify-content: center; position: relative; height: var(--barH, 24px); border-radius: 4px; font-size: 11px; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; cursor: pointer; user-select: none; box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 1px 2px rgba(0,0,0,.4); }
+#app.deck.duo .win.collapsed .partBar .plus { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 15px; line-height: 1; }
+#app.deck.duo #melWin .partBar { background: #2ee62e; color: #000; } #app.deck.duo #accWin .partBar { background: #ffcc00; color: #000; } #app.deck.duo #bassWin .partBar { background: #e02020; color: #fff; }
+#app.deck.duo #accWin .doors, #app.deck.duo #bassWin .doors { display: block !important; }   /* Stacked staves: every stave has its cover */
 #app.deck.duo.kbUp #accWin, #app.deck.duo.kbUp #bassWin { display: none !important; }
 #app.deck #rollBar .rollItem:has(input:disabled) { opacity: .6; }
 #app.deck.duo { padding: 6px 2px 6px 0; gap: 0 4px; }                                        /* the duo: what is left of the margins goes to the staves too */
@@ -6013,14 +6028,14 @@ function loadPrefs() {
   S.deck = Array.isArray(p.deck) && p.deck.length ? p.deck.filter(w => ["mel", "acc", "bass"].includes(w)) : ["mel", "acc", "bass"]; if (!S.deck.length) S.deck = ["mel"];
   S.duoBars = p.duoBars === 8 ? 8 : 4; S.duoBand = p.duoBand === "bass" ? "bass" : "acc"; S.beatDividers = p.beatDividers !== false;
   S.focusBand = Object.assign({ mel: { on: false, lo: 64 }, acc: { on: false, lo: 52 }, bass: { on: false, lo: 40 } }, p.focusBand || {}); for (const w of ["mel", "acc", "bass"]) { if (!S.focusBand[w]) S.focusBand[w] = { on: false, lo: { mel: 64, acc: 52, bass: 40 }[w] }; S.focusBand[w].lo = clamp(Math.round((S.focusBand[w].lo != null ? S.focusBand[w].lo : { mel: 64, acc: 52, bass: 40 }[w]) / 2) * 2, 24, 96); }
-  S.doors = Object.assign({ mel: true, acc: true, bass: true }, p.doors || {});
+  S.doors = Object.assign({ mel: true, acc: true, bass: true }, p.doors || {}); S.collapsed = Object.assign({ mel: false, acc: false, bass: false }, p.collapsed || {});   // Stacked staves: which parts are folded to a bar
   S.clefs = Object.assign({ mel: { on: false, kind: "treble" }, acc: { on: false, kind: "treble" }, bass: { on: false, kind: "bass" } }, p.clefs || {});
   if (p.clef && p.clef.on && !p.clefs) ["mel", "acc", "bass"].forEach(w => { S.clefs[w] = { on: true, kind: p.clef.kind }; });   // an older setting: one clef for all
   for (const w of ["mel", "acc", "bass"]) if (!S.clefs[w] || !CLEFS[S.clefs[w].kind]) S.clefs[w] = { on: false, kind: w === "bass" ? "bass" : "treble" };
   S.lyricFont = p.lyricFont || "sans"; S.chipMode = "multi"; S.keepAwake = p.keepAwake !== false; S.paper = Object.assign({ mel: "default", acc: "default", bass: "default" }, p.paper || {}); S.quick = Object.assign({ cells: QUICK_DEFAULT.slice(), locked: true, float: false, x: null, y: null }, p.quick || {}); if (!Array.isArray(S.quick.cells) || S.quick.cells.join() === QUICK_OLD.join()) S.quick.cells = QUICK_DEFAULT.slice(); if (S.quick.cells.length === 8) S.quick.cells.push("sl", "ti", "gh", "dt"); if (S.quick.cells.length !== 12) S.quick.cells = QUICK_DEFAULT.slice();   // a third row joined: slur, tie, ghost note, dot S.winState = Object.assign({ mel: "open", acc: "closed", bass: "closed" }, p.winState || {}); S.zoomWin = Object.assign({ mel: 1, acc: 1, bass: 1 }, p.zoomWin || {}); S.midi = p.midi || {}; S.viewSpan = [1, 2, 3, 4].includes(p.viewSpan) ? p.viewSpan : 1; if (p.softKb != null) S.softKb = p.softKb2 == null ? true : !!p.softKb2; S.kbPos = p.kbPos || null;   // the app keyboard, on unless switched off S.layout = p.layout === "stack" ? "stack" : "rolled";
   applyTheme();
 }
-function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, deck: S.deck, rhyShown: S.rhyShown, lyrShown: S.lyrShown, partsShown: S.partsShown, dynShown: S.dynShown, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, beatLines: S.beatLines, barHi: S.barHi, spacing: S.spacing, rangeLock: S.rangeLock, kbLayout: S.kbLayout, kbTheme: S.kbTheme, kbSpace: S.kbSpace, kbBackUp: S.kbBackUp, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, keepAwake: S.keepAwake, paper: S.paper, quick: S.quick, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout, duoBars: S.duoBars, duoBand: S.duoBand, beatDividers: S.beatDividers, focusBand: S.focusBand, doors: S.doors, clefs: S.clefs }); }
+function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, deck: S.deck, rhyShown: S.rhyShown, lyrShown: S.lyrShown, partsShown: S.partsShown, dynShown: S.dynShown, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, beatLines: S.beatLines, barHi: S.barHi, spacing: S.spacing, collapsed: S.collapsed, rangeLock: S.rangeLock, kbLayout: S.kbLayout, kbTheme: S.kbTheme, kbSpace: S.kbSpace, kbBackUp: S.kbBackUp, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, keepAwake: S.keepAwake, paper: S.paper, quick: S.quick, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout, duoBars: S.duoBars, duoBand: S.duoBand, beatDividers: S.beatDividers, focusBand: S.focusBand, doors: S.doors, clefs: S.clefs }); }
 function applyTheme() {
   const r = document.documentElement;
   if (S.theme === "dark") r.setAttribute("data-theme", "dark"); else r.removeAttribute("data-theme");
@@ -6047,27 +6062,34 @@ function rowsOf(win) { const deck = deckMode() && DECK_ROWS[win]; const rows = d
 /* the duo: the melody about a third of the screen's height at its natural scale; the band part in view fills exactly what is left
    between the last strip (or the melody) and the tool bar, edge to edge — its row height stretched a whisker so it lands flush */
 function allocateDuo() {
-  const band = duoBandWin(), k0 = STEP_K[S.noteSize] || 1, kOf = w => k0 * (S.zoomWin[w] || 1);   // the spacing buttons' factor rides with the note size
+  /* Stacked staves: the parts in the deck stacked under the melody (its strips flush beneath it), all sharing the room from the top stave to the
+     tool bar. A part folded to a bar takes only the bar's height, flush on whatever is below it (a folded top part sits flush with the top);
+     the staves left open share the rest by weight — the melody two parts, a band one — so the room freed by a fold goes to the staves that
+     remain, and unfolding gives every stave its share back; each stave fills its share exactly, the rows at their natural scale and every row
+     stretched a whisker, so the stack lands on the tool bar to the pixel; a clef view keeps its staff and ledger lines in view, centred */
+  const wins = duoWins(), k0 = STEP_K[S.noteSize] || 1, kOf = w => k0 * (S.zoomWin[w] || 1), barH = window.innerHeight < 520 ? 12 : 24;
+  $("app").style.setProperty("--barH", barH + "px");
   const clampView = (w, rows) => { const key = WIN_LO[w], v = S.song && S.song.view ? viewOf(w) : null, [minV, topV] = viewLimits(w, rows); if (v != null && v + rows - 1 > topV) S.song.view[key] = Math.max(minV, topV + 1 - rows); };
-  for (const w of ["mel", "acc", "bass"]) if (w !== "mel" && w !== band) { STEPS[w] = WIN[S.winSize][w][1]; DECK_ROWS[w] = 0; }
-  /* the room the two staves share: from the melody's top to the tool bar, less the strips between them (their true span, fractions and all) */
-  const tb = $("toolbar").getBoundingClientRect(), melFrame = $("melWin").querySelector(".frame"), mr = melFrame.getBoundingClientRect();
+  const open = wins.filter(w => !S.collapsed[w]);
+  for (const w of ["mel", "acc", "bass"]) if (!open.includes(w)) { STEPS[w] = WIN[S.winSize][w][1]; DECK_ROWS[w] = 0; }
+  if (!open.length) return;
+  const ar = $("app").getBoundingClientRect(), tbTop = ar.bottom - (parseFloat(getComputedStyle($("app")).paddingBottom) || 0) - $("toolbar").offsetHeight;   // where the tool bar belongs: the app's fixed foot less the bar — not where a pass that overshot may have pushed it
+  const tb = { top: tbTop }, topEl = $(wins[0] + "Win").getBoundingClientRect();
   const strips = ["dynStrip", "rhyStrip", "lyrStrip"].map(id => $(id)).filter(e => e && e.offsetHeight > 0 && getComputedStyle(e).position !== "fixed");
-  const stripsH = strips.length ? Math.max(...strips.map(e => e.getBoundingClientRect().bottom)) - mr.bottom : 0;
-  const measured = melFrame.offsetHeight > 0 && tb.top - mr.top - stripsH > 120, room = measured ? tb.top - mr.top - stripsH : 0;   // nothing measured yet (the first pass): natural sizes, corrected by the settle pass
-  let bandH;                                                                              // the band part: a third of that room at its natural scale, flush on the tool bar
-  { const [rows0, lo, hi0] = WIN[S.winSize][band], hi = Math.max(hi0, WIN[S.winSize].mel[2]), k = kOf(band), target = measured ? Math.round(room / 3) - 16 : rows0 * hi * k, fits = target >= rows0 * hi * k;
+  const stripsH = strips.reduce((a, e) => a + e.getBoundingClientRect().height, 0);         // the strips under the melody (or its bar): their own heights, whatever gap the last pass left
+  const measured = topEl.height > 0 && tb.top - topEl.top - stripsH > 120, room = measured ? tb.top - topEl.top - stripsH : 0;   // nothing measured yet (the first pass): natural sizes, corrected by the settle pass
+  const weight = w => w === "mel" ? 2 : 1, total = open.reduce((a, w) => a + weight(w), 0);
+  const avail = room - (wins.length - open.length) * barH - 16 * open.length;             // less the bars, and each stave's own 10px of padding and 6px of border
+  let used = 0;
+  open.forEach((w, i) => {
+    const [rows0, lo, hi0] = WIN[S.winSize][w], hi = Math.max(hi0, WIN[S.winSize].mel[2]), k = kOf(w), last = i === open.length - 1;
+    const share = !measured ? rows0 * hi * k : last ? avail - used : Math.round(avail * weight(w) / total); used += share;   // the last stave takes the remainder, so the sum is exact
+    const target = Math.max(40, share), fits = target >= rows0 * hi * k;
     let rows = fits ? clamp(Math.floor(target / (hi * k)), rows0, 88) : rows0;
-    const minRows = minRowsFor(band), floored = !!(minRows && rows < minRows); if (floored) rows = minRows;   // a clef view: its staff and ledger lines all in view, the rows closer if need be
-    rows = evenRows(rows, band, minRows);                                                 // and a row count that centres the staff exactly
-    const h = floored ? Math.max(4 * rows, Math.round(target)) : fits ? Math.round(rows * hi * k) : Math.max(4 * rows0, Math.round(target));   // a whole number of pixels tall, so the sum below lands exactly
-    DECK_ROWS[band] = rows; STEPS[band] = h / rows / k; clampView(band, rows); bandH = h + 16; }
-  { const [rows0, lo, hi] = WIN[S.winSize].mel, k = kOf("mel");                        // the melody: the rest — its row height stretched a whisker so the lower stave lands on the tool bar to the pixel
-    const bandF = $(band + "Win").querySelector(".frame"), drawn = measured && bandF.offsetHeight > 0 && DECK_ROWS.mel > 0 && DECK_ROWS[band] > 0;
-    let target = drawn ? (mr.height - 16) + (tb.top - bandF.getBoundingClientRect().bottom)   // the duo already drawn: the melody takes up whatever the lower stave stops short of the tool bar by (or overshoots it by), as actually laid out
-      : measured ? room - bandH - 16 : rows0 * hi * k;                                     // less the stave's own 10px of padding and the frame's 6px of border
-    if (!(target > 40)) target = rows0 * hi * k;
-    const rows = evenRows(Math.max(clamp(Math.floor(target / (hi * k)), 4, 88), minRowsFor("mel")), "mel", minRowsFor("mel")); DECK_ROWS.mel = rows; STEPS.mel = Math.max(3, target / rows / k); clampView("mel", rows); }   // a clef view keeps its staves and ledger lines in view, centred exactly
+    const minRows = minRowsFor(w); if (minRows && rows < minRows) rows = minRows;        // a clef view keeps its staff and ledger lines in view, the rows closer if need be
+    rows = evenRows(rows, w, minRows);                                                    // and a row count that centres the staves exactly
+    DECK_ROWS[w] = rows; STEPS[w] = Math.max(3, target / rows / k); clampView(w, rows);
+  });
 }
 function allocate() {
   if (duoMode() && !kbUpNow()) { allocateDuo(); return; }
@@ -6600,12 +6622,14 @@ const deckMode = () => window.matchMedia("(min-width: 860px) and (min-aspect-rat
 /* Stacked staves on a wide screen ("duo"): the deck's frame and tool bar, but two staves — the melody, about a third of the screen's height,
    over its strips, and below them the accompaniment or the bass filling the rest, flush on the tool bar; several bars across the width */
 const duoMode = () => deckMode() && S.layout === "stack";
-const duoBandWin = () => S.duoBand === "bass" ? "bass" : "acc";
+/* Stacked staves: every part checked into the deck, the melody first, then the accompaniment, then the bass; duoBandWin: the lowest band in it */
+const duoWins = () => ["mel", ...["acc", "bass"].filter(w => S.deck && S.deck.includes(w))];
+const duoBandWin = () => { const bs = duoWins().filter(w => w !== "mel"); return bs.length ? bs[bs.length - 1] : (S.duoBand === "bass" ? "bass" : "acc"); };
 const kbUpNow = () => !!(typeof WE !== "undefined" && WE.on && $("wordEdit") && $("wordEdit").classList.contains("on"));
 const spanNow = () => duoMode() ? (S.duoBars === 8 ? 8 : 4) : SPACING_SP[S.spacing] ? spacingSpan() : S.viewSpan;   // Stacked staves keep their own bars; a set spacing takes as many as fit
 const DECK_NAME = { mel: "MELODY", acc: "ACCOMPANIMENT", bass: "BASS" };
 const gearIco = () => { const s = svgEl("svg", { class: "ico" }); s.append(svgEl("use", { href: "#icoGear" })); return s; };   // the shared gear symbol (svgEl's third argument is text, so the <use> must be appended)
-function deckActive() { if (duoMode()) { if (kbUpNow()) return "mel"; const w = PART_WIN[S.activePart || "melody"]; return w === duoBandWin() ? w : "mel"; } const open = ["mel", "acc", "bass"].find(w => S.winState[w] !== "closed"); return S.deck.includes(open) ? open : S.deck[0]; }
+function deckActive() { if (duoMode()) { if (kbUpNow()) return "mel"; const ws = duoWins(), w = PART_WIN[S.activePart || "melody"]; if (ws.includes(w) && !(S.collapsed && S.collapsed[w])) return w; return ws.find(x => !(S.collapsed && S.collapsed[x])) || "mel"; } const open = ["mel", "acc", "bass"].find(w => S.winState[w] !== "closed"); return S.deck.includes(open) ? open : S.deck[0]; }
 /* a flipping third of the tool bar scrolls sideways: touch pans it natively (the keys let a swipe through), a mouse wheel scrolls
    it, and a mouse drag from anywhere in it — keys included — scrolls it too, the drag swallowing the click it would otherwise make */
 function wireScroller(sc) {
@@ -6703,13 +6727,13 @@ function placeDeckLabels() {
     const win = $(w + "Win"), frame = win.querySelector(".frame");
     let top = win.querySelector(".deckLbl.top"), bot = win.querySelector(".deckLbl.bot");
     if (!top) { top = el("div", { class: "deckLbl top" }, DECK_NAME[w]); bot = el("div", { class: "deckLbl bot" }, DECK_NAME[w]); win.append(top, bot); }
-    if (!deckMode() || !win.classList.contains("deckOn")) continue;
+    if (!deckMode() || !win.classList.contains("deckOn") || win.classList.contains("collapsed")) continue;   // a stave folded to a bar: nothing to centre on
     const x = frame.offsetLeft + frame.offsetWidth / 2;
     for (const id of ["nav", "rollBar"]) { const e = $(id); if (!e || !e.offsetWidth) continue; e.style.position = "relative"; const cur = parseFloat(e.style.left) || 0, fr = frame.getBoundingClientRect(), eb = e.getBoundingClientRect(); const ar = $("app").getBoundingClientRect(), mid = duoMode() && id === "nav" ? (ar.left + ar.right) / 2 : (fr.left + fr.right) / 2; let eMid = (eb.left + eb.right) / 2; if (id === "rollBar") { const items = e.querySelectorAll(".rollItem"); if (items.length && items[0].offsetWidth > 0) eMid = (items[0].getBoundingClientRect().left + items[items.length - 1].getBoundingClientRect().right) / 2; } else { const a = $("prevBar"), b = $("nextBar"); if (a && b) eMid = (a.getBoundingClientRect().left + b.getBoundingClientRect().right) / 2; } /* the bracket itself (← to →) over the part label, the parts button riding beside it */
       let shift = mid - eMid;
       if (id === "nav") { const tp = $("tempo"), a = $("prevBar"); if (tp && a && tp.parentNode === $("head") && tp.offsetWidth) { const room = tp.getBoundingClientRect().right + 8 - a.getBoundingClientRect().left; if (shift < room) shift = room; } }   // never over the tempo: the bracket's ← stays a clear 8px to its right, centred on the stave only when there is room
       e.style.left = Math.round(cur + shift) + "px"; }   // the bracket and the selectors centred on the stave's frame
-    { const nav = $("deckNav"), duo = duoMode() && !kbUpNow(), fTop = duo ? $("melWin").querySelector(".frame") : frame, fBot = duo ? $(duoBandWin() + "Win").querySelector(".frame") : frame, rowTop = nav.getBoundingClientRect().top - (parseFloat(nav.style.marginTop) || 0); nav.style.marginTop = Math.max(0, fTop.getBoundingClientRect().top - rowTop) + "px"; nav.style.height = Math.round(fBot.getBoundingClientRect().bottom - fTop.getBoundingClientRect().top) + "px"; }   // the column: level with the (top) frame, as tall as the staves in view
+    { const nav = $("deckNav"), duo = duoMode() && !kbUpNow(), ws = duo ? duoWins() : null, fTop = duo ? $(ws[0] + "Win") : frame, fBot = duo ? $(ws[ws.length - 1] + "Win") : frame, rowTop = nav.getBoundingClientRect().top - (parseFloat(nav.style.marginTop) || 0); nav.style.marginTop = Math.max(0, fTop.getBoundingClientRect().top - rowTop) + "px"; nav.style.height = Math.round(fBot.getBoundingClientRect().bottom - fTop.getBoundingClientRect().top) + "px"; }   // the column: level with the (top) frame, as tall as the staves in view
     { const nav = $("deckNav"), navTop = nav.getBoundingClientRect().top, kbUp = $("app").classList.contains("kbUp");
       /* the keyboard open: CLOSE floats level with the Lyrics strip (centred on the strip's height); otherwise it stays in the stack under the gear.
          The strips' own SHOW / HIDE buttons live in the gutter beside the stave, placed by the style sheet */
@@ -6720,6 +6744,8 @@ function placeDeckLabels() {
     bot.style.left = x + "px"; bot.style.top = (frame.offsetTop + frame.offsetHeight) + "px";
   }
 }
+/* Stacked staves: fold a part's stave to a bar, or unfold it — the staves left open take the room, every stave centred afresh */
+function foldStave(w, fold) { S.collapsed[w] = !!fold; if (fold && PART_WIN[S.activePart] === w) { S.activePart = "melody"; S.sel = null; S.active = null; S.ghost = null; } S.homeNext = { mel: true, acc: true, bass: true }; savePrefs(); renderAll(); }
 function deckShow(w) { S.focus = null; ["mel", "acc", "bass"].forEach(x => { S.winState[x] = x === w ? "open" : "closed"; }); savePrefs(); renderAll(); }
 let PARTS_BTN = null;
 function renderRollBar() {
@@ -6742,14 +6768,19 @@ function renderRollBar() {
     const duo = duoMode(); app.classList.toggle("duo", duo);
     if (fixCombo()) { savePrefs(); toast("Notes set to Micro for this view — the other sizes do not fit these bars and window"); }
     const active = deckActive(); S.focus = null; app.classList.remove("focused", "focus-mel", "focus-acc", "focus-bass");
-    const shown = duo && !kbUpNow() ? ["mel", duoBandWin()] : [active];                    // the duo: the melody and the band part below it, both in view
+    const shown = duo && !kbUpNow() ? duoWins() : [active];                              // Stacked staves: every part in the deck, the melody first; the deck: the one in view
     ["mel", "acc", "bass"].forEach(x => { S.winState[x] = shown.includes(x) ? "open" : "closed"; });
     shown.forEach(x => $(x + "Win").classList.add("deckOn"));
+    for (const w of ["mel", "acc", "bass"]) {                                             // a stave folded to a bar (Stacked staves): the bar in the part's colour, its name centred, + at its right edge; the whole bar unfolds it
+      const win = $(w + "Win"); let pbar = win.querySelector(".partBar");
+      if (!pbar) { pbar = el("div", { class: "partBar", title: "Tap to unfold the stave", onclick: () => foldStave(w, false) }, el("span", { class: "pname" }, DECK_NAME[w]), el("span", { class: "plus" }, "+")); win.append(pbar); }
+      win.classList.toggle("collapsed", duo && shown.includes(w) && !!S.collapsed[w]);
+    }
     app.classList.toggle("norhy", S.rhyShown === false); app.classList.toggle("nolyr", S.lyrShown === false);   // the strips: shown, they push the stave up; hidden, it takes the room
     app.classList.toggle("noparts", S.partsShown === false);                                // the part selectors likewise
     pb.textContent = S.partsShown === false ? "SHOW PARTS" : "HIDE PARTS"; pb.onclick = () => { S.partsShown = S.partsShown === false; savePrefs(); renderAll(); };
     S.deck = ["mel", "acc", "bass"].filter(w => S.deck.includes(w) && (w === "mel" || S.song.parts[WIN_PART[w]].on)); if (!S.deck.length) S.deck = ["mel"];   // a part switched off in its settings leaves the view too
-    if (!duo) for (const w of ["mel", "acc", "bass"]) {                                   // the part selection: a check box each — checked, the part is on and in view; unchecked, off and out of view; the last one checked stays, greyed, until another is checked
+    for (const w of ["mel", "acc", "bass"]) {                                             // the part selection: a check box each — checked, the part is on and in view; unchecked, off and out of view; the last one checked stays, greyed, until another is checked
       const pretty = DECK_NAME[w].charAt(0) + DECK_NAME[w].slice(1).toLowerCase(), on = S.deck.includes(w), last = on && S.deck.length === 1;
       const cb = el("input", { type: "checkbox", disabled: last, title: last ? "The last part in view stays until another is checked" : on ? "Uncheck: " + pretty + " off and out of view" : "Check: " + pretty + " on and in view" }); cb.checked = on;
       cb.addEventListener("change", () => {
@@ -6760,7 +6791,10 @@ function renderRollBar() {
         toast(cb.checked ? `${pretty} on and in view` : `${pretty} off`);
       });
       const gearBtn = el("button", { class: "rollGear", title: pretty + " settings", onclick: e => { e.preventDefault(); e.stopPropagation(); openWinSettings(w); } }, gearIco());   // a small gear, centred between the name and the pill's right edge: the part's own settings
-      bar.append(el("div", { class: "rollItem" + (on ? " open" : "") }, el("label", {}, cb, el("span", { class: "lbl" }, w === "mel" ? "Melody" : w === "acc" ? "Accomp." : "Bass")), gearBtn));
+      const extras = duo ? [                                                              // Stacked staves: ⇕ covers the rest of the stave (the doors), − folds the stave to a bar, + unfolds it
+        el("button", { class: "rollCover" + (S.doors[w] !== false ? " on" : ""), title: "Open or close the covers over the rest of the " + pretty.toLowerCase() + " stave", onclick: e => { e.preventDefault(); e.stopPropagation(); S.doors[w] = S.doors[w] === false; savePrefs(); renderAll(); } }, "⇕"),
+        el("button", { class: "rollFold", title: S.collapsed[w] ? "Unfold the " + pretty.toLowerCase() + " stave" : "Fold the " + pretty.toLowerCase() + " stave to a bar", onclick: e => { e.preventDefault(); e.stopPropagation(); foldStave(w, !S.collapsed[w]); } }, S.collapsed[w] ? "+" : "−")] : [];
+      bar.append(el("div", { class: "rollItem" + (on ? " open" : "") }, el("label", {}, cb, el("span", { class: "lbl" }, w === "mel" ? "Melody" : w === "acc" ? "Accomp." : "Bass")), gearBtn, ...extras));
     }
     { const old = $("addView"); if (old) old.remove(); }
     const i = S.deck.indexOf(active), up = i > 0 ? S.deck[i - 1] : null, dn = i >= 0 && i < S.deck.length - 1 ? S.deck[i + 1] : null;
@@ -6781,12 +6815,8 @@ function renderRollBar() {
     const colRe = () => el("button", { class: "colBtn", title: "Redo", onclick: redo }, el("span", { class: "big" }, "↷"), el("span", {}, "REDO"));
     const bulk = () => ["selBtn", "delBtn", "repBtn", "copyBtn"].map(id => { const b = $(id); b.classList.add("colBtn"); return b; });   // SELECT, DELETE, REPEAT, COPY: the tool bar's own buttons, in the column while the deck is up
     const colCover = () => focusOn("mel") ? [el("button", { class: "colBtn" + (S.doors.mel !== false ? " on" : ""), title: "Open or close the doors over the rest of the melody stave", onclick: () => { S.doors.mel = S.doors.mel === false; savePrefs(); renderAll(); } }, el("span", { class: "big" }, "⇕"), el("span", {}, "COVER"))] : [];   // with the five-line focus on: the doors' switch
-    if (duo) {                                                                            // the duo's column: DEL and the melody's gear at the top, the strip buttons beside their strips, and at the foot ⇄ (swap the band part) and that part's gear
-      const bw = duoBandWin(), other = bw === "acc" ? "bass" : "acc";
-      const swap = el("button", { class: "part", title: "Swap: the " + DECK_NAME[other].toLowerCase() + " here instead", onclick: () => { S.duoBand = other; if (S.activePart !== "melody") S.activePart = WIN_PART[other]; S.sel = null; S.active = null; S.picked = []; S.homeNext = Object.assign(S.homeNext || {}, { [other]: true }); savePrefs(); renderAll(); } }, el("span", { class: "big" }, "⇄"), el("span", { class: "name" }, SHORT[other]));   // the part swapped in comes centred
-      const gearM = el("button", { class: "gearBtn", title: "Melody settings", onclick: () => openWinSettings("mel") }, gearIco());
-      const gearB = el("button", { class: "gearBtn", title: DECK_NAME[bw].charAt(0) + DECK_NAME[bw].slice(1).toLowerCase() + " settings", onclick: () => openWinSettings(bw) }, gearIco());
-      nav.append(delB, gearM, colBs("mel"), colUn(), colRe(), ...colCover(), ...bulk(), kc, el("div", { class: "spacer" }), swap, gearB);
+    if (duo) {                                                                            // Stacked staves: the column holds DEL, the gear of the part in view, BACK, UNDO, REDO and the bulk tools; the parts' gears, covers and folds sit on the selector row
+      nav.append(delB, gear, colBs(active), colUn(), colRe(), ...bulk(), kc);            // Stacked staves: the gears, covers and folds are on the selector row
     } else nav.append(arrow(-1, up), arrow(1, dn), delB, gear, colBs(active), colUn(), colRe(), ...(active === "mel" ? colCover() : []), ...bulk(), kc);   // ▲ ▼ at the top with the gear close under them, then BACK, UNDO, REDO, COVER, SELECT, DELETE, REPEAT, COPY
     { let sc = $("staveCtl"); if (!sc) sc = el("div", { id: "staveCtl" }); if (sc.parentNode !== $("toolR")) $("toolR").insertBefore(sc, $("flipBtn"));   // WIDER and TIGHTER: under a STAVE cap at the tool bar's right end, acting on the stave in view
       sc.replaceChildren(el("button", { title: "Wider: the lines further apart, notes and clef with them, up to the widest", onclick: () => zoomRows(deckActive(), 1) }, "|<>|"), el("button", { title: "Tighter: the lines closer together, notes and clef with them, down to the legible least", onclick: () => zoomRows(deckActive(), -1) }, ">|<")); }
@@ -7108,7 +7138,7 @@ function placeDoors(win) {
   const w = $(win + "Win"), frame = w.querySelector(".frame"), g = GEO[win]; let box = w.querySelector(".doors"), btn = w.querySelector(".side .doorBtn");
   const side = w.querySelector(".side");
   if (!btn && side) { btn = el("button", { class: "doorBtn", title: "Open or close the covers over the rest of the stave", onclick: () => { S.doors[win] = S.doors[win] === false; savePrefs(); renderAll(); } }, "COVER"); const ch = side.querySelector(".chordBtn"); if (ch) ch.after(btn); else side.append(btn); }
-  const show = focusOn(win) && S.winState[win] !== "closed" && !!g && (!deckMode() || win === "mel");   // on a wide screen the melody alone has doors, and only with its five-line focus on
+  const show = focusOn(win) && S.winState[win] !== "closed" && !!g && (!deckMode() || win === "mel" || duoMode()) && !(duoMode() && S.collapsed[win]);   // on the deck the melody alone has doors; Stacked staves give every stave its own; only with its five-line focus on
   if (btn) { btn.hidden = !show; btn.classList.toggle("on", show && S.doors[win] !== false); }
   if (!box) { box = el("div", { class: "doors" }, el("div", { class: "door top" }), el("div", { class: "door bot" })); w.append(box); }
   box.hidden = !show; if (!show) return;
@@ -7396,7 +7426,7 @@ function renderWindows() {
   for (const w of ["mel", "acc", "bass"]) { const elw = $(w + "Win"); elw.classList.toggle("closed", S.winState[w] === "closed"); elw.classList.toggle("half", S.winState[w] === "half"); }
   document.querySelector('.winHead[data-win="mel"]') || $("melWin").prepend(el("button", { class: "winHead", "data-win": "mel", onclick: () => openWinSettings("mel") }, "Melody"));
   /* ── melody window ── */
-  if (S.winState.mel !== "closed") {
+  if (S.winState.mel !== "closed" && !(duoMode() && S.collapsed.mel)) {
     const g = geo("mel"), svg = $("melSvg"); drawStaff(svg, g, key); if (focusOn("mel")) drawFocusCover(svg, g); drawSoundHaze(svg, g); drawGutter("mel", g, key);
     const box = css("--box"), ink = css("--melody");
     svg.append(svgEl("rect", { class: "hit", x: 0, y: 0, width: g.W, height: g.H, fill: "transparent", "data-lane": "mel" }));
@@ -7450,7 +7480,7 @@ function renderWindows() {
   for (const win of ["acc", "bass"]) {
     const part = WIN_PART[win], P = song.parts[part];
     const head0 = document.querySelector(`.winHead[data-win="${win}"]`);
-    if (S.winState[win] === "closed") { head0.textContent = `${part === "accomp" ? "Accompaniment" : "Bass"} – ${P.on ? P.inst : "off"}`; continue; }
+    if (S.winState[win] === "closed" || (duoMode() && S.collapsed[win])) { head0.textContent = `${part === "accomp" ? "Accompaniment" : "Bass"} – ${P.on ? P.inst : "off"}`; continue; }
     const g = geo(win), svg = $(win + "Svg");
     drawStaff(svg, g, key); if (focusOn(win)) drawFocusCover(svg, g); drawSoundHaze(svg, g); drawGutter(win, g, key);
     const color = css("--" + part);
@@ -8986,7 +9016,7 @@ function openSettings() {
     el("div", { class: "pLbl" }, "View"), seg([["stack", "Stacked staves"], ["rolled", "Rolled up"]], S.layout, v => { S.layout = v; S.homeNext = { mel: true, acc: true, bass: true }; if (v === "rolled") { S.focus = null; $("app").classList.remove("focused", "focus-mel", "focus-acc", "focus-bass"); } else ["mel", "acc", "bass"].forEach(w => { if (S.winState[w] === "closed") S.winState[w] = "open"; }); savePrefs(); renderAll(); }),   // Stacked: every stave opens
     el("div", { class: "tiny" }, wide ? "On this wide screen — Stacked staves: the melody over its strips, with the accompaniment or the bass filling the rest. Rolled up: the deck, one part at a time with its buttons beside it." : "On a phone — Stacked staves: all three staves, one above the other. Rolled up: one bar at a time, the parts as three bars with + / − to open and close each. (On a wide screen, Stacked is the melody over the accompaniment or bass; Rolled up is the deck, one part at a time.)"),
     ...(S.layout === "stack" ? [
-      el("div", { class: "pLbl" }, "Stacked staves on a wide screen"), el("div", { class: "mrow" }, seg([[4, "4 bars"], [8, "8 bars"]], S.duoBars === 8 ? 8 : 4, v => { S.duoBars = v; S.homeNext = { mel: true, acc: true, bass: true }; savePrefs(); renderAll(); }, okDuoBars), seg([["acc", "Accompaniment below"], ["bass", "Bass below"]], duoBandWin(), v => { S.duoBand = v; S.homeNext = Object.assign(S.homeNext || {}, { [v]: true }); savePrefs(); renderAll(); })),
+      el("div", { class: "pLbl" }, "Stacked staves on a wide screen"), el("div", { class: "mrow" }, seg([[4, "4 bars"], [8, "8 bars"]], S.duoBars === 8 ? 8 : 4, v => { S.duoBars = v; S.homeNext = { mel: true, acc: true, bass: true }; savePrefs(); renderAll(); }, okDuoBars), el("span", { class: "tiny" }, "The parts checked in the row over the staves stack beneath the melody; on that row ⇕ covers the rest of a stave, − folds it to a bar and + unfolds it.")),
       el("div", { class: "tiny" }, "This many bars across the width, nothing to scroll. The accompaniment or the bass sits below the strips at about a third of the height, flush on the tool bar; the melody takes the rest. ⇄ beside the lower stave swaps the two."),
     ] : []),
     el("div", { class: "pLbl" }, S.layout === "stack" ? "Window shows (on a phone, and the deck)" : "Window shows"), seg([[1, "1 bar"], [2, "2 bars"], [3, "3 bars"], [4, "4 bars"]], S.viewSpan, v => { S.viewSpan = v; savePrefs(); renderAll(); }, okBars),
