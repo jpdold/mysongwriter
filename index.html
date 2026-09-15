@@ -4976,7 +4976,7 @@ function saveNow() {
   writeJSON(STORE.songs, all);
 }
 function listSongs() { return Object.values(readJSON(STORE.songs, {})).sort((a, b) => (b.updated || 0) - (a.updated || 0)); }
-function loadSong(id) { const s = readJSON(STORE.songs, {})[id]; if (s) { S.song = upgradeSong(s); S.si = 0; S.sel = null; S.cursor = null; writeJSON(STORE.cur, id); } return !!s; }
+function loadSong(id) { const s = readJSON(STORE.songs, {})[id]; if (s) { S.song = upgradeSong(s); S.si = 0; S.sel = null; S.cursor = null; S.homeNext = true; writeJSON(STORE.cur, id); } return !!s; }   // a song loads with its staves centred
 function deleteSong(id) { const all = readJSON(STORE.songs, {}); delete all[id]; writeJSON(STORE.songs, all); }
 function upgradeSong(s) {
   const base = newSong();
@@ -6064,7 +6064,7 @@ function allocateDuo() {
     let target = drawn ? (mr.height - 16) + (tb.top - bandF.getBoundingClientRect().bottom)   // the duo already drawn: the melody takes up whatever the lower stave stops short of the tool bar by (or overshoots it by), as actually laid out
       : measured ? room - bandH - 16 : rows0 * hi * k;                                     // less the stave's own 10px of padding and the frame's 6px of border
     if (!(target > 40)) target = rows0 * hi * k;
-    const rows = Math.max(clamp(Math.floor(target / (hi * k)), 4, 88), minRowsFor("mel")); DECK_ROWS.mel = rows; STEPS.mel = Math.max(3, target / rows / k); clampView("mel", rows); }   // a clef view keeps its staves and ledger lines in view
+    const rows = evenRows(Math.max(clamp(Math.floor(target / (hi * k)), 4, 88), minRowsFor("mel")), "mel", minRowsFor("mel")); DECK_ROWS.mel = rows; STEPS.mel = Math.max(3, target / rows / k); clampView("mel", rows); }   // a clef view keeps its staves and ledger lines in view, centred exactly
 }
 function allocate() {
   if (duoMode() && !kbUpNow()) { allocateDuo(); return; }
@@ -6078,9 +6078,10 @@ function allocate() {
       let target = window.innerHeight - 12 - h("head") - h("rollBar") - 6 - (h("rollBar") ? 1 : 0) - (rhyOn ? h("rhyStrip") : 0) - (lyrOn ? h("lyrStrip") : 0) - (S.dynShown && !app.classList.contains("kbUp") ? (h("dynStrip") || 32) : 0) - Math.max(h("toolbar"), 30) - topExtra - 16 + DECK_FIX.px;   // the strips, when shown, sit flush between the stave and the tool bar
       { const side = $(w + "Win").querySelector(".side"); if (side && side.offsetHeight > 0) { const kids = [...side.children].filter(k => k.offsetHeight > 0), cs = getComputedStyle(side); const need = kids.reduce((a, k) => a + k.offsetHeight, 0) + Math.max(0, kids.length - 1) * (parseFloat(cs.rowGap) || 0) + (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0); target = Math.max(target, need - 16); } }   // never shorter than the buttons beside it need: they would hold the stave's row open and leave a gap   // the stave's drawing height: the screen less the rows above and below, the three 6px margins, the tool bar's 6px when the strips show, the frame's borders and pads
       const k = (STEP_K[S.noteSize] || 1) * (S.zoomWin[w] || 1), fitsAtFullScale = target >= rows0 * hi * k;   // room for at least the usual row count at the stave's natural scale (the spacing buttons' factor in k)?
-      const rows = fitsAtFullScale ? clamp(Math.floor(target / (hi * k)), rows0, 88) : rows0;
-      DECK_ROWS[w] = rows; STEPS[w] = fitsAtFullScale ? target / rows / k : Math.max(lo, target / rows0 / k);
-      { const minRows = minRowsFor(w); if (minRows && rows < minRows) { DECK_ROWS[w] = minRows; STEPS[w] = Math.max(3, target / minRows / k); } }   // a clef view: never so large that its staves and ledger lines run out of view   // the usual case: the row COUNT adapts at the stave's natural scale, each row stretched a whisker so the strips land on the tool bar exactly; the old note: row height fixed at the stave's natural scale, only the row COUNT adapts, so spacing never fluctuates — too little room even for that (a short screen): shrink the rows themselves just enough to keep the tool bar on screen, never smaller than the usual minimum
+      let rows = fitsAtFullScale ? clamp(Math.floor(target / (hi * k)), rows0, 88) : rows0;
+      const minRows = minRowsFor(w); if (minRows && rows < minRows) rows = minRows;        // a clef view: never so large that its staves and ledger lines run out of view
+      rows = evenRows(rows, w, minRows);                                                  // and a row count that centres the staves exactly
+      DECK_ROWS[w] = rows; STEPS[w] = fitsAtFullScale || rows > rows0 ? Math.max(3, target / rows / k) : Math.max(lo, target / rows0 / k);   // the usual case: the row COUNT adapts at the stave's natural scale, each row stretched a whisker so the strips land on the tool bar exactly; the old note: row height fixed at the stave's natural scale, only the row COUNT adapts, so spacing never fluctuates — too little room even for that (a short screen): shrink the rows themselves just enough to keep the tool bar on screen, never smaller than the usual minimum
       { const key = WIN_LO[w], v = S.song && S.song.view ? viewOf(w) : null, [minV, topV] = viewLimits(w, rows); if (v != null && v + rows - 1 > topV) S.song.view[key] = Math.max(minV, topV + 1 - rows); }   // more rows than fit above: the range reaches lower instead
     }
     return;
@@ -6112,7 +6113,7 @@ function allocate() {
     const [rows0] = WIN[S.winSize][w], step = Math.round(STEPS[w] * (STEP_K[S.noteSize] || 1) * 10) / 10; let rows = rows0;
     if (clefOn(w)) rows = Math.max(rows, minRowsFor(w));                                                    // a clef's whole span in view, the Grand Stave's two staves, their gap and the ledger lines included
     rows = Math.max(rows, Math.ceil((need - 13) / step));                                                // and enough rows for the column beside the stave (the frame: 10px of padding and 3px of border)
-    PHONE_ROWS[w] = rows;
+    PHONE_ROWS[w] = evenRows(rows, w, minRowsFor(w));                                                     // a row count that centres the staves exactly
   }
   if (!deckMode()) for (const w of wins) if (!f(w)) PHONE_ROWS[w] = 0;
 }
@@ -6391,7 +6392,7 @@ function deletePicked() {
 }
 /* ⌫ beside a stave: takes back the last note entered on it (or, failing that, the last note of the awake bar), the words untouched */
 /* |<>| and >|<: the rows further apart or closer together, a step at a time, the notes and the clef scaling with them — between the legible least and the widest */
-function zoomRows(win, dir) { const z = S.zoomWin[win] || 1, nz = clamp(Math.round(z * (dir > 0 ? 1.15 : 1 / 1.15) * 100) / 100, 0.6, 2.5); if (nz === z) { toast(dir > 0 ? "As wide as it goes" : "As tight as it goes"); return; } S.zoomWin[win] = nz; savePrefs(); renderAll(); }
+function zoomRows(win, dir) { const z = S.zoomWin[win] || 1, nz = clamp(Math.round(z * (dir > 0 ? 1.15 : 1 / 1.15) * 100) / 100, 0.6, 2.5); if (nz === z) { toast(dir > 0 ? "As wide as it goes" : "As tight as it goes"); return; } S.zoomWin[win] = nz; S.homeNext = true; savePrefs(); renderAll(); }   // wider or tighter, the staves are centred again
 function backspaceNote(part) {
   const le = S.lastEntered; let bi = null, ev = null;
   if (le && le.part === part && S.song.bars[le.bi]) { ev = (S.song.bars[le.bi].ev[part] || []).find(e => e.id === le.id) || null; if (ev) bi = le.bi; }
@@ -6834,7 +6835,9 @@ function renderAll() {
   S.bi = clamp(S.bi, 0, S.song.bars.length - 1);
   if (S.si !== S.siLast && S.si !== sectionOfBar(S.bi) && S.song.sections[S.si]) S.bi = sectionRange(S.si).start;   // a section op moved us
   S.si = sectionOfBar(S.bi); S.siLast = S.si;
-  renderHeader(); renderNav(); renderRollBar(); renderPalette(); allocate(); renderWindows(); renderStrips(); renderBeatRow(); placeDeckLabels();
+  renderHeader(); renderNav(); renderRollBar(); renderPalette(); allocate();
+  if (S.homeNext) { S.homeNext = false; for (const w of ["mel", "acc", "bass"]) if (focusOn(w)) S.song.view[WIN_LO[w]] = focusHome(w); }   // on load, on a song's load and after WIDER / TIGHTER: every stave's staves centred exactly in its window, the rows just allotted
+  renderWindows(); renderStrips(); renderBeatRow(); placeDeckLabels();
   if (deckMode()) { const r0 = Object.assign({}, DECK_ROWS), s0 = Object.assign({}, STEPS); allocate(); if (["mel", "acc", "bass"].some(w => DECK_ROWS[w] !== r0[w] || Math.abs(STEPS[w] - s0[w]) > 1e-6)) { renderWindows(); renderStrips(); renderBeatRow(); placeDeckLabels(); } }
   if (!deckMode()) { const s0 = Object.assign({}, STEPS); allocate(); if (["mel", "acc", "bass"].some(w => Math.abs(STEPS[w] - s0[w]) > 1e-6)) { renderWindows(); renderStrips(); renderBeatRow(); } }   // the phone: the column beside the stave is only whole once drawn (COVER is made then) — size the stave to it and draw again
   if (deckMode() && !kbUpNow()) {                                                         // the tool bar must end on the screen's foot, the stave and strips flush above it: measured as drawn, any miss (a load before the page had settled, a browser bar coming or going) is taken up by the stave at once
@@ -6931,6 +6934,10 @@ const focusOn = win => { if (clefOn(win)) return true; if (!deckMode()) return t
 /* the rows a clef view must show at the least: its staff or staves, the gap between, and two ledger lines above and below — the Grand Stave from
    two below the bass staff to two above the treble; the row height gives way so that all of it is in view, on the deck and the phone alike */
 function minRowsFor(win) { if (!clefOn(win)) return 0; const bs = focusBandSteps(win); return bs[bs.length - 1][1] + 4 - (bs[0][0] - 4) + 1; }
+/* the rows the staves themselves span (a clef view's in letter steps, a five-line focus's in its register's rows), and a row count that leaves the
+   same number of rows above and below them, so that home — the staves centred in the window — is exact and not half a row out */
+function focusSpan(win) { if (clefOn(win)) { const bs = focusBandSteps(win); return bs[bs.length - 1][1] - bs[0][0] + 1; } if (!focusOn(win)) return 0; const [a, b] = focusRange(win); return b - a + 1; }
+function evenRows(rows, win, minRows = 0) { const span = focusSpan(win); if (!span || (rows - span) % 2 === 0) return rows; return rows - 1 >= Math.max(minRows, span) ? rows - 1 : rows + 1; }
 function focusBandSteps(win) { const c = clefNow(win); return c ? (c.bandSteps || [c.stepLo]).map(st => [st, st + 8]) : null; }   // the Clef view's bands as letter steps
 function focusBands(win) {
   const c = clefNow(win);
@@ -10227,6 +10234,7 @@ async function boot() {
   loadPrefs();
   const fromLink = await importFromHash();
   if (!fromLink) { const cur = readJSON(STORE.cur, null); if (!cur || !loadSong(cur)) { S.song = newSong(); saveNow(); } }
+  S.homeNext = true;                                                                       // the app loads with every stave's staves centred in its window
   upgradeTies(S.song); S.chordsDisp = S.song.showRoman ? "roman" : S.chordsDisp;
   loadSampleMeta().then(loadSongBanks);
   $("songTitle").addEventListener("input", e => { S.song.title = e.target.value; saveSoon(); });
