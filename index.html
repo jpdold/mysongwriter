@@ -6064,7 +6064,7 @@ function allocateDuo() {
     let target = drawn ? (mr.height - 16) + (tb.top - bandF.getBoundingClientRect().bottom)   // the duo already drawn: the melody takes up whatever the lower stave stops short of the tool bar by (or overshoots it by), as actually laid out
       : measured ? room - bandH - 16 : rows0 * hi * k;                                     // less the stave's own 10px of padding and the frame's 6px of border
     if (!(target > 40)) target = rows0 * hi * k;
-    const rows = clamp(Math.floor(target / (hi * k)), 4, 88); DECK_ROWS.mel = rows; STEPS.mel = target / rows / k; clampView("mel", rows); }
+    const rows = Math.max(clamp(Math.floor(target / (hi * k)), 4, 88), minRowsFor("mel")); DECK_ROWS.mel = rows; STEPS.mel = Math.max(3, target / rows / k); clampView("mel", rows); }   // a clef view keeps its staves and ledger lines in view
 }
 function allocate() {
   if (duoMode() && !kbUpNow()) { allocateDuo(); return; }
@@ -6079,7 +6079,8 @@ function allocate() {
       { const side = $(w + "Win").querySelector(".side"); if (side && side.offsetHeight > 0) { const kids = [...side.children].filter(k => k.offsetHeight > 0), cs = getComputedStyle(side); const need = kids.reduce((a, k) => a + k.offsetHeight, 0) + Math.max(0, kids.length - 1) * (parseFloat(cs.rowGap) || 0) + (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0); target = Math.max(target, need - 16); } }   // never shorter than the buttons beside it need: they would hold the stave's row open and leave a gap   // the stave's drawing height: the screen less the rows above and below, the three 6px margins, the tool bar's 6px when the strips show, the frame's borders and pads
       const k = (STEP_K[S.noteSize] || 1) * (S.zoomWin[w] || 1), fitsAtFullScale = target >= rows0 * hi * k;   // room for at least the usual row count at the stave's natural scale (the spacing buttons' factor in k)?
       const rows = fitsAtFullScale ? clamp(Math.floor(target / (hi * k)), rows0, 88) : rows0;
-      DECK_ROWS[w] = rows; STEPS[w] = fitsAtFullScale ? target / rows / k : Math.max(lo, target / rows0 / k);   // the usual case: the row COUNT adapts at the stave's natural scale, each row stretched a whisker so the strips land on the tool bar exactly; the old note: row height fixed at the stave's natural scale, only the row COUNT adapts, so spacing never fluctuates — too little room even for that (a short screen): shrink the rows themselves just enough to keep the tool bar on screen, never smaller than the usual minimum
+      DECK_ROWS[w] = rows; STEPS[w] = fitsAtFullScale ? target / rows / k : Math.max(lo, target / rows0 / k);
+      { const minRows = minRowsFor(w); if (minRows && rows < minRows) { DECK_ROWS[w] = minRows; STEPS[w] = Math.max(3, target / minRows / k); } }   // a clef view: never so large that its staves and ledger lines run out of view   // the usual case: the row COUNT adapts at the stave's natural scale, each row stretched a whisker so the strips land on the tool bar exactly; the old note: row height fixed at the stave's natural scale, only the row COUNT adapts, so spacing never fluctuates — too little room even for that (a short screen): shrink the rows themselves just enough to keep the tool bar on screen, never smaller than the usual minimum
       { const key = WIN_LO[w], v = S.song && S.song.view ? viewOf(w) : null, [minV, topV] = viewLimits(w, rows); if (v != null && v + rows - 1 > topV) S.song.view[key] = Math.max(minV, topV + 1 - rows); }   // more rows than fit above: the range reaches lower instead
     }
     return;
@@ -6100,7 +6101,8 @@ function allocate() {
     const bandAvail = vh - h("head") - h("nav") - 7 * 5 - 44;
     const share = wide && w !== "mel" ? Math.max(120, bandAvail * WIN_WEIGHT[w] * f(w) / (wins.filter(x => x !== "mel").reduce((a, x) => a + WIN_WEIGHT[x] * f(x), 0) || 1))
       : wide ? Math.max(160, vh - chromeMel) : avail * WIN_WEIGHT[w] * f(w) / sum;
-    const base = clamp(Math.floor((share - 12) / rows * WIN_K[S.winSize] * 10) / 10, lo, hi);   // the natural row height, then the spacing buttons' factor, between the legible least and the widest
+    const rowsNeed = Math.max(rows, minRowsFor(w));                                       // a clef view's staves and ledger lines all in view, the rows closer if need be
+    const base = clamp(Math.floor((share - 12) / rowsNeed * WIN_K[S.winSize] * 10) / 10, Math.min(lo, 4), hi);   // the natural row height, then the spacing buttons' factor, between the legible least and the widest
     STEPS[w] = clamp(Math.round(base * (S.zoomWin[w] || 1) * 10) / 10, Math.round(lo * 0.7 * 10) / 10, Math.round(hi * 1.5 * 10) / 10);
   }
   if (!deckMode()) for (const w of wins) {                                              // the phone: the stave at least as tall as the column of buttons beside it, so the column never pushes the strips down
@@ -6108,7 +6110,7 @@ function allocate() {
     const kids = [...side.children].filter(k => k.offsetHeight > 0 && !k.hidden), cs = getComputedStyle(side), gap = parseFloat(cs.rowGap) || parseFloat(cs.gap) || 0;
     const need = kids.reduce((a, k) => a + k.offsetHeight + (parseFloat(getComputedStyle(k).marginTop) || 0), 0) + Math.max(0, kids.length - 1) * gap + (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
     const [rows0] = WIN[S.winSize][w], step = Math.round(STEPS[w] * (STEP_K[S.noteSize] || 1) * 10) / 10; let rows = rows0;
-    if (clefOn(w)) { const [a, b] = focusRange(w); rows = Math.max(rows, b - a + 1 + 4); }                 // a clef's whole span in view, the Grand Stave's two staves and their gap included
+    if (clefOn(w)) rows = Math.max(rows, minRowsFor(w));                                                    // a clef's whole span in view, the Grand Stave's two staves, their gap and the ledger lines included
     rows = Math.max(rows, Math.ceil((need - 13) / step));                                                // and enough rows for the column beside the stave (the frame: 10px of padding and 3px of border)
     PHONE_ROWS[w] = rows;
   }
@@ -6926,6 +6928,9 @@ const clefNow = win => clefOn(win) ? CLEFS[clefOf(win).kind] : null;
 const anyClef = () => ["mel", "acc", "bass"].some(clefOn);
 const focusOn = win => { if (clefOn(win)) return true; if (!deckMode()) return true; const f = focusOf(win); return !!(f && f.on); };   // on the phone every stave shows its five middle lines, the rest behind doors; in the Clef view a stave has its clef's lines
 /* the five-line bands of a stave, bottom to top: one (its own range, or the clef's) — or two for the Grand Stave */
+/* the rows a clef view must show at the least: its staff or staves, the gap between, and two ledger lines above and below — the Grand Stave from
+   two below the bass staff to two above the treble; the row height gives way so that all of it is in view, on the deck and the phone alike */
+function minRowsFor(win) { if (!clefOn(win)) return 0; const bs = focusBandSteps(win); return bs[bs.length - 1][1] + 4 - (bs[0][0] - 4) + 1; }
 function focusBandSteps(win) { const c = clefNow(win); return c ? (c.bandSteps || [c.stepLo]).map(st => [st, st + 8]) : null; }   // the Clef view's bands as letter steps
 function focusBands(win) {
   const c = clefNow(win);
