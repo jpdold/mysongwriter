@@ -6217,6 +6217,9 @@ const SPACING_SP = { regular: null, small: 2, tight: 1.5 };
 const PINCH_ENABLED = false;                                                              // the two-finger pinch on a stave (rows taller or shorter, more or fewer bars) is put away: the view is set from Settings and the buttons, never squeezed; flip this to bring it back
 const staffSpacePx = (win, step) => (S.halfLines || clefOn(win)) ? 2 * step : step;     // a staff space on this stave, in pixels
 const clefPadPx = (win, step, W1) => clefNow(win) ? Math.min(Math.round(W1 * 0.4), Math.round(step * 2 * (CLEF_SLOT + sigSpacesKey(keyObj(S.song.key))) + (clefNow(win).bands ? step * 2.4 : 0) + step * 0.5)) : 0;   // room for the clef, the key signature and the time signature: exactly what the head draws, never more than two fifths of the width (then the head shrinks to fit)
+/* Stacked staves: one pad for all the staves in view — the widest head's (a Grand Stave's, with its brace and two clefs) — so bar 1 starts at the same x on every stave and the bar lines and beat lines fall in line down the stack; a narrower head sits right-aligned in it */
+function sharedClefPad(W1) { let p = 0; for (const w of duoWins()) { if (S.collapsed[w]) continue; const { step } = rowsOf(w); p = Math.max(p, clefPadPx(w, step, W1)); } return p; }
+const clefPadFor = (win, step, W1) => duoMode() ? sharedClefPad(W1) : clefPadPx(win, step, W1);
 const regularBeatPx = (win, step, W1) => (W1 - clefPadPx(win, step, W1)) / ((noteSizeNow() === "x" || duoMode()) ? Math.max(1, S.viewSpan) * barBeats() : barBeats());   // Regular's beat width: the bars set in Window shows across the width (every one at Micro, the first otherwise)
 const setBeatPx = (win, step, W1) => SPACING_SP[S.spacing] ? Math.min(SPACING_SP[S.spacing] * staffSpacePx(win, step), regularBeatPx(win, step, W1)) : 0;   // a set spacing's beat width — never wider than Regular's, so Tight ≤ Small ≤ Regular in every view; else 0
 function spacingSpan() {                                                                  // Small / Tight: the bars the window holds at the set width, the last one part-way
@@ -6226,7 +6229,7 @@ function spacingSpan() {                                                        
 }
 function geo(win) {
   const svg = $(win + "Svg"), B = barBeats(), { rows, step } = rowsOf(win), lo = viewOf(win), hi = lo + rows - 1;
-  const n = spanNow(), first = viewFirst(), W1 = Math.max(120, svg.parentNode.clientWidth || $("rhyStrip").querySelector(".body").clientWidth || 300), padL = clefPadPx(win, step, W1), padR = 0, padT = 5, padB = 5;   // padL: room for the clef, the key signature and the time signature   // no pad at the ends: every beat, first and last, is exactly one share of the width
+  const n = spanNow(), first = viewFirst(), W1 = Math.max(120, svg.parentNode.clientWidth || $("rhyStrip").querySelector(".body").clientWidth || 300), padL = clefPadFor(win, step, W1), padR = 0, padT = 5, padB = 5;   // padL: room for the clef, the key signature and the time signature   // no pad at the ends: every beat, first and last, is exactly one share of the width
   const bars = viewBars(), starts = {}; let accB = 0;
   for (const b of bars) { starts[b] = accB; accB += barBeats(b); }
   const setPx = duoMode() ? 0 : setBeatPx(win, step, W1);                                   // a set spacing (Small / Tight): every beat this wide; at the song's end, with fewer bars left than fit, they fill the width as before
@@ -7079,9 +7082,9 @@ function drawKeyAndTime(svg, g, kind, lo, x, hs = 1) {                          
   const sig = String(S.song.sig || "4/4").split("/"), num = sig[0], den = sig[1] || "4", w = sp * SM_W.timeSigDigit * Math.max(num.length, den.length), cx = xx + sp * 0.4 + w / 2;
   const fig = (s, y) => svg.append(svgEl("text", { class: "clef smufl", x: cx, y, "text-anchor": "middle", "font-size": sp * 4, "font-family": SM_FONT, fill: ink, "pointer-events": "none" }, smDigits(s)));
   fig(num, g.yS(lo + 6)); fig(den, g.yS(lo + 2));                                          // the upper figure centred on the fourth line, the lower on the second
-  return cx + w / 2 + sp * 0.35;
+  return cx + w / 2 + sp * 1.25;                                                          // beat 1's first note may carry an accidental: room for it, clear of the figures
 }
-const sigSpacesKey = key => { const n = keySig(key), sig = String(S.song.sig || "4/4").split("/"); return 0.15 + Math.abs(n) * ((n > 0 ? SM_W.accidentalSharp : SM_W.accidentalFlat) + 0.05) + 0.4 + SM_W.timeSigDigit * Math.max(sig[0].length, (sig[1] || "4").length) + 0.35; };   // the signatures' room in a key, in spaces: a small gap, the accidentals, a gap, the figures, a gap before beat 1
+const sigSpacesKey = key => { const n = keySig(key), sig = String(S.song.sig || "4/4").split("/"); return 0.15 + Math.abs(n) * ((n > 0 ? SM_W.accidentalSharp : SM_W.accidentalFlat) + 0.05) + 0.4 + SM_W.timeSigDigit * Math.max(sig[0].length, (sig[1] || "4").length) + 1.25; };   // the signatures' room in a key, in spaces: a small gap, the accidentals, a gap, the figures, then room for an accidental on beat 1's first note before the beat itself
 const sigSpaces = g => g.dia ? sigSpacesKey(g.dia) : 0;
 const CLEF_SLOT = 3.0;                                                                     // the clef's room in spaces: the widest glyph and a little air after it
 function drawClefs(svg, g) {
@@ -7281,12 +7284,15 @@ function drawNote(svg, g, x, m, d, color, attrs, opts = {}) {
 const BAR_HI = { default: null, blue: "#7fc4ff", gray: "#9a9a9a", boxed: null, none: null };
 function drawAwake(svg, g, bi) {
   if (!S.active || S.active.bi !== bi || S.barHi === "none") return;
+  const part = S.activePart || "melody"; if (PART_WIN[part] !== g.win) return;           // only the stave tapped: the others stay as they are
+  let y0 = 0, y1 = g.H;                                                                   // a Grand Stave: only the staff tapped — the treble's rows for the melody, the bass's for the left hand — a row's grace either side
+  if (g.dia && grandLower(g.win)) { const bs = focusBandSteps(g.win), b = part === GRAND_LOWER ? bs[0] : bs[bs.length - 1]; y0 = Math.max(0, g.yS(b[1] + 1) - g.step / 2); y1 = Math.min(g.H, g.yS(b[0] - 1) + g.step / 2); }
   const first = bi === g.bars[0], last = bi === g.bars[g.bars.length - 1];
   const ax = first && !g.padL ? 0 : g.x(bi, 0), ax1 = last ? g.W : g.x(bi, barBeats(bi)), aw = ax1 - ax;                                          // the awake bar, edge to edge — but never over the clef and signatures at the stave's head: from beat 1
-  if (S.barHi === "boxed") { svg.append(svgEl("rect", { x: ax + 1.5, y: 1.5, width: aw - 3, height: g.H - 3, fill: "none", stroke: "#111", "stroke-width": 3, "pointer-events": "none" })); return; }
+  if (S.barHi === "boxed") { svg.append(svgEl("rect", { x: ax + 1.5, y: y0 + 1.5, width: aw - 3, height: y1 - y0 - 3, fill: "none", stroke: "#111", "stroke-width": 3, "pointer-events": "none" })); return; }
   const c = BAR_HI[S.barHi] || css("--box");
-  { const bx = g.x(bi, S.active.beat), bw = g.x(bi, Math.min(barBeats(bi), S.active.beat + 1)) - bx; svg.append(svgEl("rect", { x: bx, y: 0, width: bw, height: g.H, fill: c, opacity: 0.16, "pointer-events": "none" })); }   // the beat aimed at, a shade deeper
-  svg.append(svgEl("rect", { x: ax, y: 0, width: aw, height: g.H, fill: c, opacity: 0.28, "pointer-events": "none" }), svgEl("rect", { x: ax + 1, y: 1, width: aw - 2, height: g.H - 2, fill: "none", stroke: c, "stroke-width": 2, opacity: 0.9, "pointer-events": "none" }));
+  { const bx = g.x(bi, S.active.beat), bw = g.x(bi, Math.min(barBeats(bi), S.active.beat + 1)) - bx; svg.append(svgEl("rect", { x: bx, y: y0, width: bw, height: y1 - y0, fill: c, opacity: 0.16, "pointer-events": "none" })); }   // the beat aimed at, a shade deeper
+  svg.append(svgEl("rect", { x: ax, y: y0, width: aw, height: y1 - y0, fill: c, opacity: 0.28, "pointer-events": "none" }), svgEl("rect", { x: ax + 1, y: y0 + 1, width: aw - 2, height: y1 - y0 - 2, fill: "none", stroke: c, "stroke-width": 2, opacity: 0.9, "pointer-events": "none" }));
 }
 function drawSpillArrows(svg, g, bi) {
   const xe = g.x(bi, barBeats(bi)) - 3;
