@@ -6879,9 +6879,10 @@ function css(v) { return getComputedStyle(document.documentElement).getPropertyV
 const SOUND_RANGE = { piano: [21, 108], s808: [24, 72], bass: [28, 67], tuba: [26, 65], guitar12: [40, 88], guitarDrive: [40, 88], guitarClean: [40, 88], guitar: [40, 88], strings: [28, 103], horns: [34, 77], clarinet: [50, 94], trumpet: [52, 86], oohs: [40, 84], voice: [41, 84] };
 function soundRange(win) {
   const P = S.song && S.song.parts ? S.song.parts[WIN_PART[win]] : null; if (!P) return [21, 108];
-  const bank = P.bank && typeof SAMPLES !== "undefined" && SAMPLES.meta.has(P.bank) ? SAMPLES.meta.get(P.bank) : null;
+  const piano = win === "mel" && !!grandLower("mel"), bankName = piano ? pianoBank() : P.bank;   // the Grand Stave is the piano's: its range on both staves, so the register (and its lock) reaches the bass staff
+  const bank = bankName && typeof SAMPLES !== "undefined" && SAMPLES.meta.has(bankName) ? SAMPLES.meta.get(bankName) : null;
   if (bank && bank.hi >= bank.lo) return [Math.max(21, bank.lo - 7), Math.min(108, bank.hi + 7)];   // a sample library: its own span, a fifth either way, never past the keyboard
-  return SOUND_RANGE[TIMBRE(P.inst)] || [21, 108];
+  return SOUND_RANGE[TIMBRE(piano ? "Piano" : P.inst)] || [21, 108];
 }
 /* how far the register may scroll: the whole keyboard normally, or — with the setting on — no further than where each
    sound's own haze begins, top and bottom alike. [min view-start, top note allowed, max view-start] */
