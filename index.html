@@ -5392,7 +5392,7 @@ function playTone(ctx, midi, when, sus, level, vel, timbre, bank) {
 }
 function previewNote(midi, part) {
   const ctx = ensureCtx(), P = S.song.parts[part] || S.song.parts.melody, piano = (part === "melody" || part === "lh") && !!grandLower("mel");   // on the Grand Stave both staves are the piano
-  playTone(ctx, midi, ctx.currentTime, 0.35, 0.5 * P.vol, 0.75, TIMBRE(piano ? "Piano" : P.inst), piano ? null : partBank(P));
+  playTone(ctx, midi, ctx.currentTime, 0.35, 0.5 * P.vol, 0.75, TIMBRE(piano ? "Piano" : P.inst), piano ? pianoBank() : partBank(P));
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -5479,6 +5479,16 @@ function playSample(ctx, bank, midi, when, sus, level, vel) {
   return h;
 }
 /* resolve a part's sound: its sample bank when present on this device, else the synth */
+/* the piano for the Grand Stave: the left hand's own bank, else a piano bank any part plays, else any piano bank on the device — kept as the left
+   hand's bank so it stays decoded — so an imported piano plays on both staves; none of these, and the built-in piano sounds */
+function pianoBank() {
+  const parts = S.song.parts, lh = parts.lh || (parts.lh = { on: true, inst: "Piano", vol: 0.9, bank: null });
+  const cands = [lh.bank, ...PARTS.map(p => parts[p] && parts[p].inst === "Piano" ? parts[p].bank : null), ...[...SAMPLES.meta.keys()].filter(b => bankHint(b) === "Piano")];
+  const b = cands.find(x => x && SAMPLES.meta.has(x)); if (!b) return null;
+  if (lh.bank !== b) { lh.bank = b; saveSoon(); }
+  if (!SAMPLES.loaded.has(b)) ensureBankDecoded(b);                                      // the first notes may sound built-in while it decodes
+  return b;
+}
 function partBank(P) {
   if (!P.bank) return null;
   if (SAMPLES.meta.has(P.bank)) return P.bank;
@@ -5534,7 +5544,7 @@ function scheduleBar(ctx, bi, t0) {
     if (S.solo && p !== S.solo) continue;
     if (p === "lh" && !grandLower("mel")) continue;                                       // the left hand plays only on the Grand Stave
     const piano = (p === "melody" || p === "lh") && !!grandLower("mel");                   // the Grand Stave is the piano's: both its staves sound as one
-    const timbre = TIMBRE(piano ? "Piano" : P.inst), strum = p === "accomp" && timbre !== "piano" ? 0.012 : 0, bank = piano ? null : partBank(P);
+    const timbre = TIMBRE(piano ? "Piano" : P.inst), strum = p === "accomp" && timbre !== "piano" ? 0.012 : 0, bank = piano ? pianoBank() : partBank(P);   // on the Grand Stave an imported piano plays on both staves
     for (const e of partEvents(p, bi)) { if (!inRange(e.t)) continue; if (play.only && !(e.src && play.only.has(p + ":" + e.src.id))) continue; e.ms.forEach((m, k) => { const when = t0 + e.t * bs + k * strum; if (!isFinite(when) || !isFinite(m)) return; playTone(ctx, m, when, Math.max(0.04, (isFinite(e.sus) ? e.sus : e.d || 0.25) * bs), P.vol * e.vel * 0.5, e.vel, timbre, bank); }); }
   }
 }
