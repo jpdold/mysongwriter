@@ -40,7 +40,7 @@
   --box-soft: #f5a623;        /* highlights that use the orange */
   --accent: #2f7fd6;          /* Setup… */
   --danger: #e5322d;          /* Save… */
-  --melody: #111; --sub: #d99a2b; --backup: #9b7bc6; --bass: #2e4a9e; --accomp: #1f7a70; --ensemble: #4d8f3a;
+  --melody: #111; --sub: #d99a2b; --backup: #9b7bc6; --bass: #2e4a9e; --accomp: #1f7a70; --ensemble: #4d8f3a; --lh: #7a4a12;   /* --lh: the piano's left hand, on the Grand Stave's lower staff */
   --green: #4caf7d; --yellow: #e6b422;
   --bezel: 18px;
   --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "MSW Music", serif;
@@ -52,7 +52,7 @@
   --ground: #1c1d20; --ground2: #141517; --paper: #26272b; --paper2: #2e2f34;
   --line: #d8d8d8; --line-soft: #4a4b50; --beat: #e6e6e6; --ink: #f2f2f2; --ink2: #9a9a9a;
   --on-ground: #eee; --on-ground2: #999; --tag: #7cc242; --lyric: #2f6fa8; --box: #f0841c; --box-soft: #e39a2a; --accent: #4f95e6;
-  --melody: #f2f2f2; --bass: #8ea6f0; --accomp: #5fc0b3;
+  --melody: #f2f2f2; --bass: #8ea6f0; --accomp: #5fc0b3; --lh: #d9a15c;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -4767,23 +4767,25 @@ const VOCAB_TIERS = (() => {
    SECTION 3 · SONG MODEL & STATE
    ═══════════════════════════════════════════════════════════════════════ */
 const TS_BEATS = { "4/4": 4, "3/4": 3, "2/4": 2, "6/8": 3 };
-const PARTS = ["melody", "sub", "backup", "bass", "accomp"];
+const PARTS = ["melody", "sub", "backup", "bass", "accomp", "lh"];   // lh: the piano's left hand — written on the Grand Stave's lower staff, sounding only while the Grand Stave is on
 const PART_META = {
   melody: { label: "Melody", short: "Lead", color: "var(--melody)", hex: "#c8553d", bank: null },
   sub: { label: "Sub vocal", short: "Sub", color: "var(--sub)", hex: "#d99a2b", bank: null },
   backup: { label: "Backup vocals", short: "Backup", color: "var(--backup)", hex: "#9b7bc6", bank: null },
   bass: { label: "Bass", short: "Bass", color: "var(--bass)", hex: "#3a4f8f", bank: "bass" },
   accomp: { label: "Accompaniment", short: "Accomp", color: "var(--accomp)", hex: "#2f7f78", bank: "guitar" },
+  lh: { label: "Piano, left hand", short: "Left hand", color: "var(--lh)", hex: "#7a4a12", bank: null },
 };
 const INSTRUMENTS = {
   melody: ["Voice", "Piano", "Acoustic guitar", "Trumpet", "Clarinet"],
   sub: ["Voice"], backup: ["Voices"],
   bass: ["Bass guitar", "Synth / 808 bass", "Tuba"],
   accomp: ["Acoustic guitar", "12-string guitar", "Electric guitar (clean)", "Electric guitar (drive)", "Piano"],
+  lh: ["Piano"],
 };
 
 function newBar(chord = null) {
-  return { id: uid(), chord, chords: chord ? [{ t: 0, sym: chord }] : [], lyric: "", chips: [], ev: { melody: [], bass: [], accomp: [] } };   // every stave starts empty: the accompaniment and bass are written by hand, like the melody
+  return { id: uid(), chord, chords: chord ? [{ t: 0, sym: chord }] : [], lyric: "", chips: [], ev: { melody: [], bass: [], accomp: [], lh: [] } };   // every stave starts empty: the accompaniment and bass are written by hand, like the melody
 }
 /* chords live at beats: bar.chords = [{ t, sym }] sorted by t; bar.chord mirrors the one on beat 1 */
 const barChords = bar => bar.chords || (bar.chords = bar.chord ? [{ t: 0, sym: bar.chord }] : []);
@@ -4823,6 +4825,7 @@ function newSong() {
       backup: { on: false, inst: "Voices", vol: 0.45 },
       bass: { on: true, inst: "Bass guitar", vol: 0.9 },
       accomp: { on: true, inst: "Acoustic guitar", vol: 0.7 },
+      lh: { on: true, inst: "Piano", vol: 0.9, bank: null },
     },
   };
   const prog = ["I", "V", "vi", "IV"];
@@ -4979,7 +4982,7 @@ function upgradeSong(s) {
   const base = newSong();
   s.parts = Object.assign({}, base.parts, s.parts || {});
   for (const p in base.parts) s.parts[p] = Object.assign({}, base.parts[p], s.parts[p]);
-  s.bars.forEach(b => { b.chips = b.chips || []; b.ev = Object.assign({ melody: [], bass: [], accomp: [] }, b.ev || {}); delete b.custom; delete b.ev.ensemble; if (!b.chords) b.chords = b.chord ? [{ t: 0, sym: b.chord }] : []; });
+  s.bars.forEach(b => { b.chips = b.chips || []; b.ev = Object.assign({ melody: [], bass: [], accomp: [], lh: [] }, b.ev || {}); delete b.custom; delete b.ev.ensemble; if (!b.chords) b.chords = b.chord ? [{ t: 0, sym: b.chord }] : []; });
   if (s.snap == null) s.snap = true;
   if (!(Number(s.bpm) > 0)) s.bpm = 120; else s.bpm = Number(s.bpm);
   if (!s.view) {                                   // older songs: open the window on what they contain
@@ -5260,6 +5263,7 @@ function barCoverage(bi) {
   const sum = (list, part) => clamp((list.reduce((a, e) => a + Math.min(e.d, B - e.t), 0) + carry(part)) / B, 0, 1);
   for (const p of PARTS) {
     const P = song.parts[p]; if (!P.on) continue;
+    if (p === "lh" && !grandLower("mel")) continue;                                       // the left hand counts only on the Grand Stave
     if (p === "melody" || p === "sub") vals.push(sum(bar.ev.melody, "melody"));
     else if (p === "backup") vals.push(chordSymAt(bi, 0) ? 1 : 0);
     else vals.push(sum(bar.ev[p] || [], p));
@@ -5387,8 +5391,8 @@ function playTone(ctx, midi, when, sus, level, vel, timbre, bank) {
   return h;
 }
 function previewNote(midi, part) {
-  const ctx = ensureCtx(), P = S.song.parts[part] || S.song.parts.melody;
-  playTone(ctx, midi, ctx.currentTime, 0.35, 0.5 * P.vol, 0.75, TIMBRE(P.inst), partBank(P));
+  const ctx = ensureCtx(), P = S.song.parts[part] || S.song.parts.melody, piano = (part === "melody" || part === "lh") && !!grandLower("mel");   // on the Grand Stave both staves are the piano
+  playTone(ctx, midi, ctx.currentTime, 0.35, 0.5 * P.vol, 0.75, TIMBRE(piano ? "Piano" : P.inst), piano ? null : partBank(P));
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -5528,7 +5532,9 @@ function scheduleBar(ctx, bi, t0) {
   for (const p of PARTS) {
     const P = song.parts[p]; if (!P.on) continue;
     if (S.solo && p !== S.solo) continue;
-    const timbre = TIMBRE(P.inst), strum = p === "accomp" && timbre !== "piano" ? 0.012 : 0, bank = partBank(P);
+    if (p === "lh" && !grandLower("mel")) continue;                                       // the left hand plays only on the Grand Stave
+    const piano = (p === "melody" || p === "lh") && !!grandLower("mel");                   // the Grand Stave is the piano's: both its staves sound as one
+    const timbre = TIMBRE(piano ? "Piano" : P.inst), strum = p === "accomp" && timbre !== "piano" ? 0.012 : 0, bank = piano ? null : partBank(P);
     for (const e of partEvents(p, bi)) { if (!inRange(e.t)) continue; if (play.only && !(e.src && play.only.has(p + ":" + e.src.id))) continue; e.ms.forEach((m, k) => { const when = t0 + e.t * bs + k * strum; if (!isFinite(when) || !isFinite(m)) return; playTone(ctx, m, when, Math.max(0.04, (isFinite(e.sus) ? e.sus : e.d || 0.25) * bs), P.vol * e.vel * 0.5, e.vel, timbre, bank); }); }
   }
 }
@@ -5975,9 +5981,10 @@ const WIN_K = { s: 0.72, m: 0.84, l: 1 };         // window size also sets how m
 const WIN_WEIGHT = { mel: 1.5, acc: 1, bass: 1 };
 const STEPS = { mel: 14, acc: 8, bass: 8 };      // computed by allocate()
 const WIN_PART = { mel: "melody", acc: "accomp", bass: "bass" };
-/* the Grand Stave: the treble staff is the melody, the bass staff carries the Bass part — its own voice, drawn in the melody's window on the lower
-   staff and played together with the melody; a tap on the lower staff enters, selects and edits that part (its own window shows the same notes) */
-const GRAND_LOWER = "bass";
+/* the Grand Stave is the piano's: the treble staff is the melody, sounding as a piano while the Grand Stave is on, and the bass staff is the
+   pianist's left hand — a part of its own, drawn there in its own colour and played with the melody; a tap on the lower staff enters, selects
+   and edits the left hand. Other bass instruments keep their own stave (the Bass part). Off the Grand Stave the left hand's notes wait, silent */
+const GRAND_LOWER = "lh";
 const grandLower = win => (win === "mel" && clefNow("mel") && clefNow("mel").bands) ? GRAND_LOWER : null;   // the part the lower staff carries, when the melody's window is a Grand Stave
 const onLowerStaff = (g, m) => { if (!g.dia || g.win !== "mel" || !grandLower("mel")) return false; const bs = focusBandSteps("mel"); return g.stepOf(m) < (bs[0][1] + bs[1][0]) / 2; };   // a pitch below the middle of the gap between the staves belongs to the lower one
 const WIN_LO = { mel: "melLo", acc: "accLo", bass: "bassLo" };
@@ -6985,7 +6992,7 @@ function restMidY(g, low) {                                                     
 }
 function drawRest(parent, g, xc, d, ink, attrs = {}, part = "melody") {
   const name = restName(d), ns = Math.max(2 * headGeom(g).ry, 3.5), sp = staffSpace(g);
-  let midY = restMidY(g, part === "bass"); if (!(midY > ns * 1.5 && midY < g.H - ns * 1.5)) midY = g.H / 2;
+  let midY = restMidY(g, part === "bass" || part === "lh"); if (!(midY > ns * 1.5 && midY < g.H - ns * 1.5)) midY = g.H / 2;
   smGlyph(parent, name, xc, name === "restWhole" ? midY - sp : midY, ns, Object.assign({ "text-anchor": "middle", fill: ink }, attrs));
   if (Math.abs(d - writtenValue(d) * 1.5) < 1e-9) smGlyph(parent, "augmentationDot", xc + (SM_W[name] / 2 + 0.3) * ns, midY - sp / 2, ns, Object.assign({ fill: ink }, attrs));
 }
@@ -7830,7 +7837,7 @@ function deleteSel() { const ev = selEv(); if (!ev) return; const bar = S.song.b
 /* the entry box, at the picked length, whenever the active beat has no note selected */
 function refreshBox() { if (S.active && !S.sel && !S.mv && !PSEL.on && !(S.ftp && S.ftp.on) && !S.ghost) showBox(S.active.bi, S.activePart || "melody", true); }
 function ensureVisible(part, m) {
-  const win = part === "melody" ? "mel" : part === "accomp" ? "acc" : "bass", { rows } = rowsOf(win), key = WIN_LO[win], lo = viewOf(win), [minV, , maxV] = viewLimits(win, rows);
+  const win = PART_WIN[part] || "mel", { rows } = rowsOf(win), key = WIN_LO[win], lo = viewOf(win), [minV, , maxV] = viewLimits(win, rows);
   if (clefOn(win)) { const k = keyObj(S.song.key), sm = spell(m, k).step, loS = spell(lo, k).step; if (sm < loS + 1) S.song.view[key] = clamp(stepPitch(sm - 2, k), minV, maxV); else if (sm > loS + rows - 2) S.song.view[key] = clamp(stepPitch(sm - rows + 3, k), minV, maxV); return; }
   if (m < lo + 1) S.song.view[key] = clamp(m - 2, minV, maxV); else if (m > lo + rows - 2) S.song.view[key] = clamp(m - rows + 3, minV, maxV);
 }
@@ -7869,8 +7876,8 @@ function tapMelody(bi, t, m, onNote = false) {
   if (S.followWords) S.cursor = nextUnpitchedChip(bi, ev.chip || null);
   renderAll();
 }
-function tapBand(win, bi, t, m, onNote = false) {
-  const part = WIN_PART[win], bar = S.song.bars[bi], P = S.song.parts[part], B = barBeats(bi);
+function tapBand(win, bi, t, m, onNote = false, partOf = null) {
+  const part = partOf || WIN_PART[win], bar = S.song.bars[bi], P = S.song.parts[part], B = barBeats(bi);   // partOf: the Grand Stave's lower staff, tapped in the melody's window
   if (!inActive(bi, t)) activate(bi, t, part); else if (onNote) aimBeat(bi, t); else t = aimEntry(bi, t, part); S.activePart = part;   // one tap: the bar wakes and the box appears; inside it, a tap on a note aims at that note's beat, a tap on empty space enters at the marked beat
   S.bi = bi;
   if (!P.on) { openWinSettings(win); return; }
@@ -8100,7 +8107,7 @@ function initPointer() {
       }
       if (d.ev && d.part === "melody" && !d.ev.rest) { tapMelody(d.bi, at.t, g.m(p.y), true); return; }
       if (d.ev) { S.bi = d.bi; const again = !!(S.sel && S.sel.id === d.ev.id); if (again) unpick(d.bi, d.part, d.ev.id); else pick(d.bi, d.part, d.ev.id); select(d.bi, d.part, again ? null : d.ev.id); if (d.ev.m != null && !d.ev.rest && S.sel && S.sel.id === d.ev.id) previewNote(d.ev.m, d.part); return; }
-      if (winAt === "mel") tapMelody(at.bi, at.t, g.m(p.y)); else tapBand(winAt, at.bi, at.t, g.m(p.y));   // the lower staff of a Grand Stave: the Bass part
+      if (partAt === "melody") tapMelody(at.bi, at.t, g.m(p.y)); else tapBand(winAt, at.bi, at.t, g.m(p.y), false, partAt);   // the lower staff of a Grand Stave: the piano's left hand
     };
     svg.addEventListener("pointerup", up); svg.addEventListener("pointercancel", () => { dragCtx = null; xhairCancel(); });
     svg.addEventListener("wheel", e => { e.preventDefault(); if (e.ctrlKey) { S.zoomWin[win] = clamp(S.zoomWin[win] * (e.deltaY > 0 ? 0.92 : 1.08), 0.5, 2.5); savePrefs(); renderAll(); } else shiftView(win, e.deltaY > 0 ? -1 : 1); }, { passive: false });
@@ -9169,7 +9176,7 @@ function openMenu() {
    FLOATING TOOL PALETTE — a draggable palette that drives entry without touching the stave.
    The inset palette hides (its space is kept, so nothing rescales); the stave and strips stop taking taps.
    ═══════════════════════════════════════════════════════════════════════ */
-const PART_WIN = { melody: "mel", accomp: "acc", bass: "bass" };
+const PART_WIN = { melody: "mel", accomp: "acc", bass: "bass", lh: "mel" };   // the left hand lives in the melody's window, on the Grand Stave's lower staff
 const FTP_DEFAULT = { on: false, size: "m", side: "right", x: null, y: null, nav: "beat", m: 60, t: 0, mode: "pitch" };
 /* the floating tap pad — the small blue palette that pops the tools out (M / A / B, ◀ beat ▶, the note lengths, PITCH ▲ ▼) — is put away:
    its code stays whole, but nothing opens it and its ⧉ key is not drawn. Set FTP_ENABLED to true to bring it back. */
@@ -9202,7 +9209,7 @@ function ensureWinOpen(win) {
   else if (S.winState[win] === "closed") S.winState[win] = "open";
 }
 function lastNoteInSong() {
-  for (const part of ["melody", "accomp", "bass"]) for (let bi = S.song.bars.length - 1; bi >= 0; bi--) {
+  for (const part of ["melody", "accomp", "bass", "lh"]) for (let bi = S.song.bars.length - 1; bi >= 0; bi--) {
     const evs = (S.song.bars[bi].ev[part] || []).filter(e => !e.rest && e.m != null);
     if (evs.length) { const ev = evs.reduce((a, e) => e.t > a.t ? e : a); return { part, bi, id: ev.id }; }
   }
@@ -9465,7 +9472,7 @@ function delRun(scope) {
   if (scope === "run") { if (mv.start == null) { toast("Tap the first and last beat first"); return; } start = mv.start; end = mv.end; label = "the picked beats"; }
   else if (scope === "bar") { start = barAbs(S.bi); end = start + barBeats(S.bi); label = `bar ${barNo(S.bi)}`; }
   else { const r = sectionRange(sectionOfBar(S.bi)); start = barAbs(r.start); end = barAbs(r.end); label = "this section"; }
-  const parts = mv.allParts ? ["melody", "accomp", "bass"] : [mv.part];
+  const parts = mv.allParts ? ["melody", "accomp", "bass", "lh"] : [mv.part];
   const go = () => {
     let n = 0;
     parts.forEach(part => { const grp = mvGroup(part, start, end); grp.forEach(o => { const bar = S.song.bars[o.bi]; bar.ev[part] = bar.ev[part].filter(e => e !== o.e); n++; }); });
@@ -10043,7 +10050,7 @@ function togglePlaySelect(win, btn) {
 function leavePlaySelect() { if (S.playing && PSEL.playing) stopPlayback(); PSEL.on = false; PSEL.ids.clear(); PSEL.playing = false; renderAll(); }
 function playSelected() {
   let b0 = Infinity, b1 = -1, t0 = 0, t1 = 0;
-  S.song.bars.forEach((bar, bi) => { for (const part of ["melody", "accomp", "bass"]) (bar.ev[part] || []).forEach(e => { if (!PSEL.ids.has(part + ":" + e.id)) return; if (bi < b0 || (bi === b0 && e.t < t0)) { b0 = bi; t0 = e.t; } if (bi > b1 || (bi === b1 && e.t + e.d > t1)) { b1 = bi; t1 = r3(e.t + e.d); } }); });
+  S.song.bars.forEach((bar, bi) => { for (const part of ["melody", "accomp", "bass", "lh"]) (bar.ev[part] || []).forEach(e => { if (!PSEL.ids.has(part + ":" + e.id)) return; if (bi < b0 || (bi === b0 && e.t < t0)) { b0 = bi; t0 = e.t; } if (bi > b1 || (bi === b1 && e.t + e.d > t1)) { b1 = bi; t1 = r3(e.t + e.d); } }); });
   if (b1 < 0) return;
   S.solo = null; S.bi = b0;
   startPlaybackRange(b0, t0, b1, Math.min(t1, barBeats(b1)), new Set(PSEL.ids));   // (this stops anything already playing first)
