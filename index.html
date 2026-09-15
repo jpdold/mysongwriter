@@ -373,7 +373,7 @@ text.clef, text.smufl { user-select: none; }
 /* the Rhythm and Lyrics strips: shown or hidden by one button where their labels were; shown, they sit flush, the rhythm strip on the lyrics strip */
 #app.deck .sideBtn { position: absolute; left: 0; right: 0; display: flex; width: auto; height: 28px; flex: 0 0 auto; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 0; font-size: 7px; font-weight: 800; letter-spacing: .04em; line-height: 1.1; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); border: 1px solid #3a8a1e; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,.3); }   /* at the foot of the column beside the stave, below the ↓ */
 #app.deck .sideBtn:active { filter: brightness(1.1); }
-#app.deck #dynBtn, #app.deck #rhyBtn, #app.deck #lyrBtn { position: static; background: linear-gradient(#fff, #d9d9d9); color: #111; border: 1.5px solid #141414; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); }   /* stacked below the stave's foot, in the tool bar's own silvery finish — LYRICS, RHYTHM, DYN, top to bottom */
+#app.deck #dynBtn, #app.deck #rhyBtn, #app.deck #lyrBtn { position: absolute; background: linear-gradient(#fff, #d9d9d9); color: #111; border: 1.5px solid #141414; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); }   /* in the gutter beside the stave, stacked up from its foot in the tool bar's own silvery finish — DYN, RHYTHM, LYRICS, top to bottom */
 #app.deck #dynBtn:active, #app.deck #rhyBtn:active, #app.deck #lyrBtn:active { filter: none; background: linear-gradient(#ffd27a, #f5a623); }
 #app.deck #dynBtn.beside, #app.deck #rhyBtn.beside, #app.deck #lyrBtn.beside { position: absolute; left: 0; right: 0; }   /* its strip shows: the button floats level with it, placed by script */
 #kbClose { display: none !important; }
@@ -449,6 +449,7 @@ body.kbOpen #app.deck { padding-bottom: 6px; }
 #app.deck .win .rArr::after { font-size: 12px; font-weight: 700; color: #111; line-height: 1; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
 #app.deck .win .rArr.up { top: calc(50% - 31px); bottom: auto; } #app.deck .win .rArr.up::after { content: "↑"; }
 #app.deck .win .rArr.dn { top: calc(50% + 1px); bottom: auto; } #app.deck .win .rArr.dn::after { content: "↓"; }
+#app.deck .win .gutter .sideBtn { --sb: 28px; left: 1px; right: 1px; height: var(--sb); bottom: auto; }   /* the strips' SHOW / HIDE buttons: stacked up from the stave's foot in the gutter beside it, below the ↓ — DYN, then RHYTHM, then LYRICS, as the strips lie; placed by placeDeckLabels */
 #app.deck .strip { grid-template-columns: 48px 1fr; gap: 0 2px; position: relative; }   /* the strips line up with the stave */
 #app.deck .strip .body { border-left-width: 3px; border-right-width: 3px; }                /* the same side borders as the stave frame, so every beat divider lines up to the pixel */
 #app.deck #lyrStrip .body { border-radius: 0; }                                             /* square corners like the strips above it: its edges flush with theirs */
@@ -483,7 +484,7 @@ body.kbOpen #lyrEdit, #app.deck.kbUp #lyrEdit { display: none !important; }   /*
 #deckNav .spacer { flex: 1 1 0; }
 #deckNav button:disabled { opacity: .35; }
 #deckNav button.part:active { filter: brightness(1.3); }
-@media (max-height: 520px) { #deckNav button.gearBtn { height: 20px; } #deckNav button.part { height: 28px; } #deckNav button.part .big { font-size: 12px; } #app.deck .sideBtn { height: 22px; } }   /* a short screen: the column's buttons compact */
+@media (max-height: 520px) { #deckNav button.gearBtn { height: 20px; } #deckNav button.part { height: 28px; } #deckNav button.part .big { font-size: 12px; } #app.deck .sideBtn { height: 22px; } #app.deck .win .gutter .sideBtn { --sb: 22px; } }   /* a short screen: the column's buttons compact */
 .rollItem label { flex: 1; display: flex; align-items: center; gap: 7px; cursor: pointer; min-width: 0; }
 .rollItem input[type=checkbox] { width: 16px; height: 16px; margin: 0; accent-color: var(--tag); flex: 0 0 auto; }
 #rollBar .addView { flex: 0 0 auto; height: 22px; padding: 0 12px; border: 1px solid #3a8a1e; border-radius: 4px; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); font-size: 10px; font-weight: 800; letter-spacing: .04em; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
@@ -6645,12 +6646,13 @@ function placeDeckLabels() {
     for (const id of ["nav", "rollBar"]) { const e = $(id); if (!e || !e.offsetWidth) continue; e.style.position = "relative"; const cur = parseFloat(e.style.left) || 0, fr = frame.getBoundingClientRect(), eb = e.getBoundingClientRect(); const ar = $("app").getBoundingClientRect(), mid = duoMode() && id === "nav" ? (ar.left + ar.right) / 2 : (fr.left + fr.right) / 2; let eMid = (eb.left + eb.right) / 2; if (id === "rollBar") { const items = e.querySelectorAll(".rollItem"); if (items.length && items[0].offsetWidth > 0) eMid = (items[0].getBoundingClientRect().left + items[items.length - 1].getBoundingClientRect().right) / 2; } else { const a = $("prevBar"), b = $("nextBar"); if (a && b) eMid = (a.getBoundingClientRect().left + b.getBoundingClientRect().right) / 2; } /* the bracket itself (← to →) over the part label, the parts button riding beside it */ e.style.left = Math.round(cur + mid - eMid) + "px"; }   // the bracket and the selectors centred on the stave's frame
     { const nav = $("deckNav"), duo = duoMode() && !kbUpNow(), fTop = duo ? $("melWin").querySelector(".frame") : frame, fBot = duo ? $(duoBandWin() + "Win").querySelector(".frame") : frame, rowTop = nav.getBoundingClientRect().top - (parseFloat(nav.style.marginTop) || 0); nav.style.marginTop = Math.max(0, fTop.getBoundingClientRect().top - rowTop) + "px"; nav.style.height = Math.round(fBot.getBoundingClientRect().bottom - fTop.getBoundingClientRect().top) + "px"; }   // the column: level with the (top) frame, as tall as the staves in view   // the column beside the stave: level with the frame, exactly as tall
     { const nav = $("deckNav"), navTop = nav.getBoundingClientRect().top, kbUp = $("app").classList.contains("kbUp");
-      /* a strip that shows: its button floats level with it (centred on the strip's height); a hidden strip's button stays in the stack under the gear.
-         The keyboard open: only CLOSE (level with the Lyrics strip) and the Rhythm strip's button show */
+      /* the keyboard open: CLOSE floats level with the Lyrics strip (centred on the strip's height); otherwise it stays in the stack under the gear.
+         The strips' own SHOW / HIDE buttons live in the gutter beside the stave, placed by the style sheet */
       const beside = (id, strip) => { const b = $(id); if (!b) return; const on = !!(strip && strip.offsetHeight > 0); b.classList.toggle("beside", on);
         if (on) { const r = strip.getBoundingClientRect(); b.style.top = Math.round(r.top + r.height / 2 - b.offsetHeight / 2 - navTop) + "px"; } else b.style.top = ""; };
-      if (kbUp) { beside("kbClose", $("lyrStrip")); beside("rhyBtn", $("rhyStrip")); }
-      else { beside("lyrBtn", $("lyrStrip")); beside("rhyBtn", $("rhyStrip")); beside("dynBtn", $("dynStrip")); } }
+      if (kbUp) beside("kbClose", $("lyrStrip")); }
+    { const gut = win.querySelector(".gutter"); let y = frame.offsetTop + frame.offsetHeight - gut.offsetTop - 2;   // the strips' buttons: stacked up from the stave's foot, LYRICS lowest, flush with the frame's bottom edge
+      for (const id of ["lyrBtn", "rhyBtn", "dynBtn"]) { const b = $(id); if (!b || b.parentNode !== gut) continue; y -= b.offsetHeight; b.style.top = y + "px"; y -= 2; } }
     top.style.left = x + "px"; top.style.top = frame.offsetTop + "px";
     bot.style.left = x + "px"; bot.style.top = (frame.offsetTop + frame.offsetHeight) + "px";
   }
@@ -6717,8 +6719,9 @@ function renderRollBar() {
       const swap = el("button", { class: "part", title: "Swap: the " + DECK_NAME[other].toLowerCase() + " here instead", onclick: () => { S.duoBand = other; if (S.activePart !== "melody") S.activePart = WIN_PART[other]; S.sel = null; S.active = null; S.picked = []; savePrefs(); renderAll(); } }, el("span", { class: "big" }, "⇄"), el("span", { class: "name" }, SHORT[other]));
       const gearM = el("button", { class: "gearBtn", title: "Melody settings", onclick: () => openWinSettings("mel") }, gearIco());
       const gearB = el("button", { class: "gearBtn", title: DECK_NAME[bw].charAt(0) + DECK_NAME[bw].slice(1).toLowerCase() + " settings", onclick: () => openWinSettings(bw) }, gearIco());
-      nav.append(delB, gearM, colBs("mel"), colUn(), ...colCover(), ...colSp("mel"), kc, lb, rb, db, el("div", { class: "spacer" }), swap, gearB);
-    } else nav.append(arrow(-1, up), arrow(1, dn), el("div", { class: "spacer" }), delB, gear, colBs(active), colUn(), ...(active === "mel" ? colCover() : []), ...colSp(active), kc, lb, rb, db);   // ▲ flush with the stave's top; the gear at the foot; LYRICS, RHYTHM, DYN stacked below that, flush with the stave's bottom
+      nav.append(delB, gearM, colBs("mel"), colUn(), ...colCover(), ...colSp("mel"), kc, el("div", { class: "spacer" }), swap, gearB);
+    } else nav.append(arrow(-1, up), arrow(1, dn), el("div", { class: "spacer" }), delB, gear, colBs(active), colUn(), ...(active === "mel" ? colCover() : []), ...colSp(active), kc);   // ▲ flush with the stave's top; the gear at the foot
+    { document.querySelectorAll(".win .gutter .sideBtn").forEach(e => e.remove()); const gut = $((duo ? "mel" : active) + "Win").querySelector(".gutter"); db.classList.add("dyn"); rb.classList.add("rhy"); lb.classList.add("lyr"); gut.append(db, rb, lb); }   // the strips' SHOW / HIDE buttons: stacked at the foot of the gutter beside the stave, below the ↓, DYN then RHYTHM then LYRICS as the strips lie
     /* the tool bar: the left third flips too now — its tools, or the staff-lines switch — and the middle and right thirds flip as before */
     const tr = $("toolR"), tm = $("toolMScroll");
     { const tls = $("toolLScroll"), flipL = S.deckFlipL || 0;
