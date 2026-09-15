@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>My Song Writer</title>
 <meta name="theme-color" content="#5a5c5f">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -5985,7 +5985,7 @@ const setMode = () => {};                          // engine shims (the old mode
 const renderPanel = () => renderAll();
 function loadPrefs() {
   const p = readJSON(STORE.prefs, {});
-  S.theme = p.theme || "auto"; S.followWords = false; S.noteStyle = p.noteStyle || "trad"; S.noteSize = NOTE_SCALE[p.noteSize] ? p.noteSize : "m"; S.chordColor = p.chordColor || "#ffffff"; S.halfLines = p.halfLines == null ? true : !!p.halfLines; S.beatLines = p.beatLines == null ? true : !!p.beatLines; S.barHi = p.barHi in BAR_HI ? p.barHi : "default"; S.spacing = p.spacing === "engraved" ? "engraved" : "time"; S.rangeLock = !!p.rangeLock; S.kbLayout = p.kbLayout === "flat" ? "flat" : "standard"; S.kbTheme = ["blue", "black", "gray"].includes(p.kbTheme) ? p.kbTheme : "classic"; S.kbSpace = Math.min(1, Math.max(0, +p.kbSpace || 0)); S.kbBackUp = Math.min(1, Math.max(0, +p.kbBackUp || 0)); S.ftp = Object.assign({}, FTP_DEFAULT, p.ftp || {}); if (!FTP_ENABLED) S.ftp.on = false;
+  S.theme = p.theme || "auto"; S.followWords = false; S.noteStyle = p.noteStyle || "trad"; S.noteSize = NOTE_SCALE[p.noteSize] ? p.noteSize : "m"; S.chordColor = p.chordColor || "#ffffff"; S.halfLines = p.halfLines == null ? true : !!p.halfLines; S.beatLines = p.beatLines == null ? true : !!p.beatLines; S.barHi = p.barHi in BAR_HI ? p.barHi : "default"; S.spacing = p.spacing in SPACING_SP ? p.spacing : "regular"; S.rangeLock = !!p.rangeLock; S.kbLayout = p.kbLayout === "flat" ? "flat" : "standard"; S.kbTheme = ["blue", "black", "gray"].includes(p.kbTheme) ? p.kbTheme : "classic"; S.kbSpace = Math.min(1, Math.max(0, +p.kbSpace || 0)); S.kbBackUp = Math.min(1, Math.max(0, +p.kbBackUp || 0)); S.ftp = Object.assign({}, FTP_DEFAULT, p.ftp || {}); if (!FTP_ENABLED) S.ftp.on = false;
   S.winSize = WIN[p.winSize] ? p.winSize : "m"; S.chordsDisp = p.chordsDisp || "names"; S.metro = p.metro || "off"; S.custom = p.custom || null; S.len = p.len || 1;
   S.rhyShown = p.rhyShown !== false && p.stripsShown !== false; S.lyrShown = p.lyrShown !== false && p.stripsShown !== false; S.partsShown = p.partsShown !== false; S.dynShown = !!p.dynShown; 
   S.deck = Array.isArray(p.deck) && p.deck.length ? p.deck.filter(w => ["mel", "acc", "bass"].includes(w)) : ["mel", "acc", "bass"]; if (!S.deck.length) S.deck = ["mel"];
@@ -6160,59 +6160,33 @@ function cycleWin(win) {
 const viewFirst = () => spanNow() > 1 ? S.bi - ((S.bi - curRange().start) % spanNow()) : S.bi;
 const viewBars = () => { const f = viewFirst(), out = []; for (let i = 0; i < spanNow(); i++) if (f + i < S.song.bars.length) out.push(f + i); return out; };
 let GEO = {};
-/* the engravers' spacing scale (Settings → Note spacing → Engraved): the room a note takes along the stave by its written value, in staff spaces — a
-   32nd 1½, a 16th 2, an eighth 2½, a quarter 3½, a half 5, a whole 7 — points on a curve read against the value's log, so any span (a gap, a dotted
-   note, a tie) has its place on it: a whole note is twice a quarter's room, not four times */
-const SPACE_SCALE = [[0.125, 1.5], [0.25, 2], [0.5, 2.5], [1, 3.5], [2, 5], [4, 7]];
-function spaceW(d) {
-  const L = Math.log2(Math.max(d, 1e-4)), pts = SPACE_SCALE.map(([v, w]) => [Math.log2(v), w]);
-  if (L <= pts[0][0]) return Math.max(1, pts[0][1] + (L - pts[0][0]) * 0.5);           // shorter than a 32nd: half a space less per halving, never under one
-  for (let i = 1; i < pts.length; i++) if (L <= pts[i][0]) { const [a, wa] = pts[i - 1], [b, wb] = pts[i]; return wa + (wb - wa) * (L - a) / (b - a); }
-  const [a, wa] = pts[pts.length - 1]; return wa + (L - a) * 2.5;                        // longer than a whole: two and a half spaces more per doubling
+/* Note spacing (Settings → Staves): Regular — the bars set in Window shows fill the width; Small and Tight — every beat no wider than two, or
+   one and a half, of the stave's own staff spaces (never wider than Regular's), so the spacing complements the view's size and note size alike, with as many bars in view as
+   fit at that width, the last running off the edge and the rest a scroll away. The time grid itself is always regular: a beat is a beat */
+const SPACING_SP = { regular: null, small: 2, tight: 1.5 };
+const PINCH_ENABLED = false;                                                              // the two-finger pinch on a stave (rows taller or shorter, more or fewer bars) is put away: the view is set from Settings and the buttons, never squeezed; flip this to bring it back
+const staffSpacePx = (win, step) => (S.halfLines || clefOn(win)) ? 2 * step : step;     // a staff space on this stave, in pixels
+const clefPadPx = (win, step, W1) => clefNow(win) ? Math.min(Math.round(W1 * 0.5), Math.round(step * 2 * (3.3 + Math.abs(keySig(keyObj(S.song.key))) * 0.78 + 2.4) + (clefNow(win).bands ? step * 2.4 : 0))) : 0;   // room for the clef, the key signature and the time signature
+const regularBeatPx = (win, step, W1) => (W1 - clefPadPx(win, step, W1)) / ((noteSizeNow() === "x" || duoMode()) ? Math.max(1, S.viewSpan) * barBeats() : barBeats());   // Regular's beat width: the bars set in Window shows across the width (every one at Micro, the first otherwise)
+const setBeatPx = (win, step, W1) => SPACING_SP[S.spacing] ? Math.min(SPACING_SP[S.spacing] * staffSpacePx(win, step), regularBeatPx(win, step, W1)) : 0;   // a set spacing's beat width — never wider than Regular's, so Tight ≤ Small ≤ Regular in every view; else 0
+function spacingSpan() {                                                                  // Small / Tight: the bars the window holds at the set width, the last one part-way
+  const win = leadWin(), svg = $(win + "Svg"), W1 = Math.max(120, (svg && svg.parentNode && svg.parentNode.clientWidth) || 300), { step } = rowsOf(win);
+  const barW = Math.max(1, barBeats() * setBeatPx(win, step, W1));
+  return clamp(Math.ceil((W1 - clefPadPx(win, step, W1)) / barW - 0.05), 1, 8);          // a bar that would only just poke in is left to the scroll
 }
 function geo(win) {
   const svg = $(win + "Svg"), B = barBeats(), { rows, step } = rowsOf(win), lo = viewOf(win), hi = lo + rows - 1;
-  const n = spanNow(), first = viewFirst(), W1 = Math.max(120, svg.parentNode.clientWidth || $("rhyStrip").querySelector(".body").clientWidth || 300), padL = clefNow(win) ? Math.min(Math.round(W1 * 0.5), Math.round(step * 2 * (3.3 + Math.abs(keySig(keyObj(S.song.key))) * 0.78 + 2.4) + (clefNow(win).bands ? step * 2.4 : 0))) : 0, padR = 0, padT = 5, padB = 5;   // padL: room for the clef, the key signature and the time signature   // no pad at the ends: every beat, first and last, is exactly one share of the width
+  const n = spanNow(), first = viewFirst(), W1 = Math.max(120, svg.parentNode.clientWidth || $("rhyStrip").querySelector(".body").clientWidth || 300), padL = clefPadPx(win, step, W1), padR = 0, padT = 5, padB = 5;   // padL: room for the clef, the key signature and the time signature   // no pad at the ends: every beat, first and last, is exactly one share of the width
   const bars = viewBars(), starts = {}; let accB = 0;
   for (const b of bars) { starts[b] = accB; accB += barBeats(b); }
-  let beatPx = (W1 - padL - padR) / (noteSizeNow() === "x" || duoMode() ? Math.max(accB, B) : B);   // a bar to the window's width — or, at Micro, every bar in view across it side by side, nothing to scroll
-  let W = padL + padR + Math.max(accB, B) * beatPx;
-  /* Engraved spacing: each bar is cut at every onset in it (any part, and the lyric chips), each piece given its room from the scale in this stave's
-     own staff spaces; the bars in view are then scaled alike to fill the window, as an engraver justifies a system, so the scale's proportions hold at
-     every width and size while the bars in view stay as set (at its natural size the scale wants about two and a third times a Micro time grid's
-     width for a bar of quarters, so it would scroll). Within a piece time still runs evenly, so a tap lands where it looks and the map inverts exactly */
-  const engraved = S.spacing === "engraved", maps = {}, startPx = {}; let totPx = 0;
-  if (engraved) {
-    const sp = (S.halfLines || clefOn(win)) ? 2 * step : step, natural = [];
-    for (const b of bars) {
-      const bar = S.song.bars[b], Bb = barBeats(b), ts = new Set([0, Bb]);
-      for (const p in (bar.ev || {})) for (const e of bar.ev[p] || []) if (e.t > 0 && e.t < Bb - 1e-6) ts.add(r3(e.t));
-      for (const c of bar.chips || []) if (c.t > 0 && c.t < Bb - 1e-6) ts.add(r3(c.t));
-      const any = Object.values(bar.ev || {}).some(a => a && a.length) || (bar.chips || []).length > 0;
-      if (!any) for (let k = 1; k < Bb; k++) ts.add(k);                                   // an empty bar: its beats, each a quarter's room (a bar holding one whole note is one span)
-      const pts = [...ts].sort((a, c) => a - c), ws = []; let tot = 0;
-      for (let i = 1; i < pts.length; i++) { const w = spaceW(pts[i] - pts[i - 1]) * sp; ws.push(w); tot += w; }
-      maps[b] = { pts, ws, tot }; natural.push(tot);
-    }
-    const sum = natural.reduce((a, v) => a + v, 0), avail = Math.max(accB, B) * beatPx, k = sum > 0 ? avail / sum : 1;   // the same width the time grid would give these bars, shared out by the scale
-    for (const b of bars) { const m = maps[b]; m.cum = [0]; for (const w of m.ws) m.cum.push(m.cum[m.cum.length - 1] + w * k); startPx[b] = totPx; totPx += m.tot * k; }
-    W = padL + padR + totPx; beatPx = totPx / Math.max(accB, 1e-6);                        // beatPx: the average, for what still counts in beats (the lyric chips' fitting)
-  }
-  const g = { win, B, n, first, bars, starts, totalBeats: accB, W, W1, H: padT + rows * step + padB, padL, padT, step, lo, hi, beatPx, engraved };
+  const setPx = duoMode() ? 0 : setBeatPx(win, step, W1);                                   // a set spacing (Small / Tight): every beat this wide; at the song's end, with fewer bars left than fit, they fill the width as before
+  const fillPx = (W1 - padL - padR) / (noteSizeNow() === "x" || duoMode() || setPx ? Math.max(accB, B) : B);   // a bar to the window's width — or, at Micro, every bar in view across it side by side, nothing to scroll
+  const beatPx = setPx ? Math.max(setPx, fillPx) : fillPx;
+  const W = padL + padR + Math.max(accB, B) * beatPx;
+  const g = { win, B, n, first, bars, starts, totalBeats: accB, W, W1, H: padT + rows * step + padB, padL, padT, step, lo, hi, beatPx };
   svg.setAttribute("width", W); svg.style.width = W + "px"; svg.style.touchAction = W > W1 + 1 ? "pan-x" : "none";
-  const inBar = (bi, t) => { const m = maps[bi]; if (!m) return t * beatPx; const { pts, cum } = m, last = pts.length - 1;
-    if (t >= pts[last]) return cum[last] + (t - pts[last]) * beatPx;                    // past the bar line (a note running on): at the average rate
-    let i = 1; while (i < last && t > pts[i] + 1e-9) i++; const f = (t - pts[i - 1]) / (pts[i] - pts[i - 1]); return cum[i - 1] + f * (cum[i] - cum[i - 1]); };
-  const tIn = (bi, px) => { const m = maps[bi]; if (!m) return px / beatPx; const { pts, cum } = m, last = cum.length - 1;
-    if (px >= cum[last]) return pts[last] + (px - cum[last]) / beatPx;
-    let i = 1; while (i < last && px > cum[i]) i++; const f = (px - cum[i - 1]) / ((cum[i] - cum[i - 1]) || 1); return pts[i - 1] + f * (pts[i] - pts[i - 1]); };
-  if (engraved) {
-    g.x = (bi, t) => padL + (startPx[bi] != null ? startPx[bi] : totPx) + inBar(bi, t);
-    g.at = x => { const px = x - padL; let bi = bars[0]; for (const b of bars) if (px >= startPx[b] - 1e-6) bi = b; return { bi, t: clamp(tIn(bi, px - startPx[bi]), 0, barBeats(bi) - 0.001) }; };   // a whisker's grace at a bar line: x(bi, 0) comes back as that bar's start
-  } else {
-    g.x = (bi, t) => padL + ((starts[bi] != null ? starts[bi] : accB) + t) * beatPx;   // x(bi, t)
-    g.at = x => { const beats = (x - padL) / beatPx; let bi = bars[0]; for (const b of bars) if (beats >= starts[b]) bi = b; return { bi, t: clamp(beats - starts[bi], 0, barBeats(bi) - 0.001) }; };
-  }
+  g.x = (bi, t) => padL + ((starts[bi] != null ? starts[bi] : accB) + t) * beatPx;   // x(bi, t)
+  g.at = x => { const beats = (x - padL) / beatPx; let bi = bars[0]; for (const b of bars) if (beats >= starts[b]) bi = b; return { bi, t: clamp(beats - starts[bi], 0, barBeats(bi) - 0.001) }; };
   const dia = clefOn(win) ? keyObj(S.song.key) : null;
   if (dia) {                                                                                // the Clef view: the rows are letter steps in the key; g.lo / g.hi stay pitch bounds a whisker past the rows' own pitches
     const loS = spell(lo, dia).step, hiS = loS + rows - 1;
@@ -6600,7 +6574,7 @@ const deckMode = () => window.matchMedia("(min-width: 860px) and (min-aspect-rat
 const duoMode = () => deckMode() && S.layout === "stack";
 const duoBandWin = () => S.duoBand === "bass" ? "bass" : "acc";
 const kbUpNow = () => !!(typeof WE !== "undefined" && WE.on && $("wordEdit") && $("wordEdit").classList.contains("on"));
-const spanNow = () => duoMode() ? (S.duoBars === 8 ? 8 : 4) : S.viewSpan;
+const spanNow = () => duoMode() ? (S.duoBars === 8 ? 8 : 4) : SPACING_SP[S.spacing] ? spacingSpan() : S.viewSpan;   // Stacked staves keep their own bars; a set spacing takes as many as fit
 const DECK_NAME = { mel: "MELODY", acc: "ACCOMPANIMENT", bass: "BASS" };
 const gearIco = () => { const s = svgEl("svg", { class: "ico" }); s.append(svgEl("use", { href: "#icoGear" })); return s; };   // the shared gear symbol (svgEl's third argument is text, so the <use> must be appended)
 function deckActive() { if (duoMode()) { if (kbUpNow()) return "mel"; const w = PART_WIN[S.activePart || "melody"]; return w === duoBandWin() ? w : "mel"; } const open = ["mel", "acc", "bass"].find(w => S.winState[w] !== "closed"); return S.deck.includes(open) ? open : S.deck[0]; }
@@ -8113,9 +8087,9 @@ function initPointer() {
     svg.addEventListener("wheel", e => { e.preventDefault(); if (e.ctrlKey) { S.zoomWin[win] = clamp(S.zoomWin[win] * (e.deltaY > 0 ? 0.92 : 1.08), 0.5, 2.5); savePrefs(); renderAll(); } else shiftView(win, e.deltaY > 0 ? -1 : 1); }, { passive: false });
     /* two-finger pinch: taller/shorter rows (vertical) or fewer/more bars (horizontal) */
     const pts = new Map(); let pz = null;
-    svg.addEventListener("pointerdown", e => { if (e.pointerType !== "touch") return; pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (pts.size === 2) { dragCtx = null; const [a, b] = [...pts.values()]; pz = { d0: Math.max(20, Math.hypot(a.x - b.x, a.y - b.y)), dy0: Math.abs(a.y - b.y), dx0: Math.abs(a.x - b.x), z0: S.zoomWin[win], last: 1 }; } }, { capture: true });
-    svg.addEventListener("pointermove", e => { if (!pts.has(e.pointerId) || !pz) return; pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); const [a, b] = [...pts.values()]; const d = Math.max(20, Math.hypot(a.x - b.x, a.y - b.y)); pz.last = d / pz.d0; if (pz.dy0 >= pz.dx0) { const z = clamp(pz.z0 * pz.last, 0.5, 2.5); if (Math.abs(z - S.zoomWin[win]) > 0.02) { S.zoomWin[win] = z; allocate(); renderWindows(); renderStrips(); renderBeatRow(); } } }, { capture: true });
-    const pzEnd = e => { if (!pts.has(e.pointerId)) return; pts.delete(e.pointerId); if (pz && pts.size < 2) { if (pz.dx0 > pz.dy0 && (pz.last > 1.3 || pz.last < 0.77)) { S.viewSpan = clamp(S.viewSpan + (pz.last > 1 ? -1 : 1), 1, 4); } pz = null; savePrefs(); renderAll(); } };
+    svg.addEventListener("pointerdown", e => { if (!PINCH_ENABLED || e.pointerType !== "touch") return; pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (pts.size === 2) { dragCtx = null; const [a, b] = [...pts.values()]; pz = { d0: Math.max(20, Math.hypot(a.x - b.x, a.y - b.y)), dy0: Math.abs(a.y - b.y), dx0: Math.abs(a.x - b.x), z0: S.zoomWin[win], last: 1 }; } }, { capture: true });
+    svg.addEventListener("pointermove", e => { if (!PINCH_ENABLED || !pts.has(e.pointerId) || !pz) return; pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); const [a, b] = [...pts.values()]; const d = Math.max(20, Math.hypot(a.x - b.x, a.y - b.y)); pz.last = d / pz.d0; if (pz.dy0 >= pz.dx0) { const z = clamp(pz.z0 * pz.last, 0.5, 2.5); if (Math.abs(z - S.zoomWin[win]) > 0.02) { S.zoomWin[win] = z; allocate(); renderWindows(); renderStrips(); renderBeatRow(); } } }, { capture: true });
+    const pzEnd = e => { if (!PINCH_ENABLED || !pts.has(e.pointerId)) return; pts.delete(e.pointerId); if (pz && pts.size < 2) { if (pz.dx0 > pz.dy0 && (pz.last > 1.3 || pz.last < 0.77)) { S.viewSpan = clamp(S.viewSpan + (pz.last > 1 ? -1 : 1), 1, 4); } pz = null; savePrefs(); renderAll(); } };
     svg.addEventListener("pointerup", pzEnd, { capture: true }); svg.addEventListener("pointercancel", pzEnd, { capture: true });
   }
   /* rhythm strip: tap a slot to select, tap empty space to insert a slot there */
@@ -8962,8 +8936,8 @@ function openSettings() {
     el("div", { class: "mrow" }, toggle("Note boxes — the solid orange box drawn around each melody note, at its own duration", S.beatLines, v => { S.beatLines = v; savePrefs(); renderAll(); openSettings(); })),
     el("div", { class: "pLbl" }, "Bar select highlight"), seg([["default", "Default"], ["blue", "Light blue"], ["gray", "Gray"], ["boxed", "Boxed only"], ["none", "None"]], S.barHi, v => { S.barHi = v; savePrefs(); renderAll(); }),
     el("div", { class: "tiny" }, "The tint and frame on the bar that is awake, on every stave. Boxed only: a medium black frame and no tint. None: nothing but the dashed entry box."),
-    el("div", { class: "pLbl" }, "Note spacing"), seg([["time", "Time grid"], ["engraved", "Engraved"]], S.spacing, v => { S.spacing = v; savePrefs(); renderAll(); }),
-    el("div", { class: "tiny" }, "Time grid: every beat the same width, a note's room its duration. Engraved: a note's room by its value on the engravers' scale, in this stave's own staff spaces — a 32nd 1½, a 16th 2, an eighth 2½, a quarter 3½, a half 5, a whole 7 — so short notes get more room and long ones less, a whole note twice a quarter's room rather than four times; the bars in view keep the width they have, shared out by the scale; the beat lines fall where the notes put them, and every stave and strip shares the same placing."),
+    el("div", { class: "pLbl" }, "Note spacing"), seg([["regular", "Regular"], ["small", "Small"], ["tight", "Tight"]], S.spacing, v => { S.spacing = v; savePrefs(); renderAll(); }),
+    el("div", { class: "tiny" }, "Regular: the bars set in Window shows fill the width. Small and Tight: every beat no wider than two, or one and a half, of the stave's own staff spaces (and never wider than Regular's), so the spacing complements the view's size and the note size, with as many bars in view as fit at that width, the last running off the edge and the rest a scroll away; on the phone and the deck alike (Stacked staves keep their own bars). The beats stay regular: a beat is a beat."),
     el("div", { class: "mrow" }, toggle("Lines and spaces (half steps alternate line, space, line, space; off = one half step per space)", S.halfLines, v => { S.halfLines = v; savePrefs(); renderAll(); openSettings(); })),
     el("div", { class: "mrow" }, toggle("Lock the register scroll at the edge of each sound's range (top and bottom alike, on every stave)", S.rangeLock, v => { S.rangeLock = v; if (v) ["mel", "acc", "bass"].forEach(w => { const { rows } = rowsOf(w), [minV, , maxV] = viewLimits(w, rows); S.song.view[WIN_LO[w]] = clamp(viewOf(w), minV, maxV); }); savePrefs(); renderAll(); openSettings(); })),   // switched on, every stave's view is pulled inside its range at once
     el("div", { class: "tiny" }, "Locks to: " + ["mel", "acc", "bass"].map(w => { const [lo, hi] = soundRange(w), P = S.song.parts[WIN_PART[w]], k = keyObj(S.song.key); return `${DECK_NAME[w].charAt(0) + DECK_NAME[w].slice(1).toLowerCase()} ${noteName(lo, k)}–${noteName(hi, k)} (${P.bank || P.inst})`; }).join(" · ") + ". A piano or a sample library that spans the keyboard leaves nothing to lock."),
