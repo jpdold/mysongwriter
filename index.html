@@ -407,6 +407,8 @@ text.clef, text.smufl { user-select: none; }
    staff-lines switch; the middle between playback and this part's buttons; the right between four palettes — notes (the quick
    palette), rests, dynamics, marks — each flip button at its own third's far corner */
 #toolbar { display: none; }
+#app.deck #toolbar { position: fixed; left: 2px; right: 4px; bottom: 6px; z-index: 65; }   /* fixed to the screen's foot, so nothing — a stack run long, a browser bar coming or going — can push it off the display */
+#app.deck.duo #toolbar { left: 0; right: 2px; }
 #app.deck #toolbar { grid-area: t; display: flex; gap: 2px; align-items: center; margin-top: 0; min-width: 0; padding: 3px 6px; background: linear-gradient(#f2f3f5, #d2d5da); border: 1px solid #8a8d92; border-radius: 4px; box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(0,0,0,.25); }
 #app.deck button.tplay { height: 26px; font-size: 8px; padding: 0 6px; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); color: #111; font-weight: 800; letter-spacing: .04em; white-space: nowrap; }
 #app.deck button.tplay.on { background: #2f7fd6; color: #fff; }
@@ -469,6 +471,12 @@ body.kbOpen #app.deck { padding-bottom: 6px; }
 #app.deck.duo #melWin .partBar { background: #2ee62e; color: #000; } #app.deck.duo #accWin .partBar { background: #ffcc00; color: #000; } #app.deck.duo #bassWin .partBar { background: #e02020; color: #fff; }
 #app.deck.duo #accWin .doors, #app.deck.duo #bassWin .doors { display: block !important; }   /* Stacked staves: every stave has its cover */
 #app.deck.duo.kbUp #accWin, #app.deck.duo.kbUp #bassWin { display: none !important; }
+/* the lyrics screen (Stacked staves, keyboard open): the melody's window keeps its room but shows nothing — the strip is sized to its frame — and the column, the beat row and the other strips step out; the keyboard's ✕ closes it */
+#app.deck.lyrScreen #melWin { visibility: hidden; }
+#app.deck.lyrScreen #rollBar { display: none !important; }                                   /* the selector row too: the strip, the keyboard and its tools alone */
+#app.deck.lyrScreen #deckNav, #app.deck.lyrScreen #rhyStrip, #app.deck.lyrScreen #dynStrip, #app.deck.lyrScreen #beatRow { display: none !important; }
+#wordEdit #lyrX { display: none; position: absolute; top: 6px; right: 6px; width: 40px !important; height: 40px !important; min-width: 0; padding: 0; border: 2px solid #7a1410; border-radius: 6px; background: #e02020; color: #fff; font-size: 22px !important; font-weight: 900; line-height: 1; z-index: 5; box-shadow: 0 2px 4px rgba(0,0,0,.4); cursor: pointer; }
+body:has(#app.lyrScreen) #wordEdit #lyrX { display: grid; place-items: center; } #lyrX:active { filter: brightness(1.15); }
 #app.deck #rollBar .rollItem:has(input:disabled) { opacity: .6; }
 #app.deck.duo { padding: 6px 2px 6px 0; gap: 0 4px; }                                        /* the duo: what is left of the margins goes to the staves too */
 #app.deck.duo .win, #app.deck.duo .strip { grid-template-columns: 42px 1fr; }               /* a slimmer gutter: the pitch labels and the ↑ ↓ arrows, nothing displaced */
@@ -6641,7 +6649,7 @@ const duoMode = () => deckMode() && S.layout === "stack";
 const duoWins = () => ["mel", ...["acc", "bass"].filter(w => S.deck && S.deck.includes(w))];
 const duoBandWin = () => { const bs = duoWins().filter(w => w !== "mel"); return bs.length ? bs[bs.length - 1] : (S.duoBand === "bass" ? "bass" : "acc"); };
 const kbUpNow = () => !!(typeof WE !== "undefined" && WE.on && $("wordEdit") && $("wordEdit").classList.contains("on"));
-const spanNow = () => duoMode() ? (S.duoBars === 8 ? 8 : 4) : SPACING_SP[S.spacing] ? spacingSpan() : S.viewSpan;   // Stacked staves keep their own bars; a set spacing takes as many as fit
+const spanNow = () => duoMode() ? (kbUpNow() ? 2 : (S.duoBars === 8 ? 8 : 4)) : SPACING_SP[S.spacing] ? spacingSpan() : S.viewSpan;   // Stacked staves keep their own bars; a set spacing takes as many as fit
 const DECK_NAME = { mel: "MELODY", acc: "ACCOMPANIMENT", bass: "BASS" };
 const gearIco = () => { const s = svgEl("svg", { class: "ico" }); s.append(svgEl("use", { href: "#icoGear" })); return s; };   // the shared gear symbol (svgEl's third argument is text, so the <use> must be appended)
 function deckActive() { if (duoMode()) { if (kbUpNow()) return "mel"; const ws = duoWins(), w = PART_WIN[S.activePart || "melody"]; if (ws.includes(w) && !(S.collapsed && S.collapsed[w])) return w; return ws.find(x => !(S.collapsed && S.collapsed[x])) || "mel"; } const open = ["mel", "acc", "bass"].find(w => S.winState[w] !== "closed"); return S.deck.includes(open) ? open : S.deck[0]; }
@@ -6731,7 +6739,7 @@ function placeDeckStrips() {
   lyr.style.cssText = `position:fixed;left:${Math.round(win.left)}px;width:${Math.round(win.width)}px;bottom:0;margin:0;display:grid`;   // out of the rows first, so the tool bar settles where it will be
   if (S.rhyShown !== false) rhy.style.cssText = `position:fixed;left:${Math.round(win.left)}px;width:${Math.round(win.width)}px;bottom:0;margin:0;display:grid`; else rhy.style.cssText = "";   // a hidden Rhythm strip stays hidden
   $("wordEdit").style.bottom = Math.round(window.innerHeight - $("toolbar").getBoundingClientRect().top) + "px";   // the keyboard flush on the tool bar
-  const kbBox = $("wordEdit"), grips = [...kbBox.querySelectorAll(".half .grip")], kbTop = grips.length ? Math.min(...grips.map(g => g.getBoundingClientRect().top)) : kbBox.getBoundingClientRect().top;
+  const kbBox = $("wordEdit"), grips = [...kbBox.querySelectorAll(".half .grip")].filter(g => g.getBoundingClientRect().height > 0), kbTop = grips.length ? Math.min(...grips.map(g => g.getBoundingClientRect().top)) : kbBox.getBoundingClientRect().top;   // the letters folded away (the phone's own keyboard): the grips have no size — the box's own top then
   lyr.style.bottom = Math.round(window.innerHeight - kbTop) + "px";                      // then the strips flush on the grips' tops, the Lyrics strip there and the Rhythm strip on that
   rhy.style.bottom = Math.round(window.innerHeight - kbTop + lyrH) + "px";
 }
@@ -6785,11 +6793,11 @@ function renderRollBar() {
   if (pb.parentNode !== $("head")) $("head").insertBefore(pb, deck ? $("gearBtn") : $("topTransport"));   // off the deck the parts button waits, hidden, in the head; on the deck it rides there too, beside the save button and the gear
   { const nv = $("nav"); if (nv.parentNode !== $("head")) $("head").insertBefore(nv, $("gearBtn")); }   // the bar bracket: up in the head row, as high as it goes
   if (deck) app.style.setProperty("--deckW", (duoMode() ? 40 : Math.max(40, Math.min(46, Math.round((app.clientWidth - 24 - 10 - 80) / 17)))) + "px");   // the duo: the column as slim as its buttons allow   // the part buttons' column: about a quarter of a beat of the stave beside it, never wider than its buttons need — the width goes to the stave
-  app.classList.toggle("rolled", S.layout === "rolled" && !deck); if (!deck) app.classList.remove("duo");   // off the deck nothing of Stacked staves lingers either
+  app.classList.toggle("rolled", S.layout === "rolled" && !deck); if (!deck) app.classList.remove("duo", "lyrScreen");   // off the deck nothing of Stacked staves lingers either
   ["mel", "acc", "bass"].forEach(w => { app.classList.toggle("open-" + w, S.layout === "rolled" && !deck && S.winState[w] !== "closed"); $(w + "Win").classList.remove("deckOn"); });
   if (deck) {
     if (!S.deck || !S.deck.length) S.deck = ["mel"];
-    const duo = duoMode(); app.classList.toggle("duo", duo);
+    const duo = duoMode(); app.classList.toggle("duo", duo); app.classList.toggle("lyrScreen", duo && kbUpNow());   // Stacked staves with the keyboard open: the lyrics screen — the Lyrics strip alone, two bars across, on the keyboard, with its own ✕
     if (fixCombo()) { savePrefs(); toast("Notes set to Micro for this view — the other sizes do not fit these bars and window"); }
     const active = deckActive(); S.focus = null; app.classList.remove("focused", "focus-mel", "focus-acc", "focus-bass");
     const shown = duo && !kbUpNow() ? duoWins() : [active];                              // Stacked staves: every part in the deck, the melody first; the deck: the one in view
@@ -7190,12 +7198,10 @@ function drawStaff(svg, g, key) {
   svg.append(svgEl("rect", { x: 0, y: 0, width: g.W, height: g.H, fill: paperFill(g.win) }));
   if (g.dia) for (let st = g.loS; st <= g.hiS; st++) {                                    // the Clef view: a letter step per row, a line every other step from the staff's bottom line
     const y = g.yS(st), pc = ((stepPitch(st, g.dia) % 12) + 12) % 12;
-    if (pc === key.pc) svg.append(svgEl("rect", { x: 0, y: y - g.step / 2, width: g.W, height: g.step, fill: css("--box-soft"), opacity: 0.1 }));
     if (lineStep(g.win, st)) { const ly = Math.round(y) + 0.5; svg.append(svgEl("line", { class: "stl", x1: 0, x2: g.W, y1: ly, y2: ly, stroke: css("--line"), "stroke-width": 2 })); }
   }
   else for (let m = g.lo; m <= g.hi; m++) {
     const y = g.y(m), nat = !isBlack(m), pc = ((m % 12) + 12) % 12;
-    if (pc === key.pc) svg.append(svgEl("rect", { x: 0, y: y - g.step / 2, width: g.W, height: g.step, fill: css("--box-soft"), opacity: 0.1 }));
     if (S.halfLines) {                                                    // lines and spaces: every other half step sits on a line, the rest in the spaces between
       if (lineRow(g.win, m)) { const ly = Math.round(y) + 0.5; svg.append(svgEl("line", { class: "stl", x1: 0, x2: g.W, y1: ly, y2: ly, stroke: css("--line"), "stroke-width": 2 })); }
       continue;
@@ -7574,7 +7580,7 @@ function renderStrips() {
       [0, HR - 5].forEach(y => svg.append(svgEl("rect", { x: x0 + 0.5, y: y + 0.5, width: x1 - x0 - 1, height: 4, fill: "#fff", "fill-opacity": 0.7, stroke: "rgba(0,0,0,.35)", "stroke-width": 1, "pointer-events": "none" })));
     }
     if (S.active && bars.includes(S.active.bi)) { const ax = g.x(S.active.bi, S.active.beat), aw = g.x(S.active.bi, Math.min(barBeats(S.active.bi), S.active.beat + 1)) - ax; svg.append(svgEl("rect", { x: ax + 1, y: 1, width: Math.max(2, aw - 2), height: HR - 2, fill: "none", stroke: css("--box"), "stroke-width": 2, "pointer-events": "none" })); }   // the active beat on the strip: an outline only, nothing covering the entries
-    const mini = { step: 4, y: () => HR / 2 + 3, x: g.x, beatPx: g.beatPx, lo: 0, hi: 1, W: g.W, H: HR };   // a shorter strip: smaller heads, shorter stems
+    const mini = { step: 5, y: () => HR / 2 + 3.5, x: g.x, beatPx: g.beatPx, lo: 0, hi: 1, W: g.W, H: HR };   // a shorter strip: smaller heads, shorter stems
     for (const bi of bars) {
       const bar = song.bars[bi], sel = S.sel && S.sel.bi === bi && S.sel.part === "melody" ? S.sel.id : null;
       const rhyEvs = bar.ev.melody.filter(e => !e.rest).map(e => ({ id: e.id, t: e.t, d: e.d, m: 0.5, noBeam: e.noBeam })), groups = beamGroups(rhyEvs), beamed = new Set(groups.flatMap(gp => gp.evs.map(e => e.id)));
@@ -8306,6 +8312,7 @@ function initWindowChrome() {
 const WE = { on: false, bi: 0, t: 0, wid: null, dirty: false, picking: false, picks: [], carry: "", split: { l: 0, r: 0 } };   // picking: SELECT CHIP(S) is on; picks: the chips tapped since
 const weInput = () => $("lyrInline");
 function openWordEdit(bi, t, chip) {
+  if (typeof duoMode === "function" && duoMode() && S.activePart !== "melody") { toast("Tap the melody stave first — the lyrics go with the melody"); return; }   // Stacked staves: the lyrics screen opens for the melody alone
   const wasOpen0 = WE.on;
   /* the keyboard: a fresh word starts at the first free spot from t (the left edge, or after the last word);
      an existing chip edits in place. The box never sits on another chip. */
@@ -8987,6 +8994,7 @@ function weOpenFromButton() {
 }
 function initWordEdit() {
   const box = $("wordEdit"), inp = weInput(), close = box.querySelector("button.close");
+  box.append(el("button", { id: "lyrX", title: "Done — back to the staves", onclick: () => closeWordEdit() }, "✕"));   // the lyrics screen's ✕: a white cross on red, top right of the keyboard
   $("lyrEdit").addEventListener("click", weOpenFromButton);
   inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); commitWordEdit(true, false, true, true); } else if (e.key === "Tab") { e.preventDefault(); weNewNextBeat(); } else if (e.key === "Backspace" && !inp.value && !WE.chipId) { e.preventDefault(); weBackChip(); } else if (e.key === " " && !inp.value && !WE.chipId) { e.preventDefault(); weSpaceChip(); } else if (e.key === "Escape") { e.preventDefault(); WE.dirty = false; closeWordEdit(); } });
   inp.addEventListener("input", () => { weTypingStarts(); { const bar = S.song.bars[WE.bi], p = bar && !WE.chipId && bar.chips.find(c => c.placing); if (p) { const v = inp.value; if (placeGapChip(bar, WE.bi, p)) { openWordEdit(WE.bi, p.t, p); inp.value = v; } else inp.value = ""; } } WE.dirty = true; sizeInline(); });   // typing with a ↔ chip in hand sets it and the words go into it
@@ -9075,7 +9083,7 @@ function openSettings() {
       el("div", { class: "pLbl" }, "Stacked staves on a wide screen"), el("div", { class: "mrow" }, seg([[4, "4 bars"], [8, "8 bars"]], S.duoBars === 8 ? 8 : 4, v => { S.duoBars = v; S.homeNext = { mel: true, acc: true, bass: true }; savePrefs(); renderAll(); }, okDuoBars), el("span", { class: "tiny" }, "The parts checked in the row over the staves stack beneath the melody; on that row ⇕ covers the rest of a stave, − folds it to a bar and + unfolds it.")),
       el("div", { class: "tiny" }, "This many bars across the width, nothing to scroll. The accompaniment or the bass sits below the strips at about a third of the height, flush on the tool bar; the melody takes the rest. ⇄ beside the lower stave swaps the two."),
     ] : []),
-    el("div", { class: "pLbl" }, S.layout === "stack" ? "Window shows (on a phone, and the deck)" : "Window shows"), seg([[1, "1 bar"], [2, "2 bars"], [3, "3 bars"], [4, "4 bars"]], S.viewSpan, v => { S.viewSpan = v; savePrefs(); renderAll(); }, okBars),
+    ...(S.layout === "stack" ? [] : [el("div", { class: "pLbl" }, "Window shows"), seg([[1, "1 bar"], [2, "2 bars"], [3, "3 bars"], [4, "4 bars"]], S.viewSpan, v => { S.viewSpan = v; savePrefs(); renderAll(); }, okBars),]),
     el("div", { class: "tiny" }, "More bars make the staves proportionately wider — swipe sideways to move along them; every window and strip scrolls together. Note size Micro (below) fits them all across instead."),
     el("div", { class: "pLbl" }, "Window sizing"), seg([["s", "Small"], ["m", "Medium"], ["l", "Large"]], S.winSize, v => { S.winSize = v; S.homeNext = { mel: true, acc: true, bass: true }; savePrefs(); renderAll(); }, okWin),
     el("div", { class: "mrow" }, el("button", { class: "btn sm", onclick: () => { S.zoomWin = { mel: 1, acc: 1, bass: 1 }; S.winState = S.layout === "rolled" ? { mel: "open", acc: "closed", bass: "closed" } : { mel: "open", acc: "open", bass: "open" }; savePrefs(); renderAll(); openSettings(); } }, "Reset windows"), el("span", { class: "tiny" }, "Windows share the screen: melody gets the most. The button under each ⚙ shrinks, closes and reopens a window; pinch a window to zoom it.")),
