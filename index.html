@@ -78,7 +78,7 @@ svg text { pointer-events: none; }
 /* rolled-up view: three labelled bars across the top; open staves drop down beneath; strips and tools follow */
 #app.rolled { max-width: 560px !important; grid-template-columns: 1fr !important; grid-template-areas: "head" "rollbar" "mel" "rhy" "lyr" "acc" "bass" "arrows" "undo" "pal" "play" !important; }   /* the Rhythm and Lyrics strips flush under the melody, the accompaniment and bass beneath them */
 @media (min-width: 860px) and (min-aspect-ratio: 5/4), (max-height: 520px) and (min-aspect-ratio: 5/4) { #app.rolled { max-width: 1180px !important; padding-left: 16px; padding-right: 16px; } #app.rolled .win .focus { display: none !important; } }
-#app.rolled #rollBar { display: flex; justify-content: center; }
+#app.rolled #rollBar { display: flex; justify-content: center; padding-left: 50px; }         /* room at the left for TURN */
 /* the phone's lyrics editing: the melody's window and the Lyrics strip reach the screen's edges as the keyboard does — the gutter with its marks kept, the column beside the stave away (its bulk tools with it, back when the keyboard closes), the ↑ ↓ away (the register still scrolls), the Rhythm strip and the Lyrics label away */
 #app.lyrEdit #melWin, #app.lyrEdit #lyrStrip { margin-left: -10px; margin-right: -10px; }
 #app.lyrEdit #melWin, #app.lyrEdit #lyrStrip { grid-template-columns: 48px 1fr; }
@@ -86,7 +86,7 @@ svg text { pointer-events: none; }
 #app.lyrEdit #lyrStrip .tag { visibility: hidden; }
 #app.lyrEdit #lyrStrip { margin-top: -14px; }
 #app.lyrEdit #lyrStrip .body { border-radius: 0; }
-#app.rolled #rollBar .rollItem { flex: 0 1 118px; }                                          /* the phone's selectors: narrower, centred as a row */
+#app.rolled #rollBar .rollItem { flex: 0 1 96px; }                                          /* the phone's selectors: narrower, centred as a row */
 #app.rolled .win.closed { display: none !important; }
 #app.rolled .win .sizer { display: none; }
 #app.rolled #melWin { margin-top: 0; }
@@ -146,7 +146,10 @@ svg text { pointer-events: none; }
 #topTransport #tempo button, #navRight #tempo button { width: 20px; height: 34px; border: none; border-radius: 0; box-shadow: none; font-size: 18px; font-weight: 700; }
 #topTransport #tempo button#tempoLbl, #navRight #tempo button#tempoLbl { width: auto; min-width: 42px; padding: 0 2px; font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums; background: #111; color: #fff; }
 #topTransport #tempo button:active, #navRight #tempo button:active { background: linear-gradient(#ffd27a, #f5a623); }
-#app { overflow-x: hidden; }
+#app { overflow-x: hidden; position: relative; }
+#turnBtn { position: absolute; z-index: 6; width: 44px; height: 30px; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; background: linear-gradient(#fff, #d9d9d9); color: #111; border: 1.5px solid #141414; border-radius: 4px; font: 800 6.5px/1 system-ui, sans-serif; letter-spacing: .04em; box-shadow: 0 2px 4px rgba(0,0,0,.4); }   /* TURN: under ☰ in both views */
+#turnBtn .big { font-size: 13px; line-height: 1; } #turnBtn:active { background: linear-gradient(#ffd27a, #f5a623); }
+#app.kbUp #turnBtn, #app.lyrEdit #turnBtn { display: none; }
 .btn.warn { background: #c8402f; color: #fff; border-color: #a93226; }
 #app > * { min-width: 0; }                     /* no child may widen the column: text and svgs never push the staves about */
 #palette { min-width: 0; overflow: hidden; }
@@ -481,6 +484,7 @@ body.kbOpen #app.deck { padding-bottom: 6px; }
 #app.deck.duo.kbUp #accWin, #app.deck.duo.kbUp #bassWin { display: none !important; }
 /* the lyrics screen (Stacked staves, keyboard open): the melody's window keeps its room but shows nothing — the strip is sized to its frame — and the column, the beat row and the other strips step out; the keyboard's ✕ closes it */
 #app.deck.lyrScreen #rollBar { display: none !important; }
+#app.deck.duo:not(.lyrScreen) #lyrStrip, #app.deck.duo #lyrBtn { display: none !important; }   /* Stacked staves: the Lyrics strip only on its own screen, from LYRICS in the column */
 #lyrGrab { display: none; position: absolute; left: 6px; top: 50%; transform: translateY(-50%); width: 34px; height: 24px; padding: 0; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); color: #111; font-size: 14px; font-weight: 900; line-height: 1; cursor: ns-resize; touch-action: none; z-index: 2; }
 #app.deck.lyrScreen #lyrGrab { display: grid; place-items: center; }                                   /* the selector row too: the strip, the keyboard and its tools alone */
 #app.deck.lyrScreen #deckNav, #app.deck.lyrScreen #rhyStrip, #app.deck.lyrScreen #dynStrip, #app.deck.lyrScreen #beatRow { display: none !important; }
@@ -832,6 +836,7 @@ body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the s
 @keyframes weFlash { 0%, 100% { background: transparent; color: inherit; } 25%, 75% { background: #ff3b30; color: #fff; } 50% { background: transparent; } }
 #wordEdit.blink { animation: weBlink .9s ease-in-out 1; }
 #wordEdit.blink > button.close { animation: weFlash .9s ease-in-out 1; }
+#wordEdit > button.close { background: #e02020; color: #fff; border-color: #7a1410; font-weight: 900; font-size: 18px; }   /* a bold white ✕ on red */
 #lyrInline { position: absolute; top: 3px; height: 18px; display: none; border: none; outline: none; background: rgba(255,255,255,.18); border-radius: 4px; padding: 0 3px;
   font-family: var(--sans); font-weight: 700; font-size: 16px; color: #fff; caret-color: transparent; min-width: 10px; }   /* the empty box may be as narrow as what is left of its beat */
 #weCaret { position: absolute; top: 8px; width: 2px; height: 20px; background: #fff; border-radius: 1px; display: none; pointer-events: none; z-index: 3; }
@@ -6054,11 +6059,11 @@ function loadPrefs() {
   S.lyricFont = p.lyricFont || "sans"; S.chipMode = "multi"; S.keepAwake = p.keepAwake !== false; S.paper = Object.assign({ mel: "default", acc: "default", bass: "default" }, p.paper || {}); S.quick = Object.assign({ cells: QUICK_DEFAULT.slice(), locked: true, float: false, x: null, y: null }, p.quick || {}); if (!Array.isArray(S.quick.cells) || S.quick.cells.join() === QUICK_OLD.join()) S.quick.cells = QUICK_DEFAULT.slice(); if (S.quick.cells.length === 8) S.quick.cells.push("sl", "ti", "gh", "dt"); if (S.quick.cells.length !== 12) S.quick.cells = QUICK_DEFAULT.slice();   // a third row joined: slur, tie, ghost note, dot
   S.winState = Object.assign({ mel: "open", acc: "closed", bass: "closed" }, p.winState || {}); S.zoomWin = Object.assign({ mel: 1, acc: 1, bass: 1 }, p.zoomWin || {}); S.midi = p.midi || {}; S.viewSpan = [1, 2, 3, 4].includes(p.viewSpan) ? p.viewSpan : 1;   // (these had been swallowed by the comment before them, so no load restored the windows, the zoom, the MIDI settings or the bars shown)
   if (p.softKb != null) S.softKb = p.softKb2 == null ? true : !!p.softKb2; S.kbPos = p.kbPos || null;   // the app keyboard, on unless switched off
-  S.phoneWins = p.phoneWins && typeof p.phoneWins === "object" ? p.phoneWins : null; S.lyrOff = Math.max(0, +p.lyrOff || 0);   // the lyrics screen's strip, lifted      // the phone's window states kept aside while the deck is up
+  S.phoneWins = p.phoneWins && typeof p.phoneWins === "object" ? p.phoneWins : null; S.lyrOff = Math.max(0, +p.lyrOff || 0); S.viewForce = p.viewForce === "deck" || p.viewForce === "phone" ? p.viewForce : null;   // the lyrics screen's strip, lifted      // the phone's window states kept aside while the deck is up
   S.layout = p.layout === "stack" ? "stack" : "rolled";                                 // Stacked staves or Rolled up: the page comes back in the view it was left in
   applyTheme();
 }
-function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, deck: S.deck, rhyShown: S.rhyShown, lyrShown: S.lyrShown, partsShown: S.partsShown, dynShown: S.dynShown, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, beatLines: S.beatLines, barHi: S.barHi, spacing: S.spacing, collapsed: S.collapsed, rangeLock: S.rangeLock, kbLayout: S.kbLayout, kbTheme: S.kbTheme, kbSpace: S.kbSpace, kbBackUp: S.kbBackUp, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, keepAwake: S.keepAwake, paper: S.paper, quick: S.quick, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout, duoBars: S.duoBars, duoBand: S.duoBand, beatDividers: S.beatDividers, focusBand: S.focusBand, doors: S.doors, clefs: S.clefs, phoneWins: S.phoneWins, lyrOff: S.lyrOff }); }
+function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, deck: S.deck, rhyShown: S.rhyShown, lyrShown: S.lyrShown, partsShown: S.partsShown, dynShown: S.dynShown, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, beatLines: S.beatLines, barHi: S.barHi, spacing: S.spacing, collapsed: S.collapsed, rangeLock: S.rangeLock, kbLayout: S.kbLayout, kbTheme: S.kbTheme, kbSpace: S.kbSpace, kbBackUp: S.kbBackUp, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, keepAwake: S.keepAwake, paper: S.paper, quick: S.quick, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout, duoBars: S.duoBars, duoBand: S.duoBand, beatDividers: S.beatDividers, focusBand: S.focusBand, doors: S.doors, clefs: S.clefs, phoneWins: S.phoneWins, lyrOff: S.lyrOff, viewForce: S.viewForce }); }
 function applyTheme() {
   const r = document.documentElement;
   if (S.theme === "dark") r.setAttribute("data-theme", "dark"); else r.removeAttribute("data-theme");
@@ -6602,6 +6607,7 @@ function refitGhost() {
 /* the window whose stave is showing: it owns the beat labels and the strips' geometry */
 const leadWin = () => S.focus || ["mel", "acc", "bass"].find(w => S.winState[w] !== "closed") || "mel";
 function stripGeoRaw() { const w = leadWin(); return GEO[w] || geo(w); }
+let LYR_X = 0;                                                                              // how far the Lyrics strip's left edge stands in from the stave's (the head's room less 6px)
 function lyrK() { return 1; }                                                            // the strip keeps its size and geometry
 /* the Lyrics font on the deck: larger as the beats are wider than on a phone (a 68px beat), up to 1.3× — words, chips, the box and its caret grow with it, the strip itself does not */
 function lyrF() { if (typeof deckMode !== "function" || !deckMode()) return 1; const g = stripGeoRaw(); return Math.round(clamp(g.beatPx / 68, 1, 1.3) * 100) / 100; }
@@ -6652,7 +6658,15 @@ function dynAt(bar, t) { let d = null; for (const e of bar.ev.melody) if (e.dyn 
    ═══════════════════════════════════════════════════════════════════════ */
 /* the widescreen deck: on a wide screen one part is in view at a time; the checked parts (ADD to VIEW) make up the deck, and the
    up / down buttons beside the stave, named for the parts above and below, move between them */
-const deckMode = () => window.matchMedia("(min-width: 860px) and (min-aspect-ratio: 5/4), (max-height: 520px) and (min-aspect-ratio: 5/4)").matches;
+const deckMQ = () => window.matchMedia("(min-width: 860px) and (min-aspect-ratio: 5/4), (max-height: 520px) and (min-aspect-ratio: 5/4)").matches;
+const deckMode = () => S.viewForce === "deck" ? true : S.viewForce === "phone" ? false : deckMQ();   // the wide screen's deck — or the layout the TURN button asked for
+/* TURN, under ☰: the other orientation's view. Where the browser lets the page lock the screen's orientation (an installed app) the screen turns; otherwise the other layout is drawn as it is, and TURN again brings the screen's own back */
+async function turnScreen() {
+  const mq = deckMQ();
+  if (S.viewForce) { S.viewForce = null; savePrefs(); try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (e) {} renderAll(); toast("The screen's own view"); return; }
+  try { if (screen.orientation && screen.orientation.lock) { await screen.orientation.lock(mq ? "portrait" : "landscape"); return; } } catch (e) {}
+  S.viewForce = mq ? "phone" : "deck"; savePrefs(); renderAll(); toast(mq ? "The phone's view — TURN again for the wide one" : "The wide view — TURN again for the phone's");
+}
 /* Stacked staves on a wide screen ("duo"): the deck's frame and tool bar, but two staves — the melody, about a third of the screen's height,
    over its strips, and below them the accompaniment or the bass filling the rest, flush on the tool bar; several bars across the width */
 const duoMode = () => deckMode() && S.layout === "stack";
@@ -6794,6 +6808,7 @@ function placeDeckLabels() {
     top.style.left = x + "px"; top.style.top = frame.offsetTop + "px";
     bot.style.left = x + "px"; bot.style.top = (frame.offsetTop + frame.offsetHeight) + "px";
   }
+  { const tb = $("turnBtn"), ar = $("app").getBoundingClientRect(), hb = $("head").getBoundingClientRect(); if (tb && hb.height) { tb.style.left = Math.round(hb.left - ar.left) + "px"; tb.style.top = Math.round(hb.bottom - ar.top + 2) + "px"; } }   // TURN just under ☰
   if (deckMode()) { const nav = $("deckNav"), duo = duoMode() && !kbUpNow(), ws = duo ? duoWins() : null, frame = $(deckActive() + "Win").querySelector(".frame"), fTop = duo ? $(ws[0] + "Win") : frame, fBot = duo ? $(ws[ws.length - 1] + "Win") : frame, rowTop = nav.getBoundingClientRect().top - (parseFloat(nav.style.marginTop) || 0); nav.style.marginTop = Math.max(0, fTop.getBoundingClientRect().top - rowTop - 4) + "px"; nav.style.height = Math.round(fBot.getBoundingClientRect().bottom - fTop.getBoundingClientRect().top) + "px"; }   // the column: level with the (top) frame, as tall as the staves in view — the stack of bars when every stave is folded
 }
 /* Stacked staves: fold a part's stave to a bar, or unfold it — the staves left open take the room, every stave centred afresh */
@@ -6802,6 +6817,7 @@ function deckShow(w) { S.focus = null; ["mel", "acc", "bass"].forEach(x => { S.w
 let PARTS_BTN = null;
 function renderRollBar() {
   const pb = PARTS_BTN || (PARTS_BTN = $("partsBtn"));                                      // held: the row it lives in is rebuilt each render
+  if (!$("turnBtn")) $("app").append(el("button", { id: "turnBtn", title: "Turn the screen: the wide view, or the phone's", onclick: turnScreen }, el("span", { class: "big" }, "⟲"), el("span", {}, "TURN")));   // TURN: under ☰, placed by placeDeckLabels
   const bar = $("rollBar"); bar.replaceChildren(); const nav = $("deckNav");
   for (const id of ["selBtn", "delBtn", "repBtn", "copyBtn"]) { const b = $(id); if (b && b.parentNode === nav) $("mvRow").append(b); }   // the tool bar's own buttons step back to their row before the column is rebuilt, so they are never thrown away with it
   nav.replaceChildren();
@@ -6871,7 +6887,8 @@ function renderRollBar() {
     const bulk = () => ["selBtn", "delBtn", "repBtn", "copyBtn"].map(id => { const b = $(id); b.classList.add("colBtn"); return b; });   // SELECT, DELETE, REPEAT, COPY: the tool bar's own buttons, in the column while the deck is up
     const colCover = () => focusOn("mel") ? [el("button", { class: "colBtn" + (S.doors.mel !== false ? " on" : ""), title: "Open or close the doors over the rest of the melody stave", onclick: () => { S.doors.mel = S.doors.mel === false; savePrefs(); renderAll(); } }, el("span", { class: "big" }, "⇕"), el("span", {}, "COVER"))] : [];   // with the five-line focus on: the doors' switch
     if (duo) {                                                                            // Stacked staves: the column holds DEL, the gear of the part in view, BACK, UNDO, REDO and the bulk tools; the parts' gears, covers and folds sit on the selector row
-      nav.append(delB, gear, colBs(active), colUn(), colRe(), ...bulk(), kc);            // Stacked staves: the gears, covers and folds are on the selector row
+      const lyrCol = el("button", { class: "colBtn on", title: "Lyrics: type the words on their own screen", onclick: () => { S.activePart = "melody"; weOpenFromButton(); } }, el("span", { class: "big" }, "♪"), el("span", {}, "LYRICS"));
+      nav.append(delB, gear, colBs(active), colUn(), colRe(), ...bulk(), lyrCol, kc);    // Stacked staves: the gears, covers and folds are on the selector row; LYRICS under COPY opens the lyrics screen
     } else { nav.append(delB, gear, colBs(active), colUn(), colRe(), ...(active === "mel" ? colCover() : []), ...bulk(), kc); bar.append(el("div", { class: "rollArrows" }, arrow(-1, up), arrow(1, dn))); }   // the gear at the top, then BACK, UNDO, REDO, COVER, SELECT, DELETE, REPEAT, COPY; ▲ ▼ (the part in view) sit on the selector row past the last part, centred between it and the stave's edge — placed by placeDeckLabels
     { let sc = $("staveCtl"); if (!sc) sc = el("div", { id: "staveCtl" }); if (sc.parentNode !== $("toolR")) $("toolR").insertBefore(sc, $("flipBtn"));   // WIDER and TIGHTER: under a STAVE cap at the tool bar's right end, acting on the stave in view
       sc.replaceChildren(el("button", { title: "Wider: the lines further apart, notes and clef with them, up to the widest", onclick: () => zoomRows(deckActive(), 1) }, "|<>|"), el("button", { title: "Tighter: the lines closer together, notes and clef with them, down to the legible least", onclick: () => zoomRows(deckActive(), -1) }, ">|<")); }
@@ -7202,7 +7219,8 @@ function placeDoors(win) {
   if (!box) { box = el("div", { class: "doors" }, el("div", { class: "door top" }), el("div", { class: "door bot" })); w.append(box); }
   box.hidden = !show; if (!show) return;
   box.style.left = (frame.offsetLeft + frame.clientLeft) + "px"; box.style.top = (frame.offsetTop + frame.clientTop) + "px"; box.style.width = frame.clientWidth + "px"; box.style.height = frame.clientHeight + "px";
-  const [ct, cb] = focusCaps(g), topH = clamp(ct - 1 - DOOR_SLIVER, 0, g.H), botY = clamp(cb + 1 + DOOR_SLIVER, 0, g.H);
+  const lyrRoom = win === "mel" && !grandLower("mel") && viewBars().some(bi => (S.song.bars[bi].chips || []).some(c => !c.gap && c.text && c.text.trim())) ? g.step * 1.3 + 8 : 0;   // words under the staff: the lower door stands off them
+  const [ct, cb] = focusCaps(g), topH = clamp(ct - 1 - DOOR_SLIVER, 0, g.H), botY = clamp(cb + 1 + DOOR_SLIVER + lyrRoom, 0, g.H);
   const t = box.querySelector(".door.top"), b = box.querySelector(".door.bot");
   t.style.height = topH + "px"; b.style.top = botY + "px"; b.style.height = Math.max(0, g.H - botY) + "px";
   const [blo, bhi] = focusRange(win), closed = S.doors[win] !== false && blo >= g.lo && bhi <= g.hi;   // closed while the five lines are wholly in view; scrolled off them, the doors stand open
@@ -7539,6 +7557,9 @@ function renderWindows() {
     if (song.parts.sub.on) for (const e of partEvents("sub", bi)) if (e.m >= g.lo && e.m <= g.hi) svg.append(svgEl("rect", { x: g.x(bi, e.t) + 2, y: g.y(e.m) - 2, width: Math.max(4, g.x(bi, e.t + e.d) - g.x(bi, e.t) - 4), height: 4, rx: 2, fill: css("--sub"), opacity: 0.7, "pointer-events": "none" }));
     if (song.parts.backup.on) for (const e of partEvents("backup", bi)) for (const m of e.ms) if (m >= g.lo && m <= g.hi) svg.append(svgEl("rect", { x: g.x(bi, e.t) + 2, y: g.y(m) - 1.5, width: Math.max(4, g.x(bi, e.t + e.d) - g.x(bi, e.t) - 4), height: 3, fill: css("--backup"), opacity: 0.5, "pointer-events": "none" }));
     }
+    { const grand = !!grandLower("mel"), bs = g.dia ? focusBandSteps("mel") : null, [flo] = focusRange("mel");   // the words, as sung: under the staff, or in the white between a Grand Stave's two staves
+      const yL = grand ? g.yS((bs[0][1] + bs[1][0]) / 2) + 4 : g.dia ? g.yS(bs[0][0] - 1.6) + 4 : g.y(flo) + g.step * 1.6 + 4;
+      if (yL > 8 && yL < g.H - 2) for (const bi of g.bars) for (const c of song.bars[bi].chips || []) { if (c.gap || !c.text || !c.text.trim()) continue; svg.append(svgEl("text", { x: g.x(bi, c.t) + 2, y: yL, "font-family": "'Times New Roman', Times, serif", "font-weight": 700, "font-size": 13, fill: "#000", "pointer-events": "none" }, c.text.trim())); } }
     svg.append(svgEl("line", { id: "melHead", x1: -5, x2: -5, y1: 0, y2: g.H, stroke: css("--accent"), "stroke-width": 2, "pointer-events": "none" }));
   }
   /* ── accompaniment & bass windows ── */
@@ -7632,8 +7653,9 @@ function renderStrips() {
   /* lyrics strip: syllables, or free letters / spaces / symbols the user has split apart */
   {
     const gl = stripGeo(), k = gl.k || 1;                                                  // the strip at its own scale
-    const HL = !deckMode() && grandLower("mel") ? H * 2 : H;                                // the phone, the melody a Grand Stave: the strip in two lanes, one to each staff, the words in the upper
+    const HL = !deckMode() && grandLower("mel") ? H * 2 : H;
     const svg = $("lyrSvg"); svg.replaceChildren(); svg.setAttribute("height", HL * k); svg.setAttribute("viewBox", `0 0 ${gl.W} ${HL}`); svg.setAttribute("width", gl.W * k); svg.style.width = (gl.W * k) + "px"; svg.style.height = (HL * k) + "px"; svg.style.touchAction = g.n > 1 ? "pan-x" : "none";
+    { LYR_X = Math.max(0, Math.round((gl.padL || 0) - 6)); const body = $("lyrStrip").querySelector(".body"); body.style.marginLeft = LYR_X + "px"; svg.style.marginLeft = -LYR_X + "px"; }   // the strip begins just left of beat 1: the clef, key and time signatures' room at the head is not its concern                                // the phone, the melody a Grand Stave: the strip in two lanes, one to each staff, the words in the upper
     $("lyrStrip").classList.toggle("serif", S.lyricFont === "serif"); $("lyrStrip").classList.toggle("smallcaps", S.lyricFont === "smallcaps");
     $("wordEdit").classList.toggle("serif", S.lyricFont === "serif"); $("wordEdit").classList.toggle("smallcaps", S.lyricFont === "smallcaps");
     svg.append(svgEl("rect", { class: "hit", x: 0, y: 0, width: gl.W, height: HL, fill: "transparent", "data-lane": "lyr" }));
@@ -8316,7 +8338,7 @@ function initPointer() {
   /* a window size reported while the page is hidden (a phone browser minimising, or bringing the app back) can be a passing one — short and wide for a moment,
      enough to engage the deck; nothing is drawn to it: the render waits until the page is visible again, and is then drawn once, at the size the page really has */
   let renderWhenShown = false;
-  window.addEventListener("resize", () => { if (!S.song) return; if (document.hidden) { renderWhenShown = true; return; } renderAll(); });
+  window.addEventListener("resize", () => { if (!S.song) return; if (S.viewForce && deckMQ() === (S.viewForce === "deck")) { S.viewForce = null; savePrefs(); } if (document.hidden) { renderWhenShown = true; return; } renderAll(); });   // the screen turned for real to the view TURN had forced: the force is spent
   document.addEventListener("visibilitychange", () => { if (!document.hidden && S.song && (renderWhenShown || deckMode() !== $("app").classList.contains("deck"))) { renderWhenShown = false; renderAll(); } });
   window.addEventListener("load", () => setTimeout(() => { if (S.song) renderAll(); }, 350));                 // once more after the load has settled: the first measurements can be taken before the page has its final size
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (S.song) renderAll(); });
@@ -8626,7 +8648,7 @@ function placeInline() {
   inp.classList.toggle("empty", !inp.value && !WE.chipId);                                // an empty box wears a white border: the tap is confirmed, though nothing is selected for the tools
   const pad = chipPad(); inp.style.padding = "0 " + (pad * k) + "px";                    // half a space each side, like a chip
   { const f = lyrF(); inp.style.fontSize = (LYR_FS * f) + "px"; }                // the box in the strip's font at its deck size; the strip's height as ever
-  const put = (leftU, widthU) => { inp.style.left = Math.round(leftU * k) + "px"; if (widthU != null) inp.style.width = Math.round(widthU * k) + "px"; };   // strip units → css pixels
+  const put = (leftU, widthU) => { inp.style.left = Math.round(leftU * k - LYR_X) + "px"; if (widthU != null) inp.style.width = Math.round(widthU * k) + "px"; };   // strip units → css pixels
   if (!WE.chipId && WE.t >= barBeats(WE.bi) - 1e-6) { inp.style.width = "0px"; put(g.W - 1); return; }   // the bar is full: the box waits, out of the way, at its end
   if (S.chipMode === "single" && !WE.chipId) { const x0 = g.x(WE.bi, 0), x1 = g.x(WE.bi, barBeats(WE.bi)); put(x0 + 1, Math.max(44, x1 - x0 - 2 - 2 * pad)); return; }
   const roomPx = Math.max(12, (Math.floor(WE.t + 1e-6) + 1 - WE.t) * g.beatPx);
