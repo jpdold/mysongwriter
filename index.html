@@ -210,7 +210,7 @@ svg text { pointer-events: none; }
 .win .focus.on { background: linear-gradient(#ffd27a, #f5a623); color: #111; }
 .win .side .bsBtn, .win .side .unBtn { width: 30px; height: 24px; padding: 0; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); color: #111; font: 800 7px/1 system-ui, sans-serif; letter-spacing: .04em; display: grid; place-items: center; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); }   /* ⌫ and UNDO under the stave's gear: the strip buttons' own silver */
 .win .side .bsBtn { font-size: 15px; }
-#app:not(.deck) .win .side { gap: 3px; }                                                     /* the column beside the stave: compact, so it never outgrows the stave and pushes the strips down */
+#app:not(.deck) .win .side { gap: 3px; padding-top: 0; } #app:not(.deck) .win .side .gear { height: 16px; }   /* the gear level with the frame's top edge */                                                     /* the column beside the stave: compact, so it never outgrows the stave and pushes the strips down */
 #app:not(.deck) .win .side #mvRow { display: flex; flex-direction: column; gap: 3px; width: 30px; margin-top: 6px; justify-self: auto; }   /* a small gap under UNDO, then the tools, all the one size */
 #app:not(.deck) .win .side .bsBtn, #app:not(.deck) .win .side .unBtn, #app:not(.deck) .win .side .doorBtn, #app:not(.deck) .win .side #mvRow button { height: 20px; }
 #app:not(.deck) .win .side #mvRow.armed { width: 30px; }
@@ -315,6 +315,9 @@ text.clef, text.smufl { user-select: none; }
 #app.deck #partsBtn:active { filter: brightness(1.1); }
 #app.deck.noparts #rollBar { display: none; }                                               /* parts hidden: the whole row folds away — the button lives in the head now, so nothing needs to stay behind to hold its place */
 #app.deck #rollBar .rollItem { flex: 0 0 150px; min-width: 0; }
+#rollBar .rollArrows { position: absolute; top: 50%; transform: translateY(-50%); display: flex; gap: 4px; }   /* ▲ ▼ beside the last part selector, placed by script */
+#rollBar .rollArrows button.partArr { width: 26px; height: 22px; padding: 0; background: linear-gradient(#fff, #d9d9d9); color: #111; border: 1.5px solid #141414; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); font-size: 11px; line-height: 1; display: grid; place-items: center; }
+#rollBar .rollArrows button.partArr:disabled { opacity: .35; box-shadow: none; } #rollBar .rollArrows button.partArr:active { background: linear-gradient(#ffd27a, #f5a623); }
 #app.deck #rollBar .rollItem:has(input:checked) { background: var(--ground2); } #app.deck #rollBar .rollItem:not(:has(input:checked)) { background: #111; }   /* the box's own colour follows its checkbox right away, not just once ADD to VIEW commits it */
 #app.deck #rollBar .rollItem label, #app.deck #rollBar .rollItem .lbl { flex: 0 1 auto; }   /* the name at its own width, so the gear has the room past it */
 #app.deck #rollBar .rollGear { flex: 1 1 0; min-width: 22px; width: auto; height: 20px; display: flex; align-items: center; justify-content: center; padding: 0; border: none; border-radius: 4px; background: none; box-shadow: none; color: #fff; cursor: pointer; }   /* the part's gear, centred in the room between the name and the pill's right edge */
@@ -363,12 +366,12 @@ text.clef, text.smufl { user-select: none; }
 #app.deck #mvRow button { font-size: 7px; }
 #app.deck #mvRow::before { content: "BULK"; grid-column: 1 / -1; grid-row: 1; display: block; height: 8px; line-height: 8px; text-align: center; font-size: 5.5px; font-weight: 800; letter-spacing: .18em; color: #fff; background: #111; border: 1.5px solid #141414; border-bottom: none; border-radius: 5px 5px 0 0; box-sizing: border-box; }   /* a cap over MOVE, DELETE (and CANCEL, once armed) and SELECT: a label, not a key */
 #app.deck #toolL #mvRow button { grid-row: 2; height: 18px; font-size: 8px; border-top: 1.5px solid #141414; }   /* shaved a little at the top: the cap and the keys together stand as tall as the row */
-#app.deck #mvRow button:first-of-type { border-radius: 0 0 0 4px; } #app.deck #mvRow button:last-of-type { border-radius: 0 0 4px 0; }
+#app.deck #mvRow button:first-of-type { border-radius: 0 0 0 4px; } #app.deck #mvRow button:last-of-type { border-radius: 0 0 4px 0; } #app.deck #mvRow:not(.armed) button:first-of-type { border-radius: 0 0 4px 4px; }   /* MOVE alone under its cap: both bottom corners rounded */
 #app.deck #undoRow button { height: 26px; border-top: 1.5px solid #141414; border-radius: 0; font-size: 8.5px; box-shadow: none; }
 #app.deck #undoRow button:first-child { border-radius: 4px 0 0 4px; }
 #app.deck #undoRow button:last-child { border-radius: 0 4px 4px 0; }
 #app.deck .tplay .tri { font-size: 9px; line-height: 1; margin-right: 1px; }
-#app.deck #toolL #mvRow button:first-child { border-radius: 0 0 0 4px; } #app.deck #toolL #mvRow button:last-child { border-radius: 0 0 4px 0; }   /* square top corners: MOVE / DELETE meet the BULK cap flush; the bottom corners stay rounded */
+#app.deck #toolL #mvRow button:first-child { border-radius: 0 0 0 4px; } #app.deck #toolL #mvRow button:last-child { border-radius: 0 0 4px 0; } #app.deck #toolL #mvRow:not(.armed) button:first-child { border-radius: 0 0 4px 4px; }   /* square top corners: MOVE / DELETE meet the BULK cap flush; the bottom corners stay rounded */
 #app.deck #quick { width: auto; max-width: calc(4 * 30px + 3 * 3px); flex: 0 0 auto; display: flex; gap: 3px; align-items: center; position: static; border: none; background: none; box-shadow: none; padding: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }   /* the notes: keys like the other palettes on the flip bar — four in view, the rest a scroll away */
 #app.deck #quick::-webkit-scrollbar { display: none; }
 #app.deck #quick .qctl, #app.deck #quick .qgrip { display: none; }                         /* part of the bar: nothing to lock or float */
@@ -504,7 +507,7 @@ body.kbOpen #lyrEdit, #app.deck.kbUp #lyrEdit { display: none !important; }   /*
    ↑ ↓ pitch-range arrows almost touching, and at the foot the strips button */
 #deckNav { grid-area: deck; position: relative; box-sizing: border-box; display: none; flex-direction: column; gap: 4px; align-self: start; min-width: 0; height: 0; overflow: visible; position: relative; }
 #deckNav button { width: 100%; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; background: #111; color: #fff; border: 1px solid #000; border-radius: 6px; font-size: 7px; font-weight: 800; letter-spacing: .04em; box-shadow: 0 1px 2px rgba(0,0,0,.35); flex: 0 0 auto; }
-#deckNav button.gearBtn { height: 26px; background: none; border: none; box-shadow: none; color: var(--on-ground); }
+#deckNav button.gearBtn { height: 17px; background: none; border: none; box-shadow: none; color: var(--on-ground); }   /* as tall as its icon, so the gear sits level with the frame's top edge */
 #deckNav button.gearBtn .ico { width: 17px; height: 17px; }
 #deckNav button.part { height: 44px; }
 #deckNav button.part + button.part { margin-top: -2px; }                                   /* ▼ almost flush below ▲ */
@@ -811,7 +814,7 @@ body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the s
 @keyframes weFlash { 0%, 100% { background: transparent; color: inherit; } 25%, 75% { background: #ff3b30; color: #fff; } 50% { background: transparent; } }
 #wordEdit.blink { animation: weBlink .9s ease-in-out 1; }
 #wordEdit.blink > button.close { animation: weFlash .9s ease-in-out 1; }
-#lyrInline { position: absolute; top: 3px; height: 30px; display: none; border: none; outline: none; background: rgba(255,255,255,.18); border-radius: 4px; padding: 0 3px;
+#lyrInline { position: absolute; top: 3px; height: 18px; display: none; border: none; outline: none; background: rgba(255,255,255,.18); border-radius: 4px; padding: 0 3px;
   font-family: var(--sans); font-weight: 700; font-size: 16px; color: #fff; caret-color: transparent; min-width: 10px; }   /* the empty box may be as narrow as what is left of its beat */
 #weCaret { position: absolute; top: 8px; width: 2px; height: 20px; background: #fff; border-radius: 1px; display: none; pointer-events: none; z-index: 3; }
 #weCaret.on { display: block; }
@@ -5952,10 +5955,10 @@ function perfFollow() {
 
 /* ── small helpers the new screen needs from the old one ── */
 const _chipW = new Map(); let _measureCtx = null, _measureText = null;
-const _padW = new Map();
+const _padW = new Map(); const LYR_FS = 12;                                                 // the Lyrics strip's letters: 12px, in a strip 24px tall
 /* a chip's side margin: half the width of a space, in the strip's own font */
 function chipPad() {
-  const fz = 16 * (typeof lyrF === "function" ? lyrF() : 1), key = (S.lyricFont || "sans") + "|" + fz; let p = _padW.get(key);
+  const fz = LYR_FS * (typeof lyrF === "function" ? lyrF() : 1), key = (S.lyricFont || "sans") + "|" + fz; let p = _padW.get(key);
   if (p == null) {
     if (_measureText) { _measureText.setAttribute("font-size", fz); _measureText.textContent = "\u00a0"; p = _measureText.getComputedTextLength() / 2; }
     else { if (!_measureCtx) { _measureCtx = document.createElement("canvas").getContext("2d"); } _measureCtx.font = `700 ${fz}px -apple-system, 'Segoe UI', Roboto, Arial, sans-serif`; p = _measureCtx.measureText(" ").width / 2; }
@@ -5968,7 +5971,7 @@ function chipW(c) {
   if (c.rest) return 22;
   if (c.wpx) return Math.round(c.wpx * (c.wf || 1));                          // a spacer chip: the width it was given when placed
   if (typeof WE !== "undefined" && WE.on && WE.chipId === c.id) { const v = weInput().value.trim(); if (v && v !== c.text) return chipW({ text: v }); }   // the chip in the entry box: as wide as what is typed there
-  const fz = 16 * (typeof lyrF === "function" ? lyrF() : 1), key = (S.lyricFont || "sans") + "|" + fz + "|" + c.text;   // the strip's font, at its size on the deck
+  const fz = LYR_FS * (typeof lyrF === "function" ? lyrF() : 1), key = (S.lyricFont || "sans") + "|" + fz + "|" + c.text;   // the strip's font, at its size on the deck
   let w = _chipW.get(key);
   if (w == null) {
     if (!_measureText) { const host = document.querySelector("#lyrStrip .body"); if (host) { const svg = svgEl("svg", { width: 0, height: 0, style: "position:absolute;left:0;top:0;width:0;height:0;overflow:hidden;visibility:hidden", "aria-hidden": "true" }); _measureText = svgEl("text", { x: 0, y: 24, "font-size": 16, "font-weight": 700, "font-family": "system-ui, sans-serif", "xml:space": "preserve", style: "white-space:pre" }); svg.append(_measureText); host.append(svg); } }
@@ -6011,7 +6014,7 @@ const GRAND_LOWER = "lh";
 const grandLower = win => (win === "mel" && clefNow("mel") && clefNow("mel").bands) ? GRAND_LOWER : null;   // the part the lower staff carries, when the melody's window is a Grand Stave
 const onLowerStaff = (g, m) => { if (!g.dia || g.win !== "mel" || !grandLower("mel")) return false; const bs = focusBandSteps("mel"); return g.stepOf(m) < (bs[0][1] + bs[1][0]) / 2; };   // a pitch below the middle of the gap between the staves belongs to the lower one
 const WIN_LO = { mel: "melLo", acc: "accLo", bass: "bassLo" };
-const NOTE_SCALE = { x: 0.42, s: 0.55, m: 0.72, l: 0.92 }; const noteSizeNow = () => (typeof deckMode === "function" && deckMode()) ? S.noteSize : "x"; const NS = () => NOTE_SCALE[noteSizeNow()] || 1;   // on the phone every note is drawn Micro   // x is Micro: notes small enough that every bar the window shows fits across it, side by side, with no sideways scrolling   // note size: heads, stems and flags; the stave never changes
+const NOTE_SCALE = { x: 0.47, s: 0.55, m: 0.72, l: 0.92 }; const noteSizeNow = () => (typeof deckMode === "function" && deckMode()) ? S.noteSize : "x"; const NS = () => NOTE_SCALE[noteSizeNow()] || 1;   // on the phone every note is drawn Micro   // x is Micro: notes small enough that every bar the window shows fits across it, side by side, with no sideways scrolling   // note size: heads, stems and flags; the stave never changes
 const HK = () => S.halfLines ? 1.55 : 1;         // lines-and-spaces: heads grow to fill a space (two rows)
 const STEP_K = { x: 0.82, s: 0.94, m: 1, l: 1.06 };   // row height nudges a little with the note size (Micro's rows tighter still, so more of the range shows)
 Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", noteSize: "m", chordMode: false, chordWin: { mel: false, acc: false, bass: false }, chordColor: "#ffffff", justEntered: null, activePart: "melody", lastEntered: null, ftp: null, mv: null, selAuto: false, halfLines: true, winSize: "m", chordsDisp: "names", metro: "off", winState: { mel: "open", acc: "closed", bass: "closed" }, zoomWin: { mel: 1, acc: 1, bass: 1 }, lyricFont: "sans", viewSpan: 1, layout: "rolled", selChip: null, deck: ["mel", "acc", "bass"], deckSel: null, rhyShown: true, lyrShown: true, partsShown: true, dynShown: false, dynArm: null, ghost: null, restNext: false, restLen: null, ghostNext: false, artic: null, slurFrom: null, active: null, softKb: ("ontouchstart" in window), popPos: null, mode: "melody", rangeLock: false, kbLayout: "standard", kbTheme: "classic", kbSpace: 0, kbBackUp: 0, picked: [] });
@@ -6403,7 +6406,7 @@ function freshSongState() {
   if (S.ftp) S.ftp.t = 0;
   if (typeof WE !== "undefined") { WE.on = false; WE.dirty = false; WE.wid = null; WE.chipId = null; const box = $("wordEdit"); if (box) box.classList.remove("on"); const inp = $("lyrInline"); if (inp) inp.classList.remove("on"); }
 }
-function activate(bi, t, part = "melody") { S.active = { bi, beat: beatOf(bi, t) }; S.activePart = part; S.bi = bi; S.sel = null; S.selAuto = false; S.ghost = null; S.selChip = null; S.justEntered = null; renderAll(); }
+function activate(bi, t, part = "melody") { S.active = { bi, beat: (S.song.bars[bi].ev[part] || []).length ? beatOf(bi, t) : 0 }; S.activePart = part; S.bi = bi; S.sel = null; S.selAuto = false; S.ghost = null; S.selChip = null; S.justEntered = null; renderAll(); }   // a bar with nothing in it for this part: the first beat, wherever the tap fell
 /* the notes tapped directly: each one tapped is picked (tapped again, it is let go); they build up across beats and staves until DEL removes them all, or a new note is entered.
    DEL — square, red, at the foot of a stave's button column (on the deck, under the gear) — shows only while something is picked, and asks first. */
 const isPicked = (bi, part, id) => (S.picked || []).some(p => p.bi === bi && p.part === part && p.id === id);
@@ -6656,7 +6659,7 @@ function wireScroller(sc) {
 /* the Dynamics strip: the part in view's dynamics and hairpins along the beats, on the same silver as the Rhythm strip */
 function renderDynStrip(g, bars, dividers) {
   const svg = $("dynSvg"); if (!svg || !deckMode()) return;
-  const HD = 30; /* about a third taller than the Rhythm strip */ svg.setAttribute("height", HD); svg.setAttribute("viewBox", `0 0 ${g.W} ${HD}`); svg.setAttribute("width", g.W); svg.style.width = g.W + "px";   // sized whether shown or not: hidden by CSS alone, so its box is never left at the browser's blank-svg default and allocate() never misjudges the room it will take
+  const HD = 20; svg.setAttribute("height", HD); svg.setAttribute("viewBox", `0 0 ${g.W} ${HD}`); svg.setAttribute("width", g.W); svg.style.width = g.W + "px";   // sized whether shown or not: hidden by CSS alone, so its box is never left at the browser's blank-svg default and allocate() never misjudges the room it will take
   if (!S.dynShown) { svg.replaceChildren(); return; }
   const part = WIN_PART[deckActive()]; svg.replaceChildren();
   svg.append(svgEl("rect", { class: "hit", x: 0, y: 0, width: g.W, height: HD, fill: "transparent", "data-lane": "dyn" }));
@@ -6667,9 +6670,9 @@ function renderDynStrip(g, bars, dividers) {
     for (const e of evs) {
       if (!e.dyn && !e.hair) continue;
       const x = g.x(bi, e.t) + 2;
-      if (e.dyn) svg.append(svgEl("text", Object.assign({ x, y: 20, "font-size": 14 }, font), e.dyn));
+      if (e.dyn) svg.append(svgEl("text", Object.assign({ x, y: 14, "font-size": 11 }, font), e.dyn));
       if (e.hair) {
-        const next = evs.filter(o => o !== e && (o.dyn || o.hair) && o.t > e.t + 1e-6).sort((a, b) => a.t - b.t)[0], x1 = x + (e.dyn ? 22 : 0), x2 = next ? g.x(bi, next.t) - 4 : g.x(bi, barBeats(bi)) - 6, y = 15, h = 7;
+        const next = evs.filter(o => o !== e && (o.dyn || o.hair) && o.t > e.t + 1e-6).sort((a, b) => a.t - b.t)[0], x1 = x + (e.dyn ? 22 : 0), x2 = next ? g.x(bi, next.t) - 4 : g.x(bi, barBeats(bi)) - 6, y = 10, h = 5;
         if (e.hair === "dim") svg.append(svgEl("text", Object.assign({ x: x1, y: 20, "font-size": 13 }, font), "dim."));
         else if (x2 - x1 > 6) svg.append(svgEl("path", { d: e.hair === "cresc" ? `M ${x2} ${y - h} L ${x1} ${y} L ${x2} ${y + h}` : `M ${x1} ${y - h} L ${x2} ${y} L ${x1} ${y + h}`, fill: "none", stroke: "#fff", "stroke-width": 1.5, "stroke-linejoin": "round", "stroke-linecap": "round", "pointer-events": "none" }));
       }
@@ -6750,6 +6753,7 @@ function placeDeckLabels() {
       let shift = mid - eMid;
       if (id === "nav") { const tp = $("tempo"), a = $("prevBar"); if (tp && a && tp.parentNode === $("head") && tp.offsetWidth) { const room = tp.getBoundingClientRect().right + 8 - a.getBoundingClientRect().left; if (shift < room) shift = room; } }   // never over the tempo: the bracket's ← stays a clear 8px to its right, centred on the stave only when there is room
       e.style.left = Math.round(cur + shift) + "px"; }   // the bracket and the selectors centred on the stave's frame
+    { const ra = $("rollBar").querySelector(".rollArrows"), items = $("rollBar").querySelectorAll(".rollItem"); if (ra && items.length) { const lastR = items[items.length - 1].getBoundingClientRect().right, fr = frame.getBoundingClientRect(), rb = $("rollBar").getBoundingClientRect(), w = ra.offsetWidth; ra.style.left = Math.round(Math.max(lastR + 6, (lastR + fr.right) / 2 - w / 2) - rb.left) + "px"; } }   // ▲ ▼: centred between the last part selector and the stave's right edge, never closer than 6px to the selector
     { const pb = $("partsBtn"), nb = $("nextBar"), sv = $("saveBtn"); if (pb && pb.offsetWidth && nb && nb.offsetWidth && sv && sv.parentNode === $("head")) { const hb = $("head").getBoundingClientRect(), a = nb.getBoundingClientRect().right, b = sv.getBoundingClientRect().left; pb.style.right = "auto"; pb.style.left = Math.round(Math.max(a + 6, (a + b) / 2 - pb.offsetWidth / 2) - hb.left) + "px"; } }   // SHOW / HIDE PARTS: centred between the bracket's → and the save button, never over the arrow
     { const nav = $("deckNav"), navTop = nav.getBoundingClientRect().top, kbUp = $("app").classList.contains("kbUp");
       /* the keyboard open: CLOSE floats level with the Lyrics strip (centred on the strip's height); otherwise it stays in the stack under the gear.
@@ -6837,7 +6841,7 @@ function renderRollBar() {
     const colCover = () => focusOn("mel") ? [el("button", { class: "colBtn" + (S.doors.mel !== false ? " on" : ""), title: "Open or close the doors over the rest of the melody stave", onclick: () => { S.doors.mel = S.doors.mel === false; savePrefs(); renderAll(); } }, el("span", { class: "big" }, "⇕"), el("span", {}, "COVER"))] : [];   // with the five-line focus on: the doors' switch
     if (duo) {                                                                            // Stacked staves: the column holds DEL, the gear of the part in view, BACK, UNDO, REDO and the bulk tools; the parts' gears, covers and folds sit on the selector row
       nav.append(delB, gear, colBs(active), colUn(), colRe(), ...bulk(), kc);            // Stacked staves: the gears, covers and folds are on the selector row
-    } else nav.append(arrow(-1, up), arrow(1, dn), delB, gear, colBs(active), colUn(), colRe(), ...(active === "mel" ? colCover() : []), ...bulk(), kc);   // ▲ ▼ at the top with the gear close under them, then BACK, UNDO, REDO, COVER, SELECT, DELETE, REPEAT, COPY
+    } else { nav.append(delB, gear, colBs(active), colUn(), colRe(), ...(active === "mel" ? colCover() : []), ...bulk(), kc); bar.append(el("div", { class: "rollArrows" }, arrow(-1, up), arrow(1, dn))); }   // the gear at the top, then BACK, UNDO, REDO, COVER, SELECT, DELETE, REPEAT, COPY; ▲ ▼ (the part in view) sit on the selector row past the last part, centred between it and the stave's edge — placed by placeDeckLabels
     { let sc = $("staveCtl"); if (!sc) sc = el("div", { id: "staveCtl" }); if (sc.parentNode !== $("toolR")) $("toolR").insertBefore(sc, $("flipBtn"));   // WIDER and TIGHTER: under a STAVE cap at the tool bar's right end, acting on the stave in view
       sc.replaceChildren(el("button", { title: "Wider: the lines further apart, notes and clef with them, up to the widest", onclick: () => zoomRows(deckActive(), 1) }, "|<>|"), el("button", { title: "Tighter: the lines closer together, notes and clef with them, down to the legible least", onclick: () => zoomRows(deckActive(), -1) }, ">|<")); }
     { let sbx = $("stripBtns"); if (!sbx) sbx = el("div", { id: "stripBtns" }); if (sbx.parentNode !== $("toolL")) $("toolL").prepend(sbx); sbx.replaceChildren(db, rb, lb); }   // the strips' SHOW / HIDE buttons: a fixed set at the far left of the tool bar, DYN then RHYTHM then LYRICS as the strips lie — never flipped or scrolled
@@ -7003,7 +7007,8 @@ const focusOn = win => { if (clefOn(win)) return true; if (!deckMode()) return t
 /* the five-line bands of a stave, bottom to top: one (its own range, or the clef's) — or two for the Grand Stave */
 /* the rows a clef view must show at the least: its staff or staves, the gap between, and two ledger lines above and below — the Grand Stave from
    two below the bass staff to two above the treble; the row height gives way so that all of it is in view, on the deck and the phone alike */
-function minRowsFor(win) { if (!clefOn(win)) return 0; const bs = focusBandSteps(win); return bs[bs.length - 1][1] + 4 - (bs[0][0] - 4) + 1; }
+const CLEF_MARGIN = { s: 4, m: 3, l: 2 };                                              // the clef view's ledger rows kept in view above and below the staves, by window size: Large gives the staves more of the window
+function minRowsFor(win) { if (!clefOn(win)) return 0; const bs = focusBandSteps(win), m = CLEF_MARGIN[S.winSize] || 4; return bs[bs.length - 1][1] + m - (bs[0][0] - m) + 1; }
 /* the rows the staves themselves span (a clef view's in letter steps, a five-line focus's in its register's rows), and a row count that leaves the
    same number of rows above and below them, so that home — the staves centred in the window — is exact and not half a row out */
 function focusSpan(win) { if (clefOn(win)) { const bs = focusBandSteps(win); return bs[bs.length - 1][1] - bs[0][0] + 1; } if (!focusOn(win)) return 0; const [a, b] = focusRange(win); return b - a + 1; }
@@ -7554,11 +7559,11 @@ function refitForWidth() {
 }
 function renderStrips() {
   refitForWidth();
-  const song = S.song, key = keyObj(song.key), g = stripGeoRaw(), B = g.B, H = 36, bars = viewBars();
+  const song = S.song, key = keyObj(song.key), g = stripGeoRaw(), B = g.B, H = 24, bars = viewBars();
   const dividers = (svg, color, op, HH = H, gg = g) => { const nd = Math.max(1, Math.round((HH + 4) / 9)), dash = (HH - (nd - 1) * 4) / nd; for (const bi of bars) { if (S.beatDividers !== false) for (let b = 1; b < barBeats(bi); b++) { const bx = Math.round(gg.x(bi, b)); svg.append(svgEl("line", { x1: bx, x2: bx, y1: 0, y2: HH, stroke: color, "stroke-width": 2, "stroke-dasharray": `${dash.toFixed(2)} 4`, opacity: op * (g.n > 1 ? 0.7 : 1), "shape-rendering": "crispEdges" })); } if (bi > g.first) svg.append(svgEl("line", { x1: Math.round(g.x(bi, 0)), x2: Math.round(g.x(bi, 0)), y1: 0, y2: HH, stroke: color, "stroke-width": 2, opacity: op, "shape-rendering": "crispEdges" })); } if (g.totalBeats < g.B - 1e-6) { const ex = g.x(bars[bars.length - 1], barBeats(bars[bars.length - 1])); svg.append(svgEl("line", { x1: ex, x2: ex, y1: 0, y2: H, stroke: color, "stroke-width": 2, opacity: op })); } };
   /* rhythm strip: the slots as small glyphs, the ▶ marks where the next tap lands */
   {
-    const svg = $("rhySvg"), HR = 30; svg.replaceChildren(); svg.setAttribute("height", HR); svg.setAttribute("viewBox", `0 0 ${g.W} ${HR}`); svg.setAttribute("width", g.W); svg.style.width = g.W + "px"; svg.style.touchAction = g.n > 1 ? "pan-x" : "none";
+    const svg = $("rhySvg"), HR = 20; svg.replaceChildren(); svg.setAttribute("height", HR); svg.setAttribute("viewBox", `0 0 ${g.W} ${HR}`); svg.setAttribute("width", g.W); svg.style.width = g.W + "px"; svg.style.touchAction = g.n > 1 ? "pan-x" : "none";
     svg.append(svgEl("rect", { class: "hit", x: 0, y: 0, width: g.W, height: HR, fill: "transparent", "data-lane": "rhy" }));
     dividers(svg, "#2b2e33", 0.55, HR);                                                  // dark ticks on the silver
     for (const bi of bars) for (const c of chains(song.bars[bi])) {                 // a slot that runs on past its beat: the beats it covers stay lit
@@ -7569,7 +7574,7 @@ function renderStrips() {
       [0, HR - 5].forEach(y => svg.append(svgEl("rect", { x: x0 + 0.5, y: y + 0.5, width: x1 - x0 - 1, height: 4, fill: "#fff", "fill-opacity": 0.7, stroke: "rgba(0,0,0,.35)", "stroke-width": 1, "pointer-events": "none" })));
     }
     if (S.active && bars.includes(S.active.bi)) { const ax = g.x(S.active.bi, S.active.beat), aw = g.x(S.active.bi, Math.min(barBeats(S.active.bi), S.active.beat + 1)) - ax; svg.append(svgEl("rect", { x: ax + 1, y: 1, width: Math.max(2, aw - 2), height: HR - 2, fill: "none", stroke: css("--box"), "stroke-width": 2, "pointer-events": "none" })); }   // the active beat on the strip: an outline only, nothing covering the entries
-    const mini = { step: 6, y: () => HR / 2 + 4, x: g.x, beatPx: g.beatPx, lo: 0, hi: 1, W: g.W, H: HR };   // a shorter strip: smaller heads, shorter stems
+    const mini = { step: 4, y: () => HR / 2 + 3, x: g.x, beatPx: g.beatPx, lo: 0, hi: 1, W: g.W, H: HR };   // a shorter strip: smaller heads, shorter stems
     for (const bi of bars) {
       const bar = song.bars[bi], sel = S.sel && S.sel.bi === bi && S.sel.part === "melody" ? S.sel.id : null;
       const rhyEvs = bar.ev.melody.filter(e => !e.rest).map(e => ({ id: e.id, t: e.t, d: e.d, m: 0.5, noBeam: e.noBeam })), groups = beamGroups(rhyEvs), beamed = new Set(groups.flatMap(gp => gp.evs.map(e => e.id)));
@@ -7613,7 +7618,7 @@ function renderStrips() {
         const editingNow = WE.on && WE.bi === bi && WE.chipId === c.id;
         if (c.gap && !editingNow) {                                                     // a spacer chip: solid white, a thin dashed black edge, ↔ in the middle (it drags into place; typed into, it becomes a chip of its words)
           svg.append(svgEl("rect", { class: "chip", x: px, y: 3, width: pw, height: H - 6, rx: 6, fill: "#fff", stroke: c.placing ? "#2f7fd6" : "#111", "stroke-width": c.placing ? 1.5 : 1, "stroke-dasharray": "3 2", "data-chip": c.id, "data-bi": bi }));
-          if (c.placing) svg.append(svgEl("text", { x: px + pw / 2, y: 18 + 6 * lyrF(), "text-anchor": "middle", "font-size": 16 * lyrF(), "font-weight": 700, fill: "#2f7fd6", "font-family": "system-ui, sans-serif", "pointer-events": "none" }, "↔"));   // in hand: ↔ until it is set
+          if (c.placing) svg.append(svgEl("text", { x: px + pw / 2, y: 12 + 4.5 * lyrF(), "text-anchor": "middle", "font-size": LYR_FS * lyrF(), "font-weight": 700, fill: "#2f7fd6", "font-family": "system-ui, sans-serif", "pointer-events": "none" }, "↔"));   // in hand: ↔ until it is set
           if (isSel) svg.append(svgEl("rect", { x: px - 1.5, y: 1.5, width: pw + 3, height: H - 3, rx: 7, fill: "none", stroke: "#2f7fd6", "stroke-width": 1.5, "pointer-events": "none" }));
           pickFrame(); return;
         }
@@ -7621,12 +7626,12 @@ function renderStrips() {
         svg.append(svgEl("rect", { class: "chip", x: px, y: 3, width: pw, height: H - 6, rx: 6, fill: "#fff", "fill-opacity": isSel ? 0.42 : 0.2, stroke: "#fff", "stroke-width": isSel ? 1.5 : 0.8, "stroke-opacity": isSel ? 1 : 0.5, "data-chip": c.id, "data-bi": bi }));
         const editing = WE.on && WE.bi === bi && WE.chipId === c.id;
         const baseW = Math.round(natW / (c.wf || 1)), fit = pw < baseW - 0.5 ? { textLength: Math.max(8, pw - 2 * chipPad()), lengthAdjust: "spacingAndGlyphs" } : pw > baseW + 1.5 && c.text.trim().length > 1 ? { textLength: Math.max(8, pw - 2 * chipPad()), lengthAdjust: "spacing" } : {};   // condensed when squeezed or narrowed, letter-spaced when widened
-        if (!editing && c.full && c.words) c.words.forEach(w => svg.append(svgEl("text", { x: gl.x(bi, w.t) + chipPad(), y: 18 + 6 * lyrF(), "font-size": 16 * lyrF(), fill: "#fff", "font-weight": 700, "font-family": "system-ui, sans-serif", "xml:space": "preserve", style: "white-space:pre", "pointer-events": "none" }, w.text)));   // combined: each word where it was
-        else if (!editing) svg.append(svgEl("text", Object.assign({ x: c.full && pw > baseW ? px + pw / 2 : x, y: 18 + 6 * lyrF(), "font-size": 16 * lyrF(), fill: "#fff", "font-weight": 700, "font-family": "system-ui, sans-serif", "xml:space": "preserve", style: "white-space:pre", "pointer-events": "none" }, c.full && pw > baseW ? { "text-anchor": "middle" } : fit), c.text));
+        if (!editing && c.full && c.words) c.words.forEach(w => svg.append(svgEl("text", { x: gl.x(bi, w.t) + chipPad(), y: 12 + 4.5 * lyrF(), "font-size": LYR_FS * lyrF(), fill: "#fff", "font-weight": 700, "font-family": "system-ui, sans-serif", "xml:space": "preserve", style: "white-space:pre", "pointer-events": "none" }, w.text)));   // combined: each word where it was
+        else if (!editing) svg.append(svgEl("text", Object.assign({ x: c.full && pw > baseW ? px + pw / 2 : x, y: 12 + 4.5 * lyrF(), "font-size": LYR_FS * lyrF(), fill: "#fff", "font-weight": 700, "font-family": "system-ui, sans-serif", "xml:space": "preserve", style: "white-space:pre", "pointer-events": "none" }, c.full && pw > baseW ? { "text-anchor": "middle" } : fit), c.text));
         pickFrame();
       });
     }
-    if (!any && !WE.on) svg.append(svgEl("text", { x: gl.W1 / 2, y: 23, "text-anchor": "middle", "font-size": 11, fill: "rgba(255,255,255,.75)", "font-weight": 700, "letter-spacing": ".06em" }, "TAP HERE TO TYPE LYRICS/WORDS"));
+    if (!any && !WE.on) svg.append(svgEl("text", { x: gl.W1 / 2, y: 15.5, "text-anchor": "middle", "font-size": 9, fill: "rgba(255,255,255,.75)", "font-weight": 700, "letter-spacing": ".06em" }, "TAP HERE TO TYPE LYRICS/WORDS"));
   }
   const ph = $("lyrSvg"); ph.append(svgEl("line", { id: "lyrHead", x1: -5, x2: -5, y1: 0, y2: +ph.getAttribute("viewBox").split(" ")[3] || H, stroke: "#fff", "stroke-width": 2, "pointer-events": "none" }));
   if (WE.on) { const inp = weInput(); if (viewBars().includes(WE.bi)) { inp.classList.add("on"); placeInline(); } else inp.classList.remove("on"); }
@@ -8585,7 +8590,7 @@ function placeInline() {
   const inp = weInput(); if (!WE.on) return; const g = stripGeo(), k = g.k || 1;
   inp.classList.toggle("empty", !inp.value && !WE.chipId);                                // an empty box wears a white border: the tap is confirmed, though nothing is selected for the tools
   const pad = chipPad(); inp.style.padding = "0 " + (pad * k) + "px";                    // half a space each side, like a chip
-  { const f = lyrF(); inp.style.fontSize = f !== 1 ? (16 * f) + "px" : ""; }                // the box in the strip's font at its deck size; the strip's height as ever
+  { const f = lyrF(); inp.style.fontSize = (LYR_FS * f) + "px"; }                // the box in the strip's font at its deck size; the strip's height as ever
   const put = (leftU, widthU) => { inp.style.left = Math.round(leftU * k) + "px"; if (widthU != null) inp.style.width = Math.round(widthU * k) + "px"; };   // strip units → css pixels
   if (!WE.chipId && WE.t >= barBeats(WE.bi) - 1e-6) { inp.style.width = "0px"; put(g.W - 1); return; }   // the bar is full: the box waits, out of the way, at its end
   if (S.chipMode === "single" && !WE.chipId) { const x0 = g.x(WE.bi, 0), x1 = g.x(WE.bi, barBeats(WE.bi)); put(x0 + 1, Math.max(44, x1 - x0 - 2 - 2 * pad)); return; }
@@ -9150,7 +9155,7 @@ function openClefChooser(win = null) {
 function focusSettings(body, win) {
   const song = S.song, fb = S.focusBand[win], k = keyObj(song.key), phone = !deckMode(), key = WIN_LO[win];
   body.push(el("div", { class: "pLbl" }, "Five-line focus"));
-  body.push(el("div", { class: "mrow" }, el("button", { class: "btn sm" + (clefOn(win) ? " acc" : ""), onclick: () => { closeModal(); openClefChooser(win); } }, clefOn(win) ? `Clef view: ${clefNow(win).name} — change…` : "Switch to Clef…"), el("span", { class: "tiny" }, "this stave on its clef's lines, the clef at its head — each stave has its own")));
+  body.push(el("div", { class: "mrow" }, el("button", { class: "btn sm" + (clefOn(win) ? " acc" : ""), onclick: () => { if (!clefOn(win)) { closeModal(); openClefChooser(win); return; } SPELL_CACHE.clear(); S.clefs[win] = { on: false, kind: clefNow(win).kind }; savePrefs(); closeModal(); renderAll(); S.song.view[WIN_LO[win]] = focusHome(win); renderAll(); toast(DECK_NAME[win].charAt(0) + DECK_NAME[win].slice(1).toLowerCase() + ": clef off"); } }, clefOn(win) ? "Disable Clef" : "Enable Clef"), el("span", { class: "tiny" }, "this stave on its clef's lines, the clef at its head — each stave has its own")));
   if (clefOn(win)) return;
   if (phone) body.push(el("div", { class: "tiny" }, "On the phone the stave shows its five middle lines, the rest behind two doors in the page's own colour — COVER beside the stave slides them open and closed."));
   else if (win === "mel" && fb.on) body.push(el("div", { class: "tiny" }, "The covers sit behind two doors in the page's own colour; COVER in the column beside the stave slides them open and closed."));
