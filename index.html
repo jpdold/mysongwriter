@@ -6059,11 +6059,11 @@ function loadPrefs() {
   S.lyricFont = p.lyricFont || "sans"; S.chipMode = "multi"; S.keepAwake = p.keepAwake !== false; S.paper = Object.assign({ mel: "default", acc: "default", bass: "default" }, p.paper || {}); S.quick = Object.assign({ cells: QUICK_DEFAULT.slice(), locked: true, float: false, x: null, y: null }, p.quick || {}); if (!Array.isArray(S.quick.cells) || S.quick.cells.join() === QUICK_OLD.join()) S.quick.cells = QUICK_DEFAULT.slice(); if (S.quick.cells.length === 8) S.quick.cells.push("sl", "ti", "gh", "dt"); if (S.quick.cells.length !== 12) S.quick.cells = QUICK_DEFAULT.slice();   // a third row joined: slur, tie, ghost note, dot
   S.winState = Object.assign({ mel: "open", acc: "closed", bass: "closed" }, p.winState || {}); S.zoomWin = Object.assign({ mel: 1, acc: 1, bass: 1 }, p.zoomWin || {}); S.midi = p.midi || {}; S.viewSpan = [1, 2, 3, 4].includes(p.viewSpan) ? p.viewSpan : 1;   // (these had been swallowed by the comment before them, so no load restored the windows, the zoom, the MIDI settings or the bars shown)
   if (p.softKb != null) S.softKb = p.softKb2 == null ? true : !!p.softKb2; S.kbPos = p.kbPos || null;   // the app keyboard, on unless switched off
-  S.phoneWins = p.phoneWins && typeof p.phoneWins === "object" ? p.phoneWins : null; S.lyrOff = Math.max(0, +p.lyrOff || 0); S.viewForce = p.viewForce === "deck" || p.viewForce === "phone" ? p.viewForce : null;   // the lyrics screen's strip, lifted      // the phone's window states kept aside while the deck is up
+  S.phoneWins = p.phoneWins && typeof p.phoneWins === "object" ? p.phoneWins : null; S.lyrOff = Math.max(0, +p.lyrOff || 0);   // the lyrics screen's strip, lifted      // the phone's window states kept aside while the deck is up
   S.layout = p.layout === "stack" ? "stack" : "rolled";                                 // Stacked staves or Rolled up: the page comes back in the view it was left in
   applyTheme();
 }
-function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, deck: S.deck, rhyShown: S.rhyShown, lyrShown: S.lyrShown, partsShown: S.partsShown, dynShown: S.dynShown, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, beatLines: S.beatLines, barHi: S.barHi, spacing: S.spacing, collapsed: S.collapsed, rangeLock: S.rangeLock, kbLayout: S.kbLayout, kbTheme: S.kbTheme, kbSpace: S.kbSpace, kbBackUp: S.kbBackUp, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, keepAwake: S.keepAwake, paper: S.paper, quick: S.quick, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout, duoBars: S.duoBars, duoBand: S.duoBand, beatDividers: S.beatDividers, focusBand: S.focusBand, doors: S.doors, clefs: S.clefs, phoneWins: S.phoneWins, lyrOff: S.lyrOff, viewForce: S.viewForce }); }
+function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, deck: S.deck, rhyShown: S.rhyShown, lyrShown: S.lyrShown, partsShown: S.partsShown, dynShown: S.dynShown, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, beatLines: S.beatLines, barHi: S.barHi, spacing: S.spacing, collapsed: S.collapsed, rangeLock: S.rangeLock, kbLayout: S.kbLayout, kbTheme: S.kbTheme, kbSpace: S.kbSpace, kbBackUp: S.kbBackUp, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, keepAwake: S.keepAwake, paper: S.paper, quick: S.quick, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout, duoBars: S.duoBars, duoBand: S.duoBand, beatDividers: S.beatDividers, focusBand: S.focusBand, doors: S.doors, clefs: S.clefs, phoneWins: S.phoneWins, lyrOff: S.lyrOff }); }
 function applyTheme() {
   const r = document.documentElement;
   if (S.theme === "dark") r.setAttribute("data-theme", "dark"); else r.removeAttribute("data-theme");
@@ -6659,13 +6659,19 @@ function dynAt(bar, t) { let d = null; for (const e of bar.ev.melody) if (e.dyn 
 /* the widescreen deck: on a wide screen one part is in view at a time; the checked parts (ADD to VIEW) make up the deck, and the
    up / down buttons beside the stave, named for the parts above and below, move between them */
 const deckMQ = () => window.matchMedia("(min-width: 860px) and (min-aspect-ratio: 5/4), (max-height: 520px) and (min-aspect-ratio: 5/4)").matches;
-const deckMode = () => S.viewForce === "deck" ? true : S.viewForce === "phone" ? false : deckMQ();   // the wide screen's deck — or the layout the TURN button asked for
-/* TURN, under ☰: the other orientation's view. Where the browser lets the page lock the screen's orientation (an installed app) the screen turns; otherwise the other layout is drawn as it is, and TURN again brings the screen's own back */
+const deckMode = () => deckMQ();
+/* TURN, under ☰: the phone turned to the other orientation. The page asks to go fullscreen and then locks the screen's orientation, which a phone
+   browser allows in fullscreen (and an installed app allows outright); turned back, it unlocks and leaves fullscreen. Where the browser cannot lock
+   the orientation at all (iPhones) a toast says so — the phone itself still turns the view */
+let TURNED = false;
 async function turnScreen() {
-  const mq = deckMQ();
-  if (S.viewForce) { S.viewForce = null; savePrefs(); try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (e) {} renderAll(); toast("The screen's own view"); return; }
-  try { if (screen.orientation && screen.orientation.lock) { await screen.orientation.lock(mq ? "portrait" : "landscape"); return; } } catch (e) {}
-  S.viewForce = mq ? "phone" : "deck"; savePrefs(); renderAll(); toast(mq ? "The phone's view — TURN again for the wide one" : "The wide view — TURN again for the phone's");
+  const mq = deckMQ(), so = screen.orientation;
+  if (!so || !so.lock) { toast("This browser cannot turn the screen — turn the phone itself"); return; }
+  try {
+    if (TURNED) { TURNED = false; try { so.unlock(); } catch (e) {} if (document.fullscreenElement && document.exitFullscreen) await document.exitFullscreen(); return; }   // turned by TURN: let the phone have its own orientation back
+    if (!document.fullscreenElement && document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen({ navigationUI: "hide" });
+    await so.lock(mq ? "portrait" : "landscape"); TURNED = true;                        // the other orientation from the one the screen has now
+  } catch (e) { toast("The screen could not be turned here — turn the phone itself, or add the app to the home screen"); }
 }
 /* Stacked staves on a wide screen ("duo"): the deck's frame and tool bar, but two staves — the melody, about a third of the screen's height,
    over its strips, and below them the accompaniment or the bass filling the rest, flush on the tool bar; several bars across the width */
@@ -8338,7 +8344,7 @@ function initPointer() {
   /* a window size reported while the page is hidden (a phone browser minimising, or bringing the app back) can be a passing one — short and wide for a moment,
      enough to engage the deck; nothing is drawn to it: the render waits until the page is visible again, and is then drawn once, at the size the page really has */
   let renderWhenShown = false;
-  window.addEventListener("resize", () => { if (!S.song) return; if (S.viewForce && deckMQ() === (S.viewForce === "deck")) { S.viewForce = null; savePrefs(); } if (document.hidden) { renderWhenShown = true; return; } renderAll(); });   // the screen turned for real to the view TURN had forced: the force is spent
+  window.addEventListener("resize", () => { if (!S.song) return; if (document.hidden) { renderWhenShown = true; return; } renderAll(); });
   document.addEventListener("visibilitychange", () => { if (!document.hidden && S.song && (renderWhenShown || deckMode() !== $("app").classList.contains("deck"))) { renderWhenShown = false; renderAll(); } });
   window.addEventListener("load", () => setTimeout(() => { if (S.song) renderAll(); }, 350));                 // once more after the load has settled: the first measurements can be taken before the page has its final size
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (S.song) renderAll(); });
