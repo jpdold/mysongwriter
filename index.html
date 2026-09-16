@@ -79,6 +79,13 @@ svg text { pointer-events: none; }
 #app.rolled { max-width: 560px !important; grid-template-columns: 1fr !important; grid-template-areas: "head" "rollbar" "mel" "rhy" "lyr" "acc" "bass" "arrows" "undo" "pal" "play" !important; }   /* the Rhythm and Lyrics strips flush under the melody, the accompaniment and bass beneath them */
 @media (min-width: 860px) and (min-aspect-ratio: 5/4), (max-height: 520px) and (min-aspect-ratio: 5/4) { #app.rolled { max-width: 1180px !important; padding-left: 16px; padding-right: 16px; } #app.rolled .win .focus { display: none !important; } }
 #app.rolled #rollBar { display: flex; justify-content: center; }
+/* the phone's lyrics editing: the melody's window and the Lyrics strip reach the screen's edges as the keyboard does — the gutter with its marks kept, the column beside the stave away (its bulk tools with it, back when the keyboard closes), the ↑ ↓ away (the register still scrolls), the Rhythm strip and the Lyrics label away */
+#app.lyrEdit #melWin, #app.lyrEdit #lyrStrip { margin-left: -10px; margin-right: -10px; }
+#app.lyrEdit #melWin, #app.lyrEdit #lyrStrip { grid-template-columns: 48px 1fr; }
+#app.lyrEdit #melWin .side, #app.lyrEdit .win .rArr, #app.lyrEdit #rhyStrip, #app.lyrEdit #lyrEdit { display: none !important; }
+#app.lyrEdit #lyrStrip .tag { visibility: hidden; }
+#app.lyrEdit #lyrStrip { margin-top: -14px; }
+#app.lyrEdit #lyrStrip .body { border-radius: 0; }
 #app.rolled #rollBar .rollItem { flex: 0 1 118px; }                                          /* the phone's selectors: narrower, centred as a row */
 #app.rolled .win.closed { display: none !important; }
 #app.rolled .win .sizer { display: none; }
@@ -6808,7 +6815,7 @@ function renderRollBar() {
   if (pb.parentNode !== $("head")) $("head").insertBefore(pb, deck ? $("gearBtn") : $("topTransport"));   // off the deck the parts button waits, hidden, in the head; on the deck it rides there too, beside the save button and the gear
   { const nv = $("nav"); if (nv.parentNode !== $("head")) $("head").insertBefore(nv, $("gearBtn")); }   // the bar bracket: up in the head row, as high as it goes
   if (deck) app.style.setProperty("--deckW", (duoMode() ? 40 : Math.max(40, Math.min(46, Math.round((app.clientWidth - 24 - 10 - 80) / 17)))) + "px");   // the duo: the column as slim as its buttons allow   // the part buttons' column: about a quarter of a beat of the stave beside it, never wider than its buttons need — the width goes to the stave
-  app.classList.toggle("rolled", S.layout === "rolled" && !deck); if (!deck) app.classList.remove("duo", "lyrScreen");   // off the deck nothing of Stacked staves lingers either
+  app.classList.toggle("rolled", S.layout === "rolled" && !deck); if (!deck) app.classList.remove("duo", "lyrScreen"); app.classList.toggle("lyrEdit", !deck && kbUpNow());   // the phone with the keyboard open: the stave and the Lyrics strip edge to edge, the column, the ↑ ↓, the Rhythm strip and the Lyrics label away   // off the deck nothing of Stacked staves lingers either
   ["mel", "acc", "bass"].forEach(w => { app.classList.toggle("open-" + w, S.layout === "rolled" && !deck && S.winState[w] !== "closed"); $(w + "Win").classList.remove("deckOn"); });
   if (deck) {
     if (!S.deck || !S.deck.length) S.deck = ["mel"];
@@ -8347,7 +8354,7 @@ function openWordEdit(bi, t, chip) {
   WE.t = chip ? chip.t : (entrySpot(bar, bi, Math.max(t || 0, afterLast), ENTRY_MIN) ?? Math.min(Math.max(t || 0, afterLast), barBeats(bi)));   // exactly at the last chip's edge; never back at the bar's start
   inp.value = chip ? chip.text : ""; inp.disabled = false; S.bi = bi; S.selChip = chip ? { bi, id: chip.id } : null;
   lbl.textContent = chip ? "Editing · NEW CHIP – CURRENT BEAT keeps it · SPLIT at the cursor" : `Bar ${barNo(bi)} · beat ${beatLabel(WE.t)} · NEW CHIP – CURRENT BEAT makes the chip · NEW CHIP → NEXT BEAT moves on`;
-  box.classList.add("on"); renderWeKeys(); applyKbPos(); renderStrips(); if (typeof deckMode === "function" && deckMode()) { if (!wasOpen0) renderAll(); else placeDeckLabels(); } else renderNav();   // on the deck: the keyboard docks, the strips ride up onto it and the stave takes their rows
+  box.classList.add("on"); renderWeKeys(); applyKbPos(); renderStrips(); if (typeof deckMode === "function" && deckMode()) { if (!wasOpen0) renderAll(); else placeDeckLabels(); } else if (!wasOpen0) renderAll(); else renderNav();   // the phone too draws afresh as the keyboard opens: the stave and the strip widen to the keyboard's edges   // on the deck: the keyboard docks, the strips ride up onto it and the stave takes their rows
   syncMoveDelBtns();   // DELETE's ready state (a leftover note selection, say) must not go stale once the keyboard opens
   const bodyEl = $("lyrStrip").querySelector(".body"), x = g.x(bi, WE.t) * (g.k || 1);
   inp.classList.add("on"); sizeInline(); placeInline();
@@ -8937,7 +8944,7 @@ function weBlink() { for (const e of [$("wordEdit"), $("kbClose")]) { if (!e) co
 function closeWordEdit() {
   if (WE.on) weSettleSpacer();
   if (WE.on && WE.dirty) { commitWordEdit(false, true, false, true); return; }   // set as one chip on the way out
-  const was = WE.on; WE.on = false; WE.wid = null; WE.chipId = null; WE.picking = false; WE.picks = []; WE.carry = ""; $("wordEdit").classList.remove("on"); weInput().classList.remove("on"); weCaret(); document.body.classList.remove("kbOpen"); if (was && typeof deckMode === "function" && deckMode()) renderAll(); syncMoveDelBtns();   // DELETE's ready state, now that the keyboard is shut, reflects whatever is actually selected on the stave
+  const was = WE.on; WE.on = false; WE.wid = null; WE.chipId = null; WE.picking = false; WE.picks = []; WE.carry = ""; $("wordEdit").classList.remove("on"); weInput().classList.remove("on"); weCaret(); document.body.classList.remove("kbOpen"); if (was) renderAll(); syncMoveDelBtns();   // DELETE's ready state, now that the keyboard is shut, reflects whatever is actually selected on the stave
   const f = WE.firstChip; WE.firstChip = null;
   if (was && f && S.song.bars[f.bi] && S.song.bars[f.bi].chips.some(c => c.id === f.id)) { S.selChip = { bi: f.bi, id: f.id }; S.bi = f.bi; renderAll(); }   // the first word you typed is ready to move or stretch
 }
