@@ -277,7 +277,7 @@ text.clef, text.smufl { user-select: none; }
 .win .rArr::after { content: "↑"; font: 900 15px/1 system-ui, sans-serif; color: #111; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
 .win .rArr.dn::after { content: "↓"; }
 .win .gutter svg text { paint-order: stroke; stroke: var(--ground); stroke-width: 2px; stroke-linejoin: round; }
-.winHead { position: absolute; left: 50%; transform: translateX(-50%); top: -10px; z-index: 2; background: #111; color: #fff; font-size: 10.5px; font-weight: 700; height: 20px; line-height: 18px;   /* two pixels taller than the letters strictly need, so no phone font is clipped at its foot */
+.winHead { position: absolute; left: 50%; transform: translateX(-50%); top: -10px; z-index: 5;   /* over the covers (2), which had hidden its lower half */ background: #111; color: #fff; font-size: 10.5px; font-weight: 700; height: 20px; line-height: 18px;   /* two pixels taller than the letters strictly need, so no phone font is clipped at its foot */
   letter-spacing: .06em; padding: 0 12px; border-radius: 3px; white-space: nowrap; text-transform: uppercase; border: 1px solid #000; max-width: calc(100% - 100px); overflow: hidden; text-overflow: ellipsis; }
 #accWin, #bassWin { margin-top: 10px; }
 #rhyStrip { margin-top: -7px; }                 /* flush under the stave: the grid gap taken back */
@@ -6138,12 +6138,15 @@ function allocate() {
     if (!f(w)) continue; const side = $(w + "Win").querySelector(".side"); if (!side) continue;
     const kids = [...side.children].filter(k => k.offsetHeight > 0 && !k.hidden), cs = getComputedStyle(side), gap = parseFloat(cs.rowGap) || parseFloat(cs.gap) || 0;
     const need = kids.reduce((a, k) => a + k.offsetHeight + (parseFloat(getComputedStyle(k).marginTop) || 0), 0) + Math.max(0, kids.length - 1) * gap + (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
-    const [rows0] = WIN[S.winSize][w], step = Math.round(STEPS[w] * (STEP_K[S.noteSize] || 1) * 10) / 10; let rows = rows0;
+    const [rows0, , hi0] = WIN[S.winSize][w], k = STEP_K[S.noteSize] || 1, step = Math.round(STEPS[w] * k * 100) / 100, maxStep = hi0 * k * (S.zoomWin[w] || 1); let rows = rows0;   // maxStep: the widest row this window size allows
     if (clefOn(w)) rows = Math.max(rows, minRowsFor(w));                                                    // a clef's whole span in view, the Grand Stave's two staves, their gap and the ledger lines included
     const fcs = getComputedStyle($(w + "Win").querySelector(".frame")), chrome = 10 + (parseFloat(fcs.borderTopWidth) || 0) + (parseFloat(fcs.borderBottomWidth) || 0);   // the frame beyond its rows: 10px of padding and its borders as the browser really draws them
-    rows = Math.max(rows, Math.ceil((need - chrome) / step));                                            // and enough rows for the column beside the stave
-    PHONE_ROWS[w] = evenRows(rows, w, minRowsFor(w));                                                     // a row count that centres the staves exactly
-    if (need > rows0 * step + chrome) STEPS[w] = (need - chrome) / PHONE_ROWS[w] / (STEP_K[S.noteSize] || 1);   // the column taller than the stave would be: the rows stretched (or eased) a whisker so the frame is exactly the column's height — the strips flush under the stave, no gap where the column ran on past the frame
+    const room = need - chrome;                                                                             // the rows' share of the column's height
+    if (room > rows * step) {                                                                               // the column outreaches the stave at its natural row height: the rows are widened first, up to the widest the window size allows, and only then added — never a tower of tiny rows reaching C9 to fill the column
+      rows = evenRows(Math.max(rows, Math.ceil(room / maxStep)), w, minRowsFor(w));                        // a row count that centres the staves exactly
+      STEPS[w] = room / rows / k;                                                                           // and the rows stretched (or eased) a whisker so the frame is exactly the column's height — the strips flush under the stave
+    } else rows = evenRows(rows, w, minRowsFor(w));
+    PHONE_ROWS[w] = rows;
   }
   if (!deckMode()) for (const w of wins) if (!f(w)) PHONE_ROWS[w] = 0;
 }
