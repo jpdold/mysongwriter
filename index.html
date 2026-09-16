@@ -84,7 +84,6 @@ svg text { pointer-events: none; }
 #app.rolled #melWin { margin-top: 0; }
 #app.rolled #accWin, #app.rolled #bassWin { margin-top: 12px; }
 #app.rolled #accWin.lead, #app.rolled #bassWin.lead { margin-top: 0; }
-#app.rolled .win.lead .winHead { display: none; }
 .rollItem { flex: 1; display: flex; align-items: center; gap: 6px; height: 22px; background: #111; color: #fff; border: 1px solid #000; border-radius: 4px; padding: 0 4px 0 8px;
   font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; overflow: hidden; }
 .rollItem .dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; }
@@ -277,7 +276,7 @@ text.clef, text.smufl { user-select: none; }
 .win .rArr::after { content: "↑"; font: 900 15px/1 system-ui, sans-serif; color: #111; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
 .win .rArr.dn::after { content: "↓"; }
 .win .gutter svg text { paint-order: stroke; stroke: var(--ground); stroke-width: 2px; stroke-linejoin: round; }
-.winHead { position: absolute; left: 50%; transform: translateX(-50%); top: -10px; z-index: 5;   /* over the covers (2), which had hidden its lower half */ background: #111; color: #fff; font-size: 10.5px; font-weight: 700; height: 20px; line-height: 18px;   /* two pixels taller than the letters strictly need, so no phone font is clipped at its foot */
+.winHead { position: absolute; left: 52px; top: -10px; z-index: 5;   /* flush with the frame's left edge (its column, past the gutter), straddling its top edge — placed exactly by script once the window is drawn; over the covers (2), which had hidden its lower half */ background: #111; color: #fff; font-size: 10.5px; font-weight: 700; height: 20px; line-height: 18px;   /* two pixels taller than the letters strictly need, so no phone font is clipped at its foot */
   letter-spacing: .06em; padding: 0 12px; border-radius: 3px; white-space: nowrap; text-transform: uppercase; border: 1px solid #000; max-width: calc(100% - 100px); overflow: hidden; text-overflow: ellipsis; }
 #accWin, #bassWin { margin-top: 10px; }
 #rhyStrip { margin-top: -7px; }                 /* flush under the stave: the grid gap taken back */
@@ -524,9 +523,6 @@ body.kbOpen #lyrEdit, #app.deck.kbUp #lyrEdit { display: none !important; }   /*
 #rollBar .addView { flex: 0 0 auto; height: 22px; padding: 0 12px; border: 1px solid #3a8a1e; border-radius: 4px; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); font-size: 10px; font-weight: 800; letter-spacing: .04em; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
 
 #app:not(.rolled) .win.lead:not(#melWin) { margin-top: 26px; }
-#app:not(.rolled) .win.lead .winHead { top: -30px; }
-#melWin .winHead { display: none; }
-#melWin.closed .winHead { display: block; }
 .win.compact .gutter svg text { font-size: 7px; }
 .win.playing .frame { box-shadow: inset 0 0 0 2px var(--box), inset 0 2px 8px rgba(0,0,0,.28); }
 
@@ -7506,14 +7502,14 @@ function renderWindows() {
   for (const win of ["acc", "bass"]) {
     const part = WIN_PART[win], P = song.parts[part];
     const head0 = document.querySelector(`.winHead[data-win="${win}"]`);
-    if (S.winState[win] === "closed" || (duoMode() && S.collapsed[win])) { head0.textContent = `${part === "accomp" ? "Accompaniment" : "Bass"} – ${P.on ? P.inst : "off"}`; continue; }
+    if (S.winState[win] === "closed" || (duoMode() && S.collapsed[win])) { head0.textContent = (part === "accomp" ? "Accompaniment" : "Bass") + (P.on ? "" : " – off"); continue; }   // the part's name alone (its instrument is in its settings), "off" when it is
     const g = geo(win), svg = $(win + "Svg");
     drawStaff(svg, g, key); if (focusOn(win)) drawFocusCover(svg, g); drawSoundHaze(svg, g); drawGutter(win, g, key);
     const color = css("--" + part);
     svg.append(svgEl("rect", { class: "hit", x: 0, y: 0, width: g.W, height: g.H, fill: "transparent", "data-lane": win }));
     $(win + "Win").classList.toggle("compact", g.step < 7);
     const head = document.querySelector(`.winHead[data-win="${win}"]`);
-    head.textContent = `${part === "accomp" ? "Accompaniment" : "Bass"} – ${P.on ? P.inst : "off"}`;
+    head.textContent = (part === "accomp" ? "Accompaniment" : "Bass") + (P.on ? "" : " – off");
     if (!P.on) { svg.append(svgEl("text", { x: g.W / 2, y: g.H / 2 + 4, "text-anchor": "middle", "font-size": 11, fill: css("--ink2"), "font-family": "system-ui, sans-serif" }, "off — tap ⚙ to turn on")); continue; }
     for (const bi of viewBars()) {
     const bar = song.bars[bi], sel = S.sel && S.sel.bi === bi && S.sel.part === part ? S.sel.id : null;
@@ -7631,7 +7627,26 @@ function renderStrips() {
   renderDynStrip(g, bars, dividers);
   weCaret();
 }
-function renderBeatRow() {
+/* the phone: each open window's name label flush with its frame's left edge, straddling the frame's top edge (the melody's too, under its beat row);
+   any beat or bar label the name would run into steps right of it */
+function placeWinHeads() {
+  if (deckMode()) return;
+  for (const w of ["mel", "acc", "bass"]) {
+    const win = $(w + "Win"), head = win.querySelector(".winHead"); if (!head) continue;
+    if (S.winState[w] === "closed") { head.style.left = ""; head.style.top = ""; continue; }          // rolled up: the label is the bar itself, laid out by the style sheet
+    const frame = win.querySelector(".frame"); head.style.left = frame.offsetLeft + "px"; head.style.top = (frame.offsetTop - 10) + "px";
+    if (!win.classList.contains("lead")) continue;
+    const hb = head.getBoundingClientRect(); if (!hb.width) continue;
+    let minLeft = hb.right + 4;                                                                            // the beat (or bar) labels step right of the name, each keeping 4px clear of the one before, so none runs into another
+    for (const b of [...win.querySelectorAll("#beatRow .beat")].sort((a, c) => a.getBoundingClientRect().left - c.getBoundingClientRect().left)) {
+      const bb = b.getBoundingClientRect(); if (!(bb.bottom > hb.top && bb.top < hb.bottom)) continue;
+      const shift = Math.max(0, minLeft - bb.left); if (shift) b.style.left = (parseFloat(b.style.left) + shift) + "px";
+      minLeft = bb.right + shift + 4;
+    }
+  }
+}
+function renderBeatRow() { renderBeatRow0(); placeWinHeads(); }                          // the labels placed once the beat row is built, whichever window leads
+function renderBeatRow0() {
   const rowEl = $("beatRow"), song = S.song, bar = curBar(), bi = S.bi; rowEl.replaceChildren();
   const lead = S.focus || ["mel", "acc", "bass"].find(w => S.winState[w] !== "closed");
   document.querySelectorAll(".win.lead").forEach(w => { if (w.id !== lead + "Win") w.classList.remove("lead"); });
