@@ -310,7 +310,7 @@ text.clef, text.smufl { user-select: none; }
 #app.deck #navRight #tempo button#tempoLbl { width: auto; }
 /* the part selectors: shown or hidden from the head; ADD to VIEW keeps its place at the row's right */
 #partsBtn { display: none; }
-#app.deck #partsBtn { display: inline-flex; position: absolute; top: 50%; right: 92px; transform: translateY(-50%); align-items: center; height: 26px; padding: 0 6px; border: 1px solid #3a8a1e; border-radius: 4px; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); font-size: 7.5px; font-weight: 800; letter-spacing: .01em; white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,.3); }   /* narrow, so it clears the next-bar arrow — between it and the save button, its left edge free to move as its own width needs */
+#app.deck #partsBtn { display: inline-flex; position: absolute; top: 50%; right: 92px; transform: translateY(-50%); align-items: center; height: 26px; padding: 0 4px; border: 1px solid #3a8a1e; border-radius: 4px; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); font-size: 7.5px; font-weight: 800; letter-spacing: 0; white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,.3); }   /* narrow: centred by script between the bracket's → and the save button once the bracket is placed */
 #app.deck #partsBtn:active { filter: brightness(1.1); }
 #app.deck.noparts #rollBar { display: none; }                                               /* parts hidden: the whole row folds away — the button lives in the head now, so nothing needs to stay behind to hold its place */
 #app.deck #rollBar .rollItem { flex: 0 0 150px; min-width: 0; }
@@ -333,7 +333,7 @@ text.clef, text.smufl { user-select: none; }
 #app.deck #topTransport #tempo { box-shadow: none; }
 #app.deck #topTransport #tempo button { width: 20px; }
 #app.deck #topTransport #tempo button#tempoLbl { min-width: 38px; font-size: 9.5px; }
-#app.deck #saveBtn { position: absolute; top: 50%; right: 58px; transform: translateY(-50%); width: 30px; height: 28px; z-index: 2; padding: 0; border: 1.5px solid #6e1712; border-radius: 4px; background: linear-gradient(#ff5a4e, #e5322d); color: #fff; display: grid; place-items: center; box-shadow: 0 2px 4px rgba(0,0,0,.4); }   /* up in the head, evenly between the parts button and the gear: the floppy, whole */
+#app.deck #saveBtn { position: absolute; top: 50%; right: 50px; transform: translateY(-50%); width: 30px; height: 28px; z-index: 2; padding: 0; border: 1.5px solid #6e1712; border-radius: 4px; background: linear-gradient(#ff5a4e, #e5322d); color: #fff; display: grid; place-items: center; box-shadow: 0 2px 4px rgba(0,0,0,.4); }   /* up in the head, close beside the gear: the floppy, whole */
 #app.deck #saveBtn .ico { width: 19px; height: 19px; display: block; }
 #app.deck #head { position: relative; }
 #app.deck #topTransport #saveBtn .ico { width: 17px; height: 17px; }
@@ -6737,6 +6737,7 @@ function placeDeckLabels() {
       let shift = mid - eMid;
       if (id === "nav") { const tp = $("tempo"), a = $("prevBar"); if (tp && a && tp.parentNode === $("head") && tp.offsetWidth) { const room = tp.getBoundingClientRect().right + 8 - a.getBoundingClientRect().left; if (shift < room) shift = room; } }   // never over the tempo: the bracket's ← stays a clear 8px to its right, centred on the stave only when there is room
       e.style.left = Math.round(cur + shift) + "px"; }   // the bracket and the selectors centred on the stave's frame
+    { const pb = $("partsBtn"), nb = $("nextBar"), sv = $("saveBtn"); if (pb && pb.offsetWidth && nb && nb.offsetWidth && sv && sv.parentNode === $("head")) { const hb = $("head").getBoundingClientRect(), a = nb.getBoundingClientRect().right, b = sv.getBoundingClientRect().left; pb.style.right = "auto"; pb.style.left = Math.round(Math.max(a + 6, (a + b) / 2 - pb.offsetWidth / 2) - hb.left) + "px"; } }   // SHOW / HIDE PARTS: centred between the bracket's → and the save button, never over the arrow
     { const nav = $("deckNav"), navTop = nav.getBoundingClientRect().top, kbUp = $("app").classList.contains("kbUp");
       /* the keyboard open: CLOSE floats level with the Lyrics strip (centred on the strip's height); otherwise it stays in the stack under the gear.
          The strips' own SHOW / HIDE buttons live in the gutter beside the stave, placed by the style sheet */
