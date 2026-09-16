@@ -6437,7 +6437,9 @@ function backspaceNote(part) {
   bar.ev[part] = bar.ev[part].filter(e => !ids.has(e.id)); bar.ev[part].forEach(e => { if (e.slur && ids.has(e.slur)) delete e.slur; });
   const prev = bar.ev[part].filter(e => e.tie && e.t < ev.t && Math.abs(e.t + e.d - ev.t) < 1e-6 && (e.m === ev.m || e.m == null)).sort((a, b) => b.t - a.t)[0]; if (prev) delete prev.tie;
   if (part === "melody") syncNotesToChips(bar);
-  S.lastEntered = null; S.sel = null; S.picked = []; S.ghost = null; S.justEntered = null; S.bi = bi; renderAll(); refreshBox(); toast("Note taken back — UNDO brings it back");
+  S.lastEntered = null; S.sel = null; S.picked = []; S.ghost = null; S.justEntered = null; S.bi = bi;
+  S.active = { bi, beat: beatOf(bi, ev.t) }; S.activePart = part; if (S.ftp) S.ftp.t = r3(ev.t);   // the marked beat (and its tint) steps back to where the note was, ready for the next
+  renderAll(); refreshBox(); toast("Note taken back — UNDO brings it back");
 }
 function closeDelAsk() { const a = $("delAsk"); if (a) a.remove(); }
 function delAskAway(e) { const a = $("delAsk"); if (!a) return; if (a.contains(e.target)) document.addEventListener("pointerdown", delAskAway, { once: true }); else closeDelAsk(); }
@@ -7956,7 +7958,7 @@ function ensureVisible(part, m) {
 function shiftView(win, delta) { const { rows } = rowsOf(win), key = WIN_LO[win], [minV, , maxV] = viewLimits(win, rows); S.song.view[key] = clamp(rowsUp(win, viewOf(win), delta), minV, maxV); renderAll(); }
 /* a tap on the melody window: pitch a slot, or make a slot with a pitch */
 function tapMelody(bi, t, m, onNote = false) {
-  if (!inActive(bi, t)) activate(bi, t); else if (onNote) aimBeat(bi, t); else t = aimEntry(bi, t); S.activePart = "melody";   // one tap: the bar wakes and the box appears; inside it, a tap on a note aims at that note's beat, a tap on empty space enters at the marked beat
+  if (!inActive(bi, t)) activate(bi, t); else if (onNote) aimBeat(bi, t); else { if (S.activePart !== "melody") aimBeat(bi, t); t = aimEntry(bi, t); } S.activePart = "melody";   // one tap: the bar wakes and the box appears; inside it, a tap on a note aims at that note's beat, a tap on empty space enters at the marked beat — coming from another part, at the beat tapped
   S.bi = bi;
   const bar = S.song.bars[bi], B = barBeats(bi);
   const chain = chains(bar).find(c => !c.rest && t >= c.t - 1e-6 && t < c.t + c.d - 1e-6);
@@ -7990,7 +7992,7 @@ function tapMelody(bi, t, m, onNote = false) {
 }
 function tapBand(win, bi, t, m, onNote = false, partOf = null) {
   const part = partOf || WIN_PART[win], bar = S.song.bars[bi], P = S.song.parts[part], B = barBeats(bi);   // partOf: the Grand Stave's lower staff, tapped in the melody's window
-  if (!inActive(bi, t)) activate(bi, t, part); else if (onNote) aimBeat(bi, t); else t = aimEntry(bi, t, part); S.activePart = part;   // one tap: the bar wakes and the box appears; inside it, a tap on a note aims at that note's beat, a tap on empty space enters at the marked beat
+  if (!inActive(bi, t)) activate(bi, t, part); else if (onNote) aimBeat(bi, t); else { if (S.activePart !== part) aimBeat(bi, t); t = aimEntry(bi, t, part); } S.activePart = part;   // one tap: the bar wakes and the box appears; inside it, a tap on a note aims at that note's beat, a tap on empty space enters at the marked beat — the marked beat is the part in hand's: a tap on another part (the Grand Stave's other staff, another window) aims at the beat tapped, so the left hand's first note is not carried to wherever the melody left off
   S.bi = bi;
   if (!P.on) { openWinSettings(win); return; }
   if (chordOn(part)) { const ch = chordChainAt(bar, t, part); if (ch) { addChordNote(bi, ch, m, part); return; } }
