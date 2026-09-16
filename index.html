@@ -6734,6 +6734,11 @@ function placeDeckStrips() {
 /* MELODY / ACCOMPANIMENT / BASS, centred on the top and bottom edges of the stave in view */
 function placeDeckLabels() {
   placeDeckStrips();
+  if (!deckMode()) {                                                                     // the phone: nothing of the deck's placing may linger — a browser minimised and brought back can report a short, wide window for a moment, the deck engage and shift the bracket, the selectors and the column, and the phone's rows come back with those shifts still on them (the bracket bunched on ⟳, the bass selector off the screen's edge)
+    for (const id of ["nav", "rollBar"]) { const e = $(id); if (e) { e.style.left = ""; e.style.position = ""; } }
+    const nav = $("deckNav"); if (nav) { nav.style.marginTop = ""; nav.style.height = ""; }
+    const pb = $("partsBtn"); if (pb) { pb.style.left = ""; pb.style.right = ""; }
+  }
   for (const w of ["mel", "acc", "bass"]) {
     const win = $(w + "Win"), frame = win.querySelector(".frame");
     let top = win.querySelector(".deckLbl.top"), bot = win.querySelector(".deckLbl.bot");
@@ -6773,7 +6778,7 @@ function renderRollBar() {
   if (pb.parentNode !== $("head")) $("head").insertBefore(pb, deck ? $("gearBtn") : $("topTransport"));   // off the deck the parts button waits, hidden, in the head; on the deck it rides there too, beside the save button and the gear
   { const nv = $("nav"); if (nv.parentNode !== $("head")) $("head").insertBefore(nv, $("gearBtn")); }   // the bar bracket: up in the head row, as high as it goes
   if (deck) app.style.setProperty("--deckW", (duoMode() ? 40 : Math.max(40, Math.min(46, Math.round((app.clientWidth - 24 - 10 - 80) / 17)))) + "px");   // the duo: the column as slim as its buttons allow   // the part buttons' column: about a quarter of a beat of the stave beside it, never wider than its buttons need — the width goes to the stave
-  app.classList.toggle("rolled", S.layout === "rolled" && !deck);
+  app.classList.toggle("rolled", S.layout === "rolled" && !deck); if (!deck) app.classList.remove("duo");   // off the deck nothing of Stacked staves lingers either
   ["mel", "acc", "bass"].forEach(w => { app.classList.toggle("open-" + w, S.layout === "rolled" && !deck && S.winState[w] !== "closed"); $(w + "Win").classList.remove("deckOn"); });
   if (deck) {
     if (!S.deck || !S.deck.length) S.deck = ["mel"];
