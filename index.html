@@ -6875,19 +6875,22 @@ function renderAll() {
   S.bi = clamp(S.bi, 0, S.song.bars.length - 1);
   if (S.si !== S.siLast && S.si !== sectionOfBar(S.bi) && S.song.sections[S.si]) S.bi = sectionRange(S.si).start;   // a section op moved us
   S.si = sectionOfBar(S.bi); S.siLast = S.si;
-  renderHeader(); renderNav(); renderRollBar(); renderPalette(); allocate();
+  const atHome = {}; for (const w of ["mel", "acc", "bass"]) atHome[w] = focusOn(w) && viewOf(w) === focusHome(w);
+  renderHeader(); renderNav(); renderRollBar(); renderPalette(); allocate();   // before the rows are allotted: which staves sit centred now — a centred stave stays centred whatever its rows become (another window opening or closing, a size or zoom change, a settle pass); one scrolled away is left where it is
+  const keepHome = () => { let did = false; for (const w of ["mel", "acc", "bass"]) { if (!atHome[w]) continue; const v = focusHome(w); if (S.song.view[WIN_LO[w]] !== v) { S.song.view[WIN_LO[w]] = v; did = true; } } return did; };
   if (S.homeNext) {                                                                        // on load, on a song's load and after WIDER / TIGHTER: a stave's staves centred exactly in its window, once its rows are allotted — on the deck, when it comes into view
-    for (const w of ["mel", "acc", "bass"]) { if (!S.homeNext[w] || !focusOn(w) || (deckMode() && !DECK_ROWS[w])) continue; S.song.view[WIN_LO[w]] = focusHome(w); delete S.homeNext[w]; }
+    for (const w of ["mel", "acc", "bass"]) { if (!S.homeNext[w] || !focusOn(w) || (deckMode() && !DECK_ROWS[w])) continue; S.song.view[WIN_LO[w]] = focusHome(w); atHome[w] = true; delete S.homeNext[w]; }
     if (!Object.keys(S.homeNext).length) S.homeNext = null;
   }
+  keepHome();
   renderWindows(); renderStrips(); renderBeatRow(); placeDeckLabels();
-  if (deckMode()) { const r0 = Object.assign({}, DECK_ROWS), s0 = Object.assign({}, STEPS); allocate(); if (["mel", "acc", "bass"].some(w => DECK_ROWS[w] !== r0[w] || Math.abs(STEPS[w] - s0[w]) > 1e-6)) { renderWindows(); renderStrips(); renderBeatRow(); placeDeckLabels(); } }
-  if (!deckMode()) { const s0 = Object.assign({}, STEPS); allocate(); if (["mel", "acc", "bass"].some(w => Math.abs(STEPS[w] - s0[w]) > 1e-6)) { renderWindows(); renderStrips(); renderBeatRow(); } }   // the phone: the column beside the stave is only whole once drawn (COVER is made then) — size the stave to it and draw again
+  if (deckMode()) { const r0 = Object.assign({}, DECK_ROWS), s0 = Object.assign({}, STEPS); allocate(); if (["mel", "acc", "bass"].some(w => DECK_ROWS[w] !== r0[w] || Math.abs(STEPS[w] - s0[w]) > 1e-6)) { keepHome(); renderWindows(); renderStrips(); renderBeatRow(); placeDeckLabels(); } }
+  if (!deckMode()) { const r0 = Object.assign({}, PHONE_ROWS), s0 = Object.assign({}, STEPS); allocate(); const rh = keepHome(); if (rh || ["mel", "acc", "bass"].some(w => PHONE_ROWS[w] !== r0[w] || Math.abs(STEPS[w] - s0[w]) > 1e-6)) { renderWindows(); renderStrips(); renderBeatRow(); } }   // the phone: the column beside the stave is only whole once drawn (COVER is made then) — size the stave to it and draw again
   if (deckMode() && !kbUpNow() && !duoMode()) {                                           // Stacked staves measure their room against the app's foot themselves, so this pass would only misread the folded bars and the lower staves as a gap   // the tool bar must end on the screen's foot, the stave and strips flush above it: measured as drawn, any miss (a load before the page had settled, a browser bar coming or going) is taken up by the stave at once
     const tb = $("toolbar").getBoundingClientRect(), fr = $(deckActive() + "Win").querySelector(".frame").getBoundingClientRect();
     const strips = ["dynStrip", "rhyStrip", "lyrStrip"].map(id => $(id)).filter(e => e && e.offsetHeight > 0 && getComputedStyle(e).position !== "fixed"), above = Math.max(fr.bottom, ...strips.map(e => e.getBoundingClientRect().bottom));
     const over = tb.bottom - (window.innerHeight - 6), resid = over > 0.75 ? -over : tb.top - above;   // pushed past the foot: shrink by the overshoot; short of the tool bar: grow by the gap
-    if (Math.abs(resid) > 0.75 && Math.abs(resid) < 400) { DECK_FIX.px = clamp(DECK_FIX.px + resid, -400, 400); allocate(); renderWindows(); renderStrips(); renderBeatRow(); placeDeckLabels(); }
+    if (Math.abs(resid) > 0.75 && Math.abs(resid) < 400) { DECK_FIX.px = clamp(DECK_FIX.px + resid, -400, 400); allocate(); keepHome(); renderWindows(); renderStrips(); renderBeatRow(); placeDeckLabels(); }
   }   // measured once more now everything has settled: whatever moved mid-render (a strip, the keyboard, the head) cannot leave the stave sized to stale room
   renderDelBtns();
   saveSoon();
