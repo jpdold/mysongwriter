@@ -6808,7 +6808,7 @@ function renderRollBar() {
       });
       const gearBtn = el("button", { class: "rollGear", title: pretty + " settings", onclick: e => { e.preventDefault(); e.stopPropagation(); openWinSettings(w); } }, gearIco());   // a small gear, centred between the name and the pill's right edge: the part's own settings
       const extras = duo ? [                                                              // Stacked staves: ⇕ covers the rest of the stave (the doors), − folds the stave to a bar, + unfolds it
-        el("button", { class: "rollCover" + (S.doors[w] !== false ? " on" : ""), title: "Open or close the covers over the rest of the " + pretty.toLowerCase() + " stave", onclick: e => { e.preventDefault(); e.stopPropagation(); S.doors[w] = S.doors[w] === false; savePrefs(); renderAll(); } }, "⇕"),
+        el("button", { class: "rollCover" + (S.doors[w] !== false ? " on" : ""), title: "Open or close the covers over the rest of the " + pretty.toLowerCase() + " stave, and bring its staves back to the centre", onclick: e => { e.preventDefault(); e.stopPropagation(); S.doors[w] = S.doors[w] === false; if (focusOn(w)) S.song.view[WIN_LO[w]] = focusHome(w); S.sel = null; S.ghost = null; savePrefs(); renderAll(); } }, "⇕"),   // ⇕ also homes the stave, as ↩ LINES does
         el("button", { class: "rollFold", title: S.collapsed[w] ? "Unfold the " + pretty.toLowerCase() + " stave" : "Fold the " + pretty.toLowerCase() + " stave to a bar", onclick: e => { e.preventDefault(); e.stopPropagation(); foldStave(w, !S.collapsed[w]); } }, S.collapsed[w] ? "+" : "−")] : [];
       bar.append(el("div", { class: "rollItem" + (on ? " open" : "") }, el("label", {}, cb, el("span", { class: "lbl" }, w === "mel" ? "Melody" : w === "acc" ? "Accomp." : "Bass")), gearBtn, ...extras));
     }
@@ -7156,7 +7156,7 @@ const DOOR_SLIVER = 6;
 function placeDoors(win) {
   const w = $(win + "Win"), frame = w.querySelector(".frame"), g = GEO[win]; let box = w.querySelector(".doors"), btn = w.querySelector(".side .doorBtn");
   const side = w.querySelector(".side");
-  if (!btn && side) { btn = el("button", { class: "doorBtn", title: "Open or close the covers over the rest of the stave", onclick: () => { S.doors[win] = S.doors[win] === false; savePrefs(); renderAll(); } }, "COVER"); const ch = side.querySelector(".chordBtn"); if (ch) ch.after(btn); else side.append(btn); }
+  if (!btn && side) { btn = el("button", { class: "doorBtn", title: "Open or close the covers over the rest of the stave, and bring the five lines back to the centre", onclick: () => { S.doors[win] = S.doors[win] === false; S.song.view[WIN_LO[win]] = focusHome(win); S.sel = null; S.ghost = null; savePrefs(); renderAll(); } }, "COVER"); const ch = side.querySelector(".chordBtn"); if (ch) ch.after(btn); else side.append(btn); }   // COVER also homes the stave, as ↩ LINES does
   const show = focusOn(win) && S.winState[win] !== "closed" && !!g && (!deckMode() || win === "mel" || duoMode()) && !(duoMode() && S.collapsed[win]);   // on the deck the melody alone has doors; Stacked staves give every stave its own; only with its five-line focus on
   if (btn) { btn.hidden = !show; btn.classList.toggle("on", show && S.doors[win] !== false); }
   if (!box) { box = el("div", { class: "doors" }, el("div", { class: "door top" }), el("div", { class: "door bot" })); w.append(box); }
