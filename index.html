@@ -76,7 +76,7 @@ svg text { pointer-events: none; }
   grid-template-columns: 1fr; grid-template-areas: "head" "mel" "rhy" "lyr" "arrows" "undo" "pal" "acc" "bass" "play"; }   /* the bar bracket rides in the head row; the play pallet closes the page */
 #rollBar { grid-area: rollbar; display: none; gap: 6px; }
 /* rolled-up view: three labelled bars across the top; open staves drop down beneath; strips and tools follow */
-#app.rolled { max-width: 560px !important; grid-template-columns: 1fr !important; grid-template-areas: "head" "rollbar" "mel" "acc" "bass" "rhy" "lyr" "arrows" "undo" "pal" "play" !important; }
+#app.rolled { max-width: 560px !important; grid-template-columns: 1fr !important; grid-template-areas: "head" "rollbar" "mel" "rhy" "lyr" "acc" "bass" "arrows" "undo" "pal" "play" !important; }   /* the Rhythm and Lyrics strips flush under the melody, the accompaniment and bass beneath them */
 @media (min-width: 860px) and (min-aspect-ratio: 5/4), (max-height: 520px) and (min-aspect-ratio: 5/4) { #app.rolled { max-width: 1180px !important; padding-left: 16px; padding-right: 16px; } #app.rolled .win .focus { display: none !important; } }
 #app.rolled #rollBar { display: flex; }
 #app.rolled .win.closed { display: none !important; }
@@ -286,10 +286,8 @@ text.clef, text.smufl { user-select: none; }
 #app.deck #dynStrip .tag { visibility: hidden; }
 #dynStrip .body svg text { fill: #fff; }
 /* rolled layout: the hidden windows' empty grid rows still add gaps — take them back so the strip hugs the open stave */
-#app.rolled.open-mel #rhyStrip { margin-top: -21px; }
-#app.rolled.open-acc #rhyStrip { margin-top: -14px; }
-#app.rolled.open-acc #accWin.lead { margin-top: -7px; }
-#app.rolled.open-bass #bassWin.lead { margin-top: -14px; }
+#app.rolled:not(.open-mel) #rhyStrip { margin-top: -14px; }                                 /* the melody rolled up: its empty row's gap taken back, one gap left under the selectors */
+#app.rolled:not(.open-acc) #bassWin { margin-top: 5px; }                                     /* the accompaniment rolled up: its empty row's gap taken back, the bass the same small space under the Lyrics strip */
 /* ── the widescreen deck: one part in view at a time, its up / down part buttons a quarter beat wide beside it, the tools in a
    column on the right; the whole screen, nothing scrolls ── */
 #app.deck { max-width: none !important; height: 100vh; height: 100dvh; box-sizing: border-box; overflow: hidden; padding: 6px 4px 6px 2px; gap: 0 6px;   /* slim side margins: the width goes to the staves */   /* no row gaps: the spacing is explicit, so the stave can be sized to sit flush */
@@ -7589,11 +7587,13 @@ function renderStrips() {
   /* lyrics strip: syllables, or free letters / spaces / symbols the user has split apart */
   {
     const gl = stripGeo(), k = gl.k || 1;                                                  // the strip at its own scale
-    const svg = $("lyrSvg"); svg.replaceChildren(); svg.setAttribute("height", H * k); svg.setAttribute("viewBox", `0 0 ${gl.W} ${H}`); svg.setAttribute("width", gl.W * k); svg.style.width = (gl.W * k) + "px"; svg.style.height = (H * k) + "px"; svg.style.touchAction = g.n > 1 ? "pan-x" : "none";
+    const HL = !deckMode() && grandLower("mel") ? H * 2 : H;                                // the phone, the melody a Grand Stave: the strip in two lanes, one to each staff, the words in the upper
+    const svg = $("lyrSvg"); svg.replaceChildren(); svg.setAttribute("height", HL * k); svg.setAttribute("viewBox", `0 0 ${gl.W} ${HL}`); svg.setAttribute("width", gl.W * k); svg.style.width = (gl.W * k) + "px"; svg.style.height = (HL * k) + "px"; svg.style.touchAction = g.n > 1 ? "pan-x" : "none";
     $("lyrStrip").classList.toggle("serif", S.lyricFont === "serif"); $("lyrStrip").classList.toggle("smallcaps", S.lyricFont === "smallcaps");
     $("wordEdit").classList.toggle("serif", S.lyricFont === "serif"); $("wordEdit").classList.toggle("smallcaps", S.lyricFont === "smallcaps");
-    svg.append(svgEl("rect", { class: "hit", x: 0, y: 0, width: gl.W, height: H, fill: "transparent", "data-lane": "lyr" }));
-    dividers(svg, "#fff", 0.45, H, gl);
+    svg.append(svgEl("rect", { class: "hit", x: 0, y: 0, width: gl.W, height: HL, fill: "transparent", "data-lane": "lyr" }));
+    dividers(svg, "#fff", 0.45, HL, gl);
+    if (HL > H) svg.append(svgEl("line", { x1: 0, x2: gl.W, y1: H, y2: H, stroke: "#fff", "stroke-width": 2.5, opacity: 0.95, "pointer-events": "none" }));   // the lanes parted, as the Grand Stave's staves are
     let any = false;
     for (const bi of bars) {
       const bar = song.bars[bi], cursorId = S.cursor && S.cursor.bi === bi ? S.cursor.chipId : null, selId = S.selChip && S.selChip.bi === bi ? S.selChip.id : null;
@@ -7622,7 +7622,7 @@ function renderStrips() {
     }
     if (!any && !WE.on) svg.append(svgEl("text", { x: gl.W1 / 2, y: 23, "text-anchor": "middle", "font-size": 11, fill: "rgba(255,255,255,.75)", "font-weight": 700, "letter-spacing": ".06em" }, "TAP HERE TO TYPE LYRICS/WORDS"));
   }
-  const ph = $("lyrSvg"); ph.append(svgEl("line", { id: "lyrHead", x1: -5, x2: -5, y1: 0, y2: H, stroke: "#fff", "stroke-width": 2, "pointer-events": "none" }));
+  const ph = $("lyrSvg"); ph.append(svgEl("line", { id: "lyrHead", x1: -5, x2: -5, y1: 0, y2: +ph.getAttribute("viewBox").split(" ")[3] || H, stroke: "#fff", "stroke-width": 2, "pointer-events": "none" }));
   if (WE.on) { const inp = weInput(); if (viewBars().includes(WE.bi)) { inp.classList.add("on"); placeInline(); } else inp.classList.remove("on"); }
   renderDynStrip(g, bars, dividers);
   weCaret();
