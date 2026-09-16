@@ -6893,7 +6893,7 @@ function renderRollBar() {
     const bulk = () => ["selBtn", "delBtn", "repBtn", "copyBtn"].map(id => { const b = $(id); b.classList.add("colBtn"); return b; });   // SELECT, DELETE, REPEAT, COPY: the tool bar's own buttons, in the column while the deck is up
     const colCover = () => focusOn("mel") ? [el("button", { class: "colBtn" + (S.doors.mel !== false ? " on" : ""), title: "Open or close the doors over the rest of the melody stave", onclick: () => { S.doors.mel = S.doors.mel === false; savePrefs(); renderAll(); } }, el("span", { class: "big" }, "⇕"), el("span", {}, "COVER"))] : [];   // with the five-line focus on: the doors' switch
     if (duo) {                                                                            // Stacked staves: the column holds DEL, the gear of the part in view, BACK, UNDO, REDO and the bulk tools; the parts' gears, covers and folds sit on the selector row
-      const lyrCol = el("button", { class: "colBtn on", title: "Lyrics: type the words on their own screen", onclick: () => { S.activePart = "melody"; weOpenFromButton(); } }, el("span", { class: "big" }, "♪"), el("span", {}, "LYRICS"));
+      const lyrCol = el("button", { class: "colBtn on", title: "Lyrics: type the words on their own screen", onclick: () => { S.activePart = "melody"; weOpenFromButton(); } }, el("span", {}, "LYRICS"));
       nav.append(delB, gear, colBs(active), colUn(), colRe(), ...bulk(), lyrCol, kc);    // Stacked staves: the gears, covers and folds are on the selector row; LYRICS under COPY opens the lyrics screen
     } else { nav.append(delB, gear, colBs(active), colUn(), colRe(), ...(active === "mel" ? colCover() : []), ...bulk(), kc); bar.append(el("div", { class: "rollArrows" }, arrow(-1, up), arrow(1, dn))); }   // the gear at the top, then BACK, UNDO, REDO, COVER, SELECT, DELETE, REPEAT, COPY; ▲ ▼ (the part in view) sit on the selector row past the last part, centred between it and the stave's edge — placed by placeDeckLabels
     { let sc = $("staveCtl"); if (!sc) sc = el("div", { id: "staveCtl" }); if (sc.parentNode !== $("toolR")) $("toolR").insertBefore(sc, $("flipBtn"));   // WIDER and TIGHTER: under a STAVE cap at the tool bar's right end, acting on the stave in view
@@ -7693,7 +7693,7 @@ function renderStrips() {
         pickFrame();
       });
     }
-    if (!any && !WE.on) svg.append(svgEl("text", { x: gl.W1 / 2, y: 15.5, "text-anchor": "middle", "font-size": 9, fill: "rgba(255,255,255,.75)", "font-weight": 700, "letter-spacing": ".06em" }, "TAP HERE TO TYPE LYRICS/WORDS"));
+    if (!any && !WE.on) svg.append(svgEl("text", { x: (LYR_X + gl.W1) / 2, y: 15.5, "text-anchor": "middle", "font-size": 9, fill: "rgba(255,255,255,.75)", "font-weight": 700, "letter-spacing": ".06em" }, "TAP HERE TO TYPE LYRICS/WORDS"));
   }
   const ph = $("lyrSvg"); ph.append(svgEl("line", { id: "lyrHead", x1: -5, x2: -5, y1: 0, y2: +ph.getAttribute("viewBox").split(" ")[3] || H, stroke: "#fff", "stroke-width": 2, "pointer-events": "none" }));
   if (WE.on) { const inp = weInput(); if (viewBars().includes(WE.bi)) { inp.classList.add("on"); placeInline(); } else inp.classList.remove("on"); }
