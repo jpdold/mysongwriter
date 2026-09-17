@@ -111,10 +111,10 @@ svg text { pointer-events: none; }
    3. LAYOUT — one column on a phone; melody stack left / band right when wide
    ═══════════════════════════════════════════════════════════════════════ */
 #app { max-width: 560px; margin: 0 auto; padding: 8px 6px calc(14px + env(safe-area-inset-bottom)); display: grid; gap: 7px;
-  grid-template-columns: 1fr; grid-template-areas: "head" "mel" "rhy" "lyr" "arrows" "undo" "pal" "acc" "bass" "play"; }   /* the bar bracket rides in the head row; the play pallet closes the page */
+  grid-template-columns: 1fr; grid-template-areas: "head" "mel" "rhy" "lyr" "pal" "acc" "bass" "play" "tray"; }   /* the bar bracket rides in the head row; the play pallet closes the page */
 #rollBar { grid-area: rollbar; display: none; gap: 6px; }
 /* rolled-up view: three labelled bars across the top; open staves drop down beneath; strips and tools follow */
-#app.rolled { max-width: 560px !important; grid-template-columns: 1fr !important; grid-template-areas: "head" "rollbar" "mel" "rhy" "lyr" "acc" "bass" "arrows" "undo" "pal" "play" !important; }   /* the Rhythm and Lyrics strips flush under the melody, the accompaniment and bass beneath them */
+#app.rolled { max-width: 560px !important; grid-template-columns: 1fr !important; grid-template-areas: "head" "rollbar" "mel" "rhy" "lyr" "acc" "bass" "pal" "play" "tray" !important; }   /* the Rhythm and Lyrics strips flush under the melody, the accompaniment and bass beneath them */
 @media (min-width: 860px) and (min-aspect-ratio: 5/4), (max-height: 520px) and (min-aspect-ratio: 5/4) { #app.rolled { max-width: 1180px !important; padding-left: 16px; padding-right: 16px; } #app.rolled .win .focus { display: none !important; } }
 #app.rolled #rollBar { display: flex; justify-content: center; padding-left: 50px; }         /* room at the left for TURN */
 /* the phone's lyrics editing: the melody's window and the Lyrics strip reach the screen's edges as the keyboard does — the gutter with its marks kept, the column beside the stave away (its bulk tools with it, back when the keyboard closes), the ↑ ↓ away (the register still scrolls), the Rhythm strip and the Lyrics label away */
@@ -304,7 +304,7 @@ text.clef, text.smufl { user-select: none; }
 @media (min-width: 860px) and (min-aspect-ratio: 5/4), (max-height: 520px) and (min-aspect-ratio: 5/4) { .win .focus { display: block; } }
 /* one window given the whole screen (wide layouts) */
 #app.focused { max-width: none !important; grid-template-columns: 1fr !important; }
-#app.focus-mel { grid-template-areas: "head" "nav" "mel" "rhy" "lyr" "arrows" "undo" "pal" !important; }
+#app.focus-mel { grid-template-areas: "head" "nav" "mel" "rhy" "lyr" "pal" "tray" !important; }
 #app.focus-acc { grid-template-areas: "head" "nav" "acc" !important; }
 #app.focus-bass { grid-template-areas: "head" "nav" "bass" !important; }
 #app.focus-mel :is(#accWin, #bassWin, #foot), #app.focus-acc :is(#melWin, #rhyStrip, #lyrStrip, #palette, #bassWin, #foot), #app.focus-bass :is(#melWin, #rhyStrip, #lyrStrip, #palette, #accWin, #foot) { display: none !important; }
@@ -623,7 +623,7 @@ body.kbOpen #lyrEdit, #app.deck.kbUp #lyrEdit { display: none !important; }   /*
 /* ── palette: note lengths + editing tools ── */
 #palette { display: flex; flex-direction: column; gap: 4px; padding: 5px 6px; background: var(--ground2); border: 1.5px solid #141414; border-radius: 4px; box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 2px 5px rgba(0,0,0,.25); }
 #palette .prow { display: flex; gap: 4px; align-items: center; justify-content: flex-start; height: 30px; }
-#palette .prow[hidden] { display: none; }
+#palette .prow[hidden], #palette[hidden] { display: none; }
 #palette .prow .flexgap { flex: 1 1 0; min-width: 4px; }                                      /* pushes what follows to the right corner */
 #palette .prow button { width: 32px; min-width: 32px; height: 28px; padding: 0; flex: 0 0 32px; }
 #palette .prow button.txt { padding: 0; }
@@ -762,24 +762,52 @@ body.kbOpen #lyrEdit, #app.deck.kbUp #lyrEdit { display: none !important; }   /*
   background-image: radial-gradient(circle at 42% 38%, #f2f2f2 0.9px, transparent 1.3px), radial-gradient(circle at 50% 50%, #a8a8a8 2.1px, #6a6a6a 2.5px, transparent 3px);
   background-size: 9px 8px; background-position: 0 0, 0 0; }
 #quick.float .qctl { grid-row: 2 / 5; }
-/* the phone: docked, the quick palette is one bar of twelve across the page, beneath the arrows' pallet (54px) and the play pallet (39px) that rides on its top edge; floated, it is the 4 × 3 block it was */
-#app:not(.deck) #quick:not(.float) { width: 100%; margin-top: 97px; grid-template-columns: 40px repeat(12, 1fr); grid-template-rows: 30px; }
-#app:not(.deck) #quick:not(.float) .qctl { grid-row: 1; flex-direction: row; }
-#app:not(.deck) #quick:not(.float) .qctl button { width: auto; }
-#app:not(.deck) #quick:not(.float) .cell:nth-child(n+7) button { border-top: none; }
-/* Play All, Play Bar and Stop: three keys flush together on a pallet of their own, the pallet flush on the top edge of the bar of twelve, and slid from side to side along it (placePlayL) */
-#playL { grid-column: arrows; grid-row: arrows-start / undo-end; justify-self: start; align-self: start; display: flex; gap: 0; margin-top: 58px; padding: 3px; background: var(--ground2); border: 1.5px solid #141414; border-radius: 4px 4px 0 0; border-bottom: none; box-shadow: inset 0 1px 0 rgba(255,255,255,.12); touch-action: pan-y; cursor: ew-resize; position: relative; z-index: 1; }
+/* the ↔ wheel beside every stave: a ribbed thumb-wheel — drag it sideways and the stave scrolls across the bars on show; pushed past either end, it turns to the bars before or after */
+.hWheel[hidden] { display: none !important; }
+.hWheel { position: relative; width: 30px; height: 22px; flex: 0 0 22px; padding: 0; border: 1.5px solid #141414; border-radius: 4px; overflow: hidden; touch-action: none; cursor: ew-resize; user-select: none; -webkit-user-select: none;
+  background: linear-gradient(rgba(255,255,255,.55), rgba(255,255,255,0) 35%, rgba(0,0,0,.28)), repeating-linear-gradient(90deg, #6d7279 0 2px, #d9dce0 2px 5px); background-position: 0 0, var(--wx, 0px) 0; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 0 0 1px rgba(255,255,255,.35); }
+.hWheel::before, .hWheel::after { content: "◂"; position: absolute; top: 50%; transform: translateY(-50%); font: 900 9px/1 system-ui, sans-serif; color: #111; text-shadow: 0 0 2px #fff, 0 0 2px #fff; pointer-events: none; }
+.hWheel::before { left: 1px; } .hWheel::after { content: "▸"; right: 1px; }
+.hWheel.turning { border-color: #f5a623; }
+#deckNav .hWheel { width: 100%; height: 20px; flex: 0 0 20px; }
+/* the phone's bottom tool bar: a silver tray of two rows of twelve — the twelve quick keys above; ▶ SEL, CHORD, RUN, the five rests, staccato and tenuto below, with two
+   slots left open for keys to come. Nothing on it is locked, floated or moved about. It closes the page and holds to the foot of the screen. On its top edge ride the
+   play pallet (Play All · Play Bar · Stop, slid from side to side along it) and, at the far right, the plate of the arrows and UNDO · REDO */
+#tray { grid-area: tray; position: sticky; bottom: 0; z-index: 30; display: grid; grid-template-columns: 1fr; min-width: 0; }
+#app.deck #tray { display: none; }
+#app:not(.deck) { min-height: 100vh; min-height: 100dvh; box-sizing: border-box; grid-template-rows: repeat(8, auto) 1fr; }   /* the tray's row takes what is left of the screen, the tray at its foot: the bottom tool bar even on a short page */
+#app.rolled:not(.deck) { grid-template-rows: repeat(9, auto) 1fr; } #app.focus-mel:not(.deck) { grid-template-rows: repeat(6, auto) 1fr; }
+#tray { align-self: end; }
+#app.lyrEdit #tray, body.kbOpen #tray { position: static; }
+#tray > * { grid-area: 1 / 1; }
+#tray #quick { position: static; justify-self: stretch; align-self: start; width: auto; margin-top: 54px; grid-template-columns: repeat(12, minmax(0, 1fr)); grid-template-rows: 32px 32px; gap: 3px; padding: 5px;
+  background: linear-gradient(#d3d6db, #9a9fa7 55%, #b4b8bf); border: 1.5px solid #141414; border-radius: 4px 0 4px 4px; box-shadow: inset 0 1px 0 rgba(255,255,255,.75), inset 0 -1px 0 rgba(0,0,0,.35), 0 -2px 8px rgba(0,0,0,.35); touch-action: manipulation; overflow: visible; }
+#tray #quick .qctl, #tray #quick .qgrip { display: none; }
+#tray #quick .cell, #tray #quick .xc { display: grid; border: none; min-width: 0; }
+#tray #quick .cell button, #tray #quick .xc button { width: 100%; height: 100%; min-width: 0; padding: 0; border: 1px solid #222; border-radius: 3px; background: linear-gradient(var(--sv-hi), var(--sv-lo2)); color: #111; display: grid; place-items: center; box-shadow: 0 1px 2px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.7); }
+#tray #quick .cell:nth-child(n+7) button { border-top: 1px solid #222; }
+#tray #quick .cell button.on, #tray #quick .xc button.on { background: linear-gradient(#6fb3ff, #2f7fd6); color: #fff; border-color: #1b4f8a; }
+#tray #quick .xc button.armed { background: linear-gradient(#ffd27a, #f5a623); border-color: #a86d10; }
+#tray #quick .xc button.tplay { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; line-height: 1; }
+#tray #quick .xc button.tplay .top { font-size: 12px; } #tray #quick .xc button.tplay .sub { font-size: 6px; font-weight: 800; letter-spacing: .02em; }
+#tray #quick .xc button.art { font-family: var(--serif); font-size: 16px; }
+#tray #quick .xc button svg { display: block; }
+#tray #quick .xc button:active { background: linear-gradient(#ffd27a, #f5a623); }
+#tray #quick .xc.empty { border-radius: 3px; background: rgba(0,0,0,.13); box-shadow: inset 0 1px 3px rgba(0,0,0,.45), 0 1px 0 rgba(255,255,255,.5); }   /* an open slot in the tray: room for a key to come */
+#tray #quick .xc button.chord.on, body.runDraw #tray #quick .xc button.run.on { animation: chordBlink 1.4s step-end infinite; }
+/* Play All, Play Bar and Stop: three keys flush together on a pallet of their own, the pallet flush on the tray's top edge, and slid from side to side along it (placePlayL) — as far as the arrows' plate */
+#playL { justify-self: start; align-self: start; display: flex; gap: 0; margin-top: 15px; padding: 3px; background: var(--ground2); border: 1.5px solid #141414; border-radius: 4px 4px 0 0; border-bottom: none; box-shadow: inset 0 1px 0 rgba(255,255,255,.12); touch-action: pan-y; cursor: ew-resize; position: relative; z-index: 1; }
 #playL button { height: 31.5px; border-radius: 0; box-shadow: inset 0 1px 0 rgba(255,255,255,.7); }
 #playL button + button { border-left: none; }
 #playL button:first-child { border-radius: 4px 0 0 4px; } #playL button:last-child { border-radius: 0 4px 4px 0; }
 #playL.sliding { opacity: .85; }
-#app.deck #playL { display: none; }
-#app:has(#quick.float) #playL { margin-top: 5px; }                                          /* the bar floated away: the play pallet rests beside the arrows' */
-/* the arrows and UNDO · REDO on a pallet of their own: a backing plate in the same cell, the keys inset on it */
-#arrowPal { grid-column: arrows; grid-row: arrows-start / undo-end; justify-self: end; align-self: start; width: calc(37.5% + 10px); height: 54px; background: var(--ground2); border: 1.5px solid #141414; border-radius: 4px; box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 2px 5px rgba(0,0,0,.25); }
-#app.deck #arrowPal { display: none; }
-#app:not(.deck) #arrows { margin: 5px 5px 0 0; }
-#app:not(.deck) #undoRow { margin: 27px 5px 0 0; }
+/* the arrows and UNDO · REDO on a plate of their own, standing on the far right of the tray's top edge: a backing plate, the keys inset on it */
+#arrowPal { justify-self: end; align-self: start; width: calc(37.5% + 10px); height: 54px; background: var(--ground2); border: 1.5px solid #141414; border-bottom: none; border-radius: 4px 4px 0 0; box-shadow: inset 0 1px 0 rgba(255,255,255,.12); }
+#tray #arrows, #tray #undoRow { justify-self: end; align-self: start; width: 37.5%; position: relative; z-index: 1; }
+#tray #arrows { margin: 5px 5px 0 0; }
+#tray #undoRow { margin: 27px 5px 0 0; }
+/* the phone: the green Rhythm and Lyrics labels are small silver tabs, square-cornered, in bold black, close against their strips */
+#app:not(.deck) .strip .tag { justify-self: end; height: 17px; padding: 0 4px; font-size: 8.5px; font-weight: 800; letter-spacing: .02em; color: #000; background: linear-gradient(var(--sv-hi), var(--sv-lo2)); border: 1px solid #141414; border-radius: 0; box-shadow: 0 1px 2px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.7); }
 #app.focus-acc #quick, #app.focus-bass #quick { display: none; }
 #arrows .aico { width: 15px; height: 15px; display: block; }
 #arrows button, #undoRow button, #mvRow button, #pitchArrows button, #itemArrows button { height: 22px; padding: 0; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(var(--sv-hi), var(--sv-lo2)); color: #111; font-size: 14px; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); }
@@ -1158,14 +1186,13 @@ body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the s
     </div>
   </div>
 
-  <div id="arrowPal"></div>
   <div id="arrows"><button id="arrUp" title="Up: the selected note a half step up, or the stave's register up"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V4M5 11l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="arrDn" title="Down: the selected note a half step down, or the stave's register down"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M5 13l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="arrL" title="Left: the selected note or word earlier, a picked run earlier, or the beat before"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H4M11 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="arrR" title="Right: the selected note or word later, a picked run later, or the beat after"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16M13 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
   <div id="undoRow"><button id="undoBtn" title="Undo">UNDO</button><button id="redoBtn" title="Redo">REDO</button></div>
   <div id="mvRow"><button id="moveBtn" title="Move: arms on the first tap (once empty space of the same size is found in view), then confirms on the second">MOVE</button><button id="delBtn" title="Delete: arms on the first tap, then confirms on the second">DELETE</button><button id="selBtn" title="Select a run of beats to move or delete: tap the first beat, then the last — or use Bar / Section">SELECT</button><button id="repBtn" title="Repeat: tap the beat(s) to repeat, then REPEAT — it finds the space right after and copies them there; tap again to repeat further on">REPEAT</button><button id="copyBtn" title="Copy: tap the beats or bars to copy (SET each one), then tap empty space with room enough to paste them">COPY</button><button id="xhairBtn" title="Crosshair: drag a box over what to copy — release to set it, straight into the copied set" hidden>CROSSHAIR</button><button id="setCopyBtn" title="Set: add what is tapped to the copied set (up to 5)" hidden><span class="l">SET TO</span><span class="l">COPY</span></button></div>
-  <div id="playL"></div>
   <div id="quick" title="Quick palette"></div>
   <div id="palette"><div class="prow" id="palRow1"></div><div class="prow" id="palRow2"></div><div class="prow" id="palRow3"></div><div class="prow" id="palRow4"></div></div>
   <div id="playPal"></div>
+  <div id="tray"><div id="arrowPal"></div><div id="playL"></div></div>
 
   <section class="win" id="accWin">
     <button class="winHead" data-win="acc">Accompaniment</button>
@@ -7018,7 +7045,7 @@ function renderRollBar() {
   S.deckSel = null; { const old = $("addView"); if (old) old.remove(); }
   { const ar = $("arrows"), up = $("arrUp"); if (ar && up && up.parentNode !== ar) ar.append(up, $("arrDn"), $("arrL"), $("arrR")); }   // the four arrows, split apart for the deck's two capped pairs, rejoin the phone's one row
   { const mv = $("mvRow"); for (const id of ["delBtn", "selBtn", "repBtn", "copyBtn"]) { const b = $(id); if (b.parentNode !== mv) { b.classList.remove("colBtn"); mv.append(b); } } if ($("xhairBtn").parentNode === mv && $("xhairBtn").nextSibling !== $("setCopyBtn")) mv.append($("xhairBtn"), $("setCopyBtn")); }   // SELECT, DELETE, REPEAT, COPY come back from the deck's column
-  for (const id of ["arrows", "undoRow", "quick", "palette"]) { const e = $(id); if (e && e.parentNode !== app) { app.append(e); e.hidden = false; } }   // the tools back on the page
+  for (const id of ["arrows", "undoRow", "quick", "palette"]) { const e = $(id), home = id === "palette" ? app : $("tray"); if (e && e.parentNode !== home) { home.append(e); e.hidden = false; } }   // the tools back on the page
   { const side = $(leadWin() + "Win").querySelector(".side"), mv = $("mvRow"); if (mv.parentNode !== side) side.insertBefore(mv, side.querySelector(".sizer")); mv.hidden = false; }   // SELECT DELETE REPEAT COPY MOVE stacked beside the stave in use, under ⌫ and UNDO
   $("topTransport").hidden = false;
   if (S.layout !== "rolled") return;
@@ -7048,7 +7075,7 @@ function renderAll() {
     if (!Object.keys(S.homeNext).length) S.homeNext = null;
   }
   keepHome();
-  renderWindows(); renderStrips(); renderBeatRow(); placeDeckLabels();
+  placeHWheels(); renderWindows(); renderStrips(); renderBeatRow(); placeDeckLabels();
   if (deckMode()) { const r0 = Object.assign({}, DECK_ROWS), s0 = Object.assign({}, STEPS); allocate(); if (["mel", "acc", "bass"].some(w => DECK_ROWS[w] !== r0[w] || Math.abs(STEPS[w] - s0[w]) > 1e-6)) { keepHome(); renderWindows(); renderStrips(); renderBeatRow(); placeDeckLabels(); } }
   if (!deckMode()) { const r0 = Object.assign({}, PHONE_ROWS), s0 = Object.assign({}, STEPS); allocate(); const rh = keepHome(); if (rh || ["mel", "acc", "bass"].some(w => PHONE_ROWS[w] !== r0[w] || Math.abs(STEPS[w] - s0[w]) > 1e-6)) { renderWindows(); renderStrips(); renderBeatRow(); } }   // the phone: the column beside the stave is only whole once drawn (COVER is made then) — size the stave to it and draw again
   if (deckMode() && !kbUpNow() && !duoMode()) {                                           // Stacked staves measure their room against the app's foot themselves, so this pass would only misread the folded bars and the lower staves as a gap   // the tool bar must end on the screen's foot, the stave and strips flush above it: measured as drawn, any miss (a load before the page had settled, a browser bar coming or going) is taken up by the stave at once
@@ -7864,8 +7891,33 @@ function renderBeatRow0() {
     row.append(d);
   }
 }
+/* the ↔ wheel: one beside each stave (in its button column; on the deck, in the column of the part in view). A drag turns it: the stave scrolls sideways, three
+   pixels to each one of the finger's, across the bars on show; pushed 60px past either end it turns the page to the bars before or after */
+const HWHEELS = {};
+function hWheel(key, winOf) {
+  if (HWHEELS[key]) return HWHEELS[key];
+  const w = el("div", { class: "hWheel", role: "slider", "aria-label": "Scroll the stave sideways", title: "Drag sideways: scroll the stave across the bars on show — past the end, on to the next bars" }); let d = null;
+  const frameOf = () => { const win = $(winOf() + "Win"); return win ? win.querySelector(".frame") : null; };
+  w.addEventListener("pointerdown", e => { e.preventDefault(); d = { id: e.pointerId, x: e.clientX, over: 0, turn: 0 }; w.classList.add("turning"); });
+  window.addEventListener("pointermove", e => {
+    if (!d || e.pointerId !== d.id) return; const fr = frameOf(); if (!fr) return;
+    const dx = e.clientX - d.x; d.x = e.clientX; if (!dx) return;
+    d.turn += dx; w.style.setProperty("--wx", (((d.turn % 5) + 5) % 5) + "px");
+    const max = Math.max(0, fr.scrollWidth - fr.clientWidth), want = fr.scrollLeft + dx * 3, to = clamp(want, 0, max);
+    fr.scrollLeft = to; fr.dispatchEvent(new Event("scroll")); d.over = want !== to ? d.over + dx : 0;   // the strips and the beat labels go with it at once, not a frame later
+    if (Math.abs(d.over) >= 60) { const fwd = d.over > 0, last = S.song.bars.length - 1, at = S.bi; d.over = 0;
+      if (fwd ? viewFirst() + spanNow() <= last : viewFirst() > 0) { $(fwd ? "nextBar" : "prevBar").click(); const f2 = frameOf(); if (f2 && S.bi !== at) f2.scrollLeft = fwd ? 0 : Math.max(0, f2.scrollWidth - f2.clientWidth); } }
+  });
+  const end = e => { if (d && e.pointerId === d.id) { d = null; w.classList.remove("turning"); } };
+  window.addEventListener("pointerup", end); window.addEventListener("pointercancel", end);
+  return HWHEELS[key] = w;
+}
+function placeHWheels() {
+  for (const win of ["mel", "acc", "bass"]) { const side = $(win + "Win").querySelector(".side"), w = hWheel(win, () => win); if (side && w.parentNode !== side) side.append(w); w.hidden = deckMode() && !duoMode(); }
+  if (deckMode() && !duoMode()) { const nav = $("deckNav"), w = hWheel("deck", deckActive); if (nav && w.parentNode !== nav) nav.append(w); }
+}
 /* the play pallet slides along the top of the bar of twelve: S.playX is its left edge, kept inside the page and kept between loads */
-function placePlayL() { const pl = $("playL"); if (!pl || deckMode()) return; const max = Math.max(0, $("app").clientWidth - 12 - pl.offsetWidth); S.playX = clamp(S.playX || 0, 0, max); pl.style.marginLeft = S.playX + "px"; }
+function placePlayL() { const pl = $("playL"); if (!pl || deckMode()) return; const max = Math.max(0, $("tray").clientWidth - $("arrowPal").offsetWidth - 4 - pl.offsetWidth); S.playX = clamp(S.playX || 0, 0, max); pl.style.marginLeft = S.playX + "px"; }
 function initPlayL() {
   const pl = $("playL"); if (!pl) return; let d = null;
   pl.addEventListener("pointerdown", e => { d = { id: e.pointerId, x0: e.clientX, from: S.playX || 0, moved: false }; });
@@ -7875,16 +7927,12 @@ function initPlayL() {
   window.addEventListener("resize", placePlayL);
 }
 const soloWin = () => { if (deckMode()) return deckActive(); const w = PART_WIN[S.activePart || "melody"]; return S.winState[w] !== "closed" ? w : leadWin(); };   // the stave Play Bar plays: the part in view on the deck, the stave in use on the phone
-function renderPalette() {
+function renderPalette() { renderPalette0(); if (!deckMode()) { const pal = $("palette"); pal.hidden = !pal.querySelector(".prow:not([hidden]) button, .prow:not([hidden]) .who"); } }   // the phone: the pallet shows only while it has something to offer
+function renderPalette0() {
   placePlayL(); renderFtp(); renderTempo(); renderQuick(); if (deckMode()) renderFlipPal();
   const r1 = $("palRow1"), r2 = $("palRow2"), r3 = $("palRow3"), r4 = $("palRow4"); r1.replaceChildren(); r2.replaceChildren(); r3.replaceChildren(); r4.replaceChildren();
   renderRow3(r4); r2.hidden = true;                                                     // the second row is empty now
-  { const evR = selChipObj() ? null : selEv(), ownR = evR && !S.selAuto;                  // the top row's upper left: whole, half, eighth, 16th and 32nd rests (the quarter rest lives on the quick palette)
-    if (!deckMode()) { const pw = soloWin();   // ▶ SELECT: for the stave in use (▶ BAR sits with Play All and Stop, left of the arrows)
-      r1.append(el("button", { class: "gn tplay" + (typeof PSEL !== "undefined" && PSEL.on ? " on" : ""), title: "Play Select — choose the notes to hear", onclick: e => togglePlaySelect(pw, e.currentTarget) }, el("span", { class: "top" }, "▶"), el("span", { class: "sub" }, "SEL")),
-        el("button", { class: "gn tplay chord" + (S.chordWin[pw] ? " on" : ""), title: "Chord mode: every tap stacks a note on the chord being built", onclick: () => toggleChordMode(pw) }, el("span", { class: "sub" }, "CHORD")),
-        el("button", { class: "gn tplay run" + (runOn() ? " on" : ""), title: "Note run: press and drag along a stave to lay a run of notes", onclick: openRunSetup }, el("span", { class: "sub" }, "RUN"))); }
-    if (!deckMode()) [4, 2, 0.5, 0.25, 0.125].forEach(v => r1.append(el("button", { onclick: () => tapRestLen(v), class: "gn" + ((ownR ? evR.rest && Math.abs(baseLen(evR.d) - v) < 1e-9 : S.restNext && (S.restLen || S.len) === v) ? " on" : ""), title: ownR ? `Make it a ${REST_NAME[v]} rest` : `${REST_NAME[v]} rest: goes in at the next free spot, or arms one for your next tap` }, restIcon(v)))); }
+  r1.hidden = !deckMode();                                                              // the phone: the top row's keys live on the tray at the foot of the page (trayRow2)
   let p = r1;
   const ev = selEv(), bar = curBar();
   const b = (t, fn, opts = {}) => p.append(el("button", Object.assign({ onclick: fn }, opts.attrs || {}, { class: (opts.cls || "") + (opts.on ? " on" : "") + (opts.warn ? " warn" : ""), title: opts.title, disabled: opts.disabled }), t));
@@ -7914,7 +7962,7 @@ function renderPalette() {
     b("✕", mvCancel, { cls: "txt", title: "Leave move mode" });
     return;
   }
-  { const keep = p; p = r1; r1.append(el("span", { class: "flexgap" })); for (const k of ["staccato", "tenuto"]) b(k === "slur" ? [el("span", { class: "aglyph" }, ARTIC[k].glyph), el("span", { class: "acap" }, "SLUR")] : ARTIC[k].glyph, () => tapArtic(k), { cls: "art" + (k === "slur" ? " slurk" : "") + (S.artic === k ? " armed" : ""), on: !!(ev && (k === "slur" ? ev.slur : ev.artic === k)), title: S.artic === k ? `${ARTIC[k].label} armed — tap notes to mark them; tap again to return to note entry` : `${ARTIC[k].label}: tap before entering a note, or arm it and tap existing notes` }); p = keep; }   // staccato and tenuto: the top row's upper right corner
+  if (deckMode()) { const keep = p; p = r1; r1.append(el("span", { class: "flexgap" })); for (const k of ["staccato", "tenuto"]) b(k === "slur" ? [el("span", { class: "aglyph" }, ARTIC[k].glyph), el("span", { class: "acap" }, "SLUR")] : ARTIC[k].glyph, () => tapArtic(k), { cls: "art" + (k === "slur" ? " slurk" : "") + (S.artic === k ? " armed" : ""), on: !!(ev && (k === "slur" ? ev.slur : ev.artic === k)), title: S.artic === k ? `${ARTIC[k].label} armed — tap notes to mark them; tap again to return to note entry` : `${ARTIC[k].label}: tap before entering a note, or arm it and tap existing notes` }); p = keep; }   // staccato and tenuto: the top row's upper right corner
   if (ev) {                                        // editing tools appear for the selected note
     b("✕", () => { S.sel = null; renderAll(); }, { cls: "txt", title: "Done" });
     p.append(el("span", { class: "who" }, (ev.rest ? "rest" : ev.m == null ? "slot" : noteName(ev.m, keyObj(S.song.key))) + " " + durGlyph(ev.d)));
@@ -8310,6 +8358,7 @@ function lockIcon(locked) {
 }
 function renderQuick() {
   const box = $("quick"); if (!box || !S.quick) return; const Q = S.quick; box.replaceChildren();
+  if (!deckMode()) { Q.float = false; Q.locked = true; }                                   // the phone's tray: its keys are fixed — nothing is unlocked, floated or moved about
   box.classList.toggle("unlocked", !Q.locked); box.classList.toggle("float", !!Q.float);
   if (Q.float) { box.style.left = (Q.x == null ? 20 : Q.x) + "px"; box.style.top = (Q.y == null ? 80 : Q.y) + "px"; } else { box.style.left = ""; box.style.top = ""; }
   box.append(el("div", { class: "qgrip", title: "Drag to move this palette" }));
@@ -8334,6 +8383,18 @@ function renderQuick() {
     const title = it.kind === "rest" ? `${REST_NAME[it.v]} rest` : it.kind === "len" ? `${LEN_NAME[it.v]} note` : it.kind === "slur" ? "Slur" : it.kind === "tie" ? "Tie to the next note" : it.kind === "ghost" ? "Ghost note" : "Dotted";
     cell.append(el("button", { class: (on ? "on" : "") + (it.kind === "slur" || it.kind === "tie" ? " artk" : ""), title, "data-id": id }, face));
   });
+  if (!deckMode()) trayRow2(box);
+}
+/* the tray's lower row (the phone): ▶ SEL, CHORD and RUN for the stave in use, the whole, half, eighth, 16th and 32nd rests, staccato and tenuto — ten keys, and two open slots */
+function trayRow2(box) {
+  const pw = soloWin(), ev = selEv(), sc = selChipObj(), evR = sc ? null : ev, ownR = evR && !S.selAuto;
+  const put = b => box.append(el("div", { class: "xc" }, b));
+  put(el("button", { class: "tplay" + (typeof PSEL !== "undefined" && PSEL.on ? " on" : ""), title: "Play Select — choose the notes to hear", onclick: e => togglePlaySelect(pw, e.currentTarget) }, el("span", { class: "top" }, "▶"), el("span", { class: "sub" }, "SEL")));
+  put(el("button", { class: "tplay chord" + (S.chordWin[pw] ? " on" : ""), title: "Chord mode: every tap stacks a note on the chord being built", onclick: () => toggleChordMode(pw) }, el("span", { class: "sub" }, "CHORD")));
+  put(el("button", { class: "tplay run" + (runOn() ? " on" : ""), title: "Note run: press and drag along a stave to lay a run of notes", onclick: openRunSetup }, el("span", { class: "sub" }, "RUN")));
+  [4, 2, 0.5, 0.25, 0.125].forEach(v => put(el("button", { onclick: () => tapRestLen(v), class: (ownR ? evR.rest && Math.abs(baseLen(evR.d) - v) < 1e-9 : S.restNext && (S.restLen || S.len) === v) ? "on" : "", title: ownR ? `Make it a ${REST_NAME[v]} rest` : `${REST_NAME[v]} rest: goes in at the next free spot, or arms one for your next tap` }, restIcon(v))));
+  for (const k of ["staccato", "tenuto"]) put(el("button", { class: "art" + (S.artic === k ? " armed" : "") + (ev && !sc && ev.artic === k ? " on" : ""), onclick: () => tapArtic(k), title: S.artic === k ? `${ARTIC[k].label} armed — tap notes to mark them; tap again to return to note entry` : `${ARTIC[k].label}: tap before entering a note, or arm it and tap existing notes` }, ARTIC[k].glyph));
+  box.append(el("div", { class: "xc empty", title: "Room for a key to come" }), el("div", { class: "xc empty", title: "Room for a key to come" }));
 }
 function quickAct(id) { const it = QUICK_ITEMS[id]; if (!it) return; if (it.kind === "rest") tapRestLen(it.v); else if (it.kind === "len") tapLength(it.v); else if (it.kind === "slur") tapArtic("slur"); else if (it.kind === "tie") tapTie(); else if (it.kind === "ghost") tapGhostNote(); else tapDot(); }
 /* a held button dropped on a cell: an empty cell simply takes it; a full cell trades places, unless an empty cell is near enough to take the displaced one */
@@ -8749,7 +8810,7 @@ function weTypingStarts() {
   S.selChip = null; renderStrips(); renderPalette(); renderNav();
 }
 /* words set aside while another chip is modified come back to the box once it is set */
-function weUncarry() { if (!WE.carry || !WE.on) return; const inp = weInput(); inp.value = WE.carry; WE.carry = ""; WE.dirty = true; sizeInline(); toast("Your words are back in the box"); }
+function weUncarry() { if (!WE.carry || !WE.on) return; const inp = weInput(); inp.value = WE.carry; WE.carry = ""; WE.dirty = true; sizeInline(); if (!WE.carryQuiet) toast("Your words are back in the box"); }
 /* NEW CHIP → NEXT BEAT. The words in the box are set here when they fit; then the box goes to the next beat line — the line after
    the beat the last chip starts in, the chips of that beat squeezing (down to where they still read) so that nothing runs past
    it. When they cannot clear that line the user is asked: NEW CHIP ANY SPACE, modify the previous entry, next available space
@@ -8832,12 +8893,52 @@ function weNudge(d) {
     if (WE.chipId) { const me = S.song.bars[WE.bi].chips.find(x => x.id === WE.chipId); if (me) WE.t = me.t; }
     renderAll(); placeInline(); weCaret(); return;
   }
+  if (!WE.chipId && S.chipMode !== "single" && weInput().value.trim()) {                  // words typed but not yet set: the chip in the making is the one meant — it is set where it stands, stays in the box with the cursor in it, and takes the nudge
+    const bi0 = WE.bi, val = weInput().value, before = new Set(S.song.bars[bi0].chips.map(x => x.id));
+    commitWordEdit(true, false, true, true);
+    const made = S.song.bars[bi0].chips.find(x => !before.has(x.id));
+    if (!made) { if (!weInput().value) { weInput().value = val; WE.dirty = true; sizeInline(); } return; }
+    weInput().value = ""; WE.dirty = false; openWordEdit(bi0, made.t, made);
+  }
   const bar = S.song.bars[WE.bi], id = WE.chipId || (S.selChip && S.selChip.bi === WE.bi ? S.selChip.id : null), c = id ? bar.chips.find(x => x.id === id) : null;
   if (c) {
-    setChipTime(bar, c, c.t + d / 16); if (WE.chipId) WE.t = c.t; renderAll(); placeInline(); weCaret(); return;
+    const g0 = stripGeo(), flush = !WE.chipId && Math.abs(c.t + chipFull(c, g0) - WE.t) < 1 / 32;   // the empty box waiting flush after the chip just set goes along with it
+    setChipTime(bar, c, c.t + d / 16); if (WE.chipId) WE.t = c.t; else if (flush) WE.t = r3(Math.min(barBeats(WE.bi), c.t + chipFull(c, stripGeo()))); renderAll(); placeInline(); weCaret(); return;
   }
   if (S.chipMode === "single") { toast("A single chip fills the bar — nothing to nudge"); return; }
-  weEntryTo(WE.bi, clamp(WE.t + d / 16, 0, Math.max(0, barBeats(WE.bi) - ENTRY_MIN)));
+  { const t = clamp(WE.t + d / 16, 0, Math.max(0, barBeats(WE.bi) - ENTRY_MIN)), g = stripGeo();   // the empty box never steps onto a chip: it stops at the chip's edge
+    const hit = bar.chips.find(o => o.t < t + ENTRY_MIN - 1e-6 && o.t + chipFull(o, g) > t + 1e-6);
+    if (hit) { toast("A chip is in the way — tap it to move it"); return; }
+    weEntryTo(WE.bi, t); }
+}
+/* a chip grown too long as it is typed — wider than a beat of the strip (never less than 56px) — parts in two by itself: what was typed up to the
+   last space (or, in one long word, up to the last letter) is set as a chip, and the rest goes on in a new chip flush beside it, the cursor in it */
+function weAutoSplit() {
+  if (!WE.on || S.chipMode === "single" || WE.autoSplitting) return;
+  const inp = weInput(), text = inp.value; if (inp.disabled || text.replace(/\s/g, "").length < 2) return;
+  const at = inp.selectionStart == null ? text.length : inp.selectionStart; if (at < text.length) return;   // only as the words run on at their end
+  const g = stripGeo(), k = g.k || 1; if (weTextW(inp, text) / k <= Math.max(g.beatPx, 56)) return;
+  const body = text.replace(/\s+$/, ""), sp = body.lastIndexOf(" ");
+  const left = (text !== body ? body : sp > 0 ? body.slice(0, sp) : body.slice(0, -1)).trim(), right = text !== body ? "" : sp > 0 ? body.slice(sp + 1) : body.slice(-1);
+  if (!left) return;
+  WE.autoSplitting = true;
+  try {
+    const bi = WE.bi, bar = S.song.bars[bi];
+    if (WE.chipId) {                                                                        // a chip being edited: it keeps the first part, a new chip flush after it takes the rest
+      const c = bar.chips.find(x => x.id === WE.chipId); if (!c || !right) return;
+      const keep = c.text; c.text = left; delete c.words;
+      const t = entrySpot(bar, bi, c.t + chipFull(c, g), (chipW({ text: right }) + 3) / g.beatPx);
+      if (t == null) { c.text = keep; return; }
+      const n = { id: uid(), text: right, t }; bar.chips.push(n); bar.chips.sort((a, b) => a.t - b.t); bar.lyric = lyricFromChips(bar);
+      WE.chipId = null; WE.dirty = false; inp.value = ""; renderAll(); openWordEdit(bi, n.t, n); return;
+    }
+    const before = bar.chips.length; WE.carry = right; WE.carryQuiet = true; inp.value = left;
+    commitWordEdit(true, false, true, true);
+    WE.carryQuiet = false;
+    if (S.song.bars[bi].chips.length === before) { WE.carry = ""; inp.value = text; WE.dirty = true; placeInline(); weCaret(); return; }   // no room for it here: the words stay in the box as they were
+    S.selChip = null; renderStrips(); renderPalette(); renderNav();
+    inp.focus(); try { inp.setSelectionRange(inp.value.length, inp.value.length); } catch (e) {} weCaret();
+  } finally { WE.autoSplitting = false; WE.carryQuiet = false; }
 }
 /* ← → on the keyboard: move the cursor inside the word */
 function weMoveCaret(d) { const inp = weInput(); if (inp.disabled) return; const s = inp.selectionStart == null ? inp.value.length : inp.selectionStart; const n = clamp(s + d, 0, inp.value.length); inp.focus(); try { inp.setSelectionRange(n, n); } catch (e) {} weCaret(); }
@@ -8888,7 +8989,7 @@ function renderWeKeys() {
   box.classList.toggle("kb-flat", S.kbLayout === "flat"); ["blue", "black", "gray"].forEach(t => box.classList.toggle("kbt-" + t, S.kbTheme === t));   // the layout and theme chosen in Settings: Flat's square, flush letter keys; the colour scheme
   inp.setAttribute("inputmode", S.softKb ? "none" : "text");                             // the phone's keyboard (chosen in Settings): the letters fold away, the chip tools stay
   const caret = () => [inp.selectionStart == null ? inp.value.length : inp.selectionStart, inp.selectionEnd == null ? inp.value.length : inp.selectionEnd];
-  const insert = ch => { if (!weAdoptSpacer()) return; weTypingStarts(); const [s, e2] = caret(); inp.value = inp.value.slice(0, s) + ch + inp.value.slice(e2); WE.dirty = true; sizeInline(); inp.focus(); inp.setSelectionRange(s + ch.length, s + ch.length); if (weShift && !weCaps) { weShift = false; renderWeKeys(); } };
+  const insert = ch => { if (!weAdoptSpacer()) return; weTypingStarts(); const [s, e2] = caret(); inp.value = inp.value.slice(0, s) + ch + inp.value.slice(e2); WE.dirty = true; sizeInline(); inp.focus(); inp.setSelectionRange(s + ch.length, s + ch.length); weAutoSplit(); if (weShift && !weCaps) { weShift = false; renderWeKeys(); } };
   const back = () => { if (inp.disabled) return; if (!inp.value && !WE.chipId) { weBackChip(); return; } let [s, e2] = caret(); if (s === e2 && s > 0) s = s - 1; inp.value = inp.value.slice(0, s) + inp.value.slice(e2); WE.dirty = true; sizeInline(); inp.focus(); inp.setSelectionRange(s, s); };
   /* keys fire on the finger lifting inside the key: no 300 ms delay, no ghost clicks, mis-taps can slide off */
   const key = (label, fn, cls, title) => { let down = false; return el("button", { class: cls || "", title, onpointerdown: e => { e.preventDefault(); down = true; }, onpointerup: e => { e.preventDefault(); if (down) fn(); down = false; }, onpointerleave: () => { down = false; }, onpointercancel: () => { down = false; }, onclick: e => e.preventDefault() }, label); };
@@ -9246,7 +9347,7 @@ function initWordEdit() {
   box.append(el("button", { id: "lyrX", title: "Done — back to the staves", onclick: () => closeWordEdit() }, "✕")); initLyrGrab();   // the lyrics screen's ✕: a white cross on red, top right of the keyboard
   $("lyrEdit").addEventListener("click", weOpenFromButton);
   inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); commitWordEdit(true, false, true, true); } else if (e.key === "Tab") { e.preventDefault(); weNewNextBeat(); } else if (e.key === "Backspace" && !inp.value && !WE.chipId) { e.preventDefault(); weBackChip(); } else if (e.key === " " && !inp.value && !WE.chipId) { e.preventDefault(); weSpaceChip(); } else if (e.key === "Escape") { e.preventDefault(); WE.dirty = false; closeWordEdit(); } });
-  inp.addEventListener("input", () => { weTypingStarts(); { const bar = S.song.bars[WE.bi], p = bar && !WE.chipId && bar.chips.find(c => c.placing); if (p) { const v = inp.value; if (placeGapChip(bar, WE.bi, p)) { openWordEdit(WE.bi, p.t, p); inp.value = v; } else inp.value = ""; } } WE.dirty = true; sizeInline(); });   // typing with a ↔ chip in hand sets it and the words go into it
+  inp.addEventListener("input", () => { weTypingStarts(); { const bar = S.song.bars[WE.bi], p = bar && !WE.chipId && bar.chips.find(c => c.placing); if (p) { const v = inp.value; if (placeGapChip(bar, WE.bi, p)) { openWordEdit(WE.bi, p.t, p); inp.value = v; } else inp.value = ""; } } WE.dirty = true; sizeInline(); weAutoSplit(); });   // typing with a ↔ chip in hand sets it and the words go into it
   document.addEventListener("selectionchange", () => { if (WE.on) weCaret(); });
   ["keyup", "click", "focus"].forEach(ev => inp.addEventListener(ev, () => weCaret()));
   inp.addEventListener("blur", () => { /* the keyboard stays open until its ✕ (or NEW CHIP NEXT BEAT at the song's end) closes it */ });
