@@ -781,7 +781,8 @@ body.kbOpen #lyrEdit, #app.deck.kbUp #lyrEdit { display: none !important; }   /*
 #app.rolled:not(.deck) { grid-template-rows: repeat(9, auto) 1fr; } #app.focus-mel:not(.deck) { grid-template-rows: repeat(6, auto) 1fr; }
 #tray { align-self: end; }
 #app.lyrEdit #tray, body.kbOpen #tray { position: static; }
-#tray > * { grid-area: 1 / 1; }
+#tray > * { grid-area: 1 / 1; pointer-events: auto; }
+#tray { pointer-events: none; }                                                            /* only the pallets and the tray itself take touches: the clear space between them on the top edge lets a tap through to the page beneath */
 #tray #quick { position: static; justify-self: stretch; align-self: start; width: auto; margin-top: 54px; grid-template-columns: repeat(12, minmax(0, 1fr)); grid-template-rows: 32px 32px; gap: 3px; padding: 5px;
   background: linear-gradient(#d3d6db, #9a9fa7 55%, #b4b8bf); border: 1.5px solid #141414; border-radius: 4px 0 4px 4px; box-shadow: inset 0 1px 0 rgba(255,255,255,.75), inset 0 -1px 0 rgba(0,0,0,.35), 0 -2px 8px rgba(0,0,0,.35); touch-action: manipulation; overflow: visible; }
 #tray #quick .qctl, #tray #quick .qgrip { display: none; }
@@ -8509,6 +8510,7 @@ function initPointer() {
         if (!dragCtx.swipe) return;                        // too diagonal to call yet — wait for a clearer direction
         if (dragCtx.swipe === "h" && dragCtx.selFrom && S.mv && S.mv.mode === "delete" && !S.mv.armed) {   // SELECT, dragged across: the run is every beat from the one pressed to the one under the finger, either way, inside the section
           const g = GEO[win], at = g.at(svgPoint(svg, e).x), now = barAbs(at.bi) + Math.floor(at.t + 1e-6), f = dragCtx.selFrom, mv = S.mv;
+          if (!dragCtx.selDrag && now === f.beat) return;                                   // still inside the beat pressed: a tap whose finger shifted, not a drag — it is read as a tap when it lifts
           const sr = sectionRange(sectionOfBar(absToBar(f.beat).bi)), a = Math.max(barAbs(sr.start), Math.min(f.beat, now)), b = Math.min(barAbs(sr.end), Math.max(f.beat, now) + 1);
           if (mv.part !== f.part || mv.start !== a || mv.end !== b || !dragCtx.selDrag) { mv.part = f.part; mv.start = a; mv.end = b; mv.sub = null; mv.moved = false; dragCtx.selDrag = true; S.active = null; S.sel = null; S.ghost = null; renderAll(); }
           return;
@@ -8540,6 +8542,7 @@ function initPointer() {
       const d = dragCtx; dragCtx = null;
       if (d.ftpOn && !d.moved) { if (typeof WE !== "undefined" && WE.on) { if (!weSetChip()) weBlink(); } return; }   // a tap on the stave: nothing — with the keyboard open it sets the chip in hand, else the keyboard blinks
       if (d.selDrag) { const n = Math.round(S.mv ? S.mv.end - S.mv.start : 0); if (n) toast(`${n} beat${n === 1 ? "" : "s"} picked — drag or tap again to change it`); return; }   // a SELECT drag ends as a selection: no swipe, no bar turned
+      if (d.moved && d.selFrom && S.mv && S.mv.mode === "delete" && d.swipe !== "v") d.moved = false;   // SELECT: a press that never left its beat is a tap, however the finger shifted — it had been thrown away as a swipe, so on a touch screen a beat often would not pick
       if (d.moved) { if (d.locked && d.ev) return; if (!d.ev && d.swipe === "h" && !(typeof WE !== "undefined" && WE.on)) { const dx = e.clientX - d.x0; if (Math.abs(dx) > 50) { S.bi = clamp(S.bi + (dx < 0 ? 1 : -1), 0, S.song.bars.length - 1); S.sel = null; S.ghost = null; } } renderAll(); return; }   // a swipe ends as a swipe: no tap, no entry
       const p = svgPoint(svg, e), g = GEO[win], at = g.at(p.x);
       const partAt = win === "mel" && onLowerStaff(g, g.m(p.y)) ? GRAND_LOWER : WIN_PART[win], winAt = PART_WIN[partAt];   // the Grand Stave's lower staff: the Bass part's tap
@@ -8657,7 +8660,7 @@ function openWordEdit(bi, t, chip) {
   const bodyEl = $("lyrStrip").querySelector(".body"), x = g.x(bi, WE.t) * (g.k || 1);
   inp.classList.add("on"); sizeInline(); placeInline();
   if (x < bodyEl.scrollLeft || x > bodyEl.scrollLeft + bodyEl.clientWidth - 60) bodyEl.scrollLeft = Math.max(0, x - 40);
-  setTimeout(() => { if (!inp.disabled) { inp.focus(); const n = inp.value.length; try { inp.setSelectionRange(n, n); } catch (e) {} } weCaret(); }, 20);
+  setTimeout(() => { if (!inp.disabled) { inp.focus(); const n = inp.value.length; try { inp.setSelectionRange(n, n); } catch (e) {} } weCaret(); weReseat(); }, 20);
 }
 const ENTRY_MIN = 0.25;                                                  // the smallest room the entry box asks for, in beats
 /* the first t at or after `from` where a chip `w` beats wide fits without touching another; null when the bar has no such spot */
@@ -9047,7 +9050,9 @@ function renderWeKeys() {
       return gp; };
     L.prepend(gripFor("l")); R.prepend(gripFor("r"));
     const split = el("div", { class: "kbSplit" }); split.append(L, R); k.append(split); weApplySplit(L, R);
-    weApplySlide(R); weSlideWire(spR, "x", R, spaceFn); weSlideWire(bkR, "y", R, back);   // the right half's space bar and BACKSPACE take their slid positions, and can be unseated and slid again
+    weApplySlide(R); weSlideWire(spR, "x", R, spaceFn); weSlideWire(bkR, "y", R, back);
+    if (window.ResizeObserver) { const ro = new ResizeObserver(() => { if (R.isConnected && !R.querySelector(".unseated")) weApplySlide(R); }); ro.observe(R); ro.observe(L); }   // the halves resized after the keys were built (the keyboard docking as it opens, a grip pulled, the screen turned): the space bar and BACKSPACE are seated again from the new measure — they had kept the old one's pixels, and the space bar could stand out past the board's edge
+      // the right half's space bar and BACKSPACE take their slid positions, and can be unseated and slid again
   }
   if (wePanelHidden && !deck) return;
   /* the tool panel: four columns — the modes, SPLIT and UNDO on the left; DELETE / SELECT, the nudges, SHORTEN / WIDEN and REDO in the middle; the NEW CHIP keys and SET CHIP on the right */
@@ -9398,7 +9403,8 @@ function placeKb(x, y) {
   box.style.left = x + "px"; box.style.top = y + "px";
 }
 function dockKb() { const box = $("wordEdit"); box.classList.remove("floating"); box.style.left = ""; box.style.top = ""; }
-function applyKbPos() { if (S.kbPos) placeKb(S.kbPos.x, S.kbPos.y); else dockKb(); keepStripClear(); }
+function weReseat() { const R = $("wordEdit").querySelector(".half.r"); if (R && R.offsetWidth && !R.querySelector(".unseated")) weApplySlide(R); }   // the right half's space bar and BACKSPACE seated again from the board as it measures now
+function applyKbPos() { if (S.kbPos) placeKb(S.kbPos.x, S.kbPos.y); else dockKb(); keepStripClear(); weReseat(); requestAnimationFrame(weReseat); }
 function keepStripClear() {
   document.body.classList.add("kbOpen");
   requestAnimationFrame(() => {
@@ -10737,7 +10743,7 @@ async function boot() {
   let syncing = false;
   scrollers.forEach(sc => sc.addEventListener("scroll", () => { if (syncing) return; syncing = true; scrollers.forEach(o => { if (o !== sc) o.scrollLeft = sc.scrollLeft; }); const inner = $("beatRow").querySelector(".inner"); if (inner) inner.style.transform = `translateX(${-sc.scrollLeft}px)`; syncing = false; }, { passive: true }));
   $("barLabel").addEventListener("click", openSectionOps);
-  wireTempo(); initPlayL();
+  wireTempo(); initPlayL(); window.addEventListener("resize", () => setTimeout(weReseat, 60));
   $("saveBtn").addEventListener("click", openLibrary);
   document.querySelectorAll(".win .delBtn").forEach(b => b.addEventListener("click", () => delAskOpen(b)));
   document.querySelectorAll(".win .bsBtn").forEach(b => b.addEventListener("click", () => backspaceNote(WIN_PART[b.dataset.win])));
