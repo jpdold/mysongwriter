@@ -252,7 +252,7 @@ svg text { pointer-events: none; }
 .win .chordBtn .ico { width: 20px; height: 20px; display: block; }
 .win .chordBtn.on { background: linear-gradient(#ffd27a, #f5a623); color: #111; border-color: #a86d10; }
 @keyframes chordBlink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: .4; } }
-.win .chordBtn.on, #app.deck button.tplay#tChord.on, #palette .prow button.tplay.chord.on { animation: chordBlink 1.4s step-end infinite; }   /* chord mode on: the button blinks, unhurried */
+.win .chordBtn.on, #app.deck button.tplay#tChord.on, #palette .prow button.tplay.chord.on, #app.deck button.tplay#tRun.on, #palette .prow button.tplay.run.on { animation: chordBlink 1.4s step-end infinite; }   /* chord mode on: the button blinks, unhurried */
 .win.closed .chordBtn { display: none; }
 .win .pselClose { width: 24px; height: 24px; padding: 0; border: 1.5px solid #2f7fd6; border-radius: 4px; background: rgba(0,0,0,.25); color: #fff; font-size: 13px; font-weight: 700; line-height: 1; }
 .win .pselClose:active { background: #2f7fd6; }
@@ -6121,11 +6121,12 @@ function loadPrefs() {
   S.lyricFont = p.lyricFont || "sans"; S.chipMode = "multi"; S.keepAwake = p.keepAwake !== false; S.paper = Object.assign({ mel: "default", acc: "default", bass: "default" }, p.paper || {}); S.quick = Object.assign({ cells: QUICK_DEFAULT.slice(), locked: true, float: false, x: null, y: null }, p.quick || {}); if (!Array.isArray(S.quick.cells) || S.quick.cells.join() === QUICK_OLD.join()) S.quick.cells = QUICK_DEFAULT.slice(); if (S.quick.cells.length === 8) S.quick.cells.push("sl", "ti", "gh", "dt"); if (S.quick.cells.length !== 12) S.quick.cells = QUICK_DEFAULT.slice();   // a third row joined: slur, tie, ghost note, dot
   S.winState = Object.assign({ mel: "open", acc: "closed", bass: "closed" }, p.winState || {}); for (const w of ["mel", "acc", "bass"]) if (S.winState[w] === "half") S.winState[w] = "open"; S.zoomWin = Object.assign({ mel: 1, acc: 1, bass: 1 }, p.zoomWin || {}); S.midi = p.midi || {}; S.viewSpan = [1, 2, 3, 4].includes(p.viewSpan) ? p.viewSpan : 1;   // (these had been swallowed by the comment before them, so no load restored the windows, the zoom, the MIDI settings or the bars shown)
   if (p.softKb != null) S.softKb = p.softKb2 == null ? true : !!p.softKb2; S.kbPos = p.kbPos || null;   // the app keyboard, on unless switched off
+  S.run = Object.assign({ on: false, mode: "free", preset: "scale", semis: 4 }, p.run || {}, { on: false });   // the note run's choices are kept; it starts switched off
   S.phoneWins = p.phoneWins && typeof p.phoneWins === "object" ? p.phoneWins : null; S.lyrOff = Math.max(0, +p.lyrOff || 0);   // the lyrics screen's strip, lifted      // the phone's window states kept aside while the deck is up
   S.layout = p.layout === "stack" ? "stack" : "rolled";                                 // Stacked staves or Rolled up: the page comes back in the view it was left in
   applyTheme();
 }
-function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, deck: S.deck, rhyShown: S.rhyShown, lyrShown: S.lyrShown, partsShown: S.partsShown, dynShown: S.dynShown, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, beatLines: S.beatLines, barHi: S.barHi, spacing: S.spacing, collapsed: S.collapsed, rangeLock: S.rangeLock, kbLayout: S.kbLayout, kbTheme: S.kbTheme, kbSpace: S.kbSpace, kbBackUp: S.kbBackUp, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, keepAwake: S.keepAwake, paper: S.paper, quick: S.quick, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout, duoBars: S.duoBars, duoBand: S.duoBand, beatDividers: S.beatDividers, focusBand: S.focusBand, doors: S.doors, clefs: S.clefs, phoneWins: S.phoneWins, lyrOff: S.lyrOff }); }
+function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, deck: S.deck, rhyShown: S.rhyShown, lyrShown: S.lyrShown, partsShown: S.partsShown, dynShown: S.dynShown, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, beatLines: S.beatLines, barHi: S.barHi, spacing: S.spacing, collapsed: S.collapsed, rangeLock: S.rangeLock, kbLayout: S.kbLayout, kbTheme: S.kbTheme, kbSpace: S.kbSpace, kbBackUp: S.kbBackUp, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, keepAwake: S.keepAwake, paper: S.paper, quick: S.quick, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout, duoBars: S.duoBars, duoBand: S.duoBand, beatDividers: S.beatDividers, focusBand: S.focusBand, doors: S.doors, clefs: S.clefs, phoneWins: S.phoneWins, lyrOff: S.lyrOff, run: S.run ? { mode: S.run.mode, preset: S.run.preset, semis: S.run.semis } : null }); }
 function applyTheme() {
   const r = document.documentElement;
   const TEX = { pearl: "#f3f0ea", cobalt: "#0b3d91", cherry: "#c4202b", mustard: "#d8d12e" };   // the textured themes, and the colour each gives the browser's bar
@@ -6336,7 +6337,7 @@ function geo(win) {
   const beatPx = setPx ? Math.max(setPx, fillPx) : fillPx;
   const W = padL + padR + Math.max(accB, B) * beatPx;
   const g = { win, B, n, first, bars, starts, totalBeats: accB, W, W1, H: padT + rows * step + padB, padL, padT, step, lo, hi, beatPx };
-  svg.setAttribute("width", W); svg.style.width = W + "px"; svg.style.touchAction = W > W1 + 1 ? "pan-x" : "none";
+  svg.setAttribute("width", W); svg.style.width = W + "px"; svg.style.touchAction = W > W1 + 1 && !(S.run && S.run.on) ? "pan-x" : "none";   // a run is drawn sideways: the stave does not pan under it
   g.x = (bi, t) => padL + ((starts[bi] != null ? starts[bi] : accB) + t) * beatPx;   // x(bi, t)
   g.at = x => { const beats = (x - padL) / beatPx; let bi = bars[0]; for (const b of bars) if (beats >= starts[b]) bi = b; return { bi, t: clamp(beats - starts[bi], 0, barBeats(bi) - 0.001) }; };
   const dia = clefOn(win) ? keyObj(S.song.key) : null;
@@ -6980,7 +6981,9 @@ function renderRollBar() {
       const flb = $("flipLBtn"); flb.replaceChildren(el("span", { class: "big" }, "⟳"), el("span", { class: "cap" }, "MORE")); flb.onclick = () => { S.deckFlipL = ((S.deckFlipL || 0) + 1) % 2; renderAll(); }; }
     if (!tm.querySelector(".tplay")) tm.append(
       el("button", { class: "tplay", id: "tPlaySel", title: "Play Select — choose the notes to hear", onclick: e => togglePlaySelect(deckActive(), e.currentTarget) }, el("span", { class: "tri" }, "▶"), " SELECT"),
-      el("button", { class: "tplay", id: "tChord", title: "Chord mode: every tap stacks a note on the chord being built", onclick: () => toggleChordMode(deckActive()) }, "CHORD"));
+      el("button", { class: "tplay", id: "tChord", title: "Chord mode: every tap stacks a note on the chord being built", onclick: () => toggleChordMode(deckActive()) }, "CHORD"),
+      el("button", { class: "tplay", id: "tRun", title: "Note run: press and drag along a stave to lay a run of notes", onclick: openRunSetup }, "RUN"));
+    if ($("tRun")) $("tRun").classList.toggle("on", runOn());
     $("tPlaySel").classList.toggle("on", !!(typeof PSEL !== "undefined" && PSEL.on)); $("tChord").classList.toggle("on", !!(S.chordWin && S.chordWin[active]));
     { const fm = S.deckFlipM || 0; $("topTransport").hidden = fm !== 0; tm.querySelectorAll(".tplay").forEach(b => { b.hidden = fm !== 1; });   // the middle third: playback, or this part's buttons
       const fb = $("flipMBtn"); fb.replaceChildren(el("span", { class: "big" }, "⟳"), el("span", { class: "cap" }, "MORE")); fb.onclick = () => { S.deckFlipM = ((S.deckFlipM || 0) + 1) % 2; renderAll(); }; }
@@ -7847,7 +7850,8 @@ function renderPalette() {
     if (!deckMode()) { const pw = (() => { const w = PART_WIN[S.activePart || "melody"]; return S.winState[w] !== "closed" ? w : leadWin(); })();   // ▶ BAR and ▶ SELECT: for the stave in use
       r1.append(el("button", { class: "gn tplay" + (S.playing && S.solo === WIN_PART[pw] ? " on" : ""), title: "Play Bar — this part alone, this bar", onclick: e => playSolo(pw, e.currentTarget) }, el("span", { class: "top" }, "▶"), el("span", { class: "sub" }, "BAR")),
         el("button", { class: "gn tplay" + (typeof PSEL !== "undefined" && PSEL.on ? " on" : ""), title: "Play Select — choose the notes to hear", onclick: e => togglePlaySelect(pw, e.currentTarget) }, el("span", { class: "top" }, "▶"), el("span", { class: "sub" }, "SEL")),
-        el("button", { class: "gn tplay chord" + (S.chordWin[pw] ? " on" : ""), title: "Chord mode: every tap stacks a note on the chord being built", onclick: () => toggleChordMode(pw) }, el("span", { class: "sub" }, "CHORD"))); }
+        el("button", { class: "gn tplay chord" + (S.chordWin[pw] ? " on" : ""), title: "Chord mode: every tap stacks a note on the chord being built", onclick: () => toggleChordMode(pw) }, el("span", { class: "sub" }, "CHORD")),
+        el("button", { class: "gn tplay run" + (runOn() ? " on" : ""), title: "Note run: press and drag along a stave to lay a run of notes", onclick: openRunSetup }, el("span", { class: "sub" }, "RUN"))); }
     if (!deckMode()) [4, 2, 0.5, 0.25, 0.125].forEach(v => r1.append(el("button", { onclick: () => tapRestLen(v), class: "gn" + ((ownR ? evR.rest && Math.abs(baseLen(evR.d) - v) < 1e-9 : S.restNext && (S.restLen || S.len) === v) ? " on" : ""), title: ownR ? `Make it a ${REST_NAME[v]} rest` : `${REST_NAME[v]} rest: goes in at the next free spot, or arms one for your next tap` }, restIcon(v)))); }
   let p = r1;
   const ev = selEv(), bar = curBar();
@@ -8149,6 +8153,66 @@ function tapMelody(bi, t, m, onNote = false) {
   if (S.followWords) S.cursor = nextUnpitchedChip(bi, ev.chip || null);
   renderAll();
 }
+/* ── NOTE RUN: press on a stave and drag, and notes of the length in hand are laid along the drag, one to each slot of that length the finger crosses,
+   until it lifts. Free drag: each note takes the pitch under the finger, drawn to the preset's pitches. Straight: the run is flat (the one pitch
+   repeated) or climbs or falls one way, a preset step to each note — which of the three is read from the drag once it leaves its first slot, and kept.
+   The presets: chromatic (every half step), the scale of the song's key, or a fixed interval from the first note (2nds to the octave, major or minor).
+   Slots already holding something are passed over, the run stays inside the bars in view, and the whole run is one step for UNDO. ── */
+const RUN_INTERVALS = [[1, "Minor 2nd"], [2, "Major 2nd"], [3, "Minor 3rd"], [4, "Major 3rd"], [5, "4th"], [7, "5th"], [8, "Minor 6th"], [9, "Major 6th"], [10, "Minor 7th"], [11, "Major 7th"], [12, "Octave"]];
+let runCtx = null;
+const runOn = () => !!(S.run && S.run.on);
+function runScale() { const k = keyObj(S.song.key), st = k.minor ? [0, 2, 3, 5, 7, 8, 10] : [0, 2, 4, 5, 7, 9, 11]; return new Set(st.map(x => (k.pc + x) % 12)); }
+const runPc = m => ((m % 12) + 12) % 12;
+function runQuant(m, start) {                                                             // the pitch under the finger, drawn to the preset's pitches
+  const R = S.run;
+  if (R.preset === "int") { const n = R.semis || 4; return start + Math.round((m - start) / n) * n; }
+  if (R.preset === "scale") { const sc = runScale(); for (const d of [0, -1, 1, -2, 2]) if (sc.has(runPc(m + d))) return m + d; }
+  return m;
+}
+function runStep(m, dir) {                                                                // Straight: the next pitch one preset step on, up or down
+  const R = S.run; if (!dir) return m;
+  if (R.preset === "int") return m + dir * (R.semis || 4);
+  if (R.preset === "scale") { const sc = runScale(); let x = m + dir; for (let i = 0; i < 12 && !sc.has(runPc(x)); i++) x += dir; return x; }
+  return m + dir;
+}
+function runDown(win, svg, e) {
+  const g = GEO[win]; if (!g) return; const pt = svgPoint(svg, e), at = g.at(pt.x), m0 = g.m(pt.y);
+  const part = win === "mel" && onLowerStaff(g, m0) ? GRAND_LOWER : WIN_PART[win];
+  if (part !== "melody" && !S.song.parts[part].on) { toast(`${PART_META[part].label} is off — turn it on in ⚙ beside its window`); return; }
+  const d = noteLenBeats(), t0 = r3(Math.floor(at.t / d + 1e-6) * d);
+  runCtx = { win, svg, id: e.pointerId, part, d, abs0: barAbs(at.bi) + t0, start: S.run.preset === "scale" ? runQuant(m0, m0) : m0, last: -1, prev: null, dir: null, y0: pt.y, n: 0, done: false };
+  try { svg.setPointerCapture(e.pointerId); } catch (x) {}
+  S.ghost = null; S.sel = null; S.justEntered = null; S.restNext = false; S.active = { bi: at.bi, beat: beatOf(at.bi, t0) }; S.activePart = part; S.bi = at.bi;
+  runFill(e);
+}
+function runFill(e) {
+  const c = runCtx; if (!c || c.done) return; const g = GEO[c.win], pt = svgPoint(c.svg, e), at = g.at(pt.x);
+  const idx = Math.floor((barAbs(at.bi) + at.t - c.abs0) / c.d + 1e-6); let placed = false;
+  for (let k = c.last + 1; k <= idx; k++) {
+    c.last = k; let m;
+    if (c.prev == null) m = c.start;
+    else if (S.run.mode === "straight") { if (c.dir == null) { const rows = (c.y0 - pt.y) / g.step; c.dir = Math.abs(rows) < 1 ? 0 : rows > 0 ? 1 : -1; } m = runStep(c.prev, c.dir); }
+    else m = runQuant(g.m(pt.y), c.start);
+    if (m < 21 || m > 108) { c.done = true; break; }                                       // off the keyboard: the run ends there
+    const pos = absToBar(c.abs0 + k * c.d); if (!pos || !g.bars.includes(pos.bi)) { c.done = true; break; }   // the run stays inside the bars in view
+    const bar = S.song.bars[pos.bi];
+    if ((bar.ev[c.part] || []).some(x => x.t < pos.t + c.d - 1e-6 && x.t + x.d > pos.t + 1e-6)) continue;   // a slot already holding something is passed over, and costs the run no pitch
+    const plan = planSpan(pos.bi, pos.t, c.d, c.part); if (plan.deny) { c.done = true; break; }
+    placeSpan(plan.pieces, c.part, m, null); c.prev = m; c.n++; placed = true; previewNote(m, c.part);
+  }
+  if (placed) { renderWindows(); renderStrips(); }
+}
+function runUp() { const c = runCtx; runCtx = null; if (!c) return; S.justEntered = null; S.sel = null; renderAll(); if (c.n) toast(c.n === 1 ? "1 note — drag along the stave for a run" : `${c.n} notes in the run — UNDO takes the whole run back`); }
+function openRunSetup() {
+  if (runOn()) { S.run.on = false; savePrefs(); renderAll(); toast("Note run off"); return; }
+  const R = S.run, body = [];
+  const radios = (name, opts, cur, fn, col) => { const box = el("div", { class: "radios" + (col ? " col" : "") }); opts.forEach(([v, l]) => { const inp = el("input", { type: "radio", name: "run_" + name }); inp.checked = cur === v; inp.addEventListener("change", () => { if (inp.checked) fn(v); }); box.append(el("label", {}, inp, el("span", {}, l))); }); return box; };
+  const sel = el("select", { class: "sel" }); RUN_INTERVALS.forEach(([n, l]) => sel.append(el("option", { value: n, selected: n === (R.semis || 4) }, l))); sel.addEventListener("change", () => { R.semis = +sel.value; R.preset = "int"; savePrefs(); closeModal(); R.on = false; openRunSetup(); });
+  body.push(el("div", { class: "pLbl" }, "Draw"), radios("mode", [["free", "Free drag — each note takes the pitch under the finger, up and down as it moves"], ["straight", "Straight — the same pitch repeated, or one way up, or one way down"]], R.mode, v => { R.mode = v; savePrefs(); }, true));
+  body.push(el("div", { class: "pLbl" }, "Pitches"), radios("preset", [["chrom", "Chromatic — every half step"], ["scale", `Scale of the key (${S.song.key}) — its own sharps or flats`], ["int", "A set interval from the first note:"]], R.preset, v => { R.preset = v; savePrefs(); }, true), el("div", { class: "mrow", style: "margin-left:22px" }, sel));
+  body.push(el("div", { class: "tiny", style: "margin-top:6px" }, "Press on a stave and drag: notes of the length in hand are laid along the drag until the finger lifts. Slots already holding a note are passed over; the run stays inside the bars in view; UNDO takes the whole run back. Tap RUN again to turn it off."));
+  openModal("Note run", body, [el("button", { class: "btn", onclick: closeModal }, "Cancel"), el("button", { class: "btn acc", onclick: () => { R.on = true; savePrefs(); closeModal(); renderAll(); toast(`Note run on — ${R.mode === "free" ? "free drag" : "straight"}, ${R.preset === "chrom" ? "chromatic" : R.preset === "scale" ? "the key's scale" : (RUN_INTERVALS.find(x => x[0] === (R.semis || 4)) || [0, "interval"])[1].toLowerCase() + "s"}`); } }, "Start drawing")]);
+}
 function tapBand(win, bi, t, m, onNote = false, partOf = null) {
   const part = partOf || WIN_PART[win], bar = S.song.bars[bi], P = S.song.parts[part], B = barBeats(bi);   // partOf: the Grand Stave's lower staff, tapped in the melody's window
   if (chordOn(part) && inActive(bi, t) && P.on) { const ch0 = chordChainAt(bar, t, part); if (ch0 && ch0.head.m != null) { S.bi = bi; S.activePart = part; aimBeat(bi, t); addChordNote(bi, ch0, m, part); return; } }   // chord mode: a tap in a chord's own beat stacks on it
@@ -8317,6 +8381,7 @@ function initPointer() {
     const svg = $(win + "Svg");
     svg.addEventListener("pointerdown", e => {
       if (S.cpy && S.cpy.crosshair) { xhairDown(win, svg, e); return; }                     // COPY's crosshair: drag a box instead of the usual tap handling
+      if (runOn() && !(typeof WE !== "undefined" && WE.on) && !S.mv && !S.rep && !S.cpy && !PSEL.on) { runDown(win, svg, e); return; }   // NOTE RUN: the press starts a run, the drag lays it
       const t = e.target, holder = t.getAttribute && t.getAttribute("data-ev") ? t : t.parentNode;
       const evId = holder && holder.getAttribute ? holder.getAttribute("data-ev") : null;
       const part = evId ? holder.getAttribute("data-part") : null, ebi = evId ? parseInt(holder.getAttribute("data-bi") || S.bi, 10) : S.bi;
@@ -8329,6 +8394,7 @@ function initPointer() {
     });
     svg.addEventListener("pointermove", e => {
       if (xhairCtx && xhairCtx.svg === svg && e.pointerId === xhairCtx.id) { xhairMove(e); return; }
+      if (runCtx && runCtx.svg === svg && e.pointerId === runCtx.id) { runFill(e); return; }
       if (!dragCtx || dragCtx.svg !== svg || e.pointerId !== dragCtx.id) return;
       const dx = e.clientX - dragCtx.x0, dy = e.clientY - dragCtx.y0;
       if (!dragCtx.moved && Math.hypot(dx, dy) < 10) return;
@@ -8360,6 +8426,7 @@ function initPointer() {
     });
     const up = e => {
       if (xhairCtx && xhairCtx.svg === svg && e.pointerId === xhairCtx.id) { xhairUp(win); return; }
+      if (runCtx && runCtx.svg === svg && e.pointerId === runCtx.id) { runFill(e); runUp(); return; }
       if (!dragCtx || dragCtx.svg !== svg || e.pointerId !== dragCtx.id) return;
       const d = dragCtx; dragCtx = null;
       if (d.ftpOn && !d.moved) { if (typeof WE !== "undefined" && WE.on) { if (!weSetChip()) weBlink(); } return; }   // a tap on the stave: nothing — with the keyboard open it sets the chip in hand, else the keyboard blinks
@@ -8383,7 +8450,7 @@ function initPointer() {
       if (d.ev) { S.bi = d.bi; const again = !!(S.sel && S.sel.id === d.ev.id); if (again) unpick(d.bi, d.part, d.ev.id); else pick(d.bi, d.part, d.ev.id); select(d.bi, d.part, again ? null : d.ev.id); if (d.ev.m != null && !d.ev.rest && S.sel && S.sel.id === d.ev.id) previewNote(d.ev.m, d.part); return; }
       if (partAt === "melody") tapMelody(at.bi, at.t, g.m(p.y)); else tapBand(winAt, at.bi, at.t, g.m(p.y), false, partAt);   // the lower staff of a Grand Stave: the piano's left hand
     };
-    svg.addEventListener("pointerup", up); svg.addEventListener("pointercancel", () => { dragCtx = null; xhairCancel(); });
+    svg.addEventListener("pointerup", up); svg.addEventListener("pointercancel", () => { dragCtx = null; xhairCancel(); if (runCtx && runCtx.svg === svg) runUp(); });
     svg.addEventListener("wheel", e => { e.preventDefault(); if (e.ctrlKey) { S.zoomWin[win] = clamp(S.zoomWin[win] * (e.deltaY > 0 ? 0.92 : 1.08), 0.5, 2.5); savePrefs(); renderAll(); } else shiftView(win, e.deltaY > 0 ? -1 : 1); }, { passive: false });
     /* two-finger pinch: taller/shorter rows (vertical) or fewer/more bars (horizontal) */
     const pts = new Map(); let pz = null;
