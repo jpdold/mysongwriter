@@ -4711,13 +4711,7 @@ $("reloadBtn").addEventListener("click", () => {                                
     if (WE.on) closeWordEdit(); loadPrefs(); const cur = readJSON(STORE.cur, null); if (cur) loadSong(cur); S.homeNext = { mel: true, acc: true, bass: true }; renderAll(); toast("Refreshed — TURN back and refresh again for a fresh load of the app"); return; }
   location.reload();
 });
-/* the app came back (a refresh, a fresh open) while TURN had the screen turned: a reload drops fullscreen and with it the lock, so the first tap
-   anywhere — a gesture the browser accepts — turns the screen back; TURN itself undoes it as ever */
-{ let want = null; try { want = localStorage.getItem("msw_turned"); } catch (e) {}
-  if (want && screen.orientation && screen.orientation.lock) {
-    const again = async () => { document.removeEventListener("pointerup", again, true); try { if (!document.fullscreenElement && document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen({ navigationUI: "hide" }); await screen.orientation.lock(want); TURNED = true; } catch (e) { try { localStorage.removeItem("msw_turned"); } catch (e2) {} } };
-    document.addEventListener("pointerup", again, true); setTimeout(() => toast("Tap anywhere to turn the screen back"), 800);
-  } }
+{ try { localStorage.removeItem("msw_turned"); } catch (e) {} }   // an earlier build turned the screen back on the first tap after a load whenever TURN had last left it turned — so any tap on the phone could swing it to the wide view; that is gone, and its flag cleared (turned by TURN, ⟳ refreshes in place instead)
 function reportErr(msg) {
   let b = $("errBanner");
   if (!b) {
@@ -6734,9 +6728,9 @@ async function turnScreen() {
   const mq = deckMQ(), so = screen.orientation;
   if (!so || !so.lock) { toast("This browser cannot turn the screen — turn the phone itself"); return; }
   try {
-    if (TURNED) { TURNED = false; try { localStorage.removeItem("msw_turned"); } catch (e) {} try { so.unlock(); } catch (e) {} if (document.fullscreenElement && document.exitFullscreen) await document.exitFullscreen(); return; }   // turned by TURN: let the phone have its own orientation back
+    if (TURNED) { TURNED = false; try { so.unlock(); } catch (e) {} if (document.fullscreenElement && document.exitFullscreen) await document.exitFullscreen(); return; }   // turned by TURN: let the phone have its own orientation back
     if (!document.fullscreenElement && document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen({ navigationUI: "hide" });
-    await so.lock(mq ? "portrait" : "landscape"); TURNED = true; try { localStorage.setItem("msw_turned", mq ? "portrait" : "landscape"); } catch (e) {}   // the other orientation from the one the screen has now — remembered, so a refresh (which drops fullscreen and the lock) can bring it back
+    await so.lock(mq ? "portrait" : "landscape"); TURNED = true;   // the other orientation from the one the screen has now — remembered, so a refresh (which drops fullscreen and the lock) can bring it back
   } catch (e) { toast("The screen could not be turned here — turn the phone itself, or add the app to the home screen"); }
 }
 /* Stacked staves on a wide screen ("duo"): the deck's frame and tool bar, but two staves — the melody, about a third of the screen's height,
@@ -8435,9 +8429,9 @@ function initPointer() {
       const partAt = win === "mel" && onLowerStaff(g, g.m(p.y)) ? GRAND_LOWER : WIN_PART[win], winAt = PART_WIN[partAt];   // the Grand Stave's lower staff: the Bass part's tap
       S.selChip = null;
       if (PSEL.on) { if (d.ev && !d.ev.rest && d.ev.m != null) { const key = d.part + ":" + d.ev.id; if (PSEL.ids.has(key)) PSEL.ids.delete(key); else PSEL.ids.add(key); renderWindows(); } return; }   // Play Select: taps only choose notes
-      if (S.mv) { mvTap(win, at.bi, at.t); return; }                                                                    // move mode: taps pick the run, or lock it in
-      if (S.rep) { repTap(win, at.bi, at.t); return; }                                                                   // repeat mode: taps toggle the beat(s) to repeat
-      if (S.cpy) { cpyTap(win, at.bi, at.t); return; }                                                                   // copy mode: taps toggle what to copy, or paste onto empty space
+      if (S.mv) { mvTap(win, at.bi, at.t, partAt); return; }                                                                    // move mode: taps pick the run, or lock it in
+      if (S.rep) { repTap(win, at.bi, at.t, partAt); return; }                                                                   // repeat mode: taps toggle the beat(s) to repeat
+      if (S.cpy) { cpyTap(win, at.bi, at.t, partAt); return; }                                                                   // copy mode: taps toggle what to copy, or paste onto empty space
       if (d.ev && S.artic && !d.ev.rest && d.ev.m != null) { S.bi = d.bi; applyArtic(d.bi, d.part, d.ev); return; }   // slurs and marks may reach into locked beats
       if (S.artic) { const ch = chordChainAt(S.song.bars[at.bi], at.t, partAt); if (ch && ch.head.m != null) { S.bi = at.bi; applyArtic(at.bi, partAt, ch.head); return; } }   // a tap anywhere along a note marks it — the mark takes no room, so a full beat is no objection
       if (S.dynArm) { applyDynAt(d.ev ? d.bi : at.bi, d.part, d.ev, at.t); return; }        // an armed dynamic: on the note tapped, or the first note of the beat tapped
@@ -9825,7 +9819,8 @@ function delRun(scope) {
   if (scope === "run") { if (mv.start == null) { toast("Tap the first and last beat first"); return; } start = mv.start; end = mv.end; label = "the picked beats"; }
   else if (scope === "bar") { start = barAbs(S.bi); end = start + barBeats(S.bi); label = `bar ${barNo(S.bi)}`; }
   else { const r = sectionRange(sectionOfBar(S.bi)); start = barAbs(r.start); end = barAbs(r.end); label = "this section"; }
-  const parts = mv.allParts ? ["melody", "accomp", "bass", "lh"] : [mv.part];
+  const grandBoth = scope !== "run" && !!grandLower("mel") && (mv.part === "melody" || mv.part === GRAND_LOWER);   // a whole bar or section on a Grand Stave: both of its staves, the melody's and the left hand's
+  const parts = mv.allParts ? ["melody", "accomp", "bass", "lh"] : grandBoth ? ["melody", GRAND_LOWER] : [mv.part];
   const go = () => {
     let n = 0;
     parts.forEach(part => { const grp = mvGroup(part, start, end); grp.forEach(o => { const bar = S.song.bars[o.bi]; bar.ev[part] = bar.ev[part].filter(e => e !== o.e); n++; }); });
@@ -9902,8 +9897,8 @@ function repStart() {
   S.sel = null; S.ghost = null; S.active = null; renderAll();
   toast("Tap the beat(s) to repeat — a bar, a few beats, even a pattern with gaps — then REPEAT");
 }
-function repTap(win, bi, t) {
-  const part = WIN_PART[win], rep = S.rep;
+function repTap(win, bi, t, partOf) {
+  const part = partOf || WIN_PART[win], rep = S.rep;
   if (rep.part !== part) { rep.part = part; rep.picks = []; }
   const beat = r3(barAbs(bi) + Math.floor(t + 1e-6));
   if (rep.picks.length && !eventsInSpan(part, beat, r3(beat + 1)).length) { repOverrideTap(rep, beat); return; }   // empty, with a pattern already picked: try it as the destination instead
@@ -9965,8 +9960,8 @@ function cpyStart() {
   S.sel = null; S.ghost = null; S.active = null; renderAll();
   toast("Tap the beats or bars to copy, then SET TO COPY — up to 5 times; tap empty space to paste");
 }
-function cpyTap(win, bi, t) {
-  const part = WIN_PART[win], cpy = S.cpy;
+function cpyTap(win, bi, t, partOf) {
+  const part = partOf || WIN_PART[win], cpy = S.cpy;
   if (cpy.part !== part && !cpy.buf.length) { cpy.part = part; cpy.work = []; }
   if (part !== cpy.part) { toast("Copying from " + PART_META[cpy.part].label.toLowerCase() + " — CANCEL to switch parts"); return; }
   const beat = r3(barAbs(bi) + Math.floor(t + 1e-6));
@@ -10062,9 +10057,9 @@ function mvOverrideTap(win, bi, t) {
   mv.dest = { start: beat, end: r3(beat + len) }; S.active = null; S.sel = null; renderAll();
   toast("Destination set — tap MOVE to move it there");
 }
-function mvTap(win, bi, t) {
+function mvTap(win, bi, t, partOf) {
   /* first tap: the whole beat. Tapping the run's first or last beat again shows its quarters; a tap on a quarter sets the start or end there. */
-  const part = WIN_PART[win], mv = S.mv;
+  const part = partOf || WIN_PART[win], mv = S.mv;                                         // partOf: the staff tapped — on a Grand Stave the lower staff is the left hand's, and its beats hold its notes, not the melody's
   if (mv.mode === "move") { mvOverrideTap(win, bi, t); return; }                 // armed for a move: a tap elsewhere redirects the destination
   if (mv.armed) return;   // armed for delete: only DELETE confirms it now, or CANCEL settles it
   if (mv.part !== part) { mv.part = part; mv.start = mv.end = null; mv.moved = false; mv.sub = null; }
