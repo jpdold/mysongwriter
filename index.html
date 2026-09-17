@@ -775,6 +775,8 @@ body.kbOpen #lyrEdit, #app.deck.kbUp #lyrEdit { display: none !important; }   /*
    play pallet (Play All · Play Bar · Stop, slid from side to side along it) and, at the far right, the plate of the arrows and UNDO · REDO */
 #tray { grid-area: tray; position: sticky; bottom: 0; z-index: 30; display: grid; grid-template-columns: 1fr; min-width: 0; }
 #app.deck #tray { display: none; }
+/* a tablet held upright (the vertical view on a screen 700px wide or more): the column fills the screen's width, up to 900px, and allocate() gives the stave a height to match — three quarters of its width, as far as the screen's height allows; the tray's keys stand a little taller */
+@media (min-width: 700px) { #app:not(.deck), #app.rolled:not(.deck) { max-width: 900px !important; padding-left: 18px; padding-right: 18px; } #tray #quick { grid-template-rows: 40px 40px; } }
 #app:not(.deck) { min-height: 100vh; min-height: 100dvh; box-sizing: border-box; grid-template-rows: repeat(8, auto) 1fr; }   /* the tray's row takes what is left of the screen, the tray at its foot: the bottom tool bar even on a short page */
 #app.rolled:not(.deck) { grid-template-rows: repeat(9, auto) 1fr; } #app.focus-mel:not(.deck) { grid-template-rows: repeat(6, auto) 1fr; }
 #tray { align-self: end; }
@@ -6278,9 +6280,15 @@ function allocate() {
     const [rows0, , hi0] = WIN[S.winSize][w], k = STEP_K[S.noteSize] || 1, step = Math.round(STEPS[w] * k * 100) / 100, maxStep = hi0 * k * (S.zoomWin[w] || 1); let rows = rows0;   // maxStep: the widest row this window size allows
     if (clefOn(w)) rows = Math.max(rows, minRowsFor(w));                                                    // a clef's whole span in view, the Grand Stave's two staves, their gap and the ledger lines included
     const fcs = getComputedStyle($(w + "Win").querySelector(".frame")), chrome = 10 + (parseFloat(fcs.borderTopWidth) || 0) + (parseFloat(fcs.borderBottomWidth) || 0);   // the frame beyond its rows: 10px of padding and its borders as the browser really draws them
-    const room = need - chrome;                                                                             // the rows' share of the column's height
+    let room = need - chrome, maxStepT = maxStep;                                                           // the rows' share of the column's height
+    if ($("app").clientWidth >= 700) {                                                                      // a tablet held upright: the stave as tall as three quarters of its width — its rows stretched, not multiplied, so it is the phone's stave writ large — inside what the screen has left once the strips, the pallets and the tray are counted, shared among the staves open
+      const fr = $(w + "Win").querySelector(".frame"), nOpen = wins.filter(x => f(x)).length || 1;
+      const other = ["head", "rollBar", "dynStrip", "rhyStrip", "lyrStrip", "palette", "playPal", "tray"].reduce((a, id) => { const e = $(id), hh = e ? e.offsetHeight : 0; return a + (hh ? hh + 7 : 0); }, 0);
+      const free = (window.innerHeight - other - 40) / nOpen - 30, want = Math.min(fr.clientWidth * 0.75, free) - chrome;
+      if (want > room) { room = want; maxStepT = Math.max(maxStep, room / rows / 1); }
+    }
     if (room > rows * step) {                                                                               // the column outreaches the stave at its natural row height: the rows are widened first, up to the widest the window size allows, and only then added — never a tower of tiny rows reaching C9 to fill the column
-      rows = evenRows(Math.max(rows, Math.ceil(room / maxStep)), w, minRowsFor(w));                        // a row count that centres the staves exactly
+      rows = evenRows(Math.max(rows, Math.ceil(room / maxStepT)), w, minRowsFor(w));                       // a row count that centres the staves exactly
       STEPS[w] = room / rows / k;                                                                           // and the rows stretched (or eased) a whisker so the frame is exactly the column's height — the strips flush under the stave
     } else { rows = evenRows(rows, w, minRowsFor(w)); if (clefOn(w) && rows * step > room && room > 0) STEPS[w] = room / rows / k; }   // a clef view taller than the column: its rows eased so the stave is exactly the column's height — the lines a little closer, the clef and signatures scaled with them
     PHONE_ROWS[w] = rows;
