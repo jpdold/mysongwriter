@@ -6382,7 +6382,7 @@ function geo(win) {
   const beatPx = setPx ? Math.max(setPx, fillPx) : fillPx;
   const W = padL + padR + Math.max(accB, B) * beatPx;
   const g = { win, B, n, first, bars, starts, totalBeats: accB, W, W1, H: padT + rows * step + padB, padL, padT, step, lo, hi, beatPx };
-  svg.setAttribute("width", W); svg.style.width = W + "px"; svg.style.touchAction = W > W1 + 1 && !(S.run && S.run.on) ? "pan-x" : "none";   // a run is drawn sideways: the stave does not pan under it
+  svg.setAttribute("width", W); svg.style.width = W + "px"; svg.style.touchAction = W > W1 + 1 && !(S.run && S.run.on) && !(S.mv && S.mv.mode === "delete") ? "pan-x" : "none";   // a run is drawn sideways, and SELECT is dragged across: the stave does not pan under either (the ↔ wheel scrolls it)
   g.x = (bi, t) => padL + ((starts[bi] != null ? starts[bi] : accB) + t) * beatPx;   // x(bi, t)
   g.at = x => { const beats = (x - padL) / beatPx; let bi = bars[0]; for (const b of bars) if (beats >= starts[b]) bi = b; return { bi, t: clamp(beats - starts[bi], 0, barBeats(bi) - 0.001) }; };
   const dia = clefOn(win) ? keyObj(S.song.key) : null;
@@ -8484,6 +8484,7 @@ function initPointer() {
       if (locked && !(ev && (S.artic || PSEL.on))) ev = null;                     // a note in a locked beat is just part of the background (unless choosing notes to play)
       const ftpOn = !!(S.ftp && S.ftp.on) || !!(typeof WE !== "undefined" && WE.on); if (ftpOn) ev = null;   // floating palette out, or the lyrics keyboard open: the stave only swipes
       dragCtx = { win, svg, x0: e.clientX, y0: e.clientY, moved: false, ev, part, bi: ebi, t0: ev ? ev.t : 0, m0: ev ? ev.m : null, id: e.pointerId, lo0: viewOf(win), swipe: null, locked, ftpOn };
+      if (S.mv && S.mv.mode === "delete" && !S.mv.armed && !ftpOn) { const g0 = GEO[win]; dragCtx.ev = null; dragCtx.selFrom = { beat: barAbs(at0.bi) + Math.floor(at0.t + 1e-6), part: win === "mel" && onLowerStaff(g0, g0.m(p0.y)) ? GRAND_LOWER : WIN_PART[win] }; }   // SELECT: a press that goes on to drag sideways picks every beat it crosses (a tap still picks as before)
       try { svg.setPointerCapture(e.pointerId); } catch (err) {}
     });
     svg.addEventListener("pointermove", e => {
@@ -8498,6 +8499,12 @@ function initPointer() {
       if (!dragCtx.ev) {                                   // empty space anywhere (locked beats too): swipe scrolls the register (up/down) or turns the bar (sideways)
         if (!dragCtx.swipe) dragCtx.swipe = Math.abs(dy) >= Math.abs(dx) * 1.25 ? "v" : Math.abs(dx) >= Math.abs(dy) * 1.25 ? "h" : null;
         if (!dragCtx.swipe) return;                        // too diagonal to call yet — wait for a clearer direction
+        if (dragCtx.swipe === "h" && dragCtx.selFrom && S.mv && S.mv.mode === "delete" && !S.mv.armed) {   // SELECT, dragged across: the run is every beat from the one pressed to the one under the finger, either way, inside the section
+          const g = GEO[win], at = g.at(svgPoint(svg, e).x), now = barAbs(at.bi) + Math.floor(at.t + 1e-6), f = dragCtx.selFrom, mv = S.mv;
+          const sr = sectionRange(sectionOfBar(absToBar(f.beat).bi)), a = Math.max(barAbs(sr.start), Math.min(f.beat, now)), b = Math.min(barAbs(sr.end), Math.max(f.beat, now) + 1);
+          if (mv.part !== f.part || mv.start !== a || mv.end !== b || !dragCtx.selDrag) { mv.part = f.part; mv.start = a; mv.end = b; mv.sub = null; mv.moved = false; dragCtx.selDrag = true; S.active = null; S.sel = null; S.ghost = null; renderAll(); }
+          return;
+        }
         if (dragCtx.swipe === "v") {
           const g = GEO[win], r = svg.getBoundingClientRect(), rows = Math.round(dy * (g.W / r.width) / g.step), { rows: n } = rowsOf(win), [minV, , maxV] = viewLimits(win, n);
           const next = clamp(rowsUp(win, dragCtx.lo0, rows), minV, maxV);
@@ -8524,6 +8531,7 @@ function initPointer() {
       if (!dragCtx || dragCtx.svg !== svg || e.pointerId !== dragCtx.id) return;
       const d = dragCtx; dragCtx = null;
       if (d.ftpOn && !d.moved) { if (typeof WE !== "undefined" && WE.on) { if (!weSetChip()) weBlink(); } return; }   // a tap on the stave: nothing — with the keyboard open it sets the chip in hand, else the keyboard blinks
+      if (d.selDrag) { const n = Math.round(S.mv ? S.mv.end - S.mv.start : 0); if (n) toast(`${n} beat${n === 1 ? "" : "s"} picked — drag or tap again to change it`); return; }   // a SELECT drag ends as a selection: no swipe, no bar turned
       if (d.moved) { if (d.locked && d.ev) return; if (!d.ev && d.swipe === "h" && !(typeof WE !== "undefined" && WE.on)) { const dx = e.clientX - d.x0; if (Math.abs(dx) > 50) { S.bi = clamp(S.bi + (dx < 0 ? 1 : -1), 0, S.song.bars.length - 1); S.sel = null; S.ghost = null; } } renderAll(); return; }   // a swipe ends as a swipe: no tap, no entry
       const p = svgPoint(svg, e), g = GEO[win], at = g.at(p.x);
       const partAt = win === "mel" && onLowerStaff(g, g.m(p.y)) ? GRAND_LOWER : WIN_PART[win], winAt = PART_WIN[partAt];   // the Grand Stave's lower staff: the Bass part's tap
@@ -9942,7 +9950,7 @@ function mvStart(mode = "move") {
   if (S.mv && S.mv.mode === mode) { mvCancel(); return; }
   S.mv = { mode, part: S.activePart || "melody", start: null, end: null, moved: false, allParts: false, sub: null, armed: false };
   S.sel = null; S.ghost = null; S.active = null; S.justEntered = null; renderAll();
-  toast(mode === "delete" ? "Tap the first beat of the run to delete, then the last (or use Bar / Section) — then DELETE arms it, DELETE again confirms" : "Move: tap the first beat of the run (part-way in, if you like), then the last beat");
+  toast(mode === "delete" ? "Drag across the beats to pick them — or tap the first beat, then the last (or use Bar / Section) — then DELETE arms it, DELETE again confirms" : "Move: tap the first beat of the run (part-way in, if you like), then the last beat");
 }
 /* the third tools row: undo, redo, and the two run tools */
 function renderRow3(r3) {
