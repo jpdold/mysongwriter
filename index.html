@@ -147,8 +147,8 @@ svg text { pointer-events: none; }
 #topTransport #tempo button#tempoLbl, #navRight #tempo button#tempoLbl { width: auto; min-width: 42px; padding: 0 2px; font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums; background: #111; color: #fff; }
 #topTransport #tempo button:active, #navRight #tempo button:active { background: linear-gradient(#ffd27a, #f5a623); }
 #app { overflow-x: hidden; position: relative; }
-#turnBtn { position: absolute; z-index: 6; width: 44px; height: 30px; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; background: linear-gradient(#fff, #d9d9d9); color: #111; border: 1.5px solid #141414; border-radius: 4px; font: 800 6.5px/1 system-ui, sans-serif; letter-spacing: .04em; box-shadow: 0 2px 4px rgba(0,0,0,.4); }   /* TURN: under ☰ in both views */
-#turnBtn .big { font-size: 13px; line-height: 1; } #turnBtn:active { background: linear-gradient(#ffd27a, #f5a623); }
+#turnBtn { position: absolute; z-index: 6; width: 36px; height: 24px; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; background: linear-gradient(#fff, #d9d9d9); color: #111; border: 1.5px solid #141414; border-radius: 4px; font: 800 6.5px/1 system-ui, sans-serif; letter-spacing: .04em; box-shadow: 0 2px 4px rgba(0,0,0,.4); }   /* TURN: under ☰ in both views */
+#turnBtn .big { font-size: 11px; line-height: 1; } #turnBtn:active { background: linear-gradient(#ffd27a, #f5a623); }
 #app.kbUp #turnBtn, #app.lyrEdit #turnBtn { display: none; }
 .btn.warn { background: #c8402f; color: #fff; border-color: #a93226; }
 #app > * { min-width: 0; }                     /* no child may widen the column: text and svgs never push the staves about */
@@ -417,8 +417,9 @@ text.clef, text.smufl { user-select: none; }
 #app.deck.norhy #rhyStrip { display: none; } #app.deck.nolyr #lyrStrip { display: none; }
 #rhyToggle { display: none; grid-column: 3; grid-row: 1; align-self: center; width: 30px; height: 24px; padding: 0; flex-direction: column; align-items: center; justify-content: center; gap: 1px; font-size: 6.3px; font-weight: 800; letter-spacing: .04em; line-height: 1.1; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); border: 1px solid #3a8a1e; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,.3); }   /* the phone: SHOW / HIDE RHYTHM in the strip's right margin, as on the deck's tool bar */
 #app:not(.deck) #rhyToggle { display: flex; }
-#lyrGuide { position: absolute; z-index: 4; width: 0; border-left: 2px dashed #111; opacity: .85; cursor: ew-resize; touch-action: none; }   /* the phone's lyric guide: thin, dashed, dragged by a wider invisible pad */
-#lyrGuide::before { content: ""; position: absolute; left: -9px; top: 0; bottom: 0; width: 18px; }
+#lyrGuide { position: absolute; z-index: 4; width: 0; border-left: 2px dashed #111; opacity: .85; pointer-events: none; }   /* the phone's lyric guide: thin, dashed, taps pass through it to the stave */
+#lyrGuide .knob { position: absolute; left: -8px; top: -18px; width: 14px; height: 14px; border-radius: 50%; background: #111; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.5); pointer-events: auto; cursor: ew-resize; touch-action: none; }   /* the knob above the top line: drag it sideways */
+#lyrGuide .knob::before { content: ""; position: absolute; left: -8px; top: -8px; right: -8px; bottom: -8px; }
 #lyrGuide[hidden] { display: none; }
 #app:not(.deck).norhy #rhyStrip .tag, #app:not(.deck).norhy #rhyStrip .body { display: none; }
 /* the tool bar, in thirds, each flipping on its own: the left between its tools (UNDO / REDO, MOVE / DELETE, PITCH, ITEM) and the
@@ -4663,6 +4664,13 @@ function toast(msg, ms = 5200) {
 }
 $("toast").addEventListener("pointerdown", () => { clearTimeout(toastTimer); $("toast").classList.remove("on"); });   // tapping it closes it right away instead of waiting out the timer
 $("reloadBtn").addEventListener("click", () => location.reload());   // ⟳ beside the menu: a fresh load of the app
+/* the app came back (a refresh, a fresh open) while TURN had the screen turned: a reload drops fullscreen and with it the lock, so the first tap
+   anywhere — a gesture the browser accepts — turns the screen back; TURN itself undoes it as ever */
+{ let want = null; try { want = localStorage.getItem("msw_turned"); } catch (e) {}
+  if (want && screen.orientation && screen.orientation.lock) {
+    const again = async () => { document.removeEventListener("pointerup", again, true); try { if (!document.fullscreenElement && document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen({ navigationUI: "hide" }); await screen.orientation.lock(want); TURNED = true; } catch (e) { try { localStorage.removeItem("msw_turned"); } catch (e2) {} } };
+    document.addEventListener("pointerup", again, true); setTimeout(() => toast("Tap anywhere to turn the screen back"), 800);
+  } }
 function reportErr(msg) {
   let b = $("errBanner");
   if (!b) {
@@ -6674,9 +6682,9 @@ async function turnScreen() {
   const mq = deckMQ(), so = screen.orientation;
   if (!so || !so.lock) { toast("This browser cannot turn the screen — turn the phone itself"); return; }
   try {
-    if (TURNED) { TURNED = false; try { so.unlock(); } catch (e) {} if (document.fullscreenElement && document.exitFullscreen) await document.exitFullscreen(); return; }   // turned by TURN: let the phone have its own orientation back
+    if (TURNED) { TURNED = false; try { localStorage.removeItem("msw_turned"); } catch (e) {} try { so.unlock(); } catch (e) {} if (document.fullscreenElement && document.exitFullscreen) await document.exitFullscreen(); return; }   // turned by TURN: let the phone have its own orientation back
     if (!document.fullscreenElement && document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen({ navigationUI: "hide" });
-    await so.lock(mq ? "portrait" : "landscape"); TURNED = true;                        // the other orientation from the one the screen has now
+    await so.lock(mq ? "portrait" : "landscape"); TURNED = true; try { localStorage.setItem("msw_turned", mq ? "portrait" : "landscape"); } catch (e) {}   // the other orientation from the one the screen has now — remembered, so a refresh (which drops fullscreen and the lock) can bring it back
   } catch (e) { toast("The screen could not be turned here — turn the phone itself, or add the app to the home screen"); }
 }
 /* Stacked staves on a wide screen ("duo"): the deck's frame and tool bar, but two staves — the melody, about a third of the screen's height,
@@ -6805,10 +6813,6 @@ function placeDeckLabels() {
     if (!top) { top = el("div", { class: "deckLbl top" }, DECK_NAME[w]); bot = el("div", { class: "deckLbl bot" }, DECK_NAME[w]); win.append(top, bot); }
     if (!deckMode() || !win.classList.contains("deckOn") || win.classList.contains("collapsed")) continue;   // a stave folded to a bar: nothing to centre on
     const x = frame.offsetLeft + frame.offsetWidth / 2;
-    for (const id of ["nav", "rollBar"]) { const e = $(id); if (!e || !e.offsetWidth) continue; e.style.position = "relative"; const cur = parseFloat(e.style.left) || 0, fr = frame.getBoundingClientRect(), eb = e.getBoundingClientRect(); const ar = $("app").getBoundingClientRect(), mid = duoMode() && id === "nav" ? (ar.left + ar.right) / 2 : (fr.left + fr.right) / 2; let eMid = (eb.left + eb.right) / 2; if (id === "rollBar") { const items = e.querySelectorAll(".rollItem"); if (items.length && items[0].offsetWidth > 0) eMid = (items[0].getBoundingClientRect().left + items[items.length - 1].getBoundingClientRect().right) / 2; } else { const a = $("prevBar"), b = $("nextBar"); if (a && b) eMid = (a.getBoundingClientRect().left + b.getBoundingClientRect().right) / 2; } /* the bracket itself (← to →) over the part label, the parts button riding beside it */
-      let shift = mid - eMid;
-      if (id === "nav") { const tp = $("tempo"), a = $("prevBar"); if (tp && a && tp.parentNode === $("head") && tp.offsetWidth) { const room = tp.getBoundingClientRect().right + 8 - a.getBoundingClientRect().left; if (shift < room) shift = room; } }   // never over the tempo: the bracket's ← stays a clear 8px to its right, centred on the stave only when there is room
-      e.style.left = Math.round(cur + shift) + "px"; }   // the bracket and the selectors centred on the stave's frame
     { const ra = $("rollBar").querySelector(".rollArrows"), items = $("rollBar").querySelectorAll(".rollItem"); if (ra && items.length) { const lastR = items[items.length - 1].getBoundingClientRect().right, fr = frame.getBoundingClientRect(), rb = $("rollBar").getBoundingClientRect(), w = ra.offsetWidth; ra.style.left = Math.round(Math.max(lastR + 6, (lastR + fr.right) / 2 - w / 2) - rb.left) + "px"; } }   // ▲ ▼: centred between the last part selector and the stave's right edge, never closer than 6px to the selector
     { const pb = $("partsBtn"), nb = $("nextBar"), sv = $("saveBtn"); if (pb && pb.offsetWidth && nb && nb.offsetWidth && sv && sv.parentNode === $("head")) { const hb = $("head").getBoundingClientRect(), a = nb.getBoundingClientRect().right, b = sv.getBoundingClientRect().left; pb.style.right = "auto"; pb.style.left = Math.round(Math.max(a + 6, (a + b) / 2 - pb.offsetWidth / 2) - hb.left) + "px"; } }   // SHOW / HIDE PARTS: centred between the bracket's → and the save button, never over the arrow
     { const nav = $("deckNav"), navTop = nav.getBoundingClientRect().top, kbUp = $("app").classList.contains("kbUp");
@@ -6820,6 +6824,12 @@ function placeDeckLabels() {
     top.style.left = x + "px"; top.style.top = frame.offsetTop + "px";
     bot.style.left = x + "px"; bot.style.top = (frame.offsetTop + frame.offsetHeight) + "px";
   }
+  if (deckMode()) { const frame = $(deckActive() + "Win").querySelector(".frame");
+    for (const id of ["nav", "rollBar"]) { const e = $(id); if (!e || !e.offsetWidth) continue; e.style.position = "relative"; const cur = parseFloat(e.style.left) || 0, fr = frame.getBoundingClientRect(), eb = e.getBoundingClientRect(); const ar = $("app").getBoundingClientRect(), mid = (duoMode() && id === "nav") || !fr.width ? (ar.left + ar.right) / 2 : (fr.left + fr.right) / 2; let eMid = (eb.left + eb.right) / 2; if (id === "rollBar") { const items = e.querySelectorAll(".rollItem"); if (items.length && items[0].offsetWidth > 0) eMid = (items[0].getBoundingClientRect().left + items[items.length - 1].getBoundingClientRect().right) / 2; } else { const a = $("prevBar"), b = $("nextBar"); if (a && b) eMid = (a.getBoundingClientRect().left + b.getBoundingClientRect().right) / 2; } /* the bracket itself (← to →) over the part label, the parts button riding beside it */
+      let shift = mid - eMid;
+      if (id === "nav") { const tp = $("tempo"), a = $("prevBar"); if (tp && a && tp.parentNode === $("head") && tp.offsetWidth) { const room = tp.getBoundingClientRect().right + 8 - a.getBoundingClientRect().left; if (shift < room) shift = room; } }   // never over the tempo: the bracket's ← stays a clear 8px to its right, centred on the stave only when there is room
+      e.style.left = Math.round(cur + shift) + "px"; }   // the bracket and the selectors centred on the stave's frame
+  }   // once per render, on the stave in view — or on the app when every stave is folded
   { const tb = $("turnBtn"), ar = $("app").getBoundingClientRect(), hb = $("head").getBoundingClientRect(); if (tb && hb.height) { tb.style.left = Math.round(hb.left - ar.left) + "px"; tb.style.top = Math.round(hb.bottom - ar.top + 2) + "px"; } }   // TURN just under ☰
   if (deckMode()) { const nav = $("deckNav"), duo = duoMode() && !kbUpNow(), ws = duo ? duoWins() : null, frame = $(deckActive() + "Win").querySelector(".frame"), fTop = duo ? $(ws[0] + "Win") : frame, fBot = duo ? $(ws[ws.length - 1] + "Win") : frame, rowTop = nav.getBoundingClientRect().top - (parseFloat(nav.style.marginTop) || 0); nav.style.marginTop = Math.max(0, fTop.getBoundingClientRect().top - rowTop - 4) + "px"; nav.style.height = Math.round(fBot.getBoundingClientRect().bottom - fTop.getBoundingClientRect().top) + "px"; }   // the column: level with the (top) frame, as tall as the staves in view — the stack of bars when every stave is folded
 }
@@ -6843,6 +6853,7 @@ function renderRollBar() {
   if (pb.parentNode !== $("head")) $("head").insertBefore(pb, deck ? $("gearBtn") : $("topTransport"));   // off the deck the parts button waits, hidden, in the head; on the deck it rides there too, beside the save button and the gear
   { const nv = $("nav"); if (nv.parentNode !== $("head")) $("head").insertBefore(nv, $("gearBtn")); }   // the bar bracket: up in the head row, as high as it goes
   if (deck) app.style.setProperty("--deckW", (duoMode() ? 40 : Math.max(40, Math.min(46, Math.round((app.clientWidth - 24 - 10 - 80) / 17)))) + "px");   // the duo: the column as slim as its buttons allow   // the part buttons' column: about a quarter of a beat of the stave beside it, never wider than its buttons need — the width goes to the stave
+  if (!deck && S.layout !== "rolled" && S.winState.mel === "closed") S.winState.mel = "open";   // the phone's stacked layout: the melody's window is always open (rolled up, it had no way back once the sizer went)
   app.classList.toggle("norhy", S.rhyShown === false);                                    // the Rhythm strip hidden: on the deck the strip goes; on the phone its tag and body go and SHOW RHYTHM stays in its margin
   { let rt = $("rhyToggle"); if (!rt) { rt = el("button", { id: "rhyToggle", title: "Show or hide the Rhythm strip" }); rt.addEventListener("click", () => { S.rhyShown = S.rhyShown === false; savePrefs(); renderAll(); }); $("rhyStrip").append(rt); } rt.replaceChildren(el("span", {}, S.rhyShown !== false ? "HIDE" : "SHOW"), el("span", {}, "RHYTHM")); }
   app.classList.toggle("rolled", S.layout === "rolled" && !deck); if (!deck) app.classList.remove("duo", "lyrScreen"); app.classList.toggle("lyrEdit", !deck && kbUpNow());   // the phone with the keyboard open: the stave and the Lyrics strip edge to edge, the column, the ↑ ↓, the Rhythm strip and the Lyrics label away   // off the deck nothing of Stacked staves lingers either
@@ -6860,6 +6871,7 @@ function renderRollBar() {
       const win = $(w + "Win"); let pbar = win.querySelector(".partBar");
       if (!pbar) { pbar = el("div", { class: "partBar", title: "Tap to unfold the stave", onclick: () => foldStave(w, false) }, el("span", { class: "pname" }, DECK_NAME[w]), el("span", { class: "plus" }, "+")); win.append(pbar); }
       win.classList.toggle("collapsed", duo && shown.includes(w) && !!S.collapsed[w]);
+      if (win.classList.contains("collapsed")) { const d = win.querySelector(".doors"); if (d) { d.hidden = true; d.style.cssText = ""; } }   // folded: its covers hidden and unsized, whatever a render elsewhere (the phone's, the lyrics screen's) left on them
     }
     app.classList.toggle("nolyr", S.lyrShown === false);   // the strips: shown, they push the stave up; hidden, it takes the room
     app.classList.toggle("noparts", S.partsShown === false);                                // the part selectors likewise
@@ -7231,7 +7243,7 @@ function placeDoors(win) {
   const show = focusOn(win) && S.winState[win] !== "closed" && !!g && (!deckMode() || win === "mel" || duoMode()) && !(duoMode() && S.collapsed[win]);   // on the deck the melody alone has doors; Stacked staves give every stave its own; only with its five-line focus on
   if (btn) { btn.hidden = !show; btn.classList.toggle("on", show && S.doors[win] !== false); }
   if (!box) { box = el("div", { class: "doors" }, el("div", { class: "door top" }), el("div", { class: "door bot" })); w.append(box); }
-  box.hidden = !show; if (!show) return;
+  box.hidden = !show; if (!show) { box.style.cssText = ""; return; }                       // not shown: unsized too, so nothing can show through
   box.style.left = (frame.offsetLeft + frame.clientLeft) + "px"; box.style.top = (frame.offsetTop + frame.clientTop) + "px"; box.style.width = frame.clientWidth + "px"; box.style.height = frame.clientHeight + "px";
   const lyrRoom = win === "mel" && !grandLower("mel") && viewBars().some(bi => (S.song.bars[bi].chips || []).some(c => !c.gap && c.text && c.text.trim())) ? g.step * 1.3 + 8 : 0;   // words under the staff: the lower door stands off them
   const [ct, cb] = focusCaps(g), topH = clamp(ct - 1 - DOOR_SLIVER, 0, g.H), botY = clamp(cb + 1 + DOOR_SLIVER + lyrRoom, 0, g.H);
@@ -7714,9 +7726,9 @@ function renderStrips() {
    words up on; dragged sideways it steps by sixteenths of a beat, and it starts at beat 1 of the first bar in view */
 function placeLyrGuide() {
   let gd = $("lyrGuide");
-  if (!gd) { gd = el("div", { id: "lyrGuide", title: "Drag: a guide to line the words up on — it steps by sixteenths" }); $("app").append(gd);
+  if (!gd) { gd = el("div", { id: "lyrGuide" }, el("div", { class: "knob", title: "Drag: a guide to line the words up on — it steps by sixteenths" })); $("app").append(gd);   // the line lets taps through to the stave; the knob at its top is what is dragged
     let d = null;
-    gd.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); gd.setPointerCapture(e.pointerId); d = { id: e.pointerId }; });
+    gd.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); try { gd.setPointerCapture(e.pointerId); } catch (x) {} d = { id: e.pointerId }; });
     gd.addEventListener("pointermove", e => { if (!d || e.pointerId !== d.id || !GEO.mel) return; const g = GEO.mel, sr = $("melSvg").getBoundingClientRect(), at = g.at(e.clientX - sr.left); S.guide = { bi: at.bi, t: Math.round(at.t * 4) / 4 }; placeLyrGuide(); });
     const end = e => { if (d && e.pointerId === d.id) d = null; }; gd.addEventListener("pointerup", end); gd.addEventListener("pointercancel", end); }
   const g = GEO.mel, lyrBody = $("lyrStrip").querySelector(".body");
