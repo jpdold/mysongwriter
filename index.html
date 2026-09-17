@@ -72,7 +72,7 @@ svg text { pointer-events: none; }
 /* ═══════════════════════════════════════════════════════════════════════
    3. LAYOUT — one column on a phone; melody stack left / band right when wide
    ═══════════════════════════════════════════════════════════════════════ */
-#app { max-width: 560px; margin: 0 auto; padding: 8px 10px calc(14px + env(safe-area-inset-bottom)); display: grid; gap: 7px;
+#app { max-width: 560px; margin: 0 auto; padding: 8px 6px calc(14px + env(safe-area-inset-bottom)); display: grid; gap: 7px;
   grid-template-columns: 1fr; grid-template-areas: "head" "mel" "rhy" "lyr" "arrows" "undo" "pal" "acc" "bass" "play"; }   /* the bar bracket rides in the head row; the play pallet closes the page */
 #rollBar { grid-area: rollbar; display: none; gap: 6px; }
 /* rolled-up view: three labelled bars across the top; open staves drop down beneath; strips and tools follow */
@@ -80,15 +80,17 @@ svg text { pointer-events: none; }
 @media (min-width: 860px) and (min-aspect-ratio: 5/4), (max-height: 520px) and (min-aspect-ratio: 5/4) { #app.rolled { max-width: 1180px !important; padding-left: 16px; padding-right: 16px; } #app.rolled .win .focus { display: none !important; } }
 #app.rolled #rollBar { display: flex; justify-content: center; padding-left: 50px; }         /* room at the left for TURN */
 /* the phone's lyrics editing: the melody's window and the Lyrics strip reach the screen's edges as the keyboard does — the gutter with its marks kept, the column beside the stave away (its bulk tools with it, back when the keyboard closes), the ↑ ↓ away (the register still scrolls), the Rhythm strip and the Lyrics label away */
-#app.lyrEdit #melWin, #app.lyrEdit #lyrStrip { margin-left: -10px; margin-right: -10px; }
-#app.lyrEdit #melWin, #app.lyrEdit #lyrStrip { grid-template-columns: 48px 1fr; }
+#app.lyrEdit #melWin, #app.lyrEdit #lyrStrip { margin-left: -6px; margin-right: -6px; }
+#app.lyrEdit #melWin, #app.lyrEdit #lyrStrip { grid-template-columns: 44px 1fr; }
 #app.lyrEdit #melWin .side, #app.lyrEdit .win .rArr, #app.lyrEdit #rhyStrip, #app.lyrEdit #lyrEdit { display: none !important; }
 #app.lyrEdit #lyrStrip .tag { visibility: hidden; }
 #app.lyrEdit #lyrStrip { margin-top: -14px; }
 #app.lyrEdit #lyrStrip .body { border-radius: 0; }
 #app.rolled #rollBar .rollItem { flex: 0 1 96px; }                                          /* the phone's selectors: narrower, centred as a row */
 #app.rolled .win.closed { display: none !important; }
-#app:not(.deck) .win .sizer { display: none !important; }                                  /* the phone: no open / half / closed sizer beside the stave — it had pushed the window off the screen */
+#app:not(.deck) .win .sizer { display: none !important; }
+#app:not(.deck) .win, #app:not(.deck) .strip { grid-template-columns: 44px 1fr 30px; }         /* the phone: a slimmer gutter, the stave a little wider */
+#app:not(.deck) .win .gutter svg { width: 30px; margin-left: 14px; }                                  /* the phone: no open / half / closed sizer beside the stave — it had pushed the window off the screen */
 #app.rolled #melWin { margin-top: 0; }
 #app.rolled #accWin, #app.rolled #bassWin { margin-top: 12px; }
 #app.rolled #accWin.lead, #app.rolled #bassWin.lead { margin-top: 0; }
@@ -221,11 +223,11 @@ svg text { pointer-events: none; }
 .win .focus.on { background: linear-gradient(#ffd27a, #f5a623); color: #111; }
 .win .side .bsBtn, .win .side .unBtn { width: 30px; height: 24px; padding: 0; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(#fff, #d9d9d9); color: #111; font: 800 7px/1 system-ui, sans-serif; letter-spacing: .04em; display: grid; place-items: center; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); }   /* ⌫ and UNDO under the stave's gear: the strip buttons' own silver */
 .win .side .bsBtn { font-size: 15px; }
-#app:not(.deck) .win .side { gap: 3px; padding-top: 0; } #app:not(.deck) .win .side .gear { height: 16px; }   /* the gear level with the frame's top edge */                                                     /* the column beside the stave: compact, so it never outgrows the stave and pushes the strips down */
-#app:not(.deck) .win .side #mvRow { display: flex; flex-direction: column; gap: 3px; width: 30px; margin-top: 6px; justify-self: auto; }   /* a small gap under UNDO, then the tools, all the one size */
+#app:not(.deck) .win .side { gap: 2px; padding-top: 0; } #app:not(.deck) .win .side .gear { height: 16px; }   /* the gear level with the frame's top edge */                                                     /* the column beside the stave: compact, so it never outgrows the stave and pushes the strips down */
+#app:not(.deck) .win .side #mvRow { display: flex; flex-direction: column; gap: 2px; width: 30px; margin-top: 3px; justify-self: auto; }   /* a small gap under UNDO, then the tools, all the one size */
 #app:not(.deck) .win .side .bsBtn, #app:not(.deck) .win .side .unBtn, #app:not(.deck) .win .side .doorBtn, #app:not(.deck) .win .side #mvRow button { height: 20px; }
 #app:not(.deck) .win .side #mvRow.armed { width: 30px; }
-#app:not(.deck) .win .side #mvRow button { width: 30px; height: 24px; padding: 0; border: 1.5px solid #141414 !important; border-radius: 4px !important; background: linear-gradient(#fff, #cfcfcf); color: #111; font: 800 6.5px/1 system-ui, sans-serif; letter-spacing: .02em; }
+#app:not(.deck) .win .side #mvRow button { width: 30px; height: 20px; padding: 0; border: 1.5px solid #141414 !important; border-radius: 4px !important; background: linear-gradient(#fff, #cfcfcf); color: #111; font: 800 6.5px/1 system-ui, sans-serif; letter-spacing: .02em; }
 #app:not(.deck) .win .side #mvRow #selBtn { order: 1; } #app:not(.deck) .win .side #mvRow #delBtn { order: 2; } #app:not(.deck) .win .side #mvRow #repBtn { order: 3; } #app:not(.deck) .win .side #mvRow #copyBtn { order: 4; } #app:not(.deck) .win .side #mvRow #moveBtn { order: 5; }
 #app:not(.deck) .win .side #mvRow #xhairBtn, #app:not(.deck) .win .side #mvRow #setCopyBtn, #app:not(.deck) .win .side #mvRow #cancelBtn { order: 6; }
 #app:not(.deck) .win .side #mvRow #delBtn { color: var(--danger); }
@@ -4663,7 +4665,11 @@ function toast(msg, ms = 5200) {
   clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("on"), ms);
 }
 $("toast").addEventListener("pointerdown", () => { clearTimeout(toastTimer); $("toast").classList.remove("on"); });   // tapping it closes it right away instead of waiting out the timer
-$("reloadBtn").addEventListener("click", () => location.reload());   // ⟳ beside the menu: a fresh load of the app
+$("reloadBtn").addEventListener("click", () => {                                       // ⟳ beside the menu: a fresh load of the app
+  if (TURNED || document.fullscreenElement) {                                            // turned by TURN: a page reload would end fullscreen and drop the lock, so the app is refreshed in place instead
+    if (WE.on) closeWordEdit(); loadPrefs(); const cur = readJSON(STORE.cur, null); if (cur) loadSong(cur); S.homeNext = { mel: true, acc: true, bass: true }; renderAll(); toast("Refreshed — TURN back and refresh again for a fresh load of the app"); return; }
+  location.reload();
+});
 /* the app came back (a refresh, a fresh open) while TURN had the screen turned: a reload drops fullscreen and with it the lock, so the first tap
    anywhere — a gesture the browser accepts — turns the screen back; TURN itself undoes it as ever */
 { let want = null; try { want = localStorage.getItem("msw_turned"); } catch (e) {}
@@ -6185,7 +6191,7 @@ function allocate() {
     if (room > rows * step) {                                                                               // the column outreaches the stave at its natural row height: the rows are widened first, up to the widest the window size allows, and only then added — never a tower of tiny rows reaching C9 to fill the column
       rows = evenRows(Math.max(rows, Math.ceil(room / maxStep)), w, minRowsFor(w));                        // a row count that centres the staves exactly
       STEPS[w] = room / rows / k;                                                                           // and the rows stretched (or eased) a whisker so the frame is exactly the column's height — the strips flush under the stave
-    } else rows = evenRows(rows, w, minRowsFor(w));
+    } else { rows = evenRows(rows, w, minRowsFor(w)); if (clefOn(w) && rows * step > room && room > 0) STEPS[w] = room / rows / k; }   // a clef view taller than the column: its rows eased so the stave is exactly the column's height — the lines a little closer, the clef and signatures scaled with them
     PHONE_ROWS[w] = rows;
   }
   if (!deckMode()) for (const w of wins) if (!f(w)) PHONE_ROWS[w] = 0;
