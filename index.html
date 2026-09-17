@@ -171,17 +171,17 @@ svg text { pointer-events: none; }
 #playPal #topTransport { justify-self: auto; }
 #reloadBtn { width: 30px; height: 36px; font-size: 22px; font-weight: 700; padding: 0; }   /* ⟳: reloads the app */
 #topTransport { justify-self: center; display: flex; gap: 3px; min-width: 0; max-width: 100%; overflow-x: auto; scrollbar-width: none; }   /* packed a little tighter, the refresh button beside the menu having taken some of its room */
-#topTransport button, #navRight button { width: 32px; height: 34px; position: relative; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(var(--sv-hi), var(--sv-lo)); color: #111; font-size: 17px; padding: 0; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
-#topTransport button.on, #navRight button.on { background: linear-gradient(#ffd27a, #f5a623); }
-#topTransport button .bar, #navRight button .bar { position: absolute; left: calc(50% + 4.5px); top: 50%; transform: translateY(-50%); width: 3.5px; height: 12px; background: #111; border-radius: 1px; }   /* almost touching the triangle, as tall as its base */
-#topTransport #playAllBtn, #navRight #playAllBtn { padding-right: 6px; }
+#topTransport button, #navRight button, #playL button { width: 32px; height: 34px; position: relative; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(var(--sv-hi), var(--sv-lo)); color: #111; font-size: 17px; padding: 0; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
+#topTransport button.on, #navRight button.on, #playL button.on { background: linear-gradient(#ffd27a, #f5a623); }
+#topTransport button .bar, #navRight button .bar, #playL button .bar { position: absolute; left: calc(50% + 4.5px); top: 50%; transform: translateY(-50%); width: 3.5px; height: 12px; background: #111; border-radius: 1px; }   /* almost touching the triangle, as tall as its base */
+#topTransport #playAllBtn, #navRight #playAllBtn, #playL #playAllBtn { padding-right: 6px; }
 #topTransport button .dots, #navRight button .dots { font-size: 11px; font-weight: 800; margin-left: 1px; letter-spacing: -1px; }
-#topTransport #stopBtn, #navRight #stopBtn { font-size: 15px; }
+#topTransport #stopBtn, #navRight #stopBtn, #playL #stopBtn { font-size: 15px; }
 #topTransport #saveBtn, #navRight #saveBtn { background: linear-gradient(#ff5a4e, #e5322d); color: #fff; border-color: #6e1712; display: grid; place-items: center; }   /* the floppy: save, beside the tempo */
 #topTransport #saveBtn .ico, #navRight #saveBtn .ico { width: 21px; height: 21px; display: block; }
 #topTransport #rangeBtn, #navRight #rangeBtn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; }
-#topTransport #rangeBtn .top, #navRight #rangeBtn .top, #topTransport #playBarBtn .top { display: block; line-height: 15px; }
-#topTransport #rangeBtn .sub, #navRight #rangeBtn .sub, #topTransport #playBarBtn .sub { display: block; font-size: 6.5px; font-weight: 800; letter-spacing: .04em; line-height: 8px; font-family: var(--sans); margin-top: 1px; }
+#topTransport #rangeBtn .top, #navRight #rangeBtn .top, #topTransport #playBarBtn .top, #playL #playBarBtn .top { display: block; line-height: 15px; }
+#topTransport #rangeBtn .sub, #navRight #rangeBtn .sub, #topTransport #playBarBtn .sub, #playL #playBarBtn .sub { display: block; font-size: 6.5px; font-weight: 800; letter-spacing: .04em; line-height: 8px; font-family: var(--sans); margin-top: 1px; }
 #tempo { display: flex; align-items: center; margin-left: 0; border: 1.5px solid #141414; border-radius: 4px; overflow: hidden; height: 34px; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
 #topTransport #tempo button, #navRight #tempo button { width: 20px; height: 34px; border: none; border-radius: 0; box-shadow: none; font-size: 18px; font-weight: 700; }
 #topTransport #tempo button#tempoLbl, #navRight #tempo button#tempoLbl { width: auto; min-width: 42px; padding: 0 2px; font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums; background: #111; color: #fff; }
@@ -222,7 +222,7 @@ svg text { pointer-events: none; }
 #beatRow { position: relative; height: 20px; margin-bottom: -3px; overflow: hidden; grid-column: 1 / -1; grid-row: 1; }
 #beatRow[hidden] { display: none; }
 #beatRow .inner { position: absolute; inset: 0; will-change: transform; }
-#beatRow .beat { position: absolute; top: 2px; height: 16px; display: flex; align-items: center; transform: translateX(-50%); }
+#beatRow .beat { position: absolute; top: 1px; height: 16px; display: flex; align-items: center; transform: translateX(-50%); }
 #beatRow .beat b { background: #111; color: #fff; font-size: 10px; font-weight: 600; height: 16px; line-height: 16px; padding: 0 6px; border-radius: 2px; white-space: nowrap; border: 1px solid #000; }
 #beatRow .beat i { display: none; }
 #beatRow .beat .ch { color: #ffd58a; font-family: var(--serif); font-size: 12px; font-weight: 700; margin-left: 6px; white-space: nowrap; }
@@ -252,7 +252,7 @@ svg text { pointer-events: none; }
 .win .chordBtn .ico { width: 20px; height: 20px; display: block; }
 .win .chordBtn.on { background: linear-gradient(#ffd27a, #f5a623); color: #111; border-color: #a86d10; }
 @keyframes chordBlink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: .4; } }
-.win .chordBtn.on, #app.deck button.tplay#tChord.on, #palette .prow button.tplay.chord.on, #app.deck button.tplay#tRun.on, #palette .prow button.tplay.run.on { animation: chordBlink 1.4s step-end infinite; }   /* chord mode on: the button blinks, unhurried */
+.win .chordBtn.on, #app.deck button.tplay#tChord.on, #palette .prow button.tplay.chord.on, body.runDraw #app.deck button.tplay#tRun.on, body.runDraw #palette .prow button.tplay.run.on { animation: chordBlink 1.4s step-end infinite; }   /* chord mode on: the button blinks, unhurried; RUN, armed, stands lit and still — it blinks only while a run is being drawn */
 .win.closed .chordBtn { display: none; }
 .win .pselClose { width: 24px; height: 24px; padding: 0; border: 1.5px solid #2f7fd6; border-radius: 4px; background: rgba(0,0,0,.25); color: #fff; font-size: 13px; font-weight: 700; line-height: 1; }
 .win .pselClose:active { background: #2f7fd6; }
@@ -280,7 +280,7 @@ svg text { pointer-events: none; }
 .doors .door.top { top: 0; border-bottom: 4px solid rgba(255,255,255,.3); box-shadow: 0 2px 6px rgba(0,0,0,.4); }   /* the lip where each door ends */
 .doors .door.bot { border-top: 4px solid rgba(255,255,255,.3); box-shadow: 0 -2px 6px rgba(0,0,0,.4); }
 .doors.open .door.top { transform: translateY(-100%); } .doors.open .door.bot { transform: translateY(100%); }   /* both slide at once: one up, one down */
-#app.deck #accWin .doors, #app.deck #bassWin .doors, #app.deck .side .doorBtn { display: none !important; }   /* the deck: doors on the melody only, toggled from the column beside it */
+#app.deck .side .doorBtn { display: none !important; }   /* the deck: the part in view has its doors (placeDoors hides the rest), toggled from the column beside it */
 .win .side .doorBtn { width: 30px; height: 24px; padding: 0; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(var(--sv-hi), var(--sv-lo)); color: #111; font: 800 6.5px/1 system-ui, sans-serif; letter-spacing: .03em; }
 .win .side .doorBtn.on { background: linear-gradient(#6fb3ff, #2f7fd6); color: #fff; }
 .win .side .spBtn { width: 30px; height: 20px; padding: 0; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(var(--sv-hi), var(--sv-lo2)); color: #111; font: 800 9px/1 system-ui, sans-serif; letter-spacing: -.02em; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); }   /* |<>| wider, >|< tighter: the rows' spacing */
@@ -600,7 +600,7 @@ body.kbOpen #lyrEdit, #app.deck.kbUp #lyrEdit { display: none !important; }   /*
 
 /* ── strips ── */
 .strip { display: grid; grid-template-columns: 48px 1fr 30px; gap: 0 4px; align-items: center; }
-.strip .tag { justify-self: stretch; height: 24px; display: grid; place-items: center; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); border: 1px solid #3a8a1e; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,.3);
+.strip .tag { position: relative; justify-self: stretch; height: 24px; display: grid; place-items: center; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); border: 1px solid #3a8a1e; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,.3);
   font-size: 10px; font-weight: 700; letter-spacing: 0; text-transform: none; padding: 0 2px; white-space: nowrap; overflow: hidden; }
 .strip .tag:active { filter: brightness(1.1); }
 .strip .edit { width: 30px; height: 24px; padding: 0; border: 1px solid #3a8a1e; border-radius: 4px; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); font-size: 8px; font-weight: 800; letter-spacing: .02em; box-shadow: 0 1px 2px rgba(0,0,0,.3); }   /* EDIT beside the Lyrics strip: opens the keyboard */
@@ -629,6 +629,8 @@ body.kbOpen #lyrEdit, #app.deck.kbUp #lyrEdit { display: none !important; }   /*
 #palette .prow button.txt { padding: 0; }
 #palette .prow .who { margin-left: 4px; }
 #palette .prow button.chord { width: auto; min-width: 44px; flex: 0 0 auto; padding: 0 7px; }
+#app:not(.deck) #palette #palRow1 button { flex: 0 1 32px; min-width: 22px; }                 /* the phone's top row gives way on a narrow screen: every key narrows a little, and none is cut off at the pallet's edge */
+#app:not(.deck) #palette #palRow1 button.chord { flex: 0 1 auto; min-width: 36px; padding: 0 5px; }
 #palette .prow button.len { flex: 1 1 0; width: auto; min-width: 22px; padding: 0; }          /* the lengths fill the top row edge to edge */
 #palette .prow button.gn { display: inline-flex; align-items: center; justify-content: center; }
 #palette .prow button.tplay { flex-direction: column; gap: 0; line-height: 1; }
@@ -760,6 +762,14 @@ body.kbOpen #lyrEdit, #app.deck.kbUp #lyrEdit { display: none !important; }   /*
   background-image: radial-gradient(circle at 42% 38%, #f2f2f2 0.9px, transparent 1.3px), radial-gradient(circle at 50% 50%, #a8a8a8 2.1px, #6a6a6a 2.5px, transparent 3px);
   background-size: 9px 8px; background-position: 0 0, 0 0; }
 #quick.float .qctl { grid-row: 2 / 5; }
+/* the phone: docked, the quick palette is one bar of twelve across the page, a button's height beneath the arrows / UNDO · REDO block (44px tall); floated, it is the 4 × 3 block it was */
+#app:not(.deck) #quick:not(.float) { width: 100%; margin-top: 74px; grid-template-columns: 40px repeat(12, 1fr); grid-template-rows: 30px; }
+#app:not(.deck) #quick:not(.float) .qctl { grid-row: 1; flex-direction: row; }
+#app:not(.deck) #quick:not(.float) .qctl button { width: auto; }
+#app:not(.deck) #quick:not(.float) .cell:nth-child(n+7) button { border-top: none; }
+/* Play All, Play Bar and Stop: at the left, level with the middle of the arrows block, above the bar of twelve */
+#playL { grid-column: arrows; grid-row: arrows-start / undo-end; justify-self: start; align-self: start; display: flex; gap: 3px; margin-top: 5px; }
+#app.deck #playL { display: none; }
 #app.focus-acc #quick, #app.focus-bass #quick { display: none; }
 #arrows .aico { width: 15px; height: 15px; display: block; }
 #arrows button, #undoRow button, #mvRow button, #pitchArrows button, #itemArrows button { height: 22px; padding: 0; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(var(--sv-hi), var(--sv-lo2)); color: #111; font-size: 14px; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); }
@@ -1141,6 +1151,7 @@ body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the s
   <div id="arrows"><button id="arrUp" title="Up: the selected note a half step up, or the stave's register up"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V4M5 11l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="arrDn" title="Down: the selected note a half step down, or the stave's register down"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M5 13l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="arrL" title="Left: the selected note or word earlier, a picked run earlier, or the beat before"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H4M11 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="arrR" title="Right: the selected note or word later, a picked run later, or the beat after"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16M13 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
   <div id="undoRow"><button id="undoBtn" title="Undo">UNDO</button><button id="redoBtn" title="Redo">REDO</button></div>
   <div id="mvRow"><button id="moveBtn" title="Move: arms on the first tap (once empty space of the same size is found in view), then confirms on the second">MOVE</button><button id="delBtn" title="Delete: arms on the first tap, then confirms on the second">DELETE</button><button id="selBtn" title="Select a run of beats to move or delete: tap the first beat, then the last — or use Bar / Section">SELECT</button><button id="repBtn" title="Repeat: tap the beat(s) to repeat, then REPEAT — it finds the space right after and copies them there; tap again to repeat further on">REPEAT</button><button id="copyBtn" title="Copy: tap the beats or bars to copy (SET each one), then tap empty space with room enough to paste them">COPY</button><button id="xhairBtn" title="Crosshair: drag a box over what to copy — release to set it, straight into the copied set" hidden>CROSSHAIR</button><button id="setCopyBtn" title="Set: add what is tapped to the copied set (up to 5)" hidden><span class="l">SET TO</span><span class="l">COPY</span></button></div>
+  <div id="playL"></div>
   <div id="quick" title="Quick palette"></div>
   <div id="palette"><div class="prow" id="palRow1"></div><div class="prow" id="palRow2"></div><div class="prow" id="palRow3"></div><div class="prow" id="palRow4"></div></div>
   <div id="playPal"></div>
@@ -4708,7 +4719,7 @@ function toast(msg, ms = 5200) {
 $("toast").addEventListener("pointerdown", () => { clearTimeout(toastTimer); $("toast").classList.remove("on"); });   // tapping it closes it right away instead of waiting out the timer
 $("reloadBtn").addEventListener("click", () => {                                       // ⟳ beside the menu: a fresh load of the app
   if (TURNED || document.fullscreenElement) {                                            // turned by TURN: a page reload would end fullscreen and drop the lock, so the app is refreshed in place instead
-    if (WE.on) closeWordEdit(); loadPrefs(); const cur = readJSON(STORE.cur, null); if (cur) loadSong(cur); S.homeNext = { mel: true, acc: true, bass: true }; renderAll(); toast("Refreshed — TURN back and refresh again for a fresh load of the app"); return; }
+    if (WE.on) closeWordEdit(); loadPrefs(); const cur = readJSON(STORE.cur, null); if (cur) loadSong(cur); homeStaves(); renderAll(); toast("Refreshed — TURN back and refresh again for a fresh load of the app"); return; }
   location.reload();
 });
 { try { localStorage.removeItem("msw_turned"); } catch (e) {} }   // an earlier build turned the screen back on the first tap after a load whenever TURN had last left it turned — so any tap on the phone could swing it to the wide view; that is gone, and its flag cleared (turned by TURN, ⟳ refreshes in place instead)
@@ -5070,7 +5081,7 @@ function saveNow() {
   writeJSON(STORE.songs, all);
 }
 function listSongs() { return Object.values(readJSON(STORE.songs, {})).sort((a, b) => (b.updated || 0) - (a.updated || 0)); }
-function loadSong(id) { const s = readJSON(STORE.songs, {})[id]; if (s) { S.song = upgradeSong(s); S.si = 0; S.sel = null; S.cursor = null; S.homeNext = { mel: true, acc: true, bass: true }; writeJSON(STORE.cur, id); } return !!s; }   // a song loads with its staves centred
+function loadSong(id) { const s = readJSON(STORE.songs, {})[id]; if (s) { S.song = upgradeSong(s); S.si = 0; S.sel = null; S.cursor = null; homeStaves(); writeJSON(STORE.cur, id); } return !!s; }   // a song loads with its staves centred and their covers closed
 function deleteSong(id) { const all = readJSON(STORE.songs, {}); delete all[id]; writeJSON(STORE.songs, all); }
 function upgradeSong(s) {
   const base = newSong();
@@ -6892,7 +6903,9 @@ function renderRollBar() {
   const deck = deckMode(), app = $("app"); app.classList.toggle("deck", deck);
   if (deck) { if (!S.phoneWins) S.phoneWins = Object.assign({}, S.winState); }              // the deck sets the windows its own way (the part in view, or the stacked parts): the phone's own open / half / closed states are kept aside, and given back the moment the phone layout returns — a browser minimised and brought back can pass through the deck for a moment and must not come back with the accompaniment and bass rolled up
   else if (S.phoneWins) { S.winState = Object.assign({ mel: "open", acc: "closed", bass: "closed" }, S.phoneWins); S.phoneWins = null; }
-  { const pb = $("playBarBtn"); pb.hidden = !deck; pb.classList.toggle("on", !!(deck && S.playing && S.solo === WIN_PART[deckActive()])); }   // on the deck, Play Bar sits beside Play All
+  { const pb = $("playBarBtn"); pb.hidden = false; pb.classList.toggle("on", !!(S.playing && S.solo === WIN_PART[soloWin()])); }   // Play Bar sits beside Play All: for the part in view on the deck, the stave in use on the phone
+  { const tr = $("topTransport"), pl = $("playL"), all = $("playAllBtn"), pbar = $("playBarBtn"), rng = $("rangeBtn"), stop = $("stopBtn");   // the phone: Play All, Play Bar and Stop leave the play pallet for the left of the arrows block; on the deck they are back among the play buttons, in their order
+    if (deck) { if (all.parentNode !== tr) { tr.insertBefore(all, rng); tr.insertBefore(pbar, rng); rng.after(stop); } } else if (all.parentNode !== pl) pl.append(all, pbar, stop); }
   { const tr = $("topTransport"); if (deck) { if ($("tempo").parentNode !== $("head")) $("head").insertBefore($("tempo"), $("gearBtn")); } else if ($("tempo").parentNode !== tr) tr.append($("tempo"));   // the tempo: on the deck up in the head between ⟳ and the bracket; otherwise with the play buttons
     if ($("saveBtn").parentNode !== $("head")) $("head").insertBefore($("saveBtn"), $("gearBtn"));   // the save button rides in the head, beside the gear
     if (deck) { if (tr.parentNode !== $("toolMScroll")) $("toolMScroll").prepend(tr); } else if (tr.parentNode !== $("playPal")) $("playPal").append(tr); }   // on the deck the play buttons live in the middle third of the tool bar; on the phone in the play pallet at the foot
@@ -6957,11 +6970,11 @@ function renderRollBar() {
     const colUn = () => el("button", { class: "colBtn", title: "Undo", onclick: undo }, el("span", { class: "big" }, "↶"), el("span", {}, "UNDO"));
     const colRe = () => el("button", { class: "colBtn", title: "Redo", onclick: redo }, el("span", { class: "big" }, "↷"), el("span", {}, "REDO"));
     const bulk = () => ["selBtn", "delBtn", "repBtn", "copyBtn"].map(id => { const b = $(id); b.classList.add("colBtn"); return b; });   // SELECT, DELETE, REPEAT, COPY: the tool bar's own buttons, in the column while the deck is up
-    const colCover = () => focusOn("mel") ? [el("button", { class: "colBtn" + (S.doors.mel !== false ? " on" : ""), title: "Open or close the doors over the rest of the melody stave", onclick: () => { S.doors.mel = S.doors.mel === false; savePrefs(); renderAll(); } }, el("span", { class: "big" }, "⇕"), el("span", {}, "COVER"))] : [];   // with the five-line focus on: the doors' switch
+    const colCover = () => focusOn(active) ? [el("button", { class: "colBtn" + (S.doors[active] !== false ? " on" : ""), title: "Open or close the covers over the rest of the stave, and bring the five lines back to the centre", onclick: () => { S.doors[active] = S.doors[active] === false; S.song.view[WIN_LO[active]] = focusHome(active); S.sel = null; S.ghost = null; savePrefs(); renderAll(); } }, el("span", { class: "big" }, "⇕"), el("span", {}, "COVER"))] : [];   // with the five-line focus on: the doors' switch
     if (duo) {                                                                            // Stacked staves: the column holds DEL, the gear of the part in view, BACK, UNDO, REDO and the bulk tools; the parts' gears, covers and folds sit on the selector row
       const lyrCol = el("button", { class: "colBtn on", title: "Lyrics: type the words on their own screen", onclick: () => { S.activePart = "melody"; weOpenFromButton(); } }, el("span", {}, "LYRICS"));
       nav.append(delB, gear, colBs(active), colUn(), colRe(), ...bulk(), lyrCol, kc);    // Stacked staves: the gears, covers and folds are on the selector row; LYRICS under COPY opens the lyrics screen
-    } else { nav.append(delB, gear, colBs(active), colUn(), colRe(), ...(active === "mel" ? colCover() : []), ...bulk(), kc); bar.append(el("div", { class: "rollArrows" }, arrow(-1, up), arrow(1, dn))); }   // the gear at the top, then BACK, UNDO, REDO, COVER, SELECT, DELETE, REPEAT, COPY; ▲ ▼ (the part in view) sit on the selector row past the last part, centred between it and the stave's edge — placed by placeDeckLabels
+    } else { nav.append(delB, gear, colBs(active), colUn(), colRe(), ...colCover(), ...bulk(), kc); bar.append(el("div", { class: "rollArrows" }, arrow(-1, up), arrow(1, dn))); }   // the gear at the top, then BACK, UNDO, REDO, COVER, SELECT, DELETE, REPEAT, COPY; ▲ ▼ (the part in view) sit on the selector row past the last part, centred between it and the stave's edge — placed by placeDeckLabels
     { let sc = $("staveCtl"); if (!sc) sc = el("div", { id: "staveCtl" }); if (sc.parentNode !== $("toolR")) $("toolR").insertBefore(sc, $("flipBtn"));   // WIDER and TIGHTER: under a STAVE cap at the tool bar's right end, acting on the stave in view
       sc.replaceChildren(el("button", { title: "Wider: the lines further apart, notes and clef with them, up to the widest", onclick: () => zoomRows(deckActive(), 1) }, "|<>|"), el("button", { title: "Tighter: the lines closer together, notes and clef with them, down to the legible least", onclick: () => zoomRows(deckActive(), -1) }, ">|<")); }
     { let sbx = $("stripBtns"); if (!sbx) sbx = el("div", { id: "stripBtns" }); if (sbx.parentNode !== $("toolL")) $("toolL").prepend(sbx); sbx.replaceChildren(db, rb, lb); }   // the strips' SHOW / HIDE buttons: a fixed set at the far left of the tool bar, DYN then RHYTHM then LYRICS as the strips lie — never flipped or scrolled
@@ -7150,6 +7163,7 @@ const lineRow = (win, m) => focusOn(win) ? (((m - bandFor(win, m)[0]) % 2) + 2) 
 const lineStep = (win, st) => (((st - bandStepFor(win, st)[0]) % 2) + 2) % 2 === 0;        // the Clef view: a line every other letter step, counted from the staff's bottom line
 const clefPad = g => g.padL || 0;                                                          // the room at the stave's head for the clef, the key signature and the time signature: set in geo()
 function focusHome(win) { const { rows } = rowsOf(win), [minV, , maxV] = viewLimits(win, rows); return clamp(centredLo(win, rows), minV, maxV); }   // the staves centred in the window (the limits give way to it)
+function homeStaves() { S.homeNext = { mel: true, acc: true, bass: true }; S.doors = { mel: true, acc: true, bass: true }; }   // every refresh — the app's load, ⟳, a song loaded or begun: each stave centred in its window again (renderAll does it, once the rows are allotted) and its covers closed over the rest
 function focusReturn(win) { S.song.view[WIN_LO[win]] = focusHome(win); S.sel = null; S.ghost = null; renderAll(); }
 function focusCaps(g) {                                                                 // the y of the first (top) and fifth (bottom) lines, as drawStaff draws them
   const [blo, bhi] = focusRange(g.win);
@@ -7288,7 +7302,7 @@ function placeDoors(win) {
   const w = $(win + "Win"), frame = w.querySelector(".frame"), g = GEO[win]; let box = w.querySelector(".doors"), btn = w.querySelector(".side .doorBtn");
   const side = w.querySelector(".side");
   if (!btn && side) { btn = el("button", { class: "doorBtn", title: "Open or close the covers over the rest of the stave, and bring the five lines back to the centre", onclick: () => { S.doors[win] = S.doors[win] === false; S.song.view[WIN_LO[win]] = focusHome(win); S.sel = null; S.ghost = null; savePrefs(); renderAll(); } }, "COVER"); const ch = side.querySelector(".chordBtn"); if (ch) ch.after(btn); else side.append(btn); }   // COVER also homes the stave, as ↩ LINES does
-  const show = focusOn(win) && S.winState[win] !== "closed" && !!g && (!deckMode() || win === "mel" || duoMode()) && !(duoMode() && S.collapsed[win]);   // on the deck the melody alone has doors; Stacked staves give every stave its own; only with its five-line focus on
+  const show = focusOn(win) && S.winState[win] !== "closed" && !!g && (!deckMode() || win === deckActive() || duoMode()) && !(duoMode() && S.collapsed[win]);   // on the deck the part in view has doors; Stacked staves give every stave its own; only with its five-line focus on
   if (btn) { btn.hidden = !show; btn.classList.toggle("on", show && S.doors[win] !== false); }
   if (!box) { box = el("div", { class: "doors" }, el("div", { class: "door top" }), el("div", { class: "door bot" })); w.append(box); }
   box.hidden = !show; if (!show) { box.style.cssText = ""; return; }                       // not shown: unsized too, so nothing can show through
@@ -7694,6 +7708,7 @@ function renderStrips() {
   /* rhythm strip: the slots as small glyphs, the ▶ marks where the next tap lands */
   {
     const svg = $("rhySvg"), HR = 20; svg.replaceChildren(); svg.setAttribute("height", HR); svg.setAttribute("viewBox", `0 0 ${g.W} ${HR}`); svg.setAttribute("width", g.W); svg.style.width = g.W + "px"; svg.style.touchAction = g.n > 1 ? "pan-x" : "none";
+    { const rx = deckMode() ? 0 : Math.max(0, Math.round((g.padL || 0) - 6)), body = $("rhyStrip").querySelector(".body"); body.style.marginLeft = rx ? rx + "px" : ""; svg.style.marginLeft = rx ? -rx + "px" : ""; $("rhyTag").style.left = rx ? rx + "px" : ""; }   // the phone: the strip begins just left of beat 1, as the Lyrics strip does — the head's room (clef, key and time signatures) is no part of it — and its label steps in with it, to sit beside it
     svg.append(svgEl("rect", { class: "hit", x: 0, y: 0, width: g.W, height: HR, fill: "transparent", "data-lane": "rhy" }));
     dividers(svg, "#2b2e33", 0.55, HR);                                                  // dark ticks on the silver
     for (const bi of bars) for (const c of chains(song.bars[bi])) {                 // a slot that runs on past its beat: the beats it covers stay lit
@@ -7730,7 +7745,7 @@ function renderStrips() {
     const gl = stripGeo(), k = gl.k || 1;                                                  // the strip at its own scale
     const HL = !deckMode() && grandLower("mel") ? H * 2 : H;
     const svg = $("lyrSvg"); svg.replaceChildren(); svg.setAttribute("height", HL * k); svg.setAttribute("viewBox", `0 0 ${gl.W} ${HL}`); svg.setAttribute("width", gl.W * k); svg.style.width = (gl.W * k) + "px"; svg.style.height = (HL * k) + "px"; svg.style.touchAction = g.n > 1 ? "pan-x" : "none";
-    { LYR_X = Math.max(0, Math.round((gl.padL || 0) - 6)); const body = $("lyrStrip").querySelector(".body"); body.style.marginLeft = LYR_X + "px"; svg.style.marginLeft = -LYR_X + "px"; }   // the strip begins just left of beat 1: the clef, key and time signatures' room at the head is not its concern                                // the phone, the melody a Grand Stave: the strip in two lanes, one to each staff, the words in the upper
+    { LYR_X = Math.max(0, Math.round((gl.padL || 0) - 6)); const body = $("lyrStrip").querySelector(".body"); body.style.marginLeft = LYR_X + "px"; svg.style.marginLeft = -LYR_X + "px"; $("lyrTag").style.left = !deckMode() && LYR_X ? LYR_X + "px" : ""; }   // the strip begins just left of beat 1: the clef, key and time signatures' room at the head is not its concern                                // the phone, the melody a Grand Stave: the strip in two lanes, one to each staff, the words in the upper
     $("lyrStrip").classList.toggle("serif", S.lyricFont === "serif"); $("lyrStrip").classList.toggle("smallcaps", S.lyricFont === "smallcaps");
     $("wordEdit").classList.toggle("serif", S.lyricFont === "serif"); $("wordEdit").classList.toggle("smallcaps", S.lyricFont === "smallcaps");
     svg.append(svgEl("rect", { class: "hit", x: 0, y: 0, width: gl.W, height: HL, fill: "transparent", "data-lane": "lyr" }));
@@ -7836,14 +7851,14 @@ function renderBeatRow0() {
     row.append(d);
   }
 }
+const soloWin = () => { if (deckMode()) return deckActive(); const w = PART_WIN[S.activePart || "melody"]; return S.winState[w] !== "closed" ? w : leadWin(); };   // the stave Play Bar plays: the part in view on the deck, the stave in use on the phone
 function renderPalette() {
   renderFtp(); renderTempo(); renderQuick(); if (deckMode()) renderFlipPal();
   const r1 = $("palRow1"), r2 = $("palRow2"), r3 = $("palRow3"), r4 = $("palRow4"); r1.replaceChildren(); r2.replaceChildren(); r3.replaceChildren(); r4.replaceChildren();
   renderRow3(r4); r2.hidden = true;                                                     // the second row is empty now
   { const evR = selChipObj() ? null : selEv(), ownR = evR && !S.selAuto;                  // the top row's upper left: whole, half, eighth, 16th and 32nd rests (the quarter rest lives on the quick palette)
-    if (!deckMode()) { const pw = (() => { const w = PART_WIN[S.activePart || "melody"]; return S.winState[w] !== "closed" ? w : leadWin(); })();   // ▶ BAR and ▶ SELECT: for the stave in use
-      r1.append(el("button", { class: "gn tplay" + (S.playing && S.solo === WIN_PART[pw] ? " on" : ""), title: "Play Bar — this part alone, this bar", onclick: e => playSolo(pw, e.currentTarget) }, el("span", { class: "top" }, "▶"), el("span", { class: "sub" }, "BAR")),
-        el("button", { class: "gn tplay" + (typeof PSEL !== "undefined" && PSEL.on ? " on" : ""), title: "Play Select — choose the notes to hear", onclick: e => togglePlaySelect(pw, e.currentTarget) }, el("span", { class: "top" }, "▶"), el("span", { class: "sub" }, "SEL")),
+    if (!deckMode()) { const pw = soloWin();   // ▶ SELECT: for the stave in use (▶ BAR sits with Play All and Stop, left of the arrows)
+      r1.append(el("button", { class: "gn tplay" + (typeof PSEL !== "undefined" && PSEL.on ? " on" : ""), title: "Play Select — choose the notes to hear", onclick: e => togglePlaySelect(pw, e.currentTarget) }, el("span", { class: "top" }, "▶"), el("span", { class: "sub" }, "SEL")),
         el("button", { class: "gn tplay chord" + (S.chordWin[pw] ? " on" : ""), title: "Chord mode: every tap stacks a note on the chord being built", onclick: () => toggleChordMode(pw) }, el("span", { class: "sub" }, "CHORD")),
         el("button", { class: "gn tplay run" + (runOn() ? " on" : ""), title: "Note run: press and drag along a stave to lay a run of notes", onclick: openRunSetup }, el("span", { class: "sub" }, "RUN"))); }
     if (!deckMode()) [4, 2, 0.5, 0.25, 0.125].forEach(v => r1.append(el("button", { onclick: () => tapRestLen(v), class: "gn" + ((ownR ? evR.rest && Math.abs(baseLen(evR.d) - v) < 1e-9 : S.restNext && (S.restLen || S.len) === v) ? " on" : ""), title: ownR ? `Make it a ${REST_NAME[v]} rest` : `${REST_NAME[v]} rest: goes in at the next free spot, or arms one for your next tap` }, restIcon(v)))); }
@@ -8177,6 +8192,7 @@ function runDown(win, svg, e) {
   runCtx = { win, svg, id: e.pointerId, part, d, abs0: barAbs(at.bi) + t0, start: S.run.preset === "scale" ? runQuant(m0, m0) : m0, last: -1, prev: null, dir: null, y0: pt.y, n: 0, done: false };
   try { svg.setPointerCapture(e.pointerId); } catch (x) {}
   S.ghost = null; S.sel = null; S.justEntered = null; S.restNext = false; S.active = { bi: at.bi, beat: beatOf(at.bi, t0) }; S.activePart = part; S.bi = at.bi;
+  document.body.classList.add("runDraw");                                                  // RUN blinks while the run is drawn, and only then
   runFill(e);
 }
 function runFill(e) {
@@ -8196,7 +8212,7 @@ function runFill(e) {
   }
   if (placed) { renderWindows(); renderStrips(); }
 }
-function runUp() { const c = runCtx; runCtx = null; if (!c) return; S.justEntered = null; S.sel = null; renderAll(); if (c.n) toast(c.n === 1 ? "1 note — drag along the stave for a run" : `${c.n} notes in the run — UNDO takes the whole run back`); }
+function runUp() { const c = runCtx; runCtx = null; document.body.classList.remove("runDraw"); if (!c) return; S.justEntered = null; S.sel = null; renderAll(); if (c.n) toast(c.n === 1 ? "1 note — drag along the stave for a run" : `${c.n} notes in the run — UNDO takes the whole run back`); }
 function openRunSetup() {
   if (runOn()) { S.run.on = false; savePrefs(); renderAll(); toast("Note run off"); return; }
   const R = S.run, body = [];
@@ -9497,7 +9513,7 @@ function openLibrary() {
 /* New song: keep the current one (save first), drop the unsaved changes, or cancel */
 function startNewSong() {
   const song = S.song, saved = !!readJSON(STORE.songs, {})[song.id], title = song.title ? `“${song.title}”` : "this song";
-  const go = () => { closeModal(); S.song = newSong(); freshSongState(); saveNow(); renderAll(); openSongSetup(); };
+  const go = () => { closeModal(); S.song = newSong(); freshSongState(); homeStaves(); saveNow(); renderAll(); openSongSetup(); };   // a new song's registers are the plain stave's: the staves in use (a Grand Stave, a clef) are centred in the window as on any load
   openModal("New song", el("p", { style: "font-size:16px;margin:6px 0 4px" }, saved ? `Save your latest changes to ${title} before starting a new song? Without saving, ${title} stays as it was last saved.` : `${title} has not been saved yet. Save it before starting a new song?`),
     [el("button", { class: "btn", onclick: closeModal }, "Cancel"),
      el("button", { class: "btn warn", onclick: go }, "Don't save"),
@@ -10560,7 +10576,7 @@ async function boot() {
   loadPrefs();
   const fromLink = await importFromHash();
   if (!fromLink) { const cur = readJSON(STORE.cur, null); if (!cur || !loadSong(cur)) { S.song = newSong(); saveNow(); } }
-  S.homeNext = { mel: true, acc: true, bass: true };                                       // the app loads with every stave's staves centred in its window (each as it comes into view on the deck)
+  homeStaves();                                                                            // the app loads with every stave's staves centred in its window (each as it comes into view on the deck), the covers closed over the rest
   upgradeTies(S.song); S.chordsDisp = S.song.showRoman ? "roman" : S.chordsDisp;
   loadSampleMeta().then(loadSongBanks);
   $("songTitle").addEventListener("input", e => { S.song.title = e.target.value; saveSoon(); });
@@ -10584,7 +10600,7 @@ async function boot() {
   $("undoBtn").addEventListener("click", undo); $("redoBtn").addEventListener("click", redo);
   $("moveBtn").addEventListener("click", moveAction); $("delBtn").addEventListener("click", delAction); $("selBtn").addEventListener("click", () => mvStart("delete")); $("repBtn").addEventListener("click", repAction); $("copyBtn").addEventListener("click", cpyStart); $("xhairBtn").addEventListener("click", () => { if (S.cpy) { S.cpy.crosshair = !S.cpy.crosshair; renderAll(); } }); $("setCopyBtn").addEventListener("click", setCopyAction);
   $("playAllBtn").addEventListener("click", playAll);
-  $("playBarBtn").addEventListener("click", e => playSolo(deckActive(), e.currentTarget));
+  $("playBarBtn").addEventListener("click", e => playSolo(soloWin(), e.currentTarget));
   $("rangeBtn").addEventListener("click", openPlayRange);
   $("stopBtn").addEventListener("click", stopAll);
   document.querySelectorAll(".win .psel").forEach(b => b.addEventListener("click", () => togglePlaySelect(b.dataset.win, b)));
