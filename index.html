@@ -6107,7 +6107,8 @@ const setMode = () => {};                          // engine shims (the old mode
 const renderPanel = () => renderAll();
 function loadPrefs() {
   const p = readJSON(STORE.prefs, {});
-  S.theme = p.theme || "auto"; S.followWords = false; S.noteStyle = p.noteStyle || "trad"; S.noteSize = NOTE_SCALE[p.noteSize] ? p.noteSize : "m"; S.chordColor = p.chordColor || "#ffffff"; S.halfLines = p.halfLines == null ? true : !!p.halfLines; S.beatLines = p.beatLines == null ? true : !!p.beatLines; S.barHi = p.barHi in BAR_HI ? p.barHi : "default"; S.spacing = p.spacing in SPACING_SP ? p.spacing : "regular"; S.rangeLock = !!p.rangeLock; S.kbLayout = p.kbLayout === "flat" ? "flat" : "standard"; S.kbTheme = ["blue", "black", "gray"].includes(p.kbTheme) ? p.kbTheme : "classic"; S.kbSpace = Math.min(1, Math.max(0, +p.kbSpace || 0)); S.kbBackUp = Math.min(1, Math.max(0, +p.kbBackUp || 0)); S.ftp = Object.assign({}, FTP_DEFAULT, p.ftp || {}); if (!FTP_ENABLED) S.ftp.on = false;
+  S.theme = p.theme && p.theme !== "custom" ? p.theme : "auto"; S.followWords = false;   // Custom is no longer offered: a saved Custom comes back as Default
+  S.noteStyle = p.noteStyle || "trad"; S.noteSize = NOTE_SCALE[p.noteSize] ? p.noteSize : "m"; S.chordColor = p.chordColor || "#ffffff"; S.halfLines = p.halfLines == null ? true : !!p.halfLines; S.beatLines = p.beatLines == null ? true : !!p.beatLines; S.barHi = p.barHi in BAR_HI ? p.barHi : "default"; S.spacing = p.spacing in SPACING_SP ? p.spacing : "regular"; S.rangeLock = !!p.rangeLock; S.kbLayout = p.kbLayout === "flat" ? "flat" : "standard"; S.kbTheme = ["blue", "black", "gray"].includes(p.kbTheme) ? p.kbTheme : "classic"; S.kbSpace = Math.min(1, Math.max(0, +p.kbSpace || 0)); S.kbBackUp = Math.min(1, Math.max(0, +p.kbBackUp || 0)); S.ftp = Object.assign({}, FTP_DEFAULT, p.ftp || {}); if (!FTP_ENABLED) S.ftp.on = false;
   S.winSize = WIN[p.winSize] ? p.winSize : "m"; S.chordsDisp = p.chordsDisp || "names"; S.metro = p.metro || "off"; S.custom = p.custom || null; S.len = p.len || 1;
   S.rhyShown = p.rhyShown !== false && p.stripsShown !== false; S.lyrShown = p.lyrShown !== false && p.stripsShown !== false; S.partsShown = p.partsShown !== false; S.dynShown = !!p.dynShown; 
   S.deck = Array.isArray(p.deck) && p.deck.length ? p.deck.filter(w => ["mel", "acc", "bass"].includes(w)) : ["mel", "acc", "bass"]; if (!S.deck.length) S.deck = ["mel"];
@@ -9224,7 +9225,7 @@ function openSettings() {
   const sec = t => el("div", { class: "pSec" }, t), wide = deckMode();
   openModal("Settings", foldable([
     sec("Look"),
-    el("div", { class: "pLbl" }, "Theme"), seg([["auto", "Default"], ["pearl", "Pearl"], ["cobalt", "Cobalt"], ["cherry", "Cherry"], ["mustard", "Mustard"], ["dark", "Dark"], ["custom", "Custom"]], S.theme, v => { S.theme = v; if (v === "custom" && !S.custom) S.custom = custom; applyTheme(); savePrefs(); renderAll(); }), colorRow,   // the staves are painted at render time: redrawn at once, not on the next load
+    el("div", { class: "pLbl" }, "Theme"), seg([["auto", "Default"], ["pearl", "Pearl"], ["cobalt", "Cobalt"], ["cherry", "Cherry"], ["mustard", "Mustard"], ["dark", "Dark"]], S.theme, v => { S.theme = v; applyTheme(); savePrefs(); renderAll(); }),   // the staves are painted at render time: redrawn at once, not on the next load
     sec("Layout"),
     el("p", { class: "tiny", style: "margin:0 0 6px" }, "Applies to both vertical and widescreen views"),   // a p, not a div: shown outright, not folded under the header as a hint would be
     el("div", { class: "pLbl" }, "Staves setup"),
