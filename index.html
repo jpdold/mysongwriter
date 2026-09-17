@@ -8073,6 +8073,7 @@ function ensureVisible(part, m) {
 function shiftView(win, delta) { const { rows } = rowsOf(win), key = WIN_LO[win], [minV, , maxV] = viewLimits(win, rows); S.song.view[key] = clamp(rowsUp(win, viewOf(win), delta), minV, maxV); renderAll(); }
 /* a tap on the melody window: pitch a slot, or make a slot with a pitch */
 function tapMelody(bi, t, m, onNote = false) {
+  if (chordOn("melody") && inActive(bi, t)) { const ch0 = chordChainAt(S.song.bars[bi], t, "melody"); if (ch0 && ch0.head.m != null) { S.bi = bi; S.activePart = "melody"; aimBeat(bi, t); addChordNote(bi, ch0, m, "melody"); return; } }   // chord mode: a tap anywhere in a chord's own beat stacks on that chord — not carried to the marked beat
   if (!inActive(bi, t)) activate(bi, t); else if (onNote) aimBeat(bi, t); else { if (S.activePart !== "melody") aimBeat(bi, t); t = aimEntry(bi, t); } S.activePart = "melody";   // one tap: the bar wakes and the box appears; inside it, a tap on a note aims at that note's beat, a tap on empty space enters at the marked beat — coming from another part, at the beat tapped
   S.bi = bi;
   const bar = S.song.bars[bi], B = barBeats(bi);
@@ -8107,6 +8108,7 @@ function tapMelody(bi, t, m, onNote = false) {
 }
 function tapBand(win, bi, t, m, onNote = false, partOf = null) {
   const part = partOf || WIN_PART[win], bar = S.song.bars[bi], P = S.song.parts[part], B = barBeats(bi);   // partOf: the Grand Stave's lower staff, tapped in the melody's window
+  if (chordOn(part) && inActive(bi, t) && P.on) { const ch0 = chordChainAt(bar, t, part); if (ch0 && ch0.head.m != null) { S.bi = bi; S.activePart = part; aimBeat(bi, t); addChordNote(bi, ch0, m, part); return; } }   // chord mode: a tap in a chord's own beat stacks on it
   if (!inActive(bi, t)) activate(bi, t, part); else if (onNote) aimBeat(bi, t); else { if (S.activePart !== part) aimBeat(bi, t); t = aimEntry(bi, t, part); } S.activePart = part;   // one tap: the bar wakes and the box appears; inside it, a tap on a note aims at that note's beat, a tap on empty space enters at the marked beat — the marked beat is the part in hand's: a tap on another part (the Grand Stave's other staff, another window) aims at the beat tapped, so the left hand's first note is not carried to wherever the melody left off
   S.bi = bi;
   if (!P.on) { openWinSettings(win); return; }
@@ -8342,7 +8344,7 @@ function initPointer() {
     svg.addEventListener("wheel", e => { e.preventDefault(); if (e.ctrlKey) { S.zoomWin[win] = clamp(S.zoomWin[win] * (e.deltaY > 0 ? 0.92 : 1.08), 0.5, 2.5); savePrefs(); renderAll(); } else shiftView(win, e.deltaY > 0 ? -1 : 1); }, { passive: false });
     /* two-finger pinch: taller/shorter rows (vertical) or fewer/more bars (horizontal) */
     const pts = new Map(); let pz = null;
-    svg.addEventListener("pointerdown", e => { if (!PINCH_ENABLED || e.pointerType !== "touch") return; pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (pts.size === 2) { dragCtx = null; const [a, b] = [...pts.values()]; pz = { d0: Math.max(20, Math.hypot(a.x - b.x, a.y - b.y)), dy0: Math.abs(a.y - b.y), dx0: Math.abs(a.x - b.x), z0: S.zoomWin[win], last: 1 }; } }, { capture: true });
+    svg.addEventListener("pointerdown", e => { if (!PINCH_ENABLED || e.pointerType !== "touch") return; for (const [id, q] of pts) if (q.at && e.timeStamp - q.at > 4000) pts.delete(id); pts.set(e.pointerId, { x: e.clientX, y: e.clientY, at: e.timeStamp }); if (pts.size === 2) { dragCtx = null; const [a, b] = [...pts.values()]; pz = { d0: Math.max(20, Math.hypot(a.x - b.x, a.y - b.y)), dy0: Math.abs(a.y - b.y), dx0: Math.abs(a.x - b.x), z0: S.zoomWin[win], last: 1 }; } }, { capture: true });   // a touch whose end never arrived is forgotten after four seconds, so it cannot count as a second finger and swallow every tap after it
     svg.addEventListener("pointermove", e => { if (!PINCH_ENABLED || !pts.has(e.pointerId) || !pz) return; pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); const [a, b] = [...pts.values()]; const d = Math.max(20, Math.hypot(a.x - b.x, a.y - b.y)); pz.last = d / pz.d0; if (pz.dy0 >= pz.dx0) { const z = clamp(pz.z0 * pz.last, 0.5, 2.5); if (Math.abs(z - S.zoomWin[win]) > 0.02) { S.zoomWin[win] = z; allocate(); renderWindows(); renderStrips(); renderBeatRow(); } } }, { capture: true });
     const pzEnd = e => { if (!PINCH_ENABLED || !pts.has(e.pointerId)) return; pts.delete(e.pointerId); if (pz && pts.size < 2) { if (pz.dx0 > pz.dy0 && (pz.last > 1.3 || pz.last < 0.77)) { S.viewSpan = clamp(S.viewSpan + (pz.last > 1 ? -1 : 1), 1, 4); } pz = null; savePrefs(); renderAll(); } };
     svg.addEventListener("pointerup", pzEnd, { capture: true }); svg.addEventListener("pointercancel", pzEnd, { capture: true });
