@@ -56,23 +56,42 @@
   --melody: #f2f2f2; --bass: #8ea6f0; --accomp: #5fc0b3; --lh: #d9a15c;
 }
 
-:root[data-theme="pearl"] {   /* Pearl: a rich pearl white body with a fine grain and a soft sheen, deeper silver on the buttons and the gears, the stave windows set deep into it */
-  color-scheme: light;
-  --ground: #f3f0ea; --on-ground: #2b2d31; --on-ground2: #6a6d73;
+/* The textured themes — Pearl, Cobalt, Cherry, Mustard: the body a rich, grained surface with a soft sheen in place of the graphite, the covers in the
+   same surface, the silver of the buttons and the tool bar deepened, the gears in silver, and the stave windows set deep into it (a dark bezel, a lip
+   where the surface breaks, a soft shadow below, the recess's own shadow under the top and left edges). All of it colour and shadow: no dimension moves.
+   Each theme sets the variables; the rules below are shared (the root carries data-tex). */
+:root[data-tex] {
   --sv-hi: #e4e8ed; --sv-lo: #8f96a1; --sv-lo2: #9da3ad; --bar-hi: #dde1e6; --bar-lo: #a3a9b3;
-  --pearl-grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n' x='0' y='0' width='100%25' height='100%25'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .52  0 0 0 0 .49  0 0 0 0 .44  0 0 0 .11 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  --grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n' x='0' y='0' width='100%25' height='100%25'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .52  0 0 0 0 .49  0 0 0 0 .44  0 0 0 .11 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  --weave: radial-gradient(circle at 1px 1px, var(--weave-dot) 0.7px, transparent 1.1px);
 }
-:root[data-theme="pearl"] body { background-color: #f3f0ea; background-attachment: fixed;
-  background-image: var(--pearl-grain), radial-gradient(120% 80% at 18% 0%, rgba(255,255,255,.95), rgba(255,255,255,0) 60%), radial-gradient(90% 70% at 88% 100%, rgba(216,208,230,.38), rgba(255,255,255,0) 65%), radial-gradient(80% 60% at 8% 92%, rgba(200,222,228,.32), rgba(255,255,255,0) 60%), linear-gradient(160deg, #fbfaf7, #ebe7de); }
-:root[data-theme="pearl"] .doors .door { background-color: #f1eee8; background-image: var(--pearl-grain), linear-gradient(#f7f5f0, #ebe7df); }   /* the covers in the same pearl */
-:root[data-theme="pearl"] .doors .door.top { border-bottom-color: rgba(0,0,0,.18); } :root[data-theme="pearl"] .doors .door.bot { border-top-color: rgba(0,0,0,.18); }
-:root[data-theme="pearl"] .win .frame, :root[data-theme="pearl"] .strip .body { border-color: #0f1113; box-shadow: 0 0 0 2px #25282c, 0 0 0 3px rgba(255,255,255,.95), 0 3px 6px 3px rgba(70,62,50,.22), inset 0 0 0 1px rgba(0,0,0,.45); }   /* the window set deep into the pearl: a dark bezel, a bright lip where the pearl breaks, a soft shadow below — all shadow, so no dimension moves */
-:root[data-theme="pearl"] .win .gear, :root[data-theme="pearl"] #gearBtn, :root[data-theme="pearl"] #deckNav button.gearBtn, :root[data-theme="pearl"] .rollGear { color: #5f656e; filter: drop-shadow(0 1px 0 rgba(255,255,255,.9)); }   /* the gears in a deep silver */
-:root[data-theme="pearl"] .rollItem .rollGear { color: #c9ced6; filter: none; }                  /* on the dark selector pills the gear stays light */
-:root[data-theme="pearl"] #menuBtn, :root[data-theme="pearl"] #reloadBtn { color: #3a3d42; }
-:root[data-theme="pearl"] #barDots i { background: rgba(0,0,0,.16); } :root[data-theme="pearl"] #barDots i.w { background: rgba(0,0,0,.42); } :root[data-theme="pearl"] #barDots i.cur { outline-color: #2b2d31; }   /* the bar dots read on the pearl */
-:root[data-theme="pearl"] .doors::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; box-shadow: inset 0 12px 14px -7px rgba(0,0,0,.6), inset 10px 0 13px -7px rgba(0,0,0,.42), inset 0 -5px 8px -5px rgba(0,0,0,.22), inset -4px 0 7px -5px rgba(0,0,0,.18); }   /* the recess's own shadow over the covers too: deepest under the top and left edges, as light from above left would leave it */
-:root[data-theme="pearl"] .win .solo, :root[data-theme="pearl"] .win .psel, :root[data-theme="pearl"] .win .chordBtn, :root[data-theme="pearl"] .win .pselClose { border-color: rgba(0,0,0,.35); background: rgba(0,0,0,.06); }
+:root[data-theme="pearl"] { color-scheme: light; --ground: #f3f0ea; --on-ground: #2b2d31; --on-ground2: #6a6d73;
+  --tex-hi: #fbfaf7; --tex-lo: #ebe7de; --sheen1: rgba(255,255,255,.95); --sheen2: rgba(216,208,230,.38); --sheen3: rgba(200,222,228,.32); --weave-dot: rgba(120,110,95,.05);
+  --door-hi: #f7f5f0; --door-lo: #ebe7df; --door-lip: rgba(0,0,0,.18); --lip: rgba(255,255,255,.95); --gear: #5f656e; --gear-sh: rgba(255,255,255,.9);
+  --dot: rgba(0,0,0,.16); --dot-w: rgba(0,0,0,.42); --dot-cur: #2b2d31; --chip-bd: rgba(0,0,0,.35); --chip-bg: rgba(0,0,0,.06); }
+:root[data-theme="cobalt"] { color-scheme: dark; --ground: #0b3d91; --on-ground: #f2f5fb; --on-ground2: #b9c6e0;
+  --tex-hi: #1450ad; --tex-lo: #062c73; --sheen1: rgba(110,160,240,.34); --sheen2: rgba(4,14,66,.5); --sheen3: rgba(40,120,210,.26); --weave-dot: rgba(255,255,255,.07);
+  --door-hi: #1249a3; --door-lo: #083481; --door-lip: rgba(255,255,255,.28); --lip: rgba(150,185,240,.6); --gear: #d2d9e4; --gear-sh: rgba(0,0,0,.55);
+  --dot: rgba(255,255,255,.2); --dot-w: rgba(255,255,255,.6); --dot-cur: #fff; --chip-bd: rgba(255,255,255,.4); --chip-bg: rgba(0,0,0,.25); }
+:root[data-theme="cherry"] { color-scheme: dark; --ground: #c4202b; --on-ground: #fff6f6; --on-ground2: #f3c9cb;
+  --tex-hi: #d92d38; --tex-lo: #a3141e; --sheen1: rgba(255,140,140,.32); --sheen2: rgba(80,0,8,.42); --sheen3: rgba(235,70,80,.26); --weave-dot: rgba(255,255,255,.08);
+  --door-hi: #d02732; --door-lo: #ab1822; --door-lip: rgba(255,255,255,.3); --lip: rgba(255,180,180,.6); --gear: #ece4e5; --gear-sh: rgba(0,0,0,.5);
+  --dot: rgba(255,255,255,.24); --dot-w: rgba(255,255,255,.65); --dot-cur: #fff; --chip-bd: rgba(255,255,255,.45); --chip-bg: rgba(0,0,0,.22); }
+:root[data-theme="mustard"] { color-scheme: light; --ground: #d8d12e; --on-ground: #26250f; --on-ground2: #5a5827;
+  --tex-hi: #e8e14a; --tex-lo: #c2ba1e; --sheen1: rgba(255,255,200,.6); --sheen2: rgba(120,108,0,.3); --sheen3: rgba(244,238,130,.32); --weave-dot: rgba(70,64,0,.07);
+  --door-hi: #dfd83b; --door-lo: #c9c126; --door-lip: rgba(0,0,0,.22); --lip: rgba(255,255,215,.9); --gear: #4f545c; --gear-sh: rgba(255,255,220,.85);
+  --dot: rgba(0,0,0,.2); --dot-w: rgba(0,0,0,.48); --dot-cur: #26250f; --chip-bd: rgba(0,0,0,.4); --chip-bg: rgba(0,0,0,.07); }
+:root[data-tex] body { background-color: var(--ground); background-attachment: fixed; background-size: auto, 4px 4px, auto, auto, auto, auto;
+  background-image: var(--grain), var(--weave), radial-gradient(120% 80% at 18% 0%, var(--sheen1), transparent 60%), radial-gradient(90% 70% at 88% 100%, var(--sheen2), transparent 65%), radial-gradient(80% 60% at 8% 92%, var(--sheen3), transparent 60%), linear-gradient(160deg, var(--tex-hi), var(--tex-lo)); }
+:root[data-tex] .doors .door { background-color: var(--ground); background-size: auto, 4px 4px, auto; background-image: var(--grain), var(--weave), linear-gradient(var(--door-hi), var(--door-lo)); }   /* the covers in the same surface */
+:root[data-tex] .doors .door.top { border-bottom-color: var(--door-lip); } :root[data-tex] .doors .door.bot { border-top-color: var(--door-lip); }
+:root[data-tex] .win .frame, :root[data-tex] .strip .body { border-color: #0f1113; box-shadow: 0 0 0 2px #25282c, 0 0 0 3px var(--lip), 0 3px 6px 3px rgba(0,0,0,.24), inset 0 0 0 1px rgba(0,0,0,.45); }   /* the window set deep: a dark bezel, a lip where the surface breaks, a soft shadow below — all shadow, so no dimension moves */
+:root[data-tex] .win .gear, :root[data-tex] #gearBtn, :root[data-tex] #deckNav button.gearBtn, :root[data-tex] .rollGear { color: var(--gear); filter: drop-shadow(0 1px 0 var(--gear-sh)); }   /* the gears in silver */
+:root[data-tex] .rollItem .rollGear { color: #c9ced6; filter: none; }                          /* on the dark selector pills the gear stays light */
+:root[data-tex] #menuBtn, :root[data-tex] #reloadBtn { color: var(--on-ground); }
+:root[data-tex] .win .solo, :root[data-tex] .win .psel, :root[data-tex] .win .chordBtn, :root[data-tex] .win .pselClose { border-color: var(--chip-bd); background: var(--chip-bg); }
+:root[data-tex] #barDots i { background: var(--dot); } :root[data-tex] #barDots i.w { background: var(--dot-w); } :root[data-tex] #barDots i.cur { outline-color: var(--dot-cur); }   /* the bar dots read on the surface */
+:root[data-tex] .doors::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; box-shadow: inset 0 12px 14px -7px rgba(0,0,0,.6), inset 10px 0 13px -7px rgba(0,0,0,.42), inset 0 -5px 8px -5px rgba(0,0,0,.22), inset -4px 0 7px -5px rgba(0,0,0,.18); }   /* the recess's own shadow over the covers too: deepest under the top and left edges */
 
 /* ═══════════════════════════════════════════════════════════════════════
    2. BASE
@@ -6108,8 +6127,10 @@ function loadPrefs() {
 function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, deck: S.deck, rhyShown: S.rhyShown, lyrShown: S.lyrShown, partsShown: S.partsShown, dynShown: S.dynShown, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, beatLines: S.beatLines, barHi: S.barHi, spacing: S.spacing, collapsed: S.collapsed, rangeLock: S.rangeLock, kbLayout: S.kbLayout, kbTheme: S.kbTheme, kbSpace: S.kbSpace, kbBackUp: S.kbBackUp, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, keepAwake: S.keepAwake, paper: S.paper, quick: S.quick, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout, duoBars: S.duoBars, duoBand: S.duoBand, beatDividers: S.beatDividers, focusBand: S.focusBand, doors: S.doors, clefs: S.clefs, phoneWins: S.phoneWins, lyrOff: S.lyrOff }); }
 function applyTheme() {
   const r = document.documentElement;
-  if (S.theme === "dark" || S.theme === "pearl") r.setAttribute("data-theme", S.theme); else r.removeAttribute("data-theme");
-  { const m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute("content", S.theme === "pearl" ? "#f3f0ea" : S.theme === "dark" ? "#1c1d20" : "#5a5c5f"); }   // the browser's own bar in the theme's colour
+  const TEX = { pearl: "#f3f0ea", cobalt: "#0b3d91", cherry: "#c4202b", mustard: "#d8d12e" };   // the textured themes, and the colour each gives the browser's bar
+  if (S.theme === "dark" || TEX[S.theme]) r.setAttribute("data-theme", S.theme); else r.removeAttribute("data-theme");
+  if (TEX[S.theme]) r.setAttribute("data-tex", "1"); else r.removeAttribute("data-tex");
+  { const m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute("content", TEX[S.theme] || (S.theme === "dark" ? "#1c1d20" : "#5a5c5f")); }   // the browser's own bar in the theme's colour
   const c = S.theme === "custom" && S.custom ? S.custom : null;
   r.style.setProperty("--ground", c ? c.ground : ""); r.style.setProperty("--ground2", c ? c.ground2 : ""); r.style.setProperty("--accent", c ? c.accent : ""); r.style.setProperty("--lyric", c ? c.lyric : ""); r.style.setProperty("--box", c ? c.box : "");
 }
@@ -7311,7 +7332,7 @@ function drawStaff(svg, g, key) {
     if (k > 0) { const bx = g.x(bi, 0); svg.append(svgEl("line", { class: "stl", x1: bx, x2: bx, y1: 0, y2: g.H, stroke: css("--beat"), "stroke-width": 3.5 })); }
   });
   const defs = svgEl("defs"), grad = (id, x2, y2, a) => { const lg = svgEl("linearGradient", { id, x1: 0, y1: 0, x2, y2 }); lg.append(svgEl("stop", { offset: 0, "stop-color": "#000", "stop-opacity": a }), svgEl("stop", { offset: 1, "stop-color": "#000", "stop-opacity": 0 })); return lg; };
-  const deep = document.documentElement.getAttribute("data-theme") === "pearl";             // Pearl: the window set deep — a longer, darker shadow under the top and left edges
+  const deep = document.documentElement.hasAttribute("data-tex");             // Pearl: the window set deep — a longer, darker shadow under the top and left edges
   defs.append(grad(g.win + "InT", 0, 1, deep ? 0.6 : 0.32), grad(g.win + "InL", 1, 0, deep ? 0.45 : 0.22), grad(g.win + "InB", 0, 1, deep ? 0.2 : 0.14)); svg.append(defs);
   svg.append(svgEl("rect", { x: 0, y: 0, width: g.W, height: deep ? 20 : 9, fill: `url(#${g.win}InT)`, "pointer-events": "none" }),
              svgEl("rect", { x: 0, y: 0, width: deep ? 14 : 7, height: g.H, fill: `url(#${g.win}InL)`, "pointer-events": "none" }),
@@ -9203,7 +9224,7 @@ function openSettings() {
   const sec = t => el("div", { class: "pSec" }, t), wide = deckMode();
   openModal("Settings", foldable([
     sec("Look"),
-    el("div", { class: "pLbl" }, "Theme"), seg([["auto", "Default"], ["pearl", "Pearl"], ["dark", "Dark"], ["custom", "Custom"]], S.theme, v => { S.theme = v; if (v === "custom" && !S.custom) S.custom = custom; applyTheme(); savePrefs(); renderAll(); }), colorRow,   // the staves are painted at render time: redrawn at once, not on the next load
+    el("div", { class: "pLbl" }, "Theme"), seg([["auto", "Default"], ["pearl", "Pearl"], ["cobalt", "Cobalt"], ["cherry", "Cherry"], ["mustard", "Mustard"], ["dark", "Dark"], ["custom", "Custom"]], S.theme, v => { S.theme = v; if (v === "custom" && !S.custom) S.custom = custom; applyTheme(); savePrefs(); renderAll(); }), colorRow,   // the staves are painted at render time: redrawn at once, not on the next load
     sec("Layout"),
     el("p", { class: "tiny", style: "margin:0 0 6px" }, "Applies to both vertical and widescreen views"),   // a p, not a div: shown outright, not folded under the header as a hint would be
     el("div", { class: "pLbl" }, "Staves setup"),
