@@ -8816,6 +8816,10 @@ function openWordEdit(bi, t, chip) {
   const g = stripGeo();
   const afterLast = bar.chips.reduce((m, c) => Math.max(m, c.t + chipFull(c, g)), 0);
   WE.t = chip ? chip.t : (entrySpot(bar, bi, Math.max(t || 0, afterLast), ENTRY_MIN) ?? Math.min(Math.max(t || 0, afterLast), barBeats(bi)));   // exactly at the last chip's edge; never back at the bar's start
+  if (!chip && S.chipMode !== "single") {                                                  // the words go with the notes: the box opens on the first melody note at or after its spot (within a beat of it) when that spot is free, so the chip's left edge stands on the note's beat
+    const nx = (bar.ev.melody || []).filter(e => !e.rest && e.m != null && e.t >= WE.t - 1e-6 && e.t <= WE.t + 1 + 1e-6).sort((a, b) => a.t - b.t)[0];
+    if (nx && Math.abs(nx.t - WE.t) > 1e-6) { const spot = entrySpot(bar, bi, nx.t, ENTRY_MIN); if (spot != null && Math.abs(spot - nx.t) < 1e-6) WE.t = r3(nx.t); }
+  }
   inp.value = chip ? chip.text : ""; inp.disabled = false; S.bi = bi; S.selChip = chip ? { bi, id: chip.id } : null;
   lbl.textContent = chip ? "Editing · NEW CHIP – CURRENT BEAT keeps it · SPLIT at the cursor" : `Bar ${barNo(bi)} · beat ${beatLabel(WE.t)} · NEW CHIP – CURRENT BEAT makes the chip · NEW CHIP → NEXT BEAT moves on`;
   box.classList.add("on"); renderWeKeys(); applyKbPos(); renderStrips(); if (typeof deckMode === "function" && deckMode()) { if (!wasOpen0) renderAll(); else placeDeckLabels(); } else if (!wasOpen0) renderAll(); else renderNav();   // the phone too draws afresh as the keyboard opens: the stave and the strip widen to the keyboard's edges   // on the deck: the keyboard docks, the strips ride up onto it and the stave takes their rows
