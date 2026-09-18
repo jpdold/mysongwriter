@@ -460,11 +460,13 @@ text.clef, text.smufl { user-select: none; }
 #app.deck.norhy #rhyStrip { display: none; } #app.deck.nolyr #lyrStrip { display: none; }
 #rhyToggle { display: none; grid-column: 3; grid-row: 1; align-self: center; width: 30px; height: 24px; padding: 0; flex-direction: column; align-items: center; justify-content: center; gap: 1px; font-size: 6.3px; font-weight: 800; letter-spacing: .04em; line-height: 1.1; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); border: 1px solid #3a8a1e; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,.3); }   /* the phone: SHOW / HIDE RHYTHM in the strip's right margin, as on the deck's tool bar */
 #app:not(.deck) #rhyToggle { display: flex; }
-#lyrGuide { position: absolute; z-index: 4; width: 0; border-left: 2px dashed #111; opacity: .85; pointer-events: none; }   /* the phone's lyric guide: thin, dashed, taps pass through it to the stave */
+#lyrGuide { position: absolute; z-index: 4; width: 0; opacity: .85; pointer-events: none; }   /* the phone's lyric guide: thin, dashed, taps pass through it to the stave; drawn in two segments, the stave's and the strip's */
+#lyrGuide .segA, #lyrGuide .segB { position: absolute; left: 0; top: 0; width: 0; border-left: 2px dashed #111; } #lyrGuide .segA[hidden], #lyrGuide .segB[hidden] { display: none; }
+#lyrGuide.push .segA, #lyrGuide.push .segB { border-left-color: #e02020; } #lyrGuide.push .knob { background: #e02020; }   /* PUSH on: the line and its knob in red */
 #lyrGuide .knob { position: absolute; left: -8px; top: -18px; width: 14px; height: 14px; border-radius: 50%; background: #111; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.5); pointer-events: auto; cursor: ew-resize; touch-action: none; }   /* the knob above the top line: drag it sideways */
 #lyrGuide .knob::before { content: ""; position: absolute; left: -8px; top: -8px; right: -8px; bottom: -8px; }
 #lyrGuide[hidden] { display: none; }
-#lyrGuide.deck { z-index: 75; border-left-color: #f5a623; opacity: .95; } #lyrGuide.deck .knob { display: none; }   /* the deck's guide: amber, over the keyboard's plane, with no knob: it stands where the entry box is */
+#lyrGuide.deck { z-index: 75; opacity: .95; } #lyrGuide.deck .segA, #lyrGuide.deck .segB { border-left-color: #f5a623; } #lyrGuide.deck .knob { display: none; }   /* the deck's guide: amber, over the keyboard's plane, with no knob: it stands where the entry box is */
 #app:not(.deck).norhy #rhyStrip .tag, #app:not(.deck).norhy #rhyStrip .body { display: none; }
 /* the tool bar, in thirds, each flipping on its own: the left between its tools (UNDO / REDO, MOVE / DELETE, PITCH, ITEM) and the
    staff-lines switch; the middle between playback and this part's buttons; the right between four palettes — notes (the quick
@@ -7783,6 +7785,7 @@ function renderWindows() {
       const yL = grand ? g.yS((bs[0][1] + bs[1][0]) / 2) + 4 : g.dia ? g.yS(bs[0][0] - 1.6) + 4 : g.y(flo) + g.step * 1.6 + 4;
       if (yL > 8 && yL < g.H - 2) for (const bi of g.bars) for (const c of song.bars[bi].chips || []) { if (c.gap || !c.text || !c.text.trim()) continue; svg.append(svgEl("text", { x: g.x(bi, c.t) + 2, y: yL, "font-family": "'Times New Roman', Times, serif", "font-weight": 700, "font-size": 13, fill: "#000", "pointer-events": "none" }, c.text.trim())); } }
     svg.append(svgEl("line", { id: "melHead", x1: -5, x2: -5, y1: 0, y2: g.H, stroke: css("--accent"), "stroke-width": 2, "pointer-events": "none" }));
+    drawPushBoxes(svg, g, "mel");
   }
   /* ── accompaniment & bass windows ── */
   for (const win of ["acc", "bass"]) {
@@ -7923,7 +7926,7 @@ function renderStrips() {
         pickFrame();
       });
     }
-    alignPhoneStrips();
+    alignPhoneStrips(); drawPushChipBoxes(svg, gl, HL);
     if (!any && !WE.on) svg.append(svgEl("text", { x: (LYR_X + gl.W1) / 2, y: 15.5, "text-anchor": "middle", "font-size": 9, fill: "rgba(255,255,255,.75)", "font-weight": 700, "letter-spacing": ".06em" }, "TAP HERE TO TYPE LYRICS/WORDS"));
   }
   const ph = $("lyrSvg"); ph.append(svgEl("line", { id: "lyrHead", x1: -5, x2: -5, y1: 0, y2: +ph.getAttribute("viewBox").split(" ")[3] || H, stroke: "#fff", "stroke-width": 2, "pointer-events": "none" }));
@@ -7937,10 +7940,12 @@ function renderStrips() {
    words up on; dragged sideways it steps by sixteenths of a beat, and it starts at beat 1 of the first bar in view */
 function placeLyrGuide() {
   let gd = $("lyrGuide");
-  if (!gd) { gd = el("div", { id: "lyrGuide" }, el("div", { class: "knob", title: "Drag: a guide to line the words up on — it steps by sixteenths" })); $("app").append(gd);   // the line lets taps through to the stave; the knob at its top is what is dragged
+  if (!gd) { gd = el("div", { id: "lyrGuide" }, el("div", { class: "segA" }), el("div", { class: "segB" }), el("div", { class: "knob", title: "Drag: a guide to line the words up on — it steps by sixteenths; with PUSH on, what stands on it goes along" })); $("app").append(gd);   // the line lets taps through to the stave; the knob at its top is what is dragged; two segments, the stave's and the strip's, so either can be hidden
     let d = null;
     gd.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); try { gd.setPointerCapture(e.pointerId); } catch (x) {} d = { id: e.pointerId }; });
-    gd.addEventListener("pointermove", e => { if (!d || e.pointerId !== d.id || !GEO.mel) return; const g = GEO.mel, sr = $("melSvg").getBoundingClientRect(), at = g.at(e.clientX - sr.left); S.guide = { bi: at.bi, t: Math.round(at.t * 4) / 4 }; placeLyrGuide(); });
+    gd.addEventListener("pointermove", e => { if (!d || e.pointerId !== d.id || !GEO.mel) return; const g = GEO.mel, sr = $("melSvg").getBoundingClientRect(), at = g.at(e.clientX - sr.left);
+      if (S.push) { if (at.bi !== S.push.bi) return; const t = clamp(Math.round(at.t * 4) / 4, 0, barBeats(at.bi)); pushMove(t); renderWindows(); renderStrips(); placeLyrGuide(); return; }   // PUSH: the picked items go with the line, in step, inside their bar
+      S.guide = { bi: at.bi, t: Math.round(at.t * 4) / 4 }; placeLyrGuide(); });
     const end = e => { if (d && e.pointerId === d.id) d = null; }; gd.addEventListener("pointerup", end); gd.addEventListener("pointercancel", end); }
   const g = GEO.mel, lyrBody = $("lyrStrip").querySelector(".body");
   const deckShow = deckMode() && WE.on && S.lyrGuide && !!g && $("melWin").offsetHeight > 0 && lyrBody.offsetHeight > 0 && S.winState.mel !== "closed";   // the deck's lyrics screen: a guide at the chip's left edge (where the entry box stands, or the chip in it) from the stave's top to the strip's foot, so the words are lined up on the beat by eye
@@ -7954,6 +7959,9 @@ function placeLyrGuide() {
   const bs = g.dia ? focusBandSteps("mel") : null, yTop = g.dia ? g.yS(bs[bs.length - 1][1]) : g.y(focusRange("mel")[1]);
   const x = sr.left + g.x(S.guide.bi, Math.min(S.guide.t, barBeats(S.guide.bi))), top = sr.top + yTop, bottom = lr.bottom;
   gd.style.left = Math.round(x - ar.left) + "px"; gd.style.top = Math.round(top - ar.top) + "px"; gd.style.height = Math.max(0, Math.round(bottom - top)) + "px";
+  { const segA = gd.querySelector(".segA"), segB = gd.querySelector(".segB"), fr = $("melWin").querySelector(".frame").getBoundingClientRect();   // the stave's segment down to the frame's foot, the strip's from there
+    const split = Math.max(0, Math.round(fr.bottom - top)); segA.style.height = split + "px"; segB.style.top = split + "px"; segB.style.height = Math.max(0, Math.round(bottom - top) - split) + "px";
+    const picked = pushPicked(); segA.hidden = !!S.push && !picked.some(it => it.kind === "ev"); segB.hidden = !!S.push && !picked.some(it => it.kind === "chip"); gd.classList.toggle("push", !!S.push); }
 }
 function placeWinHeads() {
   placeLyrGuide();
@@ -8060,6 +8068,69 @@ function placeLyrNav() {
     }
     if (showTab) { tab.style.left = (frame.offsetLeft + 6) + "px"; tab.style.top = (frame.offsetTop + frame.offsetHeight - tab.offsetHeight - 3) + "px"; }   // tucked into the stave's bottom left corner, on the lower cover
   }
+}
+/* PUSH (the phone): the guide line takes along whatever is flush with it — a note, rest or chord on the melody stave (the left hand's too, on a Grand Stave) and a chip on the
+   Lyrics strip, whose start or end stands on the line — as it is dragged, all of them moving in step with it, on the quarter-beat grid the line keeps. PUSH on the tray
+   engages it: everything flush is picked and boxed in red, the box's edge on the line; a tap on an item lets it go (a tap again picks it back); with nothing picked on a
+   stave or on the strip the line is not drawn there. PUSH again ends it. A move stops short where a picked item would leave its bar or run into one not picked */
+const pushOn = () => !!S.push;
+function pushKey(it) { return it.kind + ":" + it.bi + ":" + (it.part || "") + ":" + it.id; }
+function pushFlushItems(bi, t) {                                                          // everything whose start or end stands on the line at t, in bar bi
+  const bar = S.song.bars[bi], out = [], near = (a, b) => Math.abs(a - b) < 1 / 64 + 1e-6, g = stripGeo();
+  const parts = ["melody", ...(grandLower("mel") ? [GRAND_LOWER] : [])];
+  for (const part of parts) for (const c of chains(bar, part)) { if (near(c.t, t) || near(c.t + c.d, t)) out.push({ kind: "ev", bi, part, id: c.head.id, side: near(c.t, t) ? "r" : "l" }); }
+  for (const c of bar.chips || []) { if (c.gap && !c.text) continue; const end = c.t + chipFull(c, g); if (near(c.t, t) || near(end, t)) out.push({ kind: "chip", bi, id: c.id, side: near(c.t, t) ? "r" : "l" }); }
+  return out;
+}
+function pushStart() {
+  if (!S.guide) { toast("Drag the guide line first"); return; }
+  const items = pushFlushItems(S.guide.bi, S.guide.t);
+  S.push = { bi: S.guide.bi, t: S.guide.t, items, off: new Set() }; S.sel = null; S.ghost = null; S.active = null; renderAll();
+  toast(items.length ? `PUSH: ${items.length} item${items.length === 1 ? "" : "s"} on the line — tap any to leave it out; drag the line to move them; PUSH again to finish` : "PUSH: nothing stands on the line — drag the line onto a note or a chip first, or PUSH again to leave");
+}
+function pushEnd() { S.push = null; renderAll(); toast("PUSH off"); }
+function pushToggleItem(kind, bi, part, id) {                                             // a tap on a picked item lets it go; on one let go, picks it back
+  const P = S.push; if (!P) return false; const it = P.items.find(x => x.kind === kind && x.bi === bi && (x.part || "") === (part || "") && x.id === id); if (!it) return false;
+  const k = pushKey(it); if (P.off.has(k)) P.off.delete(k); else P.off.add(k); renderWindows(); renderStrips(); placeLyrGuide(); return true;
+}
+const pushPicked = () => S.push ? S.push.items.filter(it => !S.push.off.has(pushKey(it))) : [];
+const pushHas = (kind, bi, part, id) => !!S.push && pushPicked().some(it => it.kind === kind && it.bi === bi && (it.part || "") === (part || "") && it.id === id);
+function pushMove(t) {                                                                    // the line to t: the picked items go with it, as far as they all can
+  const P = S.push; if (!P || t === P.t) return; const bar = S.song.bars[P.bi], B = barBeats(P.bi), picked = pushPicked(), g = stripGeo();
+  const evOf = it => (bar.ev[it.part] || []).find(e => e.id === it.id), chipOf = it => bar.chips.find(c => c.id === it.id);
+  const chainOfIt = it => { const e = evOf(it); return e ? chainOf(bar, e, it.part) : null; };
+  let d = r3(t - P.t); const step = d > 0 ? 0.25 : -0.25;
+  const fits = dd => picked.every(it => {                                                 // every picked item can take the step: inside its bar, and not onto anything not picked
+    if (it.kind === "ev") { const c = chainOfIt(it); if (!c) return true; const nt = r3(c.t + dd); if (nt < -1e-6 || nt + c.d > B + 1e-6) return false;
+      const ids = new Set(c.members.map(m => m.id)), pickedIds = new Set(picked.filter(x => x.kind === "ev" && x.part === it.part).flatMap(x => { const cc = chainOfIt(x); return cc ? cc.members.map(m => m.id) : []; }));
+      return !(bar.ev[it.part] || []).some(o => !ids.has(o.id) && !pickedIds.has(o.id) && o.t < nt + c.d - 1e-6 && o.t + o.d > nt + 1e-6); }
+    const c = chipOf(it); if (!c) return true; const nt = r3(c.t + dd), w = chipBeats(c, g); if (nt < -1e-6 || nt + Math.min(w, 0.25) > B + 1e-6) return false;
+    const pickedChips = new Set(picked.filter(x => x.kind === "chip").map(x => x.id));
+    return !bar.chips.some(o => o !== c && !pickedChips.has(o.id) && o.t < nt + w - 1e-6 && o.t + chipBeats(o, g) > nt + 1e-6);
+  });
+  while (Math.abs(d) > 1e-6 && !fits(d)) d = r3(d - step);                                 // too far: back a quarter at a time until they all fit
+  if (Math.abs(d) < 1e-6) return;
+  for (const it of picked) {
+    if (it.kind === "ev") { const c = chainOfIt(it); if (c) c.members.forEach(m => { m.t = r3(m.t + d); }); }
+    else { const c = chipOf(it); if (c) c.t = r3(c.t + d); }
+  }
+  bar.chips.sort((a, b) => a.t - b.t); bar.chips.forEach((c, k) => { c.d = r3((k < bar.chips.length - 1 ? bar.chips[k + 1].t : B) - c.t); if (c.d <= 0) c.d = 0.25; }); syncNotesToChips(bar);
+  P.t = r3(P.t + d); S.guide = { bi: P.bi, t: P.t };
+}
+function drawPushBoxes(svg, g, win) {                                                     // the red boxes on the stave: round each picked note, rest or chord, its edge on the line
+  if (!S.push || win !== "mel") return; const bi = S.push.bi; if (!g.bars.includes(bi)) return; const bar = S.song.bars[bi], lx = g.x(bi, S.push.t);
+  for (const it of pushPicked()) { if (it.kind !== "ev") continue; const e = (bar.ev[it.part] || []).find(x => x.id === it.id); if (!e) continue; const c = chainOf(bar, e, it.part) || { t: e.t, d: e.d, members: [e], head: e };
+    const x0 = g.x(bi, c.t), x1 = g.x(bi, c.t + c.d), ms = c.members.filter(m => m.m != null && !m.rest).map(m => m.m);
+    let y0, y1; if (ms.length) { const ys = ms.map(m => g.y(m)); y0 = Math.min(...ys) - g.step * 1.6; y1 = Math.max(...ys) + g.step * 1.6; } else { const [a, b] = focusRange(win); y0 = g.y(b) - g.step; y1 = g.y(a) + g.step; }
+    const left = it.side === "r" ? lx : Math.min(x0, lx), right = it.side === "l" ? lx : Math.max(x1, lx);   // the box's edge flush on the line
+    svg.append(svgEl("rect", { class: "pushBox", x: left, y: y0, width: Math.max(2, right - left), height: y1 - y0, fill: "none", stroke: "#e02020", "stroke-width": 1.5, "pointer-events": "none" }));
+  }
+}
+function drawPushChipBoxes(svg, gl, HL) {                                                 // the red boxes on the strip: round each picked chip, its edge on the line
+  if (!S.push) return; const bi = S.push.bi, bar = S.song.bars[bi]; if (!gl.bars.includes(bi)) return; const lx = gl.x(bi, S.push.t), laid = layoutChips(bar, bi, gl);
+  for (const it of pushPicked()) { if (it.kind !== "chip") continue; const c = bar.chips.find(x => x.id === it.id), L = c && laid.get(c.id); if (!L) continue;
+    const left = it.side === "r" ? lx : Math.min(L.x, lx), right = it.side === "l" ? lx : Math.max(L.x + L.w, lx);
+    svg.append(svgEl("rect", { class: "pushBox", x: left, y: 1, width: Math.max(2, right - left), height: HL - 2, fill: "none", stroke: "#e02020", "stroke-width": 1.5, "pointer-events": "none" })); }
 }
 /* the scratch pad: shown beside the stave in view on the deck, its words kept with the song (song.pad); the font size and RULED are the app's own settings */
 function renderPad() {
@@ -8593,7 +8664,8 @@ function trayRow2(box) {
   put(el("button", { class: "tplay run" + (runOn() ? " on" : ""), title: "Note run: press and drag along a stave to lay a run of notes", onclick: openRunSetup }, el("span", { class: "sub" }, "RUN")));
   [4, 2, 0.5, 0.25, 0.125].forEach(v => put(el("button", { onclick: () => tapRestLen(v), class: (ownR ? evR.rest && Math.abs(baseLen(evR.d) - v) < 1e-9 : S.restNext && (S.restLen || S.len) === v) ? "on" : "", title: ownR ? `Make it a ${REST_NAME[v]} rest` : `${REST_NAME[v]} rest: goes in at the next free spot, or arms one for your next tap` }, restIcon(v))));
   for (const k of ["staccato", "tenuto"]) put(el("button", { class: "art" + (S.artic === k ? " armed" : "") + (ev && !sc && ev.artic === k ? " on" : ""), onclick: () => tapArtic(k), title: S.artic === k ? `${ARTIC[k].label} armed — tap notes to mark them; tap again to return to note entry` : `${ARTIC[k].label}: tap before entering a note, or arm it and tap existing notes` }, ARTIC[k].glyph));
-  box.append(el("div", { class: "xc empty", title: "Room for a key to come" }), el("div", { class: "xc empty", title: "Room for a key to come" }));
+  put(el("button", { class: "tplay push" + (S.push ? " on" : ""), title: "Push: the guide line takes whatever stands on it along as it is dragged — tap to engage, tap again to finish", onclick: () => S.push ? pushEnd() : pushStart() }, el("span", { class: "sub" }, "PUSH")));
+  box.append(el("div", { class: "xc empty", title: "Room for a key to come" }));
 }
 function quickAct(id) { const it = QUICK_ITEMS[id]; if (!it) return; if (it.kind === "rest") tapRestLen(it.v); else if (it.kind === "len") tapLength(it.v); else if (it.kind === "slur") tapArtic("slur"); else if (it.kind === "tie") tapTie(); else if (it.kind === "ghost") tapGhostNote(); else tapDot(); }
 /* a held button dropped on a cell: an empty cell simply takes it; a full cell trades places, unless an empty cell is near enough to take the displaced one */
@@ -8694,6 +8766,7 @@ function initPointer() {
       if (!dragCtx.moved && Math.hypot(dx, dy) < 10) return;
       dragCtx.moved = true;                                // from here on this pointer can never place, pitch or select anything
       if (dragCtx.locked && dragCtx.ev) return;            // a marked note in a locked beat: nothing to drag
+      if (S.push && dragCtx.ev) return;                    // PUSH: the line moves the notes, not a finger on them
       if (PSEL.on && dragCtx.ev) return;                   // choosing notes to play: no dragging
       if (!dragCtx.ev) {                                   // empty space anywhere (locked beats too): swipe scrolls the register (up/down) or turns the bar (sideways)
         if (!dragCtx.swipe) dragCtx.swipe = Math.abs(dy) >= Math.abs(dx) * 1.25 ? "v" : Math.abs(dx) >= Math.abs(dy) * 1.25 ? "h" : null;
@@ -8738,6 +8811,7 @@ function initPointer() {
       const partAt = win === "mel" && onLowerStaff(g, g.m(p.y)) ? GRAND_LOWER : WIN_PART[win], winAt = PART_WIN[partAt];   // the Grand Stave's lower staff: the Bass part's tap
       S.selChip = null;
       if (PSEL.on) { if (d.ev && !d.ev.rest && d.ev.m != null) { const key = d.part + ":" + d.ev.id; if (PSEL.ids.has(key)) PSEL.ids.delete(key); else PSEL.ids.add(key); renderWindows(); } return; }   // Play Select: taps only choose notes
+      if (S.push) { const hit = d.ev || (() => { const ch = chordChainAt(S.song.bars[at.bi], at.t, partAt); return ch ? ch.head : null; })(); if (hit) { const bar = S.song.bars[d.ev ? d.bi : at.bi], part = d.ev ? d.part : partAt, ch = chainOf(bar, hit, part); if (!pushToggleItem("ev", d.ev ? d.bi : at.bi, part, ch ? ch.head.id : hit.id)) toast("That one is not on the line"); } return; }   // PUSH: a tap on an item lets it go, or picks it back
       if (S.mv) { mvTap(win, at.bi, at.t, partAt); return; }                                                                    // move mode: taps pick the run, or lock it in
       if (S.rep) { repTap(win, at.bi, at.t, partAt); return; }                                                                   // repeat mode: taps toggle the beat(s) to repeat
       if (S.cpy) { cpyTap(win, at.bi, at.t, partAt); return; }                                                                   // copy mode: taps toggle what to copy, or paste onto empty space
@@ -8779,7 +8853,7 @@ function initPointer() {
   /* a landing spot: a beat line or a note start when one is close, else the nearest eighth */
   const snapStripT = (bar, bi, t, reach) => { const B = barBeats(bi), marks = []; for (let b = 0; b <= B; b++) marks.push(b); chains(bar).filter(c => !c.rest).forEach(c => marks.push(c.t)); const near = marks.sort((a, b) => Math.abs(a - t) - Math.abs(b - t)).find(m => Math.abs(m - t) < reach); return near != null ? near : Math.round(t * 8) / 8; };
   lyr.addEventListener("pointermove", e => {
-    if (!ld || !ld.chip || e.pointerId !== ld.id) return;
+    if (!ld || !ld.chip || e.pointerId !== ld.id || S.push) return;
     const dx = e.clientX - ld.x0; if (!ld.moved && Math.abs(dx) < 6) return; ld.moved = true;
     const g = stripGeo(), r = lyr.getBoundingClientRect(), raw = ld.t0 + dx * (g.W / r.width) / g.beatPx, bar = S.song.bars[ld.bi];
     if (ld.chip.placing) { const t = gapSnap(bar, ld.bi, ld.chip, raw, g); if (gapFree(bar, ld.bi, ld.chip, t)) { ld.chip.t = t; bar.chips.sort((a, b) => a.t - b.t); } S.selChip = { bi: ld.bi, id: ld.chip.id }; renderStrips(); renderNav(); return; }   // a spacer on its way: it clicks onto chip edges and beat lines, never over a chip
@@ -8791,6 +8865,7 @@ function initPointer() {
   lyr.addEventListener("pointerup", e => {
     if (!ld || e.pointerId !== ld.id) return; const d = ld; ld = null;
     if (d.chip && d.chip.placing) { S.selChip = { bi: d.bi, id: d.chip.id }; renderStrips(); renderNav(); return; }   // a spacer let go stays in hand: SET CHIP (or typing) sets it
+    if (S.push) { if (d.chip && !pushToggleItem("chip", d.bi, "", d.chip.id)) toast("That chip is not on the line"); return; }   // PUSH: a tap on a chip lets it go, or picks it back
     if (d.moved) { S.selChip = null; renderAll(); return; }                 // the bar goes with the release; tap again to bring it back
     if (WE.on && WE.picking && d.chip) { const i = WE.picks.findIndex(p => p.id === d.chip.id); if (i >= 0) WE.picks.splice(i, 1); else WE.picks.push({ bi: d.bi, id: d.chip.id }); renderStrips(); syncMoveDelBtns(); return; }   // SELECT CHIP(S) is on: the tap picks the chip, or unpicks it
     const p = svgPoint(lyr, e), at = stripGeo().at(p.x);
@@ -10182,7 +10257,7 @@ function escAll() {
   if (had(S.mv)) S.mv = null; if (had(S.rep)) S.rep = null; if (had(S.cpy)) S.cpy = null;
   if (had(typeof PSEL !== "undefined" && PSEL.on)) leavePlaySelect();
   if (had(S.artic)) S.artic = null; if (had(S.dynArm)) S.dynArm = null; if (had(S.restNext)) S.restNext = false; if (had(S.ghostNext)) S.ghostNext = false;
-  if (had(runOn())) S.run.on = false;
+  if (had(runOn())) S.run.on = false; if (had(S.push)) S.push = null;
   if (had(S.sel || S.selChip)) { S.sel = null; S.selChip = null; } if (had((S.picked || []).length)) S.picked = [];
   S.ghost = null; S.justEntered = null; if (S.mvDest) S.mvDest = null;
   if (typeof WE !== "undefined" && WE.on && had(WE.picking || WE.picks.length)) { WE.picking = false; WE.picks = []; }
