@@ -401,7 +401,7 @@ text.clef, text.smufl { user-select: none; }
 #app.deck #pitchArrows, #app.deck #itemArrows { width: 62px; flex: 0 0 auto; margin-top: 0; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 8px 22px; align-self: center; }   /* larger than MOVE's block: the arrows are the keys most used */
 #app.deck #pitchArrows::before, #app.deck #itemArrows::before { grid-column: 1 / -1; grid-row: 1; display: block; height: 8px; line-height: 8px; text-align: center; font-size: 5.5px; font-weight: 800; letter-spacing: .18em; color: #fff; background: #111; border: 1.5px solid #141414; border-bottom: none; border-radius: 5px 5px 0 0; box-sizing: border-box; }
 #app.deck #pitchArrows::before { content: "PITCH"; } #app.deck #itemArrows::before { content: "ITEM"; }
-#app.deck #staveCtl { width: 84px; flex: 0 0 auto; margin-left: auto; margin-right: 4px; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 8px 18px; align-self: center; }   /* WIDER and TIGHTER under a STAVE cap, at the tool bar's right end before its flip button */
+#app.deck #staveCtl { width: 130px; flex: 0 0 auto; margin-left: auto; margin-right: 4px; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 8px 18px; align-self: center; }   /* WIDER and TIGHTER under a STAVE cap, at the tool bar's right end before its flip button */
 #app.deck #staveCtl::before { content: "STAVE"; grid-column: 1 / -1; grid-row: 1; display: block; height: 8px; line-height: 8px; text-align: center; font-size: 5.5px; font-weight: 800; letter-spacing: .18em; color: #fff; background: #111; border: 1.5px solid #141414; border-bottom: none; border-radius: 5px 5px 0 0; box-sizing: border-box; }
 #app.deck #staveCtl button { grid-row: 2; height: 18px; padding: 0; border: 1.5px solid #141414; border-top: 1.5px solid #141414; border-radius: 0; background: linear-gradient(var(--sv-hi), var(--sv-lo2)); color: #111; font-size: 7.5px; font-weight: 800; letter-spacing: 0; line-height: 1; box-shadow: none; }
 #app.deck #staveCtl button:first-child { border-radius: 0 0 0 4px; } #app.deck #staveCtl button:last-child { border-radius: 0 0 4px 0; } #app.deck #staveCtl button + button { border-left: none; }
@@ -468,7 +468,8 @@ text.clef, text.smufl { user-select: none; }
 #lyrGuide .knob { position: absolute; left: -8px; top: -18px; width: 14px; height: 14px; border-radius: 50%; background: #111; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.5); pointer-events: auto; cursor: ew-resize; touch-action: none; }   /* the knob above the top line: drag it sideways */
 #lyrGuide .knob::before { content: ""; position: absolute; left: -8px; top: -8px; right: -8px; bottom: -8px; }
 #lyrGuide[hidden] { display: none; }
-#lyrGuide.deck { z-index: 75; opacity: .95; } #lyrGuide.deck .seg { border-left-color: #f5a623; } #lyrGuide.deck .knob, #lyrGuide.deck .pushTag { display: none; }   /* the deck's guide: amber, over the keyboard's plane, with no knob: it stands where the entry box is */
+#lyrGuide.deck { z-index: 75; opacity: .95; } #lyrGuide.deck .seg { border-left-color: #f5a623; } #lyrGuide.deck .knob, #lyrGuide.deck .pushTag { display: none; }
+#app.deck #lyrGuide:not(.deck) { z-index: 9; }   /* the wide screen's draggable guide (outside the lyrics screen): over the stave and the strips */   /* the deck's guide: amber, over the keyboard's plane, with no knob: it stands where the entry box is */
 #app:not(.deck).norhy #rhyStrip .tag, #app:not(.deck).norhy #rhyStrip .body { display: none; }
 /* the tool bar, in thirds, each flipping on its own: the left between its tools (UNDO / REDO, MOVE / DELETE, PITCH, ITEM) and the
    staff-lines switch; the middle between playback and this part's buttons; the right between four palettes — notes (the quick
@@ -846,6 +847,7 @@ body.kbOpen #lyrEdit, #app.deck.kbUp #lyrEdit { display: none !important; }   /*
 #tray #quick .xc button.art { font-family: var(--serif); font-size: 16px; }
 #tray #quick .xc button svg { display: block; }
 #tray #quick .xc button:active { background: linear-gradient(#ffd27a, #f5a623); }
+#tray #quick .xc.two { display: grid; grid-template-rows: 1fr 1fr; gap: 2px; } #tray #quick .xc.two button { font-size: 8px; font-weight: 800; letter-spacing: .04em; }   /* NOTE + over NOTE −, sharing a slot */
 #tray #quick .xc.empty { border-radius: 3px; background: rgba(0,0,0,.13); box-shadow: inset 0 1px 3px rgba(0,0,0,.45), 0 1px 0 rgba(255,255,255,.5); }   /* an open slot in the tray: room for a key to come */
 #tray #quick .xc button.chord.on, body.runDraw #tray #quick .xc button.run.on { animation: chordBlink 1.4s step-end infinite; }
 /* Play All, Play Bar and Stop: three keys flush together on a pallet of their own, the pallet flush on the tray's top edge, and slid from side to side along it (placePlayL) — as far as the arrows' plate */
@@ -4827,7 +4829,7 @@ function toast(msg, ms = 5200) {
 $("toast").addEventListener("pointerdown", () => { clearTimeout(toastTimer); $("toast").classList.remove("on"); });   // tapping it closes it right away instead of waiting out the timer
 $("reloadBtn").addEventListener("click", () => {                                       // ⟳ beside the menu: a fresh load of the app
   if (TURNED || document.fullscreenElement) {                                            // turned by TURN: a page reload would end fullscreen and drop the lock, so the app is refreshed in place instead
-    if (WE.on) closeWordEdit(); loadPrefs(); const cur = readJSON(STORE.cur, null); if (cur) loadSong(cur); homeStaves(); renderAll(); toast("Refreshed — TURN back and refresh again for a fresh load of the app"); return; }
+    try { localStorage.setItem("msw_reTurn", "1"); } catch (e) {} }                       // turned by TURN: a reload drops fullscreen and the lock — noted, so the wide view is brought back once the app is up again
   location.reload();
 });
 { try { localStorage.removeItem("msw_turned"); } catch (e) {} }   // an earlier build turned the screen back on the first tap after a load whenever TURN had last left it turned — so any tap on the phone could swing it to the wide view; that is gone, and its flag cleared (turned by TURN, ⟳ refreshes in place instead)
@@ -6213,7 +6215,7 @@ const GRAND_LOWER = "lh";
 const grandLower = win => (win === "mel" && clefNow("mel") && clefNow("mel").bands) ? GRAND_LOWER : null;   // the part the lower staff carries, when the melody's window is a Grand Stave
 const onLowerStaff = (g, m) => { if (!g.dia || g.win !== "mel" || !grandLower("mel")) return false; const bs = focusBandSteps("mel"); return g.stepOf(m) < (bs[0][1] + bs[1][0]) / 2; };   // a pitch below the middle of the gap between the staves belongs to the lower one
 const WIN_LO = { mel: "melLo", acc: "accLo", bass: "bassLo" };
-const NOTE_SCALE = { x: 0.47, s: 0.55, m: 0.72, l: 0.92 }; const noteSizeNow = () => (typeof deckMode === "function" && deckMode()) ? S.noteSize : "x"; const NS = () => NOTE_SCALE[noteSizeNow()] || 1;   // on the phone every note is drawn Micro   // x is Micro: notes small enough that every bar the window shows fits across it, side by side, with no sideways scrolling   // note size: heads, stems and flags; the stave never changes
+const NOTE_SCALE = { x: 0.47, s: 0.55, m: 0.72, l: 0.92 }; const noteSizeNow = () => (typeof deckMode === "function" && deckMode()) ? S.noteSize : "x"; const noteZoomNow = () => (S.noteZoom && S.noteZoom[deckMode() ? "deck" : "phone"]) || 1; const NS = () => (NOTE_SCALE[noteSizeNow()] || 1) * noteZoomNow();   // the note size incrementer: the heads (and stems, flags, marks with them) scaled on this screen alone, the staves untouched   // on the phone every note is drawn Micro   // x is Micro: notes small enough that every bar the window shows fits across it, side by side, with no sideways scrolling   // note size: heads, stems and flags; the stave never changes
 const HK = () => S.halfLines ? 1.55 : 1;         // lines-and-spaces: heads grow to fill a space (two rows)
 const STEP_K = { x: 0.82, s: 0.94, m: 1, l: 1.06 };   // row height nudges a little with the note size (Micro's rows tighter still, so more of the range shows)
 Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", noteSize: "m", chordMode: false, chordWin: { mel: false, acc: false, bass: false }, chordColor: "#ffffff", justEntered: null, activePart: "melody", lastEntered: null, ftp: null, mv: null, selAuto: false, halfLines: true, winSize: "m", chordsDisp: "names", metro: "off", winState: { mel: "open", acc: "closed", bass: "closed" }, zoomWin: { mel: 1, acc: 1, bass: 1 }, lyricFont: "sans", viewSpan: 1, layout: "rolled", selChip: null, deck: ["mel", "acc", "bass"], deckSel: null, rhyShown: true, lyrShown: true, partsShown: true, dynShown: false, dynArm: null, ghost: null, restNext: false, restLen: null, ghostNext: false, artic: null, slurFrom: null, active: null, softKb: ("ontouchstart" in window), popPos: null, mode: "melody", rangeLock: false, kbLayout: "standard", kbTheme: "classic", kbSpace: 0, kbBackUp: 0, picked: [] });
@@ -6229,7 +6231,7 @@ function loadPrefs() {
   S.deck = Array.isArray(p.deck) && p.deck.length ? p.deck.filter(w => ["mel", "acc", "bass"].includes(w)) : ["mel", "acc", "bass"]; if (!S.deck.length) S.deck = ["mel"];
   S.duoBars = p.duoBars === 8 ? 8 : 4; S.duoBand = p.duoBand === "bass" ? "bass" : "acc"; S.beatDividers = p.beatDividers !== false;
   S.focusBand = Object.assign({ mel: { on: false, lo: 64 }, acc: { on: false, lo: 52 }, bass: { on: false, lo: 40 } }, p.focusBand || {}); for (const w of ["mel", "acc", "bass"]) { if (!S.focusBand[w]) S.focusBand[w] = { on: false, lo: { mel: 64, acc: 52, bass: 40 }[w] }; S.focusBand[w].lo = clamp(Math.round((S.focusBand[w].lo != null ? S.focusBand[w].lo : { mel: 64, acc: 52, bass: 40 }[w]) / 2) * 2, 24, 96); }
-  S.doors = Object.assign({ mel: true, acc: true, bass: true }, p.doors || {}); S.playX = +p.playX || 0; S.edge = !!p.edge; S.padOn = !!p.padOn; S.padFont = ({ s: 1, m: 1, l: 1 })[p.padFont] ? p.padFont : "m"; S.padRuled = p.padRuled !== false; S.lyrGuide = !!p.lyrGuide; S.sigsOff = !!p.sigsOff; S.collapsed = Object.assign({ mel: false, acc: false, bass: false }, p.collapsed || {});   // Stacked staves: which parts are folded to a bar
+  S.doors = Object.assign({ mel: true, acc: true, bass: true }, p.doors || {}); S.playX = +p.playX || 0; S.noteZoom = Object.assign({ phone: 1, deck: 1 }, p.noteZoom || {}); S.edge = !!p.edge; S.padOn = !!p.padOn; S.padFont = ({ s: 1, m: 1, l: 1 })[p.padFont] ? p.padFont : "m"; S.padRuled = p.padRuled !== false; S.lyrGuide = !!p.lyrGuide; S.sigsOff = !!p.sigsOff; S.collapsed = Object.assign({ mel: false, acc: false, bass: false }, p.collapsed || {});   // Stacked staves: which parts are folded to a bar
   S.clefs = Object.assign({ mel: { on: false, kind: "treble" }, acc: { on: false, kind: "treble" }, bass: { on: false, kind: "bass" } }, p.clefs || {});
   if (p.clef && p.clef.on && !p.clefs) ["mel", "acc", "bass"].forEach(w => { S.clefs[w] = { on: true, kind: p.clef.kind }; });   // an older setting: one clef for all
   for (const w of ["mel", "acc", "bass"]) if (!S.clefs[w] || !CLEFS[S.clefs[w].kind]) S.clefs[w] = { on: false, kind: w === "bass" ? "bass" : "treble" };
@@ -6241,7 +6243,7 @@ function loadPrefs() {
   S.layout = p.layout === "stack" ? "stack" : "rolled";                                 // Stacked staves or Rolled up: the page comes back in the view it was left in
   applyTheme();
 }
-function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, deck: S.deck, rhyShown: S.rhyShown, lyrShown: S.lyrShown, partsShown: S.partsShown, dynShown: S.dynShown, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, beatLines: S.beatLines, barHi: S.barHi, spacing: S.spacing, collapsed: S.collapsed, rangeLock: S.rangeLock, kbLayout: S.kbLayout, kbTheme: S.kbTheme, kbSpace: S.kbSpace, kbBackUp: S.kbBackUp, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, keepAwake: S.keepAwake, paper: S.paper, quick: S.quick, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout, duoBars: S.duoBars, duoBand: S.duoBand, beatDividers: S.beatDividers, focusBand: S.focusBand, doors: S.doors, playX: S.playX || 0, edge: S.edge, padOn: S.padOn, padFont: S.padFont, padRuled: S.padRuled, lyrGuide: S.lyrGuide, sigsOff: S.sigsOff, clefs: S.clefs, phoneWins: S.phoneWins, lyrOff: S.lyrOff, run: S.run ? { mode: S.run.mode, preset: S.run.preset, semis: S.run.semis } : null }); }
+function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, deck: S.deck, rhyShown: S.rhyShown, lyrShown: S.lyrShown, partsShown: S.partsShown, dynShown: S.dynShown, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, beatLines: S.beatLines, barHi: S.barHi, spacing: S.spacing, collapsed: S.collapsed, rangeLock: S.rangeLock, kbLayout: S.kbLayout, kbTheme: S.kbTheme, kbSpace: S.kbSpace, kbBackUp: S.kbBackUp, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, keepAwake: S.keepAwake, paper: S.paper, quick: S.quick, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout, duoBars: S.duoBars, duoBand: S.duoBand, beatDividers: S.beatDividers, focusBand: S.focusBand, doors: S.doors, playX: S.playX || 0, noteZoom: S.noteZoom, edge: S.edge, padOn: S.padOn, padFont: S.padFont, padRuled: S.padRuled, lyrGuide: S.lyrGuide, sigsOff: S.sigsOff, clefs: S.clefs, phoneWins: S.phoneWins, lyrOff: S.lyrOff, run: S.run ? { mode: S.run.mode, preset: S.run.preset, semis: S.run.semis } : null }); }
 function applyTheme() {
   const r = document.documentElement;
   const TEX = { pearl: "#f3f0ea", cobalt: "#0b3d91", cherry: "#c4202b", mustard: "#d8d12e" };   // the textured themes, and the colour each gives the browser's bar
@@ -7099,7 +7101,8 @@ function renderRollBar() {
     } else { nav.append(delB, el("button", { class: "escBtn", title: "Escape: let go of whatever is armed, pending or picked", onclick: escAll }, "ESC"), gear, colBs(active), colUn(), colRe(), ...colCover(), ...bulk(), kc); bar.append(el("div", { class: "rollArrows" }, arrow(-1, up), arrow(1, dn))); }   // the gear at the top, then BACK, UNDO, REDO, COVER, SELECT, DELETE, REPEAT, COPY; ▲ ▼ (the part in view) sit on the selector row past the last part, centred between it and the stave's edge — placed by placeDeckLabels
     { let sc = $("staveCtl"); if (!sc) sc = el("div", { id: "staveCtl" }); if (sc.parentNode !== $("toolR")) $("toolR").insertBefore(sc, $("flipBtn"));   // WIDER and TIGHTER: under a STAVE cap at the tool bar's right end, acting on the stave in view
       sc.replaceChildren(el("button", { title: "Wider: the lines further apart, notes and clef with them, up to the widest", onclick: () => zoomRows(deckActive(), 1) }, "|<>|"), el("button", { title: "Tighter: the lines closer together, notes and clef with them, down to the legible least", onclick: () => zoomRows(deckActive(), -1) }, ">|<"),
-        el("button", { class: S.edge ? "on" : "", title: "Edge: the stave out to the screen's left edge, with two more bars in view; tap again to bring the pitch marks back", onclick: () => { S.edge = !S.edge; homeStaves(); savePrefs(); renderAll(); } }, "⇤EDGE")); }
+        el("button", { class: S.edge ? "on" : "", title: "Edge: the stave out to the screen's left edge, with two more bars in view; tap again to bring the pitch marks back", onclick: () => { S.edge = !S.edge; homeStaves(); savePrefs(); renderAll(); } }, "⇤EDGE"),
+        el("button", { title: "Notes a step larger on this screen (the staves stay as they are)", onclick: () => noteZoomStep(1) }, "N+"), el("button", { title: "Notes a step smaller on this screen", onclick: () => noteZoomStep(-1) }, "N−")); }
     { let sbx = $("stripBtns"); if (!sbx) sbx = el("div", { id: "stripBtns" }); if (sbx.parentNode !== $("toolL")) $("toolL").prepend(sbx); sbx.replaceChildren(db, rb, lb); }   // the strips' SHOW / HIDE buttons: a fixed set at the far left of the tool bar, DYN then RHYTHM then LYRICS as the strips lie — never flipped or scrolled
     /* the tool bar: the left third flips too now — its tools, or the staff-lines switch — and the middle and right thirds flip as before */
     const tr = $("toolR"), tm = $("toolMScroll");
@@ -7787,7 +7790,7 @@ function renderWindows() {
       const yL = grand ? g.yS((bs[0][1] + bs[1][0]) / 2) + 4 : g.dia ? g.yS(bs[0][0] - 1.6) + 4 : g.y(flo) + g.step * 1.6 + 4;
       if (yL > 8 && yL < g.H - 2) for (const bi of g.bars) for (const c of song.bars[bi].chips || []) { if (c.gap || !c.text || !c.text.trim()) continue; svg.append(svgEl("text", { x: g.x(bi, c.t) + 2, y: yL, "font-family": "'Times New Roman', Times, serif", "font-weight": 700, "font-size": 13, fill: "#000", "pointer-events": "none" }, c.text.trim())); } }
     svg.append(svgEl("line", { id: "melHead", x1: -5, x2: -5, y1: 0, y2: g.H, stroke: css("--accent"), "stroke-width": 2, "pointer-events": "none" }));
-    drawPushBoxes(svg, g, "mel");
+    drawPushBoxes(svg, g, "mel"); applyNoteOffsets(svg, g, ["melody", GRAND_LOWER]);
   }
   /* ── accompaniment & bass windows ── */
   for (const win of ["acc", "bass"]) {
@@ -7810,7 +7813,7 @@ function renderWindows() {
     drawPartBar(svg, g, bi, part, color, win);
     }
     svg.append(svgEl("line", { id: win + "Head", x1: -5, x2: -5, y1: 0, y2: g.H, stroke: css("--accent"), "stroke-width": 2, "pointer-events": "none" }));
-    drawPushBoxes(svg, g, win);
+    drawPushBoxes(svg, g, win); applyNoteOffsets(svg, g, [part]);
   }
   if (!deckMode() && !S.homed) { S.homed = true; let moved = false; for (const w of ["mel", "acc", "bass"]) { const h = focusHome(w); if (viewOf(w) !== h) { S.song.view[WIN_LO[w]] = h; moved = true; } } if (moved) { renderWindows(); return; } }   // the phone's first draw: every stave at its five lines' home
   for (const w of ["mel", "acc", "bass"]) { if (S.winState[w] !== "closed" && GEO[w]) placeFocusReturn(GEO[w], w); else { const rb = $(w + "Win").querySelector(".retBtn"); if (rb) rb.hidden = true; } placeDoors(w); }
@@ -7947,27 +7950,28 @@ function placeLyrGuide() {
     gd.querySelector(".pushTag").addEventListener("pointerdown", e => e.stopPropagation());
     let d = null;
     gd.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); try { gd.setPointerCapture(e.pointerId); } catch (x) {} d = { id: e.pointerId }; });
-    gd.addEventListener("pointermove", e => { if (!d || e.pointerId !== d.id || !GEO.mel) return; const g = GEO.mel, sr = $("melSvg").getBoundingClientRect(), at = g.at(e.clientX - sr.left);
-      if (S.push) { if (at.bi !== S.push.bi) return; const t = clamp(Math.round(at.t * 4) / 4, 0, barBeats(at.bi)); pushMove(t); renderWindows(); renderStrips(); placeLyrGuide(); return; }   // PUSH: the picked items go with the line, in step, inside their bar
+    gd.addEventListener("pointermove", e => { const w = pushWin(); if (!d || e.pointerId !== d.id || !GEO[w]) return; const g = GEO[w], sr = $(w + "Svg").getBoundingClientRect(), at = g.at(e.clientX - sr.left);
+      if (S.push) { if (at.bi !== S.push.bi) return; const t = clamp(at.t, 0, barBeats(at.bi)); pushMove(t); renderWindows(); renderStrips(); placeLyrGuide(); return; }   // PUSH: the line runs free, pixel by pixel, and the picked items are drawn along with it inside their beats
       S.guide = { bi: at.bi, t: Math.round(at.t * 4) / 4 }; placeLyrGuide(); });
     const end = e => { if (d && e.pointerId === d.id) d = null; }; gd.addEventListener("pointerup", end); gd.addEventListener("pointercancel", end); }
   const g = GEO.mel, lyrBody = $("lyrStrip").querySelector(".body");
   const deckShow = deckMode() && WE.on && S.lyrGuide && !!g && $("melWin").offsetHeight > 0 && lyrBody.offsetHeight > 0 && S.winState.mel !== "closed";   // the deck's lyrics screen: a guide at the chip's left edge (where the entry box stands, or the chip in it) from the stave's top to the strip's foot, so the words are lined up on the beat by eye
-  const show = deckShow || (!deckMode() && !!g && S.winState.mel !== "closed" && $("melWin").offsetHeight > 0 && lyrBody.offsetHeight > 0);
+  const pw = pushWin(), gp = GEO[pw], pwin = $(pw + "Win");
+  const show = deckShow || (!!(deckMode() ? (!WE.on && gp && pwin.classList.contains("deckOn") && pwin.offsetHeight > 0 && !duoMode()) : (g && S.winState.mel !== "closed" && $("melWin").offsetHeight > 0 && lyrBody.offsetHeight > 0)));   // the wide screen outside the lyrics screen: the same draggable guide on the stave in view
   gd.hidden = !show; gd.classList.toggle("deck", deckShow); if (!show) return;
   if (deckShow) { const ar = $("app").getBoundingClientRect(), sr = $("melSvg").getBoundingClientRect(), fr = $("melWin").querySelector(".frame").getBoundingClientRect(), lr = lyrBody.getBoundingClientRect();
     const bi = g.bars.includes(WE.bi) ? WE.bi : g.bars[0], x = sr.left + g.x(bi, Math.min(WE.t, barBeats(bi)));
     gd.style.left = Math.round(x - ar.left) + "px"; gd.style.top = Math.round(fr.top - ar.top) + "px"; gd.style.height = Math.max(0, Math.round(lr.bottom - fr.top)) + "px"; gd.querySelector(".segs").replaceChildren(el("div", { class: "seg", style: `top:0;height:${Math.max(0, Math.round(lr.bottom - fr.top))}px` })); return; }
-  if (!S.guide || !g.bars.includes(S.guide.bi)) S.guide = { bi: g.bars[0], t: 0 };
-  const ar = $("app").getBoundingClientRect(), sr = $("melSvg").getBoundingClientRect(), lr = lyrBody.getBoundingClientRect();
-  const bs = g.dia ? focusBandSteps("mel") : null, yTop = g.dia ? g.yS(bs[bs.length - 1][1]) : g.y(focusRange("mel")[1]);
-  const x = sr.left + g.x(S.guide.bi, Math.min(S.guide.t, barBeats(S.guide.bi))), top = sr.top + yTop, bottom = lr.bottom;
+  { const gg = gp; if (!S.guide || !gg.bars.includes(S.guide.bi)) S.guide = { bi: gg.bars[0], t: 0 }; }
+  const ar = $("app").getBoundingClientRect(), sr = $(pw + "Svg").getBoundingClientRect(), lr = (lyrBody.offsetHeight ? lyrBody : pwin.querySelector(".frame")).getBoundingClientRect();
+  { const gg = gp, bs = gg.dia ? focusBandSteps(pw) : null, yTop = focusOn(pw) ? (gg.dia ? gg.yS(bs[bs.length - 1][1]) : gg.y(focusRange(pw)[1])) : 0;
+    var x = sr.left + gg.x(S.guide.bi, Math.min(S.guide.t, barBeats(S.guide.bi))), top = sr.top + yTop, bottom = lr.bottom; }
   gd.style.left = Math.round(x - ar.left) + "px"; gd.style.top = Math.round(top - ar.top) + "px"; gd.style.height = Math.max(0, Math.round(bottom - top)) + "px";
-  { const picked = pushPicked(), segs = [], fr = $("melWin").querySelector(".frame").getBoundingClientRect();
-    segs.push({ top, bottom: fr.bottom, on: !S.push || picked.some(it => it.kind === "ev" && (it.part === "melody" || it.part === GRAND_LOWER)) });   // the melody stave, from the five lines' top
-    segs.push({ top: fr.bottom, bottom: lr.bottom, on: !S.push || picked.some(it => it.kind === "chip") });                                            // the strips
+  { const picked = pushPicked(), segs = [], fr = pwin.querySelector(".frame").getBoundingClientRect(), mine = pw === "mel" ? ["melody", GRAND_LOWER] : [WIN_PART[pw]];
+    segs.push({ top, bottom: fr.bottom, on: !S.push || picked.some(it => it.kind === "ev" && mine.includes(it.part)) });                             // the stave in view, from the five lines' top
+    if (lyrBody.offsetHeight) segs.push({ top: fr.bottom, bottom: lr.bottom, on: !S.push || picked.some(it => it.kind === "chip") });                  // the strips
     let low = lr.bottom;
-    for (const w of ["acc", "bass"]) { const win = $(w + "Win"); if (S.winState[w] === "closed" || !win.offsetHeight) continue; const f = win.querySelector(".frame").getBoundingClientRect(); if (!f.height) continue;   // the accompaniment and bass staves below, when open
+    for (const w of deckMode() ? [] : ["acc", "bass"]) { const win = $(w + "Win"); if (S.winState[w] === "closed" || !win.offsetHeight) continue; const f = win.querySelector(".frame").getBoundingClientRect(); if (!f.height) continue;   // the phone: the accompaniment and bass staves below, when open
       segs.push({ top: f.top, bottom: f.bottom, on: !S.push || picked.some(it => it.kind === "ev" && it.part === WIN_PART[w]) }); low = Math.max(low, f.bottom); }
     gd.style.height = Math.max(0, Math.round(low - top)) + "px";
     const box = gd.querySelector(".segs"); box.replaceChildren(...segs.filter(sg => sg.on && sg.bottom > sg.top).map(sg => el("div", { class: "seg", style: `top:${Math.round(sg.top - top)}px;height:${Math.round(sg.bottom - sg.top)}px` })));
@@ -8084,12 +8088,21 @@ function placeLyrNav() {
    engages it: everything flush is picked and boxed in red, the box's edge on the line; a tap on an item lets it go (a tap again picks it back); with nothing picked on a
    stave or on the strip the line is not drawn there. PUSH again ends it. A move stops short where a picked item would leave its bar or run into one not picked */
 const pushOn = () => !!S.push;
+const pushWin = () => deckMode() ? deckActive() : "mel";                                 // the stave the guide line is measured on: the phone's melody, the wide screen's stave in view
+/* NOTE + / NOTE −: the notes a step larger or smaller on the screen in use — the heads never wider than a staff space nor smaller than a fifth of one, measured on the stave in view */
+function noteZoomStep(dir) {
+  const win = deckMode() ? deckActive() : leadWin(), g = GEO[win] || geo(win), base = (NOTE_SCALE[noteSizeNow()] || 1) * ((S.halfLines || g.dia) ? 1.55 : 1);   // the head's height is st * 0.40 * base * zoom, capped at st * 0.78
+  const zMax = Math.max(1, 0.78 / (0.40 * base)), zMin = Math.min(1, 0.2 / (0.40 * base)), key = deckMode() ? "deck" : "phone";
+  const z = clamp(Math.round(((S.noteZoom[key] || 1) + dir * 0.1) * 100) / 100, zMin, zMax);
+  if (z === (S.noteZoom[key] || 1)) { toast(dir > 0 ? "The notes are as large as this stave allows" : "The notes are as small as they read"); return; }
+  S.noteZoom[key] = z; savePrefs(); renderAll(); toast(`Notes ${Math.round(z * 100)}% on this screen`);
+}
 function pushKey(it) { return it.kind + ":" + it.bi + ":" + (it.part || "") + ":" + it.id; }
 function pushFlushItems(bi, t) {                                                          // everything whose start or end stands on the line at t, in bar bi
   const bar = S.song.bars[bi], out = [], near = (a, b) => Math.abs(a - b) < 1 / 64 + 1e-6, g = stripGeo();
-  const parts = ["melody", ...(grandLower("mel") ? [GRAND_LOWER] : []), ...["acc", "bass"].filter(w => S.winState[w] !== "closed").map(w => WIN_PART[w])];   // the melody (and the left hand on a Grand Stave), and the accompaniment and bass when their windows are open
-  for (const part of parts) for (const c of chains(bar, part)) { if (near(c.t, t) || near(c.t + c.d, t)) out.push({ kind: "ev", bi, part, id: c.head.id, side: near(c.t, t) ? "r" : "l" }); }
-  for (const c of bar.chips || []) { if (c.gap && !c.text) continue; const end = c.t + chipFull(c, g); if (near(c.t, t) || near(end, t)) out.push({ kind: "chip", bi, id: c.id, side: near(c.t, t) ? "r" : "l" }); }
+  const parts = deckMode() ? (pushWin() === "mel" ? ["melody", ...(grandLower("mel") ? [GRAND_LOWER] : [])] : [WIN_PART[pushWin()]]) : ["melody", ...(grandLower("mel") ? [GRAND_LOWER] : []), ...["acc", "bass"].filter(w => S.winState[w] !== "closed").map(w => WIN_PART[w])];   // the phone: the melody (and the left hand on a Grand Stave), and the accompaniment and bass when their windows are open; the wide screen: the stave in view
+  for (const part of parts) for (const c of chains(bar, part)) { const ox = c.head.ox || 0; if (near(c.t + ox, t) || near(c.t + c.d + ox, t)) out.push({ kind: "ev", bi, part, id: c.head.id, side: near(c.t + ox, t) ? "r" : "l" }); }
+  for (const c of bar.chips || []) { if (c.gap && !c.text) continue; const ox = c.ox || 0, end = c.t + chipFull(c, g) + ox; if (near(c.t + ox, t) || near(end, t)) out.push({ kind: "chip", bi, id: c.id, side: near(c.t + ox, t) ? "r" : "l" }); }
   return out;
 }
 function pushStart() {
@@ -8105,32 +8118,27 @@ function pushToggleItem(kind, bi, part, id) {                                   
 }
 const pushPicked = () => S.push ? S.push.items.filter(it => !S.push.off.has(pushKey(it))) : [];
 const pushHas = (kind, bi, part, id) => !!S.push && pushPicked().some(it => it.kind === kind && it.bi === bi && (it.part || "") === (part || "") && it.id === id);
-function pushMove(t) {                                                                    // the line to t: the picked items go with it, as far as they all can
-  const P = S.push; if (!P || t === P.t) return; const bar = S.song.bars[P.bi], B = barBeats(P.bi), picked = pushPicked(), g = stripGeo();
-  const evOf = it => (bar.ev[it.part] || []).find(e => e.id === it.id), chipOf = it => bar.chips.find(c => c.id === it.id);
-  const chainOfIt = it => { const e = evOf(it); return e ? chainOf(bar, e, it.part) : null; };
-  let d = r3(t - P.t); const step = d > 0 ? 0.25 : -0.25;
-  const fits = dd => picked.every(it => {                                                 // every picked item can take the step: inside its bar, and not onto anything not picked
-    if (it.kind === "ev") { const c = chainOfIt(it); if (!c) return true; const nt = r3(c.t + dd); if (nt < -1e-6 || nt + c.d > B + 1e-6) return false;
-      const ids = new Set(c.members.map(m => m.id)), pickedIds = new Set(picked.filter(x => x.kind === "ev" && x.part === it.part).flatMap(x => { const cc = chainOfIt(x); return cc ? cc.members.map(m => m.id) : []; }));
-      return !(bar.ev[it.part] || []).some(o => !ids.has(o.id) && !pickedIds.has(o.id) && o.t < nt + c.d - 1e-6 && o.t + o.d > nt + 1e-6); }
-    const c = chipOf(it); if (!c) return true; const nt = r3(c.t + dd), w = chipBeats(c, g); if (nt < -1e-6 || nt + Math.min(w, 0.25) > B + 1e-6) return false;
-    const pickedChips = new Set(picked.filter(x => x.kind === "chip").map(x => x.id));
-    return !bar.chips.some(o => o !== c && !pickedChips.has(o.id) && o.t < nt + w - 1e-6 && o.t + chipBeats(o, g) > nt + 1e-6);
-  });
-  while (Math.abs(d) > 1e-6 && !fits(d)) d = r3(d - step);                                 // too far: back a quarter at a time until they all fit
+/* the picked items are nudged, not retimed: each keeps its beat and its time value and is drawn a little to one side (ev.ox / chip.ox, in beats, drawn as pixels), never past the edges of the beat lane it starts in — a fine placement by eye, the playback untouched */
+function pushRange(it, bar) {                                                              // how far this item may be drawn either side of its time, in beats: inside its beat lane
+  const g = GEO[pushWin()] || stripGeo();
+  if (it.kind === "ev") { const e = (bar.ev[it.part] || []).find(x => x.id === it.id); if (!e) return [0, 0]; const b0 = Math.floor(e.t + 1e-6), hw = (headGeom(g).rx * 2 + 4) / g.beatPx; return [b0 - e.t, Math.max(b0 - e.t, b0 + 1 - e.t - hw)]; }
+  const c = bar.chips.find(x => x.id === it.id); if (!c) return [0, 0]; const b0 = Math.floor(c.t + 1e-6), w = chipBeats(c, stripGeo()); return [b0 - c.t, Math.max(b0 - c.t, b0 + 1 - c.t - w)];
+}
+function pushMove(t) {                                                                    // the line to t: the picked items are drawn along with it, as far as every one of them may go inside its beat
+  const P = S.push; if (!P || t === P.t) return; const bar = S.song.bars[P.bi], picked = pushPicked();
+  let d = t - P.t;
+  for (const it of picked) { const cur = (it.kind === "ev" ? (bar.ev[it.part] || []).find(x => x.id === it.id) : bar.chips.find(x => x.id === it.id)); if (!cur) continue; const [lo, hi] = pushRange(it, bar), ox = cur.ox || 0; d = Math.max(lo - ox, Math.min(hi - ox, d)); }   // the tightest item sets how far they all go
   if (Math.abs(d) < 1e-6) return;
-  for (const it of picked) {
-    if (it.kind === "ev") { const c = chainOfIt(it); if (c) c.members.forEach(m => { m.t = r3(m.t + d); }); }
-    else { const c = chipOf(it); if (c) c.t = r3(c.t + d); }
-  }
-  bar.chips.sort((a, b) => a.t - b.t); bar.chips.forEach((c, k) => { c.d = r3((k < bar.chips.length - 1 ? bar.chips[k + 1].t : B) - c.t); if (c.d <= 0) c.d = 0.25; }); syncNotesToChips(bar);
-  P.t = r3(P.t + d); S.guide = { bi: P.bi, t: P.t };
+  for (const it of picked) { const cur = (it.kind === "ev" ? (bar.ev[it.part] || []).find(x => x.id === it.id) : bar.chips.find(x => x.id === it.id)); if (!cur) continue; cur.ox = Math.round(((cur.ox || 0) + d) * 10000) / 10000; if (Math.abs(cur.ox) < 1e-4) delete cur.ox; }
+  P.t = P.t + d; S.guide = { bi: P.bi, t: P.t };
+}
+function applyNoteOffsets(svg, g, parts) {                                                // a note nudged by PUSH: its drawn group slid by its offset (its beams, ties and ledger lines stay — the nudge is a few pixels)
+  for (const bi of g.bars) { const bar = S.song.bars[bi]; for (const part of parts) for (const e of bar.ev[part] || []) { if (!e.ox) continue; svg.querySelectorAll(`g.noteEl[data-ev="${e.id}"]`).forEach(el => el.setAttribute("transform", `translate(${e.ox * g.beatPx} 0)`)); } }
 }
 function drawPushBoxes(svg, g, win) {                                                     // the red boxes on the stave: round each picked note, rest or chord, its edge on the line
-  if (!S.push) return; const bi = S.push.bi; if (!g.bars.includes(bi)) return; const bar = S.song.bars[bi], lx = g.x(bi, S.push.t), mine = win === "mel" ? ["melody", GRAND_LOWER] : [WIN_PART[win]];
+  if (!S.push) return; const bi = S.push.bi; if (!g.bars.includes(bi)) return; const bar = S.song.bars[bi], lx = g.x(bi, S.push.t), mine = win === "mel" ? ["melody", GRAND_LOWER] : [WIN_PART[win]]; if (deckMode() && win !== pushWin()) return;
   for (const it of pushPicked()) { if (it.kind !== "ev" || !mine.includes(it.part)) continue; const e = (bar.ev[it.part] || []).find(x => x.id === it.id); if (!e) continue; const c = chainOf(bar, e, it.part) || { t: e.t, d: e.d, members: [e], head: e };
-    const x0 = g.x(bi, c.t), x1 = g.x(bi, c.t + c.d), ms = c.members.filter(m => m.m != null && !m.rest).map(m => m.m);
+    const ox = (e.ox || 0) * g.beatPx, x0 = g.x(bi, c.t) + ox, x1 = g.x(bi, c.t + c.d) + ox, ms = c.members.filter(m => m.m != null && !m.rest).map(m => m.m);
     let y0, y1; if (ms.length) { const ys = ms.map(m => g.y(m)); y0 = Math.min(...ys) - g.step * 1.6; y1 = Math.max(...ys) + g.step * 1.6; } else { const [a, b] = focusRange(win); y0 = g.y(b) - g.step; y1 = g.y(a) + g.step; }
     const left = it.side === "r" ? lx : Math.min(x0, lx), right = it.side === "l" ? lx : Math.max(x1, lx);   // the box's edge flush on the line
     svg.append(svgEl("rect", { class: "pushBox", x: left, y: y0, width: Math.max(2, right - left), height: y1 - y0, fill: "none", stroke: "#e02020", "stroke-width": 1.5, "pointer-events": "none" }));
@@ -8675,7 +8683,7 @@ function trayRow2(box) {
   [4, 2, 0.5, 0.25, 0.125].forEach(v => put(el("button", { onclick: () => tapRestLen(v), class: (ownR ? evR.rest && Math.abs(baseLen(evR.d) - v) < 1e-9 : S.restNext && (S.restLen || S.len) === v) ? "on" : "", title: ownR ? `Make it a ${REST_NAME[v]} rest` : `${REST_NAME[v]} rest: goes in at the next free spot, or arms one for your next tap` }, restIcon(v))));
   for (const k of ["staccato", "tenuto"]) put(el("button", { class: "art" + (S.artic === k ? " armed" : "") + (ev && !sc && ev.artic === k ? " on" : ""), onclick: () => tapArtic(k), title: S.artic === k ? `${ARTIC[k].label} armed — tap notes to mark them; tap again to return to note entry` : `${ARTIC[k].label}: tap before entering a note, or arm it and tap existing notes` }, ARTIC[k].glyph));
   put(el("button", { class: "tplay push" + (S.push ? " on" : ""), title: "Push: the guide line takes whatever stands on it along as it is dragged — tap to engage, tap again to finish", onclick: () => S.push ? pushEnd() : pushStart() }, el("span", { class: "sub" }, "PUSH")));
-  box.append(el("div", { class: "xc empty", title: "Room for a key to come" }));
+  box.append(el("div", { class: "xc two" }, el("button", { title: "Notes a step larger on this screen (the staves stay as they are)", onclick: () => noteZoomStep(1) }, "N+"), el("button", { title: "Notes a step smaller on this screen", onclick: () => noteZoomStep(-1) }, "N−")));
 }
 function quickAct(id) { const it = QUICK_ITEMS[id]; if (!it) return; if (it.kind === "rest") tapRestLen(it.v); else if (it.kind === "len") tapLength(it.v); else if (it.kind === "slur") tapArtic("slur"); else if (it.kind === "tie") tapTie(); else if (it.kind === "ghost") tapGhostNote(); else tapDot(); }
 /* a held button dropped on a cell: an empty cell simply takes it; a full cell trades places, unless an empty cell is near enough to take the displaced one */
@@ -9636,7 +9644,7 @@ function addLyricChip(bar, bi, text, from = 0) {
    its legible minimum when there is not, and pushes the next chip along when even that will not fit; a bar too full for the
    minimums shrinks them all alike, so the chips still sit side by side */
 function layoutChips(bar, bi, g) {
-  const GAP = 0, x0 = g.x(bi, 0), x1 = g.x(bi, barBeats(bi)), items = [...bar.chips].sort((a, b) => a.t - b.t).map(c => ({ c, x: g.x(bi, c.t), nat: c.full ? Math.max(chipW(c), x1 - g.x(bi, c.t)) : chipW(c), min: chipMinW(c), w: 0 }));   // a chip in the entry box stays its words' width; a bar-filling chip runs to the bar line
+  const GAP = 0, x0 = g.x(bi, 0), x1 = g.x(bi, barBeats(bi)), items = [...bar.chips].sort((a, b) => a.t - b.t).map(c => ({ c, x: g.x(bi, c.t) + (c.ox || 0) * g.beatPx, nat: c.full ? Math.max(chipW(c), x1 - g.x(bi, c.t)) : chipW(c), min: chipMinW(c), w: 0 }));   // a chip in the entry box stays its words' width; a bar-filling chip runs to the bar line
   for (let i = 0; i < items.length; i++) {
     const it = items[i], nextX = i + 1 < items.length ? items[i + 1].x : x1 + GAP;
     it.w = Math.min(it.nat, nextX - it.x - GAP);
@@ -11052,6 +11060,8 @@ async function boot() {
   loadPrefs();
   const fromLink = await importFromHash();
   if (!fromLink) { const cur = readJSON(STORE.cur, null); if (!cur || !loadSong(cur)) { S.song = newSong(); saveNow(); } }
+  { let re = null; try { re = localStorage.getItem("msw_reTurn"); localStorage.removeItem("msw_reTurn"); } catch (e) {}   // refreshed from the wide view: back to it — the lock alone where the browser allows it, else a word to tap TURN
+    if (re) { (async () => { try { if (screen.orientation && screen.orientation.lock) { await screen.orientation.lock("landscape"); TURNED = true; } else throw 0; } catch (e) { toast("Refreshed — tap TURN to go back to the wide view"); } })(); } }
   homeStaves();                                                                            // the app loads with every stave's staves centred in its window (each as it comes into view on the deck), the covers closed over the rest
   upgradeTies(S.song); S.chordsDisp = S.song.showRoman ? "roman" : S.chordsDisp;
   loadSampleMeta().then(loadSongBanks);
