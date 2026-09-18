@@ -120,7 +120,7 @@ svg text { pointer-events: none; }
 /* the phone's lyrics editing: the melody's window and the Lyrics strip reach the screen's edges as the keyboard does — the gutter with its marks kept, the column beside the stave away (its bulk tools with it, back when the keyboard closes), the ↑ ↓ away (the register still scrolls), the Rhythm strip and the Lyrics label away */
 #app.lyrEdit #melWin, #app.lyrEdit #lyrStrip { margin-left: -6px; margin-right: -6px; }
 #app.lyrEdit #melWin, #app.lyrEdit #lyrStrip { grid-template-columns: 44px 1fr; }
-#app.lyrEdit #melWin .side, #app.lyrEdit .win .rArr, #app.lyrEdit #rhyStrip, #app.lyrEdit #lyrEdit { display: none !important; }
+#app.lyrEdit #melWin .side, #app.lyrEdit .win .rArr, #app.lyrEdit #rhyStrip, #app.lyrEdit #lyrEdit, #app.lyrEdit #accWin, #app.lyrEdit #bassWin, #app.lyrEdit #dynStrip { display: none !important; }   /* the phone's lyrics screen: the melody stave alone */
 #app.lyrEdit #lyrStrip .tag { visibility: hidden; }
 #app.lyrEdit #lyrStrip { margin-top: -14px; }
 #app.lyrEdit #lyrStrip .body { border-radius: 0; }
@@ -7139,6 +7139,10 @@ function renderAll() {
   S.bi = clamp(S.bi, 0, S.song.bars.length - 1);
   if (S.si !== S.siLast && S.si !== sectionOfBar(S.bi) && S.song.sections[S.si]) S.bi = sectionRange(S.si).start;   // a section op moved us
   S.si = sectionOfBar(S.bi); S.siLast = S.si;
+  if (typeof WE !== "undefined" && WE.on && !viewBars().includes(WE.bi)) {                  // the view turned to other bars (NEXT, BACK, the wheel, a swipe) while the keyboard is open: the box goes to the first bar in view — left behind on a bar out of view, it was drawn at the strip's far end and its words went into the unseen bar
+    if (WE.chipId) { const ob = S.song.bars[WE.bi], c = ob && ob.chips.find(x => x.id === WE.chipId); const raw = weInput().value.replace(/^\s+|\s+$/g, ""); if (c) { if (raw) { c.text = raw; delete c.words; } else ob.chips = ob.chips.filter(x => x !== c); ob.lyric = lyricFromChips(ob); } WE.chipId = null; weInput().value = ""; WE.dirty = false; }   // a chip being edited is set as it stands
+    WE.bi = viewFirst(); const b2 = S.song.bars[WE.bi], g2 = stripGeo(), after = b2.chips.reduce((m, c) => Math.max(m, c.t + chipFull(c, g2)), 0); WE.t = entrySpot(b2, WE.bi, after, ENTRY_MIN) ?? Math.min(after, barBeats(WE.bi)); S.selChip = null;
+  }
   const atHome = {}; for (const w of ["mel", "acc", "bass"]) atHome[w] = focusOn(w) && viewOf(w) === focusHome(w);
   renderHeader(); renderNav(); renderRollBar(); renderPalette(); allocate();   // before the rows are allotted: which staves sit centred now — a centred stave stays centred whatever its rows become (another window opening or closing, a size or zoom change, a settle pass); one scrolled away is left where it is
   const keepHome = () => { let did = false; for (const w of ["mel", "acc", "bass"]) { if (!atHome[w]) continue; const v = focusHome(w); if (S.song.view[WIN_LO[w]] !== v) { S.song.view[WIN_LO[w]] = v; did = true; } } return did; };
@@ -8780,7 +8784,8 @@ function initPointer() {
   /* a window size reported while the page is hidden (a phone browser minimising, or bringing the app back) can be a passing one — short and wide for a moment,
      enough to engage the deck; nothing is drawn to it: the render waits until the page is visible again, and is then drawn once, at the size the page really has */
   let renderWhenShown = false;
-  window.addEventListener("resize", () => { if (!S.song) return; if (document.hidden) { renderWhenShown = true; return; } renderAll(); });
+  window.addEventListener("resize", () => { if (!S.song) return; if (document.hidden) { renderWhenShown = true; return; } renderAll();
+    if (WE.on && WE.builtDeck !== deckMode()) { const v = weInput().value, id = WE.chipId, bar = S.song.bars[WE.bi], c = id ? bar.chips.find(x => x.id === id) : null; WE.dirty = false; weInput().value = ""; openWordEdit(WE.bi, WE.t, c); weInput().value = v; WE.dirty = !!v && v !== (c ? c.text : ""); sizeInline(); } });   // the screen turned with the keyboard open: the keys laid out afresh for this screen, the words in the box kept
   document.addEventListener("visibilitychange", () => { if (!document.hidden && S.song && (renderWhenShown || deckMode() !== $("app").classList.contains("deck"))) { renderWhenShown = false; renderAll(); } });
   window.addEventListener("load", () => setTimeout(() => { if (S.song) renderAll(); }, 350));                 // once more after the load has settled: the first measurements can be taken before the page has its final size
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (S.song) renderAll(); });
@@ -9182,6 +9187,7 @@ const WE_PAGES = {
 const WE_TITLES = { "‿": "elision — sing two words as one", "_": "rest", "—": "em dash", "…": "ellipsis", "𝄽": "rest", "⇧": "shift", "⌫": "delete" };
 let wePage = "abc", weShift = false, weCaps = false, weShiftAt = -1e9;
 function renderWeKeys() {
+  WE.builtDeck = deckMode();
   const k = $("weKeys"), box = $("wordEdit"), inp = weInput(); k.replaceChildren();
   box.classList.toggle("native", !S.softKb);
   { const pk = box.querySelector(".weRow button.panelk"); if (pk) pk.textContent = wePanelHidden ? "SHOW PANEL" : "HIDE PANEL"; }
@@ -9262,7 +9268,8 @@ function renderWeKeys() {
   };
   if (!deck) {                                                                              // the phone: four columns under the letters
     const panel = el("div", { class: "panel" });
-    panel.append(K.multi, K.del, K.pick, K.next, K.single, K.nl, K.nr, K.cur, K.split, K.short, K.wide, K.gap, K.undo, K.redo, K.rest, K.set);
+    K.turn = key([el("span", { class: "big" }, "⟲"), cap("WIDE EDITOR")], () => { S.turnBack = true; turnScreen(); }, "turnk", "turn the screen: edit the words on the wide screen; closing the keyboard there turns it back");
+    panel.append(K.multi, K.del, K.pick, K.next, K.single, K.nl, K.nr, K.cur, K.split, K.short, K.wide, K.gap, K.undo, K.redo, K.rest, K.set, K.turn);
     k.append(panel); return;
   }
   /* the deck: while the keyboard is open the bottom tool bar is the chip tool panel — one fixed row, left to right, in place of its three thirds */
@@ -9469,7 +9476,8 @@ function weBlink() { for (const e of [$("wordEdit"), $("kbClose")]) { if (!e) co
 function closeWordEdit() {
   if (WE.on) weSettleSpacer();
   if (WE.on && WE.dirty) { commitWordEdit(false, true, false, true); return; }   // set as one chip on the way out
-  const was = WE.on; WE.on = false; WE.wid = null; WE.chipId = null; WE.picking = false; WE.picks = []; WE.carry = ""; $("wordEdit").classList.remove("on"); weInput().classList.remove("on"); weCaret(); document.body.classList.remove("kbOpen"); if (was) renderAll(); syncMoveDelBtns();   // DELETE's ready state, now that the keyboard is shut, reflects whatever is actually selected on the stave
+  const was = WE.on; WE.on = false; WE.wid = null; WE.chipId = null; WE.picking = false; WE.picks = []; WE.carry = ""; $("wordEdit").classList.remove("on"); weInput().classList.remove("on"); weCaret(); document.body.classList.remove("kbOpen"); if (was) renderAll(); syncMoveDelBtns();
+  if (was && S.turnBack) { S.turnBack = false; if (TURNED) turnScreen(); }                 // opened on the wide screen from the phone's keyboard: the screen turns back as it closes   // DELETE's ready state, now that the keyboard is shut, reflects whatever is actually selected on the stave
   const f = WE.firstChip; WE.firstChip = null;
   if (was && f && S.song.bars[f.bi] && S.song.bars[f.bi].chips.some(c => c.id === f.id)) { S.selChip = { bi: f.bi, id: f.id }; S.bi = f.bi; renderAll(); }   // the first word you typed is ready to move or stretch
 }
