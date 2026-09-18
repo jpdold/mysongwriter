@@ -8134,8 +8134,13 @@ function pushRange(it, bar) {                                                   
   const c = bar.chips.find(x => x.id === it.id); if (!c) return [0, 0]; const b0 = Math.floor(c.t + 1e-6), slack = 4 / stripGeo().beatPx; return [b0 - c.t - slack, b0 + 1 - c.t - slack];   // a chip's left edge stays inside its beat lane, however wide the chip (its width had been counted against the lane, and a wide chip pinned the line to a couple of pixels)
 }
 function pushMove(t) {                                                                    // the line to t: the picked items are drawn along with it, as far as every one of them may go inside its beat
-  const P = S.push; if (!P || t === P.t) return; const bar = S.song.bars[P.bi], picked = pushPicked();
+  const P = S.push; if (!P || t === P.t) return; const bar = S.song.bars[P.bi];
   let d = t - P.t;
+  if (P.dir == null && Math.abs(d) * ((GEO[pushWin()] || stripGeo()).beatPx) >= 1.5) {          // the first push sets the way: pushing left, whatever stands to the right of the line is let go, and the other way round — a push goes one way
+    P.dir = d < 0 ? -1 : 1; let dropped = 0; for (const it of P.items) { const k = pushKey(it); if (((P.dir < 0 && it.side === "r") || (P.dir > 0 && it.side === "l")) && !P.off.has(k)) { P.off.add(k); dropped++; } }
+    if (dropped) toast(`Pushing ${P.dir < 0 ? "left" : "right"}: ${dropped} on the other side of the line let go`);
+  }
+  const picked = pushPicked();
   for (const it of picked) { const cur = (it.kind === "ev" ? (bar.ev[it.part] || []).find(x => x.id === it.id) : bar.chips.find(x => x.id === it.id)); if (!cur) continue; const [lo, hi] = pushRange(it, bar), ox = cur.ox || 0; d = Math.max(lo - ox, Math.min(hi - ox, d)); }   // the tightest item sets how far they all go
   if (Math.abs(d) < 1e-6) return;
   for (const it of picked) { const cur = (it.kind === "ev" ? (bar.ev[it.part] || []).find(x => x.id === it.id) : bar.chips.find(x => x.id === it.id)); if (!cur) continue; cur.ox = Math.round(((cur.ox || 0) + d) * 10000) / 10000; if (Math.abs(cur.ox) < 1e-4) delete cur.ox; }
