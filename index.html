@@ -842,22 +842,23 @@ body.kbOpen #lyrEdit, #app.deck.kbUp #lyrEdit { display: none !important; }   /*
 #tray #quick .xc.empty { border-radius: 3px; background: rgba(0,0,0,.13); box-shadow: inset 0 1px 3px rgba(0,0,0,.45), 0 1px 0 rgba(255,255,255,.5); }   /* an open slot in the tray: room for a key to come */
 #tray #quick .xc button.chord.on, body.runDraw #tray #quick .xc button.run.on { animation: chordBlink 1.4s step-end infinite; }
 /* Play All, Play Bar and Stop: three keys flush together on a pallet of their own, the pallet flush on the tray's top edge, and slid from side to side along it (placePlayL) — as far as the arrows' plate */
-#playL { justify-self: start; align-self: start; display: flex; gap: 0; margin-top: 15px; padding: 3px; background: var(--ground2); border: 1.5px solid #141414; border-radius: 4px 4px 0 0; border-bottom: none; box-shadow: inset 0 1px 0 rgba(255,255,255,.12); touch-action: pan-y; cursor: ew-resize; position: relative; z-index: 1; }
-#playL button { height: 31.5px; border-radius: 0; box-shadow: inset 0 1px 0 rgba(255,255,255,.7); }
+#playL { justify-self: start; align-self: start; display: flex; gap: 0; margin-top: 20px; padding: 2px; background: var(--ground2); border: 1.5px solid #141414; border-radius: 4px 4px 0 0; border-bottom: none; box-shadow: inset 0 1px 0 rgba(255,255,255,.12); touch-action: pan-y; cursor: ew-resize; position: relative; z-index: 1; }
+#playL button { width: 27px; height: 28px; font-size: 14px; border-radius: 0; box-shadow: inset 0 1px 0 rgba(255,255,255,.7); }   /* the play keys a size smaller, so the three pallets share the tray's edge with room to spare on a narrow phone */
+#playL #playBarBtn .top, #playL #playSelBtn .top { line-height: 12px; } #playL #playBarBtn .sub, #playL #playSelBtn .sub { font-size: 6px; line-height: 7px; }
 #playL button + button { border-left: none; }
 #playL button:first-child { border-radius: 4px 0 0 4px; } #playL button:last-child { border-radius: 0 4px 4px 0; }
 #playL.sliding { opacity: .85; }
 /* the tempo on a pallet of its own on the tray's top edge, between the play pallet and the arrows' plate (placePlayL keeps it beside the play pallet) */
-#tempoL { justify-self: start; align-self: start; margin-top: 15px; padding: 3px; background: var(--ground2); border: 1.5px solid #141414; border-radius: 4px 4px 0 0; border-bottom: none; box-shadow: inset 0 1px 0 rgba(255,255,255,.12); position: relative; z-index: 1; }
+#tempoL { justify-self: start; align-self: start; margin-top: 20px; padding: 2px; background: var(--ground2); border: 1.5px solid #141414; border-radius: 4px 4px 0 0; border-bottom: none; box-shadow: inset 0 1px 0 rgba(255,255,255,.12); position: relative; z-index: 1; }
 #tempoL:empty { display: none; }
-#tray #tempo { display: flex; height: 31.5px; border: 1.5px solid #141414; border-radius: 4px; overflow: hidden; background: linear-gradient(var(--sv-hi), var(--sv-lo)); }
-#tray #tempo button { width: 20px; height: 31.5px; border: none; border-radius: 0; box-shadow: none; font-size: 18px; font-weight: 700; padding: 0; background: linear-gradient(var(--sv-hi), var(--sv-lo)); color: #111; }
-#tray #tempo button#tempoLbl { width: auto; min-width: 42px; padding: 0 2px; font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums; background: #111; color: #fff; }
+#tray #tempo { display: flex; height: 28px; border: 1.5px solid #141414; border-radius: 4px; overflow: hidden; background: linear-gradient(var(--sv-hi), var(--sv-lo)); }
+#tray #tempo button { width: 16px; height: 28px; border: none; border-radius: 0; box-shadow: none; font-size: 15px; font-weight: 700; padding: 0; background: linear-gradient(var(--sv-hi), var(--sv-lo)); color: #111; }
+#tray #tempo button#tempoLbl { width: auto; min-width: 36px; padding: 0 2px; font-size: 10px; font-weight: 800; font-variant-numeric: tabular-nums; background: #111; color: #fff; }
 #tray #tempo button:active { background: linear-gradient(#ffd27a, #f5a623); }
 #app:not(.deck) #playPal { display: none; }                                                    /* the play pallet at the foot is gone: RANGE is on the tray, the tempo on the tray's edge; its row is kept free */
 /* the arrows and UNDO · REDO on a plate of their own, standing on the far right of the tray's top edge: a backing plate, the keys inset on it */
-#arrowPal { justify-self: end; align-self: start; width: calc(37.5% + 10px); height: 54px; background: var(--ground2); border: 1.5px solid #141414; border-bottom: none; border-radius: 4px 4px 0 0; box-shadow: inset 0 1px 0 rgba(255,255,255,.12); }
-#tray #arrows, #tray #undoRow { justify-self: end; align-self: start; width: 37.5%; position: relative; z-index: 1; }
+#arrowPal { justify-self: end; align-self: start; width: calc(34% + 10px); height: 54px; background: var(--ground2); border: 1.5px solid #141414; border-bottom: none; border-radius: 4px 4px 0 0; box-shadow: inset 0 1px 0 rgba(255,255,255,.12); }
+#tray #arrows, #tray #undoRow { justify-self: end; align-self: start; width: 34%; position: relative; z-index: 1; }
 #tray #arrows { margin: 5px 5px 0 0; }
 #tray #undoRow { margin: 27px 5px 0 0; }
 /* the phone: the green Rhythm and Lyrics labels are small silver tabs, square-cornered, in bold black, close against their strips */
