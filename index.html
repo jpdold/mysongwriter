@@ -102,7 +102,7 @@ body:has(#app.deck) { overflow: hidden; }   /* the deck is a fixed, self-contain
 body { margin: 0; background: var(--ground); color: var(--on-ground); font-family: var(--sans); font-size: 14px; line-height: 1.3;
   overscroll-behavior-y: none; -webkit-user-select: none; user-select: none; }
 button, input, select, textarea { font: inherit; color: inherit; }
-button { cursor: pointer; }
+button { cursor: pointer; touch-action: manipulation; }                                 /* no double-tap zoom on any key: two quick taps on the same key are two presses */
 input, textarea { -webkit-user-select: text; user-select: text; }
 .hidden { display: none !important; }
 svg text { pointer-events: none; }
@@ -773,6 +773,9 @@ body.kbOpen #lyrEdit, #app.deck.kbUp #lyrEdit { display: none !important; }   /*
   background-size: 9px 8px; background-position: 0 0, 0 0; }
 #quick.float .qctl { grid-row: 2 / 5; }
 /* the run magnifier: a floating window on the stave, twice the size, above the finger */
+.runOpt { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }                    /* the RUN menu's choices: the picture, then the words */
+.runOpt .runPic { width: 84px; height: 30px; flex: 0 0 auto; border: 1px solid #bbb; border-radius: 3px; background: #fffdf8; }
+.runOpt .runPics { display: inline-flex; gap: 4px; flex: 0 0 auto; }
 #runMag { position: fixed; z-index: 80; border: 2px solid #141414; border-radius: 6px; background: var(--paper); box-shadow: 0 6px 18px rgba(0,0,0,.5); pointer-events: none; }
 
 /* the lyrics view: the pitch marks and side column folded away (the columns kept at no width, so the frame stays in its own), BACK / NEXT at the stave's top right, SIGS under its foot */
@@ -8466,12 +8469,26 @@ function runMag(e) {
 }
 function runMagHide() { const m = $("runMag"); if (m) m.style.display = "none"; }
 function runUp() { const c = runCtx; runCtx = null; document.body.classList.remove("runDraw"); runMagHide(); if (!c) return; S.justEntered = null; S.sel = null; renderAll(); if (c.n) toast(c.n === 1 ? "1 note — drag along the stave for a run" : `${c.n} notes in the run — UNDO takes the whole run back`); }
+/* the RUN menu's pictures: a free drag as an S-shaped line with notes along it, ending in an arrow tip; a straight run as a line climbing by scale steps, and one falling by thirds */
+function runPic(kind) {
+  const W = 84, H = 30, s = svgEl("svg", { class: "runPic", viewBox: `0 0 ${W} ${H}`, "aria-hidden": "true" }), ink = "#111";
+  for (let y = 5; y <= 25; y += 5) s.append(svgEl("line", { x1: 2, x2: W - 2, y1: y + 0.5, y2: y + 0.5, stroke: "#9aa", "stroke-width": 1 }));   // five faint lines behind
+  let d, pts;
+  if (kind === "free") { d = `M 6 20 C 22 2, 34 2, 42 15 S 62 30, 74 12`; pts = [[8, 19], [22, 8], [36, 8], [48, 18], [62, 22], [70, 14]]; }
+  else if (kind === "up") { d = `M 6 25 L 74 6`; pts = [[8, 24.5], [21, 21], [34, 17.5], [47, 14], [60, 10.5]]; }   // climbing by the scale's steps: one row each
+  else { d = `M 6 6 L 74 25`; pts = [[8, 6.5], [24, 11.5], [40, 16.5], [56, 21.5]]; }                            // falling by thirds: two rows each
+  s.append(svgEl("path", { d, fill: "none", stroke: ink, "stroke-width": 1.6, "stroke-linecap": "round" }));
+  const tip = kind === "free" ? "M 74 12 l -7 -3 l 1 7 z" : kind === "up" ? "M 76 5.5 l -7 -1 l 4 6 z" : "M 76 25.5 l -7 1 l 4 -6 z";
+  s.append(svgEl("path", { d: tip, fill: ink }));
+  for (const [x, y] of pts) { s.append(svgEl("ellipse", { cx: x, cy: y, rx: 3, ry: 2.2, fill: ink, transform: `rotate(-20 ${x} ${y})` })); s.append(svgEl("line", { x1: x + 2.6, x2: x + 2.6, y1: y - 0.5, y2: y - 9, stroke: ink, "stroke-width": 1.1 })); }
+  return s;
+}
 function openRunSetup() {
   if (runOn()) { S.run.on = false; savePrefs(); renderAll(); toast("Note run off"); return; }
   const R = S.run, body = [];
-  const radios = (name, opts, cur, fn, col) => { const box = el("div", { class: "radios" + (col ? " col" : "") }); opts.forEach(([v, l]) => { const inp = el("input", { type: "radio", name: "run_" + name }); inp.checked = cur === v; inp.addEventListener("change", () => { if (inp.checked) fn(v); }); box.append(el("label", {}, inp, el("span", {}, l))); }); return box; };
+  const radios = (name, opts, cur, fn, col) => { const box = el("div", { class: "radios" + (col ? " col" : "") }); opts.forEach(([v, l]) => { const inp = el("input", { type: "radio", name: "run_" + name }); inp.checked = cur === v; inp.addEventListener("change", () => { if (inp.checked) fn(v); }); box.append(el("label", { class: Array.isArray(l) ? "runOpt" : "" }, inp, ...(Array.isArray(l) ? l : [el("span", {}, l)]))); }); return box; };
   const sel = el("select", { class: "sel" }); RUN_INTERVALS.forEach(([n, l]) => sel.append(el("option", { value: n, selected: n === (R.semis || 4) }, l))); sel.addEventListener("change", () => { R.semis = +sel.value; R.preset = "int"; savePrefs(); closeModal(); R.on = false; openRunSetup(); });
-  body.push(el("div", { class: "pLbl" }, "Draw"), radios("mode", [["free", "Free drag — each note takes the pitch under the finger, up and down as it moves"], ["straight", "Straight — the same pitch repeated, or one way up, or one way down"]], R.mode, v => { R.mode = v; savePrefs(); }, true));
+  body.push(el("div", { class: "pLbl" }, "Draw"), radios("mode", [["free", [runPic("free"), el("span", {}, "Free drag — each note takes the pitch under the finger, up and down as it moves")]], ["straight", [el("span", { class: "runPics" }, runPic("up"), runPic("down")), el("span", {}, "Straight — the same pitch repeated, or one way up, or one way down")]]], R.mode, v => { R.mode = v; savePrefs(); }, true));
   body.push(el("div", { class: "pLbl" }, "Pitches"), radios("preset", [["chrom", "Chromatic — every half step"], ["scale", `Scale of the key (${S.song.key}) — its own sharps or flats`], ["int", "A set interval from the first note:"]], R.preset, v => { R.preset = v; savePrefs(); }, true), el("div", { class: "mrow", style: "margin-left:22px" }, sel));
   body.push(el("div", { class: "tiny", style: "margin-top:6px" }, "Press on a stave and drag: notes of the length in hand are laid along the drag until the finger lifts. Slots already holding a note are passed over; the run stays inside the bars in view; UNDO takes the whole run back. Tap RUN again to turn it off."));
   openModal("Note run", body, [el("button", { class: "btn", onclick: closeModal }, "Cancel"), el("button", { class: "btn acc", onclick: () => { R.on = true; savePrefs(); closeModal(); renderAll(); toast(`Note run on — ${R.mode === "free" ? "free drag" : "straight"}, ${R.preset === "chrom" ? "chromatic" : R.preset === "scale" ? "the key's scale" : (RUN_INTERVALS.find(x => x[0] === (R.semis || 4)) || [0, "interval"])[1].toLowerCase() + "s"}`); } }, "Start drawing")]);
@@ -10972,7 +10989,7 @@ async function boot() {
   $("arrUp").addEventListener("click", () => arrowUD(1)); $("arrDn").addEventListener("click", () => arrowUD(-1));
   $("arrL").addEventListener("click", () => arrowLR(-1)); $("arrR").addEventListener("click", () => arrowLR(1));
   $("undoBtn").addEventListener("click", undo); $("redoBtn").addEventListener("click", redo);
-  $("moveBtn").addEventListener("click", moveAction); $("delBtn").addEventListener("click", delAction); $("selBtn").addEventListener("click", () => mvStart("delete")); $("repBtn").addEventListener("click", repAction); $("copyBtn").addEventListener("click", cpyStart); $("xhairBtn").addEventListener("click", () => { if (S.cpy) { S.cpy.crosshair = !S.cpy.crosshair; renderAll(); } }); $("setCopyBtn").addEventListener("click", setCopyAction);
+  $("moveBtn").addEventListener("click", moveAction); { const db = $("delBtn"); let upAt = 0; db.addEventListener("pointerup", e => { if (e.pointerType === "mouse" || db.disabled) return; upAt = performance.now(); delAction(); }); db.addEventListener("click", () => { if (performance.now() - upAt < 500) return; delAction(); }); }   /* DELETE acts as the finger lifts (a touch screen may take two quick taps on it for a double-tap and drop the second press); the click that follows a touch is not a second press */ $("selBtn").addEventListener("click", () => mvStart("delete")); $("repBtn").addEventListener("click", repAction); $("copyBtn").addEventListener("click", cpyStart); $("xhairBtn").addEventListener("click", () => { if (S.cpy) { S.cpy.crosshair = !S.cpy.crosshair; renderAll(); } }); $("setCopyBtn").addEventListener("click", setCopyAction);
   $("playAllBtn").addEventListener("click", playAll);
   $("playBarBtn").addEventListener("click", e => playSolo(soloWin(), e.currentTarget));
   $("rangeBtn").addEventListener("click", openPlayRange);
