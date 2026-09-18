@@ -8050,10 +8050,7 @@ function hWheel(key, winOf) {
   window.addEventListener("pointerup", end); window.addEventListener("pointercancel", end);
   return HWHEELS[key] = w;
 }
-function placeHWheels() {
-  for (const win of ["mel", "acc", "bass"]) { const side = $(win + "Win").querySelector(".side"), w = hWheel(win, () => win); if (side && w.parentNode !== side) side.append(w); w.hidden = deckMode() && !duoMode(); }
-  if (deckMode() && !duoMode()) { const nav = $("deckNav"), w = hWheel("deck", deckActive); if (nav && w.parentNode !== nav) nav.append(w); }
-}
+function placeHWheels() { document.querySelectorAll(".hWheel").forEach(w => w.remove()); }        // the ↔ wheel beside the staves is gone: swipes and the bar arrows turn the bars, and the wheel had puzzled more than it helped
 /* the play pallet slides along the top of the bar of twelve: S.playX is its left edge, kept inside the page and kept between loads */
 /* the lyrics view: the stave in use centred between the screen's edges — its pitch marks and side column folded away, the frame given equal margins to the screen's centre (the deck's stave column sits left of the button column, so it is not centred of itself); the strips take the same */
 function centreLyrFrame() {
