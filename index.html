@@ -463,10 +463,11 @@ text.clef, text.smufl { user-select: none; }
 #lyrGuide { position: absolute; z-index: 4; width: 0; opacity: .85; pointer-events: none; }   /* the phone's lyric guide: thin, dashed, taps pass through it to the stave; drawn in two segments, the stave's and the strip's */
 #lyrGuide .seg { position: absolute; left: 0; width: 0; border-left: 2px dashed #111; }
 #lyrGuide.push .seg { border-left-color: #e02020; } #lyrGuide.push .knob { background: #e02020; }   /* PUSH on: the line and its knob in red */
-#lyrGuide .knob.foot { top: auto; bottom: -18px; } #lyrGuide .pushTag.foot { top: auto; bottom: -20px; }   /* the foot's handle and tag, mirroring the top's */
-#lyrGuide .pushTag { position: absolute; left: 10px; top: -20px; height: 16px; padding: 0 5px; border: 1.5px solid #141414; border-radius: 3px; background: #fff; color: #111; font-family: var(--sans); font-size: 7px; font-weight: 900; letter-spacing: .08em; pointer-events: auto; touch-action: manipulation; box-shadow: 0 1px 3px rgba(0,0,0,.4); }   /* the PUSH tag beside the knob: the way in, right where the line is */
+#lyrGuide .knob.foot { top: auto; bottom: -7px; } #lyrGuide .pushTag.foot { top: auto; bottom: -8px; }   /* the handles centred on the line's ends, the line running into them */   /* the foot's handle and tag, mirroring the top's */
+#lyrGuide .pushTag { position: absolute; left: 10px; top: -8px; height: 16px; padding: 0 5px; border: 1.5px solid #141414; border-radius: 3px; background: #fff; color: #111; font-family: var(--sans); font-size: 7px; font-weight: 900; letter-spacing: .08em; pointer-events: auto; touch-action: manipulation; box-shadow: 0 1px 3px rgba(0,0,0,.4); }   /* the PUSH tag beside the knob: the way in, right where the line is */
 #lyrGuide.push .pushTag { background: #e02020; color: #fff; border-color: #7a1410; }
-#lyrGuide .knob { position: absolute; left: -8px; top: -18px; width: 14px; height: 14px; border-radius: 50%; background: #111; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.5); pointer-events: auto; cursor: ew-resize; touch-action: none; }   /* the knob above the top line: drag it sideways */
+#lyrGuide .grab { position: absolute; left: -9px; top: 0; bottom: 0; width: 18px; pointer-events: auto; cursor: ew-resize; touch-action: none; }   /* the line is taken hold of anywhere along it */
+#lyrGuide .knob { position: absolute; left: -8px; top: -7px; width: 14px; height: 14px; border-radius: 50%; background: #111; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.5); pointer-events: auto; cursor: ew-resize; touch-action: none; }   /* the knob above the top line: drag it sideways */
 #lyrGuide .knob::before { content: ""; position: absolute; left: -8px; top: -8px; right: -8px; bottom: -8px; }
 #lyrGuide[hidden] { display: none; }
 #lyrGuide.deck { z-index: 75; opacity: .95; } #lyrGuide.deck .seg { border-left-color: #f5a623; } #lyrGuide.deck .knob, #lyrGuide.deck .pushTag { display: none !important; }
@@ -7948,7 +7949,7 @@ function renderStrips() {
 function placeLyrGuide() {
   let gd = $("lyrGuide");
   if (!gd) { gd = el("div", { id: "lyrGuide" }, el("div", { class: "segs" }), el("div", { class: "knob", title: "Drag: a guide to line the words up on — it steps by sixteenths; with PUSH on, what stands on it goes along" }), el("button", { class: "pushTag", title: "PUSH: the line takes whatever stands on it along as it is dragged — tap to engage, tap again to finish", onclick: e => { e.stopPropagation(); S.push ? pushEnd() : pushStart(); } }, "PUSH"),
-      el("div", { class: "knob foot", title: "Drag: the guide line, from its foot" }), el("button", { class: "pushTag foot", title: "PUSH: the line takes whatever stands on it along as it is dragged — tap to engage, tap again to finish", onclick: e => { e.stopPropagation(); S.push ? pushEnd() : pushStart(); } }, "PUSH")); $("app").append(gd);   // a handle at each end: a knob to drag by and a PUSH tag beside it, so the line is found and worked from its top or its foot   // the line lets taps through to the stave; the knob at its top is what is dragged; the line is drawn in segments, one to each stave and one to the strips, so any can be hidden; the PUSH tag beside the knob engages the push
+      el("div", { class: "grab", title: "Drag the guide line" }), el("div", { class: "knob foot", title: "Drag: the guide line, from its foot" }), el("button", { class: "pushTag foot", title: "PUSH: the line takes whatever stands on it along as it is dragged — tap to engage, tap again to finish", onclick: e => { e.stopPropagation(); S.push ? pushEnd() : pushStart(); } }, "PUSH")); $("app").append(gd);   // a handle at each end: a knob to drag by and a PUSH tag beside it, so the line is found and worked from its top or its foot   // the line lets taps through to the stave; the knob at its top is what is dragged; the line is drawn in segments, one to each stave and one to the strips, so any can be hidden; the PUSH tag beside the knob engages the push
     gd.querySelectorAll(".pushTag").forEach(t => t.addEventListener("pointerdown", e => e.stopPropagation()));
     let d = null;
     gd.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); try { gd.setPointerCapture(e.pointerId); } catch (x) {} d = { id: e.pointerId }; });
@@ -8766,7 +8767,7 @@ function initPointer() {
     const svg = $(win + "Svg");
     svg.addEventListener("pointerdown", e => {
       if (S.cpy && S.cpy.crosshair) { xhairDown(win, svg, e); return; }                     // COPY's crosshair: drag a box instead of the usual tap handling
-      if (runOn() && !(typeof WE !== "undefined" && WE.on) && !S.mv && !S.rep && !S.cpy && !PSEL.on) { runDown(win, svg, e); return; }   // NOTE RUN: the press starts a run, the drag lays it
+      if (runOn() && !(typeof WE !== "undefined" && WE.on) && !S.mv && !S.rep && !S.cpy && !PSEL.on && !S.push) { runDown(win, svg, e); return; }   // NOTE RUN: the press starts a run, the drag lays it
       const t = e.target, holder = t.getAttribute && t.getAttribute("data-ev") ? t : t.parentNode;
       const evId = holder && holder.getAttribute ? holder.getAttribute("data-ev") : null;
       const part = evId ? holder.getAttribute("data-part") : null, ebi = evId ? parseInt(holder.getAttribute("data-bi") || S.bi, 10) : S.bi;
@@ -8861,6 +8862,7 @@ function initPointer() {
   rhy.addEventListener("pointerup", e => {
     const t = e.target, evId = t.getAttribute && t.getAttribute("data-ev");
     S.selChip = null;
+    if (S.push) return;                                                                    // PUSH on: the strips and staves take no entries
     const p = svgPoint(rhy, e), at = stripGeo().at(p.x);
     if (S.dynArm) { const bi0 = evId ? parseInt(t.getAttribute("data-bi") || S.bi, 10) : at.bi, ev0 = evId ? S.song.bars[bi0].ev.melody.find(x => x.id === evId) : null; applyDynAt(bi0, "melody", ev0, at.t); return; }
     if (evId) { const bi = parseInt(t.getAttribute("data-bi") || S.bi, 10); const ev = S.song.bars[bi].ev.melody.find(x => x.id === evId); if (S.artic && ev && !ev.rest && ev.m != null) { applyArtic(bi, "melody", ev); return; } if (!ev || !inActive(bi, ev.t)) { activate(at.bi, at.t); return; } S.bi = bi; select(bi, "melody", S.sel && S.sel.id === evId ? null : evId); return; }
