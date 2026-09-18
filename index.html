@@ -820,6 +820,7 @@ body.kbOpen #lyrEdit, #app.deck.kbUp #lyrEdit { display: none !important; }   /*
 /* a tablet held upright (the vertical view on a screen 700px wide or more): the column fills the screen's width, up to 900px, and allocate() gives the stave a height to match — three quarters of its width, as far as the screen's height allows; the tray's keys stand a little taller */
 @media (min-width: 700px) { #app:not(.deck), #app.rolled:not(.deck) { max-width: 900px !important; padding-left: 18px; padding-right: 18px; } #tray #quick { grid-template-rows: 40px 40px; } }
 #app:not(.deck) { padding-bottom: calc(var(--trayH, 140px) + 14px + env(safe-area-inset-bottom)) !important; }   /* room at the page's foot for the fixed tray */
+#app.lyrEdit:not(.deck) { padding-bottom: calc(var(--kbH, 440px) + 24px) !important; }        /* the keyboard open: room for it instead, so the strip can scroll above it */
 #app:not(.deck) #head { position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: var(--trayW, calc(100% - 12px)); z-index: 25; background: var(--ground); padding-top: 8px; box-shadow: 0 6px 8px -6px rgba(0,0,0,.5); }   /* the head — the menu, the bar bracket, the gear — fixed at the screen's top as the page scrolls, the stave's top edge flush under it (the page padded for its height by placeTray) */
 #app:not(.deck) { padding-top: calc(var(--headH, 64px) + 6px) !important; }
 #app.lyrEdit #tray, body.kbOpen #tray { display: none; }                                    /* the keyboard open: the tray steps aside (the keyboard has the foot of the screen) */
@@ -988,6 +989,8 @@ body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the s
 #wordEdit.blink { animation: weBlink .9s ease-in-out 1; }
 #wordEdit.blink > button.close { animation: weFlash .9s ease-in-out 1; }
 #wordEdit > button.close { background: #e02020; color: #fff; border-color: #7a1410; font-weight: 900; font-size: 18px; }   /* a bold white ✕ on red */
+#wordEdit > button.panelTab { position: absolute; top: -22px; left: 6px; height: 24px; width: auto; padding: 0 9px; border: 2px solid var(--tag); border-bottom: none; border-radius: 8px 8px 0 0; background: #edf1f6; color: #123; font-family: var(--sans); font-size: 9px; font-weight: 800; letter-spacing: .04em; box-shadow: 0 -2px 6px rgba(0,0,0,.25); }   /* HIDE PANEL / SHOW PANEL: flush on the top left corner, aligned with the keyboard's left side */
+#app.deck #wordEdit > button.panelTab { display: none; }
 #lyrInline { position: absolute; top: 3px; height: 18px; display: none; border: none; outline: none; background: rgba(255,255,255,.18); border-radius: 4px; padding: 0 3px;
   font-family: var(--sans); font-weight: 700; font-size: 16px; color: #fff; caret-color: transparent; min-width: 10px; }   /* the empty box may be as narrow as what is left of its beat */
 #weCaret { position: absolute; top: 8px; width: 2px; height: 20px; background: #fff; border-radius: 1px; display: none; pointer-events: none; z-index: 3; }
@@ -7152,6 +7155,7 @@ function renderAll() {
   }
   keepHome();
   placeHWheels(); renderWindows(); renderStrips(); renderBeatRow(); placeDeckLabels(); renderPad(); placeLyrNav();
+  if (!deckMode() && kbUpNow()) keepStripClear();                                            // the phone: whatever the render moved, the Lyrics strip ends up above the keyboard
   if (deckMode()) { const r0 = Object.assign({}, DECK_ROWS), s0 = Object.assign({}, STEPS); allocate(); if (["mel", "acc", "bass"].some(w => DECK_ROWS[w] !== r0[w] || Math.abs(STEPS[w] - s0[w]) > 1e-6)) { keepHome(); renderWindows(); renderStrips(); renderBeatRow(); placeDeckLabels(); } }
   if (!deckMode()) { const r0 = Object.assign({}, PHONE_ROWS), s0 = Object.assign({}, STEPS); allocate(); const rh = keepHome(); if (rh || ["mel", "acc", "bass"].some(w => PHONE_ROWS[w] !== r0[w] || Math.abs(STEPS[w] - s0[w]) > 1e-6)) { renderWindows(); renderStrips(); renderBeatRow(); } }   // the phone: the column beside the stave is only whole once drawn (COVER is made then) — size the stave to it and draw again
   if (deckMode() && !kbUpNow() && !duoMode()) {                                           // Stacked staves measure their room against the app's foot themselves, so this pass would only misread the folded bars and the lower staves as a gap   // the tool bar must end on the screen's foot, the stave and strips flush above it: measured as drawn, any miss (a load before the page had settled, a browser bar coming or going) is taken up by the stave at once
@@ -8101,6 +8105,7 @@ function renderPalette0() {
   const b = (t, fn, opts = {}) => p.append(el("button", Object.assign({ onclick: fn }, opts.attrs || {}, { class: (opts.cls || "") + (opts.on ? " on" : "") + (opts.warn ? " warn" : ""), title: opts.title, disabled: opts.disabled }), t));
   const sc = selChipObj();
   if (sc) {                                        // a word, letter, space or symbol on the Lyrics strip is selected
+    if (!deckMode()) return;                       // the phone: nothing to show for it (ESC lets it go) — the pallet stays folded
     p = r3;
     const { chip } = sc;
     p.append(el("span", { class: "who" }, `“${chip.text.trim()}”`));
@@ -9047,17 +9052,20 @@ function weTab() {
 }
 /* Split: the chip being edited breaks in two at the cursor; the right half lands just after the left */
 function weSplit() {
+  if (WE.on && !WE.chipId) { const sc = selChipObj(); if (sc && sc.chip.text.trim()) { const bi = S.song.bars.indexOf(sc.bar); openWordEdit(bi, sc.chip.t, sc.chip); const v = weInput().value, sp = v.lastIndexOf(" "); const at = sp > 0 ? sp : Math.ceil(v.length / 2); try { weInput().setSelectionRange(at, at); } catch (e) {} } }   // a chip selected but not in the box: it comes into the box and parts at its last space (or its middle)
   if (!WE.on || !WE.chipId) { toast("Tap a chip, tap Edit, put the cursor where it should break, then Split"); return; }
   const inp = weInput(), bar = S.song.bars[WE.bi], c = bar.chips.find(x => x.id === WE.chipId); if (!c) return;
   const at = inp.selectionStart == null ? inp.value.length : inp.selectionStart, text = inp.value;
   const left = text.slice(0, at).replace(/\s+$/, ""), right = text.slice(at).replace(/^\s+/, "");
   if (!left || !right) { toast("Put the cursor inside the word, between the two parts"); return; }
   const keep = c.text; c.text = left;
-  const g = stripGeo(), t = entrySpot(bar, WE.bi, c.t + chipFull(c, g), (chipW({ text: right }) + 3) / g.beatPx);
-  if (t == null) { c.text = keep; toast("No room for the second part in this bar"); return; }
-  const n = { id: uid(), text: right, t }; bar.chips.push(n); bar.chips.sort((a, b) => a.t - b.t); bar.lyric = lyricFromChips(bar);
-  WE.chipId = null; WE.dirty = false; inp.value = ""; renderAll();
-  openWordEdit(WE.bi, n.t + chipFull(n, g)); S.selChip = { bi: WE.bi, id: n.id }; renderStrips(); renderPalette(); renderNav();
+  const g = stripGeo(), w = (chipW({ text: right }) + 3) / g.beatPx; let bi2 = WE.bi, bar2 = bar, t = entrySpot(bar, WE.bi, c.t + chipFull(c, g), w);
+  if (t == null) t = entrySpot(bar, WE.bi, Math.min(barBeats(WE.bi), Math.floor(c.t + 1e-6) + 1), w);                                   // no room beside it: the second part goes on to the next beat line
+  if (t == null && WE.bi + 1 < S.song.bars.length) { bi2 = WE.bi + 1; bar2 = S.song.bars[bi2]; normalizeLyrics(bar2); t = entrySpot(bar2, bi2, 0, w) ?? entrySpot(bar2, bi2, 0, chipBeats({ text: right }, g)); }   // none left in the bar: the next bar's first free spot
+  if (t == null) { c.text = keep; toast("No room for the second part here or in the next bar"); return; }
+  const n = { id: uid(), text: right, t }; bar2.chips.push(n); bar2.chips.sort((a, b) => a.t - b.t); bar.lyric = lyricFromChips(bar); if (bar2 !== bar) bar2.lyric = lyricFromChips(bar2);
+  WE.chipId = null; WE.dirty = false; inp.value = ""; if (bi2 !== WE.bi) { S.bi = bi2; toast(`The second part went on to bar ${barNo(bi2)}`); } renderAll();
+  openWordEdit(bi2, n.t + chipFull(n, g)); S.selChip = { bi: bi2, id: n.id }; renderStrips(); renderPalette(); renderNav();
 }
 /* 𝄽 on the keyboard: a rest chip at the entry spot (or the rest sign typed into the chip being edited) */
 function weRestChip() {
@@ -9213,7 +9221,8 @@ function renderWeKeys() {
   const deck = deckMode();
   if (!deck) {                                                                              // one piece: the rows, then the bottom row
     rows.forEach(r => { const d = el("div", { class: "krow" }); d.append(...r); k.append(d); });
-    const bottom = el("div", { class: "krow bottom" }); bottom.append(symKey(), accKey(), spaceKey(), backKey(), panelKey()); k.append(bottom);   // BACKSPACE beside the space bar, which gives up a third of its width to it
+    const bottom = el("div", { class: "krow bottom" }); bottom.append(symKey(), accKey(), spaceKey(), backKey()); k.append(bottom);
+    { let pt = box.querySelector(":scope > button.panelTab"); if (!pt) { pt = el("button", { class: "panelTab", title: "Hide or show the tool panel" }); pt.addEventListener("pointerdown", e => e.preventDefault()); pt.addEventListener("click", e => { e.preventDefault(); box.querySelector(".weRow button.panelk").click(); }); box.append(pt); } pt.textContent = wePanelHidden ? "SHOW PANEL" : "HIDE PANEL"; }   // HIDE PANEL: a tab standing on the keyboard's top left corner, over q and w   // BACKSPACE beside the space bar, which gives up a third of its width to it
   } else {                                                                                  // two halves, parted between t | y, g | h, v | b and the space bar, each with a grip at its outer top corner
     const L = el("div", { class: "half l" }), R = el("div", { class: "half r" });
     const blank1 = () => el("div", { class: "blankk one", "aria-hidden": "true" }), isOldBlank = k => k.classList.contains("blankk") && !k.classList.contains("one"), isShift = k => k.classList.contains("shiftk");
@@ -9607,6 +9616,7 @@ function keepStripClear() {
   requestAnimationFrame(() => {
     const box = $("wordEdit"), strip = $("lyrStrip"); if (!box.classList.contains("on")) return;
     const kr = box.getBoundingClientRect(), sr = strip.getBoundingClientRect();
+    if (!deckMode()) $("app").style.setProperty("--kbH", Math.round(window.innerHeight - kr.top) + "px");   // the phone: the page padded below by the keyboard's height, so the strip can always scroll clear of it
     if (S.kbPos) return;                                                   // floating: the user put it where they want it
     if (sr.bottom > kr.top - 6) window.scrollBy(0, sr.bottom - (kr.top - 6));
   });
