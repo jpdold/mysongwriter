@@ -461,12 +461,14 @@ text.clef, text.smufl { user-select: none; }
 #rhyToggle { display: none; grid-column: 3; grid-row: 1; align-self: center; width: 30px; height: 24px; padding: 0; flex-direction: column; align-items: center; justify-content: center; gap: 1px; font-size: 6.3px; font-weight: 800; letter-spacing: .04em; line-height: 1.1; background: linear-gradient(#a6e06a, var(--tag)); color: var(--tag-ink); border: 1px solid #3a8a1e; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,.3); }   /* the phone: SHOW / HIDE RHYTHM in the strip's right margin, as on the deck's tool bar */
 #app:not(.deck) #rhyToggle { display: flex; }
 #lyrGuide { position: absolute; z-index: 4; width: 0; opacity: .85; pointer-events: none; }   /* the phone's lyric guide: thin, dashed, taps pass through it to the stave; drawn in two segments, the stave's and the strip's */
-#lyrGuide .segA, #lyrGuide .segB { position: absolute; left: 0; top: 0; width: 0; border-left: 2px dashed #111; } #lyrGuide .segA[hidden], #lyrGuide .segB[hidden] { display: none; }
-#lyrGuide.push .segA, #lyrGuide.push .segB { border-left-color: #e02020; } #lyrGuide.push .knob { background: #e02020; }   /* PUSH on: the line and its knob in red */
+#lyrGuide .seg { position: absolute; left: 0; width: 0; border-left: 2px dashed #111; }
+#lyrGuide.push .seg { border-left-color: #e02020; } #lyrGuide.push .knob { background: #e02020; }   /* PUSH on: the line and its knob in red */
+#lyrGuide .pushTag { position: absolute; left: 10px; top: -20px; height: 16px; padding: 0 5px; border: 1.5px solid #141414; border-radius: 3px; background: #fff; color: #111; font-family: var(--sans); font-size: 7px; font-weight: 900; letter-spacing: .08em; pointer-events: auto; touch-action: manipulation; box-shadow: 0 1px 3px rgba(0,0,0,.4); }   /* the PUSH tag beside the knob: the way in, right where the line is */
+#lyrGuide.push .pushTag { background: #e02020; color: #fff; border-color: #7a1410; }
 #lyrGuide .knob { position: absolute; left: -8px; top: -18px; width: 14px; height: 14px; border-radius: 50%; background: #111; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.5); pointer-events: auto; cursor: ew-resize; touch-action: none; }   /* the knob above the top line: drag it sideways */
 #lyrGuide .knob::before { content: ""; position: absolute; left: -8px; top: -8px; right: -8px; bottom: -8px; }
 #lyrGuide[hidden] { display: none; }
-#lyrGuide.deck { z-index: 75; opacity: .95; } #lyrGuide.deck .segA, #lyrGuide.deck .segB { border-left-color: #f5a623; } #lyrGuide.deck .knob { display: none; }   /* the deck's guide: amber, over the keyboard's plane, with no knob: it stands where the entry box is */
+#lyrGuide.deck { z-index: 75; opacity: .95; } #lyrGuide.deck .seg { border-left-color: #f5a623; } #lyrGuide.deck .knob, #lyrGuide.deck .pushTag { display: none; }   /* the deck's guide: amber, over the keyboard's plane, with no knob: it stands where the entry box is */
 #app:not(.deck).norhy #rhyStrip .tag, #app:not(.deck).norhy #rhyStrip .body { display: none; }
 /* the tool bar, in thirds, each flipping on its own: the left between its tools (UNDO / REDO, MOVE / DELETE, PITCH, ITEM) and the
    staff-lines switch; the middle between playback and this part's buttons; the right between four palettes — notes (the quick
@@ -7808,6 +7810,7 @@ function renderWindows() {
     drawPartBar(svg, g, bi, part, color, win);
     }
     svg.append(svgEl("line", { id: win + "Head", x1: -5, x2: -5, y1: 0, y2: g.H, stroke: css("--accent"), "stroke-width": 2, "pointer-events": "none" }));
+    drawPushBoxes(svg, g, win);
   }
   if (!deckMode() && !S.homed) { S.homed = true; let moved = false; for (const w of ["mel", "acc", "bass"]) { const h = focusHome(w); if (viewOf(w) !== h) { S.song.view[WIN_LO[w]] = h; moved = true; } } if (moved) { renderWindows(); return; } }   // the phone's first draw: every stave at its five lines' home
   for (const w of ["mel", "acc", "bass"]) { if (S.winState[w] !== "closed" && GEO[w]) placeFocusReturn(GEO[w], w); else { const rb = $(w + "Win").querySelector(".retBtn"); if (rb) rb.hidden = true; } placeDoors(w); }
@@ -7940,7 +7943,8 @@ function renderStrips() {
    words up on; dragged sideways it steps by sixteenths of a beat, and it starts at beat 1 of the first bar in view */
 function placeLyrGuide() {
   let gd = $("lyrGuide");
-  if (!gd) { gd = el("div", { id: "lyrGuide" }, el("div", { class: "segA" }), el("div", { class: "segB" }), el("div", { class: "knob", title: "Drag: a guide to line the words up on — it steps by sixteenths; with PUSH on, what stands on it goes along" })); $("app").append(gd);   // the line lets taps through to the stave; the knob at its top is what is dragged; two segments, the stave's and the strip's, so either can be hidden
+  if (!gd) { gd = el("div", { id: "lyrGuide" }, el("div", { class: "segs" }), el("div", { class: "knob", title: "Drag: a guide to line the words up on — it steps by sixteenths; with PUSH on, what stands on it goes along" }), el("button", { class: "pushTag", title: "PUSH: the line takes whatever stands on it along as it is dragged — tap to engage, tap again to finish", onclick: e => { e.stopPropagation(); S.push ? pushEnd() : pushStart(); } }, "PUSH")); $("app").append(gd);   // the line lets taps through to the stave; the knob at its top is what is dragged; the line is drawn in segments, one to each stave and one to the strips, so any can be hidden; the PUSH tag beside the knob engages the push
+    gd.querySelector(".pushTag").addEventListener("pointerdown", e => e.stopPropagation());
     let d = null;
     gd.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); try { gd.setPointerCapture(e.pointerId); } catch (x) {} d = { id: e.pointerId }; });
     gd.addEventListener("pointermove", e => { if (!d || e.pointerId !== d.id || !GEO.mel) return; const g = GEO.mel, sr = $("melSvg").getBoundingClientRect(), at = g.at(e.clientX - sr.left);
@@ -7953,15 +7957,21 @@ function placeLyrGuide() {
   gd.hidden = !show; gd.classList.toggle("deck", deckShow); if (!show) return;
   if (deckShow) { const ar = $("app").getBoundingClientRect(), sr = $("melSvg").getBoundingClientRect(), fr = $("melWin").querySelector(".frame").getBoundingClientRect(), lr = lyrBody.getBoundingClientRect();
     const bi = g.bars.includes(WE.bi) ? WE.bi : g.bars[0], x = sr.left + g.x(bi, Math.min(WE.t, barBeats(bi)));
-    gd.style.left = Math.round(x - ar.left) + "px"; gd.style.top = Math.round(fr.top - ar.top) + "px"; gd.style.height = Math.max(0, Math.round(lr.bottom - fr.top)) + "px"; return; }
+    gd.style.left = Math.round(x - ar.left) + "px"; gd.style.top = Math.round(fr.top - ar.top) + "px"; gd.style.height = Math.max(0, Math.round(lr.bottom - fr.top)) + "px"; gd.querySelector(".segs").replaceChildren(el("div", { class: "seg", style: `top:0;height:${Math.max(0, Math.round(lr.bottom - fr.top))}px` })); return; }
   if (!S.guide || !g.bars.includes(S.guide.bi)) S.guide = { bi: g.bars[0], t: 0 };
   const ar = $("app").getBoundingClientRect(), sr = $("melSvg").getBoundingClientRect(), lr = lyrBody.getBoundingClientRect();
   const bs = g.dia ? focusBandSteps("mel") : null, yTop = g.dia ? g.yS(bs[bs.length - 1][1]) : g.y(focusRange("mel")[1]);
   const x = sr.left + g.x(S.guide.bi, Math.min(S.guide.t, barBeats(S.guide.bi))), top = sr.top + yTop, bottom = lr.bottom;
   gd.style.left = Math.round(x - ar.left) + "px"; gd.style.top = Math.round(top - ar.top) + "px"; gd.style.height = Math.max(0, Math.round(bottom - top)) + "px";
-  { const segA = gd.querySelector(".segA"), segB = gd.querySelector(".segB"), fr = $("melWin").querySelector(".frame").getBoundingClientRect();   // the stave's segment down to the frame's foot, the strip's from there
-    const split = Math.max(0, Math.round(fr.bottom - top)); segA.style.height = split + "px"; segB.style.top = split + "px"; segB.style.height = Math.max(0, Math.round(bottom - top) - split) + "px";
-    const picked = pushPicked(); segA.hidden = !!S.push && !picked.some(it => it.kind === "ev"); segB.hidden = !!S.push && !picked.some(it => it.kind === "chip"); gd.classList.toggle("push", !!S.push); }
+  { const picked = pushPicked(), segs = [], fr = $("melWin").querySelector(".frame").getBoundingClientRect();
+    segs.push({ top, bottom: fr.bottom, on: !S.push || picked.some(it => it.kind === "ev" && (it.part === "melody" || it.part === GRAND_LOWER)) });   // the melody stave, from the five lines' top
+    segs.push({ top: fr.bottom, bottom: lr.bottom, on: !S.push || picked.some(it => it.kind === "chip") });                                            // the strips
+    let low = lr.bottom;
+    for (const w of ["acc", "bass"]) { const win = $(w + "Win"); if (S.winState[w] === "closed" || !win.offsetHeight) continue; const f = win.querySelector(".frame").getBoundingClientRect(); if (!f.height) continue;   // the accompaniment and bass staves below, when open
+      segs.push({ top: f.top, bottom: f.bottom, on: !S.push || picked.some(it => it.kind === "ev" && it.part === WIN_PART[w]) }); low = Math.max(low, f.bottom); }
+    gd.style.height = Math.max(0, Math.round(low - top)) + "px";
+    const box = gd.querySelector(".segs"); box.replaceChildren(...segs.filter(sg => sg.on && sg.bottom > sg.top).map(sg => el("div", { class: "seg", style: `top:${Math.round(sg.top - top)}px;height:${Math.round(sg.bottom - sg.top)}px` })));
+    gd.classList.toggle("push", !!S.push); gd.querySelector(".pushTag").textContent = S.push ? "PUSH ON" : "PUSH"; }
 }
 function placeWinHeads() {
   placeLyrGuide();
@@ -8077,7 +8087,7 @@ const pushOn = () => !!S.push;
 function pushKey(it) { return it.kind + ":" + it.bi + ":" + (it.part || "") + ":" + it.id; }
 function pushFlushItems(bi, t) {                                                          // everything whose start or end stands on the line at t, in bar bi
   const bar = S.song.bars[bi], out = [], near = (a, b) => Math.abs(a - b) < 1 / 64 + 1e-6, g = stripGeo();
-  const parts = ["melody", ...(grandLower("mel") ? [GRAND_LOWER] : [])];
+  const parts = ["melody", ...(grandLower("mel") ? [GRAND_LOWER] : []), ...["acc", "bass"].filter(w => S.winState[w] !== "closed").map(w => WIN_PART[w])];   // the melody (and the left hand on a Grand Stave), and the accompaniment and bass when their windows are open
   for (const part of parts) for (const c of chains(bar, part)) { if (near(c.t, t) || near(c.t + c.d, t)) out.push({ kind: "ev", bi, part, id: c.head.id, side: near(c.t, t) ? "r" : "l" }); }
   for (const c of bar.chips || []) { if (c.gap && !c.text) continue; const end = c.t + chipFull(c, g); if (near(c.t, t) || near(end, t)) out.push({ kind: "chip", bi, id: c.id, side: near(c.t, t) ? "r" : "l" }); }
   return out;
@@ -8118,8 +8128,8 @@ function pushMove(t) {                                                          
   P.t = r3(P.t + d); S.guide = { bi: P.bi, t: P.t };
 }
 function drawPushBoxes(svg, g, win) {                                                     // the red boxes on the stave: round each picked note, rest or chord, its edge on the line
-  if (!S.push || win !== "mel") return; const bi = S.push.bi; if (!g.bars.includes(bi)) return; const bar = S.song.bars[bi], lx = g.x(bi, S.push.t);
-  for (const it of pushPicked()) { if (it.kind !== "ev") continue; const e = (bar.ev[it.part] || []).find(x => x.id === it.id); if (!e) continue; const c = chainOf(bar, e, it.part) || { t: e.t, d: e.d, members: [e], head: e };
+  if (!S.push) return; const bi = S.push.bi; if (!g.bars.includes(bi)) return; const bar = S.song.bars[bi], lx = g.x(bi, S.push.t), mine = win === "mel" ? ["melody", GRAND_LOWER] : [WIN_PART[win]];
+  for (const it of pushPicked()) { if (it.kind !== "ev" || !mine.includes(it.part)) continue; const e = (bar.ev[it.part] || []).find(x => x.id === it.id); if (!e) continue; const c = chainOf(bar, e, it.part) || { t: e.t, d: e.d, members: [e], head: e };
     const x0 = g.x(bi, c.t), x1 = g.x(bi, c.t + c.d), ms = c.members.filter(m => m.m != null && !m.rest).map(m => m.m);
     let y0, y1; if (ms.length) { const ys = ms.map(m => g.y(m)); y0 = Math.min(...ys) - g.step * 1.6; y1 = Math.max(...ys) + g.step * 1.6; } else { const [a, b] = focusRange(win); y0 = g.y(b) - g.step; y1 = g.y(a) + g.step; }
     const left = it.side === "r" ? lx : Math.min(x0, lx), right = it.side === "l" ? lx : Math.max(x1, lx);   // the box's edge flush on the line
