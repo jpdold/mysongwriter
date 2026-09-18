@@ -8131,7 +8131,7 @@ const pushHas = (kind, bi, part, id) => !!S.push && pushPicked().some(it => it.k
 function pushRange(it, bar) {                                                              // how far this item may be drawn either side of its time, in beats: inside its beat lane
   const g = GEO[pushWin()] || stripGeo();
   if (it.kind === "ev") { const e = (bar.ev[it.part] || []).find(x => x.id === it.id); if (!e) return [0, 0]; const b0 = Math.floor(e.t + 1e-6), half = (headGeom(g).rx + 2) / g.beatPx; return [b0 - e.t - half, Math.max(b0 - e.t - half, b0 + 1 - e.t - half)]; }   // the head's centre inside the lane
-  const c = bar.chips.find(x => x.id === it.id); if (!c) return [0, 0]; const b0 = Math.floor(c.t + 1e-6), w = chipBeats(c, stripGeo()), slack = 4 / stripGeo().beatPx; return [b0 - c.t - slack, Math.max(b0 - c.t - slack, b0 + 1 - c.t - w)];
+  const c = bar.chips.find(x => x.id === it.id); if (!c) return [0, 0]; const b0 = Math.floor(c.t + 1e-6), slack = 4 / stripGeo().beatPx; return [b0 - c.t - slack, b0 + 1 - c.t - slack];   // a chip's left edge stays inside its beat lane, however wide the chip (its width had been counted against the lane, and a wide chip pinned the line to a couple of pixels)
 }
 function pushMove(t) {                                                                    // the line to t: the picked items are drawn along with it, as far as every one of them may go inside its beat
   const P = S.push; if (!P || t === P.t) return; const bar = S.song.bars[P.bi], picked = pushPicked();
