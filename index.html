@@ -463,12 +463,13 @@ text.clef, text.smufl { user-select: none; }
 #lyrGuide { position: absolute; z-index: 4; width: 0; opacity: .85; pointer-events: none; }   /* the phone's lyric guide: thin, dashed, taps pass through it to the stave; drawn in two segments, the stave's and the strip's */
 #lyrGuide .seg { position: absolute; left: 0; width: 0; border-left: 2px dashed #111; }
 #lyrGuide.push .seg { border-left-color: #e02020; } #lyrGuide.push .knob { background: #e02020; }   /* PUSH on: the line and its knob in red */
+#lyrGuide .knob.foot { top: auto; bottom: -18px; } #lyrGuide .pushTag.foot { top: auto; bottom: -20px; }   /* the foot's handle and tag, mirroring the top's */
 #lyrGuide .pushTag { position: absolute; left: 10px; top: -20px; height: 16px; padding: 0 5px; border: 1.5px solid #141414; border-radius: 3px; background: #fff; color: #111; font-family: var(--sans); font-size: 7px; font-weight: 900; letter-spacing: .08em; pointer-events: auto; touch-action: manipulation; box-shadow: 0 1px 3px rgba(0,0,0,.4); }   /* the PUSH tag beside the knob: the way in, right where the line is */
 #lyrGuide.push .pushTag { background: #e02020; color: #fff; border-color: #7a1410; }
 #lyrGuide .knob { position: absolute; left: -8px; top: -18px; width: 14px; height: 14px; border-radius: 50%; background: #111; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.5); pointer-events: auto; cursor: ew-resize; touch-action: none; }   /* the knob above the top line: drag it sideways */
 #lyrGuide .knob::before { content: ""; position: absolute; left: -8px; top: -8px; right: -8px; bottom: -8px; }
 #lyrGuide[hidden] { display: none; }
-#lyrGuide.deck { z-index: 75; opacity: .95; } #lyrGuide.deck .seg { border-left-color: #f5a623; } #lyrGuide.deck .knob, #lyrGuide.deck .pushTag { display: none; }
+#lyrGuide.deck { z-index: 75; opacity: .95; } #lyrGuide.deck .seg { border-left-color: #f5a623; } #lyrGuide.deck .knob, #lyrGuide.deck .pushTag { display: none !important; }
 #app.deck #lyrGuide:not(.deck) { z-index: 9; }   /* the wide screen's draggable guide (outside the lyrics screen): over the stave and the strips */   /* the deck's guide: amber, over the keyboard's plane, with no knob: it stands where the entry box is */
 #app:not(.deck).norhy #rhyStrip .tag, #app:not(.deck).norhy #rhyStrip .body { display: none; }
 /* the tool bar, in thirds, each flipping on its own: the left between its tools (UNDO / REDO, MOVE / DELETE, PITCH, ITEM) and the
@@ -7946,8 +7947,9 @@ function renderStrips() {
    words up on; dragged sideways it steps by sixteenths of a beat, and it starts at beat 1 of the first bar in view */
 function placeLyrGuide() {
   let gd = $("lyrGuide");
-  if (!gd) { gd = el("div", { id: "lyrGuide" }, el("div", { class: "segs" }), el("div", { class: "knob", title: "Drag: a guide to line the words up on — it steps by sixteenths; with PUSH on, what stands on it goes along" }), el("button", { class: "pushTag", title: "PUSH: the line takes whatever stands on it along as it is dragged — tap to engage, tap again to finish", onclick: e => { e.stopPropagation(); S.push ? pushEnd() : pushStart(); } }, "PUSH")); $("app").append(gd);   // the line lets taps through to the stave; the knob at its top is what is dragged; the line is drawn in segments, one to each stave and one to the strips, so any can be hidden; the PUSH tag beside the knob engages the push
-    gd.querySelector(".pushTag").addEventListener("pointerdown", e => e.stopPropagation());
+  if (!gd) { gd = el("div", { id: "lyrGuide" }, el("div", { class: "segs" }), el("div", { class: "knob", title: "Drag: a guide to line the words up on — it steps by sixteenths; with PUSH on, what stands on it goes along" }), el("button", { class: "pushTag", title: "PUSH: the line takes whatever stands on it along as it is dragged — tap to engage, tap again to finish", onclick: e => { e.stopPropagation(); S.push ? pushEnd() : pushStart(); } }, "PUSH"),
+      el("div", { class: "knob foot", title: "Drag: the guide line, from its foot" }), el("button", { class: "pushTag foot", title: "PUSH: the line takes whatever stands on it along as it is dragged — tap to engage, tap again to finish", onclick: e => { e.stopPropagation(); S.push ? pushEnd() : pushStart(); } }, "PUSH")); $("app").append(gd);   // a handle at each end: a knob to drag by and a PUSH tag beside it, so the line is found and worked from its top or its foot   // the line lets taps through to the stave; the knob at its top is what is dragged; the line is drawn in segments, one to each stave and one to the strips, so any can be hidden; the PUSH tag beside the knob engages the push
+    gd.querySelectorAll(".pushTag").forEach(t => t.addEventListener("pointerdown", e => e.stopPropagation()));
     let d = null;
     gd.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); try { gd.setPointerCapture(e.pointerId); } catch (x) {} d = { id: e.pointerId }; });
     gd.addEventListener("pointermove", e => { const w = pushWin(); if (!d || e.pointerId !== d.id || !GEO[w]) return; const g = GEO[w], sr = $(w + "Svg").getBoundingClientRect(), at = g.at(e.clientX - sr.left);
@@ -7975,7 +7977,7 @@ function placeLyrGuide() {
       segs.push({ top: f.top, bottom: f.bottom, on: !S.push || picked.some(it => it.kind === "ev" && it.part === WIN_PART[w]) }); low = Math.max(low, f.bottom); }
     gd.style.height = Math.max(0, Math.round(low - top)) + "px";
     const box = gd.querySelector(".segs"); box.replaceChildren(...segs.filter(sg => sg.on && sg.bottom > sg.top).map(sg => el("div", { class: "seg", style: `top:${Math.round(sg.top - top)}px;height:${Math.round(sg.bottom - sg.top)}px` })));
-    gd.classList.toggle("push", !!S.push); gd.querySelector(".pushTag").textContent = S.push ? "PUSH ON" : "PUSH"; }
+    gd.classList.toggle("push", !!S.push); gd.querySelectorAll(".pushTag").forEach(t => { t.textContent = S.push ? "PUSH ON" : "PUSH"; }); }
 }
 function placeWinHeads() {
   placeLyrGuide();
