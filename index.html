@@ -7954,11 +7954,11 @@ function placeLyrGuide() {
     gd.querySelectorAll(".pushTag").forEach(t => t.addEventListener("pointerdown", e => e.stopPropagation()));
     gd.addEventListener("touchstart", e => { if (!e.target.closest(".pushTag")) e.preventDefault(); }, { passive: false }); gd.addEventListener("touchmove", e => e.preventDefault(), { passive: false });   // a touch on the line is the line's: no page scroll or swipe starts from it
     let d = null;
-    gd.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); try { gd.setPointerCapture(e.pointerId); } catch (x) {} d = { id: e.pointerId }; });
-    gd.addEventListener("pointermove", e => { const w = pushWin(); if (!d || e.pointerId !== d.id || !GEO[w]) return; const g = GEO[w], sr = $(w + "Svg").getBoundingClientRect(), at = g.at(e.clientX - sr.left);
+    gd.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); d = { id: e.pointerId }; try { e.target.setPointerCapture(e.pointerId); } catch (x) {} });   // the finger's own target (the grab strip or a knob) holds the pointer; the moves are read at the window, so the drag goes on wherever the finger wanders
+    window.addEventListener("pointermove", e => { const w = pushWin(); if (!d || e.pointerId !== d.id || !GEO[w]) return; const g = GEO[w], sr = $(w + "Svg").getBoundingClientRect(), at = g.at(e.clientX - sr.left);
       if (S.push) { if (at.bi !== S.push.bi) return; const t = clamp(at.t, 0, barBeats(at.bi)); pushMove(t); renderWindows(); renderStrips(); placeLyrGuide(); return; }   // PUSH: the line runs free, pixel by pixel, and the picked items are drawn along with it inside their beats
       S.guide = { bi: at.bi, t: Math.round(at.t * 4) / 4 }; placeLyrGuide(); });
-    const end = e => { if (d && e.pointerId === d.id) d = null; }; gd.addEventListener("pointerup", end); gd.addEventListener("pointercancel", end); }
+    const end = e => { if (d && e.pointerId === d.id) d = null; }; window.addEventListener("pointerup", end); window.addEventListener("pointercancel", end); }
   const g = GEO.mel, lyrBody = $("lyrStrip").querySelector(".body");
   const deckShow = deckMode() && WE.on && S.lyrGuide && !!g && $("melWin").offsetHeight > 0 && lyrBody.offsetHeight > 0 && S.winState.mel !== "closed";   // the deck's lyrics screen: a guide at the chip's left edge (where the entry box stands, or the chip in it) from the stave's top to the strip's foot, so the words are lined up on the beat by eye
   const pw = pushWin(), gp = GEO[pw], pwin = $(pw + "Win");
