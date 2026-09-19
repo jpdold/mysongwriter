@@ -783,25 +783,31 @@ body.kbOpen #lyrEdit, #app.deck.kbUp #lyrEdit { display: none !important; }   /*
   background-image: radial-gradient(circle at 42% 38%, #f2f2f2 0.9px, transparent 1.3px), radial-gradient(circle at 50% 50%, #a8a8a8 2.1px, #6a6a6a 2.5px, transparent 3px);
   background-size: 9px 8px; background-position: 0 0, 0 0; }
 #quick.float .qctl { grid-row: 2 / 5; }
-/* Tune dimensions: two samples side by side (as it is, as it would be), each with its limits under it, and three wheels beneath */
-.tune { --tn: #c9c9c9; } .tune .tnPanels { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 460px; margin: 4px auto 6px; }
-.tune .tnCap { width: 84%; margin: 0 auto; border: 2px solid #111; border-bottom: none; background: var(--tn); font-size: 9.5px; font-weight: 700; letter-spacing: .04em; text-align: center; padding: 2px 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tune .tnFrame { border: 2px solid #111; background: var(--tn); }
-.tune .tnPanel .tnFrame { display: grid; grid-template-rows: 1fr auto; aspect-ratio: 1 / 1; max-height: 40vh; padding: 6px; gap: 4px; min-width: 0; }
-.tune .tnBox { min-height: 0; min-width: 0; overflow: hidden; display: grid; place-items: center; } .tune .tnBox svg { display: block; }
-.tune .tnLim { min-height: 16px; border: 2px solid #111; font-size: 8.5px; font-weight: 800; letter-spacing: .05em; text-align: center; padding: 2px 3px; line-height: 1.25; color: #111; } .tune .tnLim:empty { visibility: hidden; }
-.tune .tnNote { text-align: center; margin: 0 0 8px; }
-.tune .tnHug { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; max-width: 460px; margin: 0 auto 8px; min-height: 26px; padding: 3px 6px; border: 2px solid #111; border-radius: 0; background: var(--tn); color: #111; font-size: 8.5px; font-weight: 800; letter-spacing: .05em; } .tune .tnHug .dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid #111; background: #fff; flex: 0 0 auto; } .tune .tnHug.on { background: #cfe3ff; } .tune .tnHug.on .dot { background: #2f7fd6; }
-.tune .tnCtl.idle { opacity: .4; }
-.tune .tnWheels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 460px; margin: 0 auto; }
-.tune .tnCtl .tnCap { width: 100%; font-size: 8.5px; letter-spacing: 0; }
-.tune .tnCtl .tnFrame { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 4px; padding: 6px 6px; height: 104px; box-shadow: inset 0 0 0 3px #d9d9d9, inset 0 0 0 4px #9a9a9a; }
-.tune .tnIco { height: 84px; width: 100%; max-width: 46px; justify-self: center; }
-.tune .tnCol { display: grid; grid-template-rows: 1fr 1fr; height: 84px; } .tune .tnArr { width: 22px; padding: 0; border: none; background: transparent; color: #111; font-size: 15px; line-height: 1; } .tune .tnArr:disabled { opacity: .22; }
-.tune .tnWheel { width: 30px; height: 64px; border: 2.5px solid #1b2a4a; border-radius: 9px / 16px; touch-action: none; cursor: ns-resize;
-  background: linear-gradient(rgba(0,0,0,.72), rgba(0,0,0,0) 22%, rgba(255,255,255,.28) 50%, rgba(0,0,0,0) 78%, rgba(0,0,0,.72)), repeating-linear-gradient(#e9e9e9 0 2px, #2a2a2a 2px 5px); background-repeat: no-repeat, repeat; box-shadow: 2px 0 0 #3a4f7a inset, 0 1px 3px rgba(0,0,0,.5); }
-.tune .tnCtl.stop .tnFrame { animation: tnStop .28s; } @keyframes tnStop { 0%, 100% { background: var(--tn); } 40% { background: #f0b4ae; } }
-@media (max-width: 420px) { .tune .tnCtl .tnFrame { padding: 5px 3px; gap: 2px; } .tune .tnWheel { width: 26px; } .tune .tnArr { width: 18px; } }
+/* Tune dimensions: the app's own graphite and silver — two samples on paper under black caps (as it is, as it would be), three silver wheel plates, and one row of keys. Nothing in it
+   scrolls or lets a touch through: the whole window is touch-action none, and it is laid out to fit the screen (upright: stacked; a short wide screen: samples and wheels side by side) */
+#modal.tuneM { background: var(--ground); color: var(--on-ground); border: 1.5px solid #141414; padding: 8px 10px calc(10px + env(safe-area-inset-bottom)); overflow: hidden; max-height: none; user-select: none; -webkit-user-select: none; touch-action: none; }
+.tune { display: grid; gap: 7px; touch-action: none; } .tune * { touch-action: none; }
+.tune .tnHead { display: flex; align-items: center; justify-content: space-between; font-size: 9px; font-weight: 800; letter-spacing: .16em; }
+.tune .tnPanels { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; min-width: 0; }
+.tune .tnPanel { display: grid; grid-template-rows: auto 1fr auto; min-width: 0; border: 1.5px solid #141414; border-radius: 5px; overflow: hidden; background: #fbf8f1; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
+.tune .tnCap { height: 12px; line-height: 12px; background: #111; color: #fff; font-size: 6.5px; font-weight: 800; letter-spacing: .18em; text-align: center; white-space: nowrap; overflow: hidden; }
+.tune .tnBox { position: relative; height: clamp(84px, 24vh, 150px); min-width: 0; overflow: hidden; } .tune .tnBox svg { display: block; position: absolute; inset: 0; }
+.tune .tnPct { position: absolute; right: 4px; bottom: 2px; font-size: 7px; font-weight: 700; color: #888; }
+.tune .tnLim { min-height: 13px; padding: 1px 3px 2px; font-size: 7px; font-weight: 800; letter-spacing: .06em; line-height: 1.2; text-align: center; color: #b3261e; }
+.tune .tnWheels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; min-width: 0; }
+.tune .tnCtl { display: grid; grid-template-rows: auto 1fr; min-width: 0; border: 1.5px solid #141414; border-radius: 5px; overflow: hidden; background: linear-gradient(var(--sv-hi), var(--sv-lo2)); box-shadow: 0 2px 4px rgba(0,0,0,.4); cursor: ns-resize; }
+.tune .tnCtl.idle { opacity: .4; pointer-events: none; }
+.tune .tnFace { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 3px; padding: 5px 6px; height: clamp(72px, 22vh, 100px); box-sizing: border-box; box-shadow: inset 0 1px 0 rgba(255,255,255,.7); }
+.tune .tnIco { height: 100%; width: 100%; max-width: 44px; min-height: 0; justify-self: center; }
+.tune .tnCol { display: grid; grid-template-rows: 1fr 1fr; height: 100%; } .tune .tnArr { width: 24px; padding: 0; border: none; background: transparent; color: #111; font-size: 14px; line-height: 1; box-shadow: none; } .tune .tnArr:disabled { opacity: .2; } .tune .tnArr:active { color: #f5a623; }
+.tune .tnWheel { width: 28px; height: 100%; max-height: 66px; box-sizing: border-box; border: 2px solid #141414; border-radius: 9px / 16px;
+  background: linear-gradient(rgba(0,0,0,.72), rgba(0,0,0,0) 22%, rgba(255,255,255,.28) 50%, rgba(0,0,0,0) 78%, rgba(0,0,0,.72)), repeating-linear-gradient(#e9e9e9 0 2px, #2a2a2a 2px 5px); background-repeat: no-repeat, repeat; box-shadow: 0 1px 3px rgba(0,0,0,.5); }
+.tune .tnCtl.stop { animation: tnStop .28s; } @keyframes tnStop { 40% { filter: sepia(1) saturate(4) hue-rotate(-35deg); } }
+.tune .tnFoot { display: flex; gap: 6px; } .tune .tnBtn { height: 28px; padding: 0 10px; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(var(--sv-hi), var(--sv-lo2)); color: #111; font-family: var(--sans); font-size: 8px; font-weight: 800; letter-spacing: .08em; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.7); }
+.tune .tnBtn:active { background: linear-gradient(#ffd27a, #f5a623); } .tune .tnBtn:disabled { opacity: .4; } .tune .tnBtn.go, .tune .tnBtn.hug.on { background: linear-gradient(#6fb3ff, #2f7fd6); color: #fff; }
+.tune .tnBtn.hug { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; gap: 6px; } .tune .tnBtn.hug .dot { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid currentColor; } .tune .tnBtn.hug.on .dot { background: #fff; }
+.tune .tnBtn.x { width: 26px; height: 22px; padding: 0; font-size: 11px; }
+@media (max-height: 520px) and (min-aspect-ratio: 5/4) { #modal.tuneM { max-width: 720px; } .tune { grid-template-columns: 1fr 1fr; } .tune .tnHead, .tune .tnFoot { grid-column: 1 / -1; } .tune .tnBox { height: clamp(84px, 40vh, 150px); } .tune .tnFace { height: 100%; } .tune .tnWheel { max-height: 80px; } }
 /* the line's bar (the phone): under the melody stave and its strips, above the accompaniment — a slider whose grip stands exactly under the line, and the line's controls.
    The line itself: wide white dashes with a blue glow, over the five lines of each stave alone */
 #vlBar { grid-area: vl; display: grid; gap: 5px; min-width: 0; }
@@ -5887,7 +5893,7 @@ function playBar(bi) { startPlayback([bi]); }
    SECTION 11 · MODALS — song setup, chord builder, sections, menu, share
    ═══════════════════════════════════════════════════════════════════════ */
 function openModal(title, body, foot) {
-  const m = $("modal"); m.replaceChildren();
+  const m = $("modal"); m.replaceChildren(); m.classList.remove("tuneM");
   if (title) m.append(el("div", { style: "display:flex;align-items:center;gap:8px" }, el("h3", { style: "flex:1" }, title), el("button", { class: "btn sm ghost", onclick: closeModal, "aria-label": "Close" }, "✕")));
   [body].flat().forEach(b => b && m.append(b));
   if (foot) m.append(el("div", { class: "mfoot" }, foot));
@@ -8245,19 +8251,19 @@ function tuneNext(win, v, spec, dir) {
   if (sp < TUNE_SP_MIN - 1e-6) return null; if (sp >= reg - 1e-6) sp = null;                 // as wide as Regular: it is Regular
   const nv = Object.assign({}, v, { sp }), o = tuneSim(win, nv); return tuneOk(o, from) ? nv : null;
 }
-const TUNE_SPECS = [["z", "Adjust Stave Line Spacing", "LINES"], ["nz", "Adjust Note Size", "SIZE"], ["sp", "Adjust Note Spacing", "SPACING"]];
+const TUNE_SPECS = [["z", "Adjust Stave Line Spacing", "LINES", "LINE SPACING"], ["nz", "Adjust Note Size", "SIZE", "NOTE SIZE"], ["sp", "Adjust Note Spacing", "SPACING", "NOTE SPACING"]];
 function tuneEnds(win, v) { const out = {}; for (const [k] of TUNE_SPECS) out[k] = { up: tuneNext(win, v, k, 1), dn: tuneNext(win, v, k, -1) }; return out; }
 function tuneLabel(ends, v) { const SPECS = TUNE_SPECS.filter(([k]) => !(v && v.hug && k === "nz")), say = (w, l) => l.length === SPECS.length ? w + " REACHED" : l.length ? w + " " + l.map(x => x[2]).join(" + ") + " REACHED" : "";   // every wheel at its end: MAX REACHED, as plainly as that
   return [say("MAX", SPECS.filter(([k]) => !ends[k].up)), say("MIN", SPECS.filter(([k]) => !ends[k].dn))].filter(Boolean).join(" · "); }
 /* the sample: five lines and two quarter notes a beat apart, at the stave's own measures times f (both samples share one f, so they are compared like for like) */
 function tuneSample(o, f, boxW, boxH) {
-  const sp = o.space * f, rx = o.rx * f, ry = o.ry * f, beat = o.beatPx * f, stem = o.stem * f, padX = Math.max(4, rx * 1.2), w = Math.min(boxW, beat + 2 * rx + 2 * padX + 2), h = 4 * sp, x0 = (boxW - w) / 2, y0 = (boxH - h) / 2;
-  const svg = svgEl("svg", { width: boxW, height: boxH, viewBox: `0 0 ${boxW} ${boxH}` }), lw = clamp(1.4 * f, 0.8, 2.2);
-  svg.append(svgEl("rect", { x: x0, y: y0, width: w, height: h, fill: "#f3f3f3", stroke: "#111", "stroke-width": lw }));
-  for (let k = 1; k < 4; k++) svg.append(svgEl("line", { x1: x0, x2: x0 + w, y1: y0 + k * sp, y2: y0 + k * sp, stroke: "#111", "stroke-width": lw }));
-  const note = (cx, cy, up) => { const sw = Math.max(1, ry * 0.32), sx = up ? cx + rx * 0.92 - sw / 2 : cx - rx * 0.92 + sw / 2;
+  const sp = o.space * f, rx = o.rx * f, ry = o.ry * f, beat = o.beatPx * f, stem = o.stem * f, padX = Math.max(4, rx * 1.2), w = Math.min(boxW - 2, beat + 2 * rx + 2 * padX + 2), h = 4 * sp, x0 = (boxW - w) / 2, y0 = (boxH - h) / 2;
+  const svg = svgEl("svg", { width: boxW, height: boxH, viewBox: `0 0 ${boxW} ${boxH}` }), lw = clamp(1.4 * f, 0.8, 2);
+  for (let k = 0; k < 5; k++) svg.append(svgEl("line", { x1: x0, x2: x0 + w, y1: y0 + k * sp, y2: y0 + k * sp, stroke: "#111", "stroke-width": lw }));
+  svg.append(svgEl("line", { x1: x0, x2: x0, y1: y0, y2: y0 + h, stroke: "#111", "stroke-width": lw }), svgEl("line", { x1: x0 + w, x2: x0 + w, y1: y0, y2: y0 + h, stroke: "#111", "stroke-width": lw }));
+  const note = (cx, cy, up) => { const sw = Math.max(1, ry * 0.3), sx = up ? cx + rx * 0.92 - sw / 2 : cx - rx * 0.92 + sw / 2;
     svg.append(svgEl("line", { x1: sx, x2: sx, y1: cy, y2: up ? cy - stem : cy + stem, stroke: "#000", "stroke-width": sw }), svgEl("ellipse", { cx, cy, rx, ry, fill: "#000", transform: `rotate(-20 ${cx} ${cy})` })); };
-  const xa = x0 + padX + rx + 1; note(xa, y0 + sp, false); note(Math.min(xa + beat, x0 + w - padX - rx), y0 + sp, true);   // both on the second line from the top: the one's stem down, the other's up
+  const xa = x0 + padX + rx + 1, yn = y0 + 1.5 * sp; note(xa, yn, false); note(Math.min(xa + beat, x0 + w - padX - rx), yn, true);   // both in a space, between two lines: the one's stem down, the other's up
   return svg;
 }
 function tuneIcon(kind) {
@@ -8272,45 +8278,44 @@ function tuneIcon(kind) {
   return s;
 }
 function openTune(winArg) {
-  const win = winArg || (deckMode() ? deckActive() : leadWin()), cur0 = tuneNow(win); let cur = cur0, pv = Object.assign({}, cur), ends = null;
+  const win = winArg || (deckMode() ? deckActive() : leadWin()); let cur = tuneNow(win), pv = Object.assign({}, cur), ends = null;
   const body = el("div", { class: "tune" }), same = () => pv.z === cur.z && pv.nz === cur.nz && pv.sp === cur.sp && !!pv.hug === !!cur.hug;
-  const panel = cap => { const box = el("div", { class: "tnBox" }), lim = el("div", { class: "tnLim" }); return { box, lim, node: el("div", { class: "tnPanel" }, el("div", { class: "tnCap" }, cap), el("div", { class: "tnFrame" }, box, lim)) }; };
-  const pc = panel("CURRENT"), pn = panel("PREVIEW NEW"), note = el("div", { class: "tiny tnNote" }), applyBtn = el("button", { class: "btn acc" }, "APPLY"), resetBtn = el("button", { class: "btn" }, "RESET");
+  const panel = cap => { const box = el("div", { class: "tnBox" }), lim = el("div", { class: "tnLim" }); return { box, lim, node: el("div", { class: "tnPanel" }, el("div", { class: "tnCap" }, cap), box, lim) }; };
+  const pc = panel("CURRENT"), pn = panel("PREVIEW"), applyBtn = el("button", { class: "tnBtn go" }, "APPLY"), resetBtn = el("button", { class: "tnBtn" }, "RESET"), closeBtn = el("button", { class: "tnBtn x", title: "Close", onclick: closeModal }, "✕");
   const wheels = {};
   /* heads that fill their space: as tall as the lines are apart, on every stave — the note-size wheel then rests, and the lines are drawn closer until a beat has room for the wider heads */
-  const hugBtn = el("button", { class: "tnHug", title: "Every note head as tall as its space, the lines above and below touching it (as engraved); the note size then follows the line spacing", onclick: () => { pv = Object.assign({}, pv, { hug: !pv.hug });
+  const hugBtn = el("button", { class: "tnBtn hug", title: "Every note head as tall as its space, the lines above and below touching it; the note size then follows the line spacing", onclick: () => { pv = Object.assign({}, pv, { hug: !pv.hug });
     if (pv.hug) for (let i = 0; i < 40 && tuneGuards(tuneSim(win, pv)).some(m => m < -1e-6); i++) { const nv = tuneNext(win, pv, "z", -1); if (!nv) break; pv = nv; }
-    draw(); } });
+    draw(); } }, el("span", { class: "dot" }), "HEADS FILL THE SPACE");
   const draw = () => {
     const oc = tuneSim(win, cur), on = tuneSim(win, pv); ends = tuneEnds(win, pv);
-    const bw = Math.max(90, pc.box.clientWidth || 150), bh = Math.max(90, pc.box.clientHeight || 150), need = o => [o.beatPx + 3.4 * o.rx + 10, 4 * o.space + 2 * Math.max(0, o.stem - o.space) + 8];
+    const bw = Math.max(80, pc.box.clientWidth || 150), bh = Math.max(70, pc.box.clientHeight || 120), need = o => [o.beatPx + 3.4 * o.rx + 12, 4 * o.space + 2 * Math.max(0, o.stem - 1.5 * o.space) + 10];
     const f = Math.min(1, ...[oc, on].flatMap(o => { const [w, h] = need(o); return [bw / w, bh / h]; }));
     pc.box.replaceChildren(tuneSample(oc, f, bw, bh)); pn.box.replaceChildren(tuneSample(on, f, bw, bh));
+    if (f < 0.995) { const pct = Math.round(f * 100) + "%"; pc.box.append(el("span", { class: "tnPct", title: "Both samples are drawn at this share of their true size" }, pct)); pn.box.append(el("span", { class: "tnPct" }, pct)); }
     pc.lim.textContent = tuneLabel(same() ? ends : tuneEnds(win, cur), cur); pn.lim.textContent = tuneLabel(ends, pv);
-    hugBtn.classList.toggle("on", !!pv.hug); hugBtn.replaceChildren(el("span", { class: "dot" }), pv.hug ? "NOTE HEADS FILL THEIR SPACE — THE LINES HUG THEM" : "NOTE HEADS FILL THEIR SPACE: OFF"); wheels.nz.node.classList.toggle("idle", !!pv.hug);
     for (const [k] of TUNE_SPECS) { wheels[k].up.disabled = !ends[k].up; wheels[k].dn.disabled = !ends[k].dn; }
-    const px = x => (Math.round(x * 10) / 10) + "px";
-    note.textContent = `${DECK_NAME[win].charAt(0) + DECK_NAME[win].slice(1).toLowerCase()} stave — lines ${px(oc.space)} → ${px(on.space)} apart · heads ${px(2 * oc.ry)} → ${px(2 * on.ry)} tall · a beat ${px(oc.beatPx)} → ${px(on.beatPx)} wide` + (f < 0.999 ? ` · both samples drawn at ${Math.round(f * 100)}%` : " · samples at actual size");
-    applyBtn.disabled = resetBtn.disabled = same();
+    hugBtn.classList.toggle("on", !!pv.hug); wheels.nz.node.classList.toggle("idle", !!pv.hug); applyBtn.disabled = resetBtn.disabled = same();
   };
   const turn = (k, dir) => { const nv = ends && ends[k][dir > 0 ? "up" : "dn"]; if (!nv) { const b = wheels[k].node; b.classList.remove("stop"); void b.offsetWidth; b.classList.add("stop"); return false; } pv = nv; draw(); return true; };
   const row = el("div", { class: "tnWheels" });
-  for (const [k, cap] of TUNE_SPECS) {
-    const up = el("button", { class: "tnArr", title: "More", onclick: () => turn(k, 1) }, "▲"), dn = el("button", { class: "tnArr", title: "Less", onclick: () => turn(k, -1) }, "▼"), wh = el("div", { class: "tnWheel", title: "Drag up or down" });
-    let d = null, roll = 0;
-    wh.addEventListener("pointerdown", e => { e.preventDefault(); d = { id: e.pointerId, y: e.clientY, acc: 0 }; try { wh.setPointerCapture(e.pointerId); } catch (x) {} });
-    wh.addEventListener("pointermove", e => { if (!d || e.pointerId !== d.id) return; const dy = e.clientY - d.y; d.y = e.clientY; d.acc += dy; roll += dy; wh.style.backgroundPositionY = "0px, " + roll + "px";   // the ridges roll under the finger; a notch every 12px
+  for (const [k, , , cap] of TUNE_SPECS) {
+    const up = el("button", { class: "tnArr", title: "More", onclick: () => turn(k, 1) }, "▲"), dn = el("button", { class: "tnArr", title: "Less", onclick: () => turn(k, -1) }, "▼"), wh = el("div", { class: "tnWheel" });
+    const node = el("div", { class: "tnCtl", title: "Drag up or down, or tap the arrows" }, el("div", { class: "tnCap" }, cap), el("div", { class: "tnFace" }, tuneIcon(k), el("div", { class: "tnCol" }, up, dn), wh));
+    let d = null, roll = 0; const spin = dy => { roll += dy; wh.style.backgroundPositionY = "0px, " + roll + "px"; };
+    /* the whole control is the wheel's handle: a finger that lands beside the ridges turns it all the same (and never takes the window along) — a notch every 12px */
+    node.addEventListener("pointerdown", e => { if (e.target.closest("button")) return; e.preventDefault(); d = { id: e.pointerId, y: e.clientY, acc: 0 }; try { node.setPointerCapture(e.pointerId); } catch (x) {} });
+    node.addEventListener("pointermove", e => { if (!d || e.pointerId !== d.id) return; const dy = e.clientY - d.y; d.y = e.clientY; d.acc += dy; spin(dy);
       while (Math.abs(d.acc) >= 12) { const dir = d.acc < 0 ? 1 : -1; d.acc += dir * 12; if (!turn(k, dir)) { d.acc = 0; break; } } });
-    const end = e => { if (d && e.pointerId === d.id) d = null; }; wh.addEventListener("pointerup", end); wh.addEventListener("pointercancel", end);
-    wh.addEventListener("wheel", e => { e.preventDefault(); roll += e.deltaY > 0 ? 6 : -6; wh.style.backgroundPositionY = "0px, " + roll + "px"; turn(k, e.deltaY > 0 ? -1 : 1); }, { passive: false });
-    const node = el("div", { class: "tnCtl" }, el("div", { class: "tnCap" }, cap), el("div", { class: "tnFrame" }, tuneIcon(k), el("div", { class: "tnCol" }, up, dn), wh));
+    const end = e => { if (d && e.pointerId === d.id) d = null; }; node.addEventListener("pointerup", end); node.addEventListener("pointercancel", end);
+    node.addEventListener("wheel", e => { e.preventDefault(); spin(e.deltaY > 0 ? 6 : -6); turn(k, e.deltaY > 0 ? -1 : 1); }, { passive: false });
     wheels[k] = { up, dn, node }; row.append(node);
   }
   applyBtn.onclick = () => { if (same()) return; S.hugHeads = !!pv.hug; S.zoomWin[win] = pv.z; S.noteZoom[tuneKey()] = pv.nz; S.spacing = pv.sp ? "custom" : "regular"; S.spacingSp = pv.sp || null; S.homeNext = Object.assign(S.homeNext || {}, { [win]: true });
-    savePrefs(); renderAll(); cur = tuneNow(win); pv = Object.assign({}, cur); draw(); toast("Applied — the stave is drawn to the new measures"); };
+    savePrefs(); renderAll(); cur = tuneNow(win); pv = Object.assign({}, cur); draw(); };
   resetBtn.onclick = () => { pv = Object.assign({}, cur); draw(); };
-  body.append(el("div", { class: "tnPanels" }, pc.node, pn.node), note, hugBtn, row);
-  openModal("Tune dimensions", body, [resetBtn, applyBtn]); draw();
+  body.append(el("div", { class: "tnHead" }, el("span", {}, "TUNE · " + DECK_NAME[win]), closeBtn), el("div", { class: "tnPanels" }, pc.node, pn.node), row, el("div", { class: "tnFoot" }, hugBtn, resetBtn, applyBtn));
+  openModal(null, body); $("modal").classList.add("tuneM"); draw();
 }
 function guideToggle() { S.vlDeck = !S.vlDeck; if (!S.vlDeck) { if (S.push) S.push = null; if (S.mv && S.mv.mode === "delete") S.mv = null; } savePrefs(); renderAll(); toast(S.vlDeck ? "The line and its bar are up — LINE again puts them away" : "The line is put away"); }   // the wide screen: LINE brings the line's bar up over the strips, and puts it away
 function pushKey(it) { return it.kind + ":" + it.bi + ":" + (it.part || "") + ":" + it.id; }
