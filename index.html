@@ -791,6 +791,8 @@ body.kbOpen #lyrEdit, #app.deck.kbUp #lyrEdit { display: none !important; }   /*
 .tune .tnBox { min-height: 0; min-width: 0; overflow: hidden; display: grid; place-items: center; } .tune .tnBox svg { display: block; }
 .tune .tnLim { min-height: 16px; border: 2px solid #111; font-size: 8.5px; font-weight: 800; letter-spacing: .05em; text-align: center; padding: 2px 3px; line-height: 1.25; color: #111; } .tune .tnLim:empty { visibility: hidden; }
 .tune .tnNote { text-align: center; margin: 0 0 8px; }
+.tune .tnHug { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; max-width: 460px; margin: 0 auto 8px; min-height: 26px; padding: 3px 6px; border: 2px solid #111; border-radius: 0; background: var(--tn); color: #111; font-size: 8.5px; font-weight: 800; letter-spacing: .05em; } .tune .tnHug .dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid #111; background: #fff; flex: 0 0 auto; } .tune .tnHug.on { background: #cfe3ff; } .tune .tnHug.on .dot { background: #2f7fd6; }
+.tune .tnCtl.idle { opacity: .4; }
 .tune .tnWheels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 460px; margin: 0 auto; }
 .tune .tnCtl .tnCap { width: 100%; font-size: 8.5px; letter-spacing: 0; }
 .tune .tnCtl .tnFrame { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 4px; padding: 6px 6px; height: 104px; box-shadow: inset 0 0 0 3px #d9d9d9, inset 0 0 0 4px #9a9a9a; }
@@ -994,6 +996,7 @@ body.xhairOn #melSvg, body.xhairOn #accSvg, body.xhairOn #bassSvg { cursor: cros
    ═══════════════════════════════════════════════════════════════════════ */
 #overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; z-index: 80; align-items: flex-end; justify-content: center; }
 #overlay.on { display: flex; }
+#modal, #modal * { overscroll-behavior: contain; }   /* a list run to its end inside the window stops there: the page beneath is never taken along */
 #modal { background: #f7f7f7; color: #111; width: 100%; max-width: 560px; max-height: 88vh; overflow-y: auto; border-radius: 16px 16px 0 0;
   padding: 14px 16px calc(16px + env(safe-area-inset-bottom)); box-shadow: 0 -8px 40px rgba(0,0,0,.4); -webkit-user-select: text; user-select: text; }
 @media (min-width: 640px) { #overlay { align-items: center; padding: 20px; } #modal { border-radius: 16px; } }
@@ -5890,6 +5893,12 @@ function openModal(title, body, foot) {
   if (foot) m.append(el("div", { class: "mfoot" }, foot));
   $("overlay").classList.add("on");
 }
+/* a window over the page keeps the finger to itself: a drag or a wheel on it (or on the dimmed page around it) never scrolls or moves what lies beneath — the window's own
+   contents scroll when they are taller than it, and stop there (overscroll-behavior), and its sliders and boxes work as they always did */
+function initModalGuard() { const ov = $("overlay"), m = $("modal"); m.style.overscrollBehavior = "contain";
+  const scrolls = n => { for (; n && n !== ov; n = n.parentNode) { if (n.nodeType !== 1) continue; const cs = getComputedStyle(n); if ((/(auto|scroll)/.test(cs.overflowY) && n.scrollHeight > n.clientHeight + 1) || (/(auto|scroll)/.test(cs.overflowX) && n.scrollWidth > n.clientWidth + 1)) return true; } return false; };   // something of the window's own, under the finger, that has more to show
+  const hold = e => { const t = e.target, own = m.contains(t) && !(t.closest && t.closest(".tnWheel")) && scrolls(t); if (own || (t.closest && t.closest("input, select, textarea"))) return; if (e.cancelable) e.preventDefault(); };
+  ov.addEventListener("touchmove", hold, { passive: false }); ov.addEventListener("wheel", hold, { passive: false }); }
 function closeModal() { $("overlay").classList.remove("on"); }
 function confirmModal(text, fn, okLabel = "Yes") {
   openModal(null, el("p", { style: "font-size:16px;margin:6px 0 4px" }, text), [el("button", { class: "btn", onclick: closeModal }, "Cancel"), el("button", { class: "btn acc", onclick: () => { closeModal(); fn(); } }, okLabel)]);
@@ -6327,7 +6336,7 @@ function loadPrefs() {
   S.deck = Array.isArray(p.deck) && p.deck.length ? p.deck.filter(w => ["mel", "acc", "bass"].includes(w)) : ["mel", "acc", "bass"]; if (!S.deck.length) S.deck = ["mel"];
   S.duoBars = p.duoBars === 8 ? 8 : 4; S.duoBand = p.duoBand === "bass" ? "bass" : "acc"; S.beatDividers = p.beatDividers !== false;
   S.focusBand = Object.assign({ mel: { on: false, lo: 64 }, acc: { on: false, lo: 52 }, bass: { on: false, lo: 40 } }, p.focusBand || {}); for (const w of ["mel", "acc", "bass"]) { if (!S.focusBand[w]) S.focusBand[w] = { on: false, lo: { mel: 64, acc: 52, bass: 40 }[w] }; S.focusBand[w].lo = clamp(Math.round((S.focusBand[w].lo != null ? S.focusBand[w].lo : { mel: 64, acc: 52, bass: 40 }[w]) / 2) * 2, 24, 96); }
-  S.doors = Object.assign({ mel: true, acc: true, bass: true }, p.doors || {}); S.playX = +p.playX || 0; S.noteZoom = Object.assign({ phone: 1, deck: 1 }, p.noteZoom || {}); S.edge = !!p.edge; S.padOn = !!p.padOn; S.padFont = ({ s: 1, m: 1, l: 1 })[p.padFont] ? p.padFont : "m"; S.padRuled = p.padRuled !== false; S.lyrGuide = !!p.lyrGuide; S.sigsOff = !!p.sigsOff; S.headKeep = !!p.headKeep; S.guideOn = p.guideOn !== false; S.vlDeck = !!p.vlDeck; S.collapsed = Object.assign({ mel: false, acc: false, bass: false }, p.collapsed || {});   // Stacked staves: which parts are folded to a bar
+  S.doors = Object.assign({ mel: true, acc: true, bass: true }, p.doors || {}); S.playX = +p.playX || 0; S.noteZoom = Object.assign({ phone: 1, deck: 1 }, p.noteZoom || {}); S.edge = !!p.edge; S.padOn = !!p.padOn; S.padFont = ({ s: 1, m: 1, l: 1 })[p.padFont] ? p.padFont : "m"; S.padRuled = p.padRuled !== false; S.lyrGuide = !!p.lyrGuide; S.sigsOff = !!p.sigsOff; S.headKeep = !!p.headKeep; S.hugHeads = !!p.hugHeads; S.guideOn = p.guideOn !== false; S.vlDeck = !!p.vlDeck; S.collapsed = Object.assign({ mel: false, acc: false, bass: false }, p.collapsed || {});   // Stacked staves: which parts are folded to a bar
   S.clefs = Object.assign({ mel: { on: false, kind: "treble" }, acc: { on: false, kind: "treble" }, bass: { on: false, kind: "bass" } }, p.clefs || {});
   if (p.clef && p.clef.on && !p.clefs) ["mel", "acc", "bass"].forEach(w => { S.clefs[w] = { on: true, kind: p.clef.kind }; });   // an older setting: one clef for all
   for (const w of ["mel", "acc", "bass"]) if (!S.clefs[w] || !CLEFS[S.clefs[w].kind]) S.clefs[w] = { on: false, kind: w === "bass" ? "bass" : "treble" };
@@ -6339,7 +6348,7 @@ function loadPrefs() {
   S.layout = p.layout === "stack" ? "stack" : "rolled";                                 // Stacked staves or Rolled up: the page comes back in the view it was left in
   applyTheme();
 }
-function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, deck: S.deck, rhyShown: S.rhyShown, lyrShown: S.lyrShown, partsShown: S.partsShown, dynShown: S.dynShown, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, beatLines: S.beatLines, barHi: S.barHi, spacing: S.spacing, spacingSp: S.spacingSp, collapsed: S.collapsed, rangeLock: S.rangeLock, kbLayout: S.kbLayout, kbTheme: S.kbTheme, kbSpace: S.kbSpace, kbBackUp: S.kbBackUp, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, keepAwake: S.keepAwake, paper: S.paper, quick: S.quick, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout, duoBars: S.duoBars, duoBand: S.duoBand, beatDividers: S.beatDividers, focusBand: S.focusBand, doors: S.doors, playX: S.playX || 0, noteZoom: S.noteZoom, edge: S.edge, padOn: S.padOn, padFont: S.padFont, padRuled: S.padRuled, lyrGuide: S.lyrGuide, sigsOff: S.sigsOff, headKeep: S.headKeep, guideOn: S.guideOn, vlDeck: S.vlDeck, clefs: S.clefs, phoneWins: S.phoneWins, lyrOff: S.lyrOff, run: S.run ? { mode: S.run.mode, preset: S.run.preset, semis: S.run.semis } : null }); }
+function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, deck: S.deck, rhyShown: S.rhyShown, lyrShown: S.lyrShown, partsShown: S.partsShown, dynShown: S.dynShown, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, beatLines: S.beatLines, barHi: S.barHi, spacing: S.spacing, spacingSp: S.spacingSp, collapsed: S.collapsed, rangeLock: S.rangeLock, kbLayout: S.kbLayout, kbTheme: S.kbTheme, kbSpace: S.kbSpace, kbBackUp: S.kbBackUp, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, keepAwake: S.keepAwake, paper: S.paper, quick: S.quick, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout, duoBars: S.duoBars, duoBand: S.duoBand, beatDividers: S.beatDividers, focusBand: S.focusBand, doors: S.doors, playX: S.playX || 0, noteZoom: S.noteZoom, edge: S.edge, padOn: S.padOn, padFont: S.padFont, padRuled: S.padRuled, lyrGuide: S.lyrGuide, sigsOff: S.sigsOff, headKeep: S.headKeep, hugHeads: S.hugHeads, guideOn: S.guideOn, vlDeck: S.vlDeck, clefs: S.clefs, phoneWins: S.phoneWins, lyrOff: S.lyrOff, run: S.run ? { mode: S.run.mode, preset: S.run.preset, semis: S.run.semis } : null }); }
 function applyTheme() {
   const r = document.documentElement;
   const TEX = { pearl: "#f3f0ea", cobalt: "#0b3d91", cherry: "#c4202b", mustard: "#d8d12e" };   // the textured themes, and the colour each gives the browser's bar
@@ -6456,7 +6465,7 @@ function allocate() {
     if (room > rows * step) {                                                                               // the column outreaches the stave at its natural row height: the rows are widened first, up to the widest the window size allows, and only then added — never a tower of tiny rows reaching C9 to fill the column
       rows = evenRows(Math.max(rows, Math.ceil(room / maxStepT)), w, minRowsFor(w));                       // a row count that centres the staves exactly
       STEPS[w] = room / rows / k;                                                                           // and the rows stretched (or eased) a whisker so the frame is exactly the column's height — the strips flush under the stave
-    } else { rows = evenRows(rows, w, minRowsFor(w)); if (clefOn(w) && rows * step > room && room > 0) STEPS[w] = room / rows / k; }   // a clef view taller than the column: its rows eased so the stave is exactly the column's height — the lines a little closer, the clef and signatures scaled with them
+    } else { rows = evenRows(rows, w, minRowsFor(w)); if (clefOn(w) && rows * step > room && room > 0) { const fit = room / rows, zRef = clefNow(w).bands ? 0.55 : 1, grow = Math.max(1, (S.zoomWin[w] || 1) / zRef), cap = Math.max(fit, window.innerHeight * 0.62 / rows); STEPS[w] = Math.min(step, cap, fit * grow) / k; } }   /* and wider than that when the lines are asked wider (Tune dimensions, WIDER): the stave then outgrows the column, up to three fifths of the screen's height, instead of standing still */   // a clef view taller than the column: its rows eased so the stave is exactly the column's height — the lines a little closer, the clef and signatures scaled with them
     PHONE_ROWS[w] = rows;
   }
   if (!deckMode()) for (const w of wins) if (!f(w)) PHONE_ROWS[w] = 0;
@@ -7637,9 +7646,10 @@ function unisonIds(evs) { const seen = new Set(), out = new Set(); for (const e 
 /* the paper of a stave: the theme's own, or a shade picked in that stave's settings */
 const PAPER = { default: null, aged: "#e6d2a6", eggshell: "#fffcf4", white: "#ffffff" };   // aged: tanned like old paper; light eggshell: a touch lighter than the default; plain white
 const paperFill = win => (win && S.paper && PAPER[S.paper[win]]) || css("--paper");
+const headCap = g => (S.halfLines || g.dia) ? 0.94 : 0.78, headHug = g => (S.halfLines || g.dia) ? 0.94 : 0.47;                                   // half a head's greatest height, in rows: a space is two rows on a staff of lines and spaces (one row otherwise), less the lines' own thickness
 function headGeom(g) {
   const st = g.step, k = NS() * ((S.halfLines || g.dia) ? 1.55 : 1);                     // lines-and-spaces, and the Clef view's letter grid: heads grow to fill a space (two rows)
-  const ry = Math.min(st * 0.40 * k, st * 0.78), rx = ry * 1.18;                          // the engraved head: 1.18 spaces wide for one high
+  const ry = S.hugHeads ? st * headHug(g) : Math.min(st * 0.40 * k, st * headCap(g)), rx = ry * 1.18;   // the engraved head: 1.18 spaces wide for one high — never taller than its space; with "heads fill the space" on, exactly as tall, the lines above and below hugging it
   return { st, rx, ry, stem: Math.max(st * 1.9, ry * 6.4) };
 }
 function drawNote(svg, g, x, m, d, color, attrs, opts = {}) {
@@ -8199,7 +8209,7 @@ const pushWin = () => deckMode() ? deckActive() : "mel";                        
 /* NOTE + / NOTE −: the notes a step larger or smaller on the screen in use — the heads never wider than a staff space nor smaller than a fifth of one, measured on the stave in view */
 function noteZoomStep(dir) {
   const win = deckMode() ? deckActive() : leadWin(), g = GEO[win] || geo(win), base = (NOTE_SCALE[noteSizeNow()] || 1) * ((S.halfLines || g.dia) ? 1.55 : 1);   // the head's height is st * 0.40 * base * zoom, capped at st * 0.78
-  const zMax = Math.max(1, 0.78 / (0.40 * base)), zMin = Math.min(1, 0.2 / (0.40 * base)), key = deckMode() ? "deck" : "phone";
+  const zMax = Math.max(1, headCap(g) / (0.40 * base)), zMin = Math.min(1, 0.2 / (0.40 * base)), key = deckMode() ? "deck" : "phone";
   const z = clamp(Math.round(((S.noteZoom[key] || 1) + dir * 0.1) * 100) / 100, zMin, zMax);
   if (z === (S.noteZoom[key] || 1)) { toast(dir > 0 ? "The notes are as large as this stave allows" : "The notes are as small as they read"); return; }
   S.noteZoom[key] = z; savePrefs(); renderAll(); toast(`Notes ${Math.round(z * 100)}% on this screen`);
@@ -8209,14 +8219,14 @@ function noteZoomStep(dir) {
    guessed: a setting is tried for real (the values put in, the screen shared out again, the stave measured, everything put back) and what comes out is what is drawn. Each wheel goes
    only as far as the other two allow: a head never under 3px tall nor a fifth of a row, the lines never under 4px apart, a beat never narrower than four and a half half-heads (eighths
    keep a sliver of air), nothing wider than the window gives. A setting already past a guard may stay, and may be eased, never made worse. APPLY makes the preview the stave's own */
-const TUNE_Z = [0.6, 2.5], TUNE_NZ = [0.3, 4], TUNE_SP_MIN = 0.75, TUNE_SP_STEP = 0.125;
+const TUNE_Z = [0.4, 2.5], TUNE_NZ = [0.3, 4], TUNE_SP_MIN = 0.75, TUNE_SP_STEP = 0.125;
 const tuneKey = () => deckMode() ? "deck" : "phone";
-const tuneNow = win => ({ z: S.zoomWin[win] || 1, nz: S.noteZoom[tuneKey()] || 1, sp: spacingSp() });
+const tuneNow = win => ({ z: S.zoomWin[win] || 1, nz: S.noteZoom[tuneKey()] || 1, sp: spacingSp(), hug: !!S.hugHeads });
 function tuneSim(win, v) {                                                                  // the stave measured at v, and everything put back as it was
-  const key = tuneKey(), keep = { z: S.zoomWin[win], nz: S.noteZoom[key], spacing: S.spacing, sp: S.spacingSp, view: JSON.stringify(S.song.view) };
-  S.zoomWin[win] = v.z; S.noteZoom[key] = v.nz; S.spacing = v.sp ? "custom" : "regular"; S.spacingSp = v.sp || null;
+  const key = tuneKey(), keep = { z: S.zoomWin[win], nz: S.noteZoom[key], spacing: S.spacing, sp: S.spacingSp, hug: S.hugHeads, view: JSON.stringify(S.song.view) };
+  S.hugHeads = !!v.hug; S.zoomWin[win] = v.z; S.noteZoom[key] = v.nz; S.spacing = v.sp ? "custom" : "regular"; S.spacingSp = v.sp || null;
   let o; try { allocate(); const g = geo(win), h = headGeom(g); o = { step: g.step, space: staffSpacePx(win, g.step), beatPx: g.beatPx, rx: h.rx, ry: h.ry, stem: h.stem, regular: regularBeatPx(win, g.step, g.W1) }; }
-  finally { S.zoomWin[win] = keep.z; S.noteZoom[key] = keep.nz; S.spacing = keep.spacing; S.spacingSp = keep.sp; S.song.view = JSON.parse(keep.view); allocate(); geo(win); }
+  finally { S.hugHeads = keep.hug; S.zoomWin[win] = keep.z; S.noteZoom[key] = keep.nz; S.spacing = keep.spacing; S.spacingSp = keep.sp; S.song.view = JSON.parse(keep.view); allocate(); geo(win); }
   return o;
 }
 const tuneGuards = o => [2 * o.ry - 3, o.ry / o.step - 0.2, o.space - 4, o.beatPx / o.rx - 4.5];   // each at least nought: the head's height, its share of a row, the lines apart, a beat's width in half-heads
@@ -8237,8 +8247,8 @@ function tuneNext(win, v, spec, dir) {
 }
 const TUNE_SPECS = [["z", "Adjust Stave Line Spacing", "LINES"], ["nz", "Adjust Note Size", "SIZE"], ["sp", "Adjust Note Spacing", "SPACING"]];
 function tuneEnds(win, v) { const out = {}; for (const [k] of TUNE_SPECS) out[k] = { up: tuneNext(win, v, k, 1), dn: tuneNext(win, v, k, -1) }; return out; }
-function tuneLabel(ends) { const say = (w, l) => l.length === 3 ? w + " REACHED" : l.length ? w + " " + l.map(x => x[2]).join(" + ") + " REACHED" : "";   // every wheel at its end: MAX REACHED, as plainly as that
-  return [say("MAX", TUNE_SPECS.filter(([k]) => !ends[k].up)), say("MIN", TUNE_SPECS.filter(([k]) => !ends[k].dn))].filter(Boolean).join(" · "); }
+function tuneLabel(ends, v) { const SPECS = TUNE_SPECS.filter(([k]) => !(v && v.hug && k === "nz")), say = (w, l) => l.length === SPECS.length ? w + " REACHED" : l.length ? w + " " + l.map(x => x[2]).join(" + ") + " REACHED" : "";   // every wheel at its end: MAX REACHED, as plainly as that
+  return [say("MAX", SPECS.filter(([k]) => !ends[k].up)), say("MIN", SPECS.filter(([k]) => !ends[k].dn))].filter(Boolean).join(" · "); }
 /* the sample: five lines and two quarter notes a beat apart, at the stave's own measures times f (both samples share one f, so they are compared like for like) */
 function tuneSample(o, f, boxW, boxH) {
   const sp = o.space * f, rx = o.rx * f, ry = o.ry * f, beat = o.beatPx * f, stem = o.stem * f, padX = Math.max(4, rx * 1.2), w = Math.min(boxW, beat + 2 * rx + 2 * padX + 2), h = 4 * sp, x0 = (boxW - w) / 2, y0 = (boxH - h) / 2;
@@ -8263,16 +8273,21 @@ function tuneIcon(kind) {
 }
 function openTune(winArg) {
   const win = winArg || (deckMode() ? deckActive() : leadWin()), cur0 = tuneNow(win); let cur = cur0, pv = Object.assign({}, cur), ends = null;
-  const body = el("div", { class: "tune" }), same = () => pv.z === cur.z && pv.nz === cur.nz && pv.sp === cur.sp;
+  const body = el("div", { class: "tune" }), same = () => pv.z === cur.z && pv.nz === cur.nz && pv.sp === cur.sp && !!pv.hug === !!cur.hug;
   const panel = cap => { const box = el("div", { class: "tnBox" }), lim = el("div", { class: "tnLim" }); return { box, lim, node: el("div", { class: "tnPanel" }, el("div", { class: "tnCap" }, cap), el("div", { class: "tnFrame" }, box, lim)) }; };
   const pc = panel("CURRENT"), pn = panel("PREVIEW NEW"), note = el("div", { class: "tiny tnNote" }), applyBtn = el("button", { class: "btn acc" }, "APPLY"), resetBtn = el("button", { class: "btn" }, "RESET");
   const wheels = {};
+  /* heads that fill their space: as tall as the lines are apart, on every stave — the note-size wheel then rests, and the lines are drawn closer until a beat has room for the wider heads */
+  const hugBtn = el("button", { class: "tnHug", title: "Every note head as tall as its space, the lines above and below touching it (as engraved); the note size then follows the line spacing", onclick: () => { pv = Object.assign({}, pv, { hug: !pv.hug });
+    if (pv.hug) for (let i = 0; i < 40 && tuneGuards(tuneSim(win, pv)).some(m => m < -1e-6); i++) { const nv = tuneNext(win, pv, "z", -1); if (!nv) break; pv = nv; }
+    draw(); } });
   const draw = () => {
     const oc = tuneSim(win, cur), on = tuneSim(win, pv); ends = tuneEnds(win, pv);
     const bw = Math.max(90, pc.box.clientWidth || 150), bh = Math.max(90, pc.box.clientHeight || 150), need = o => [o.beatPx + 3.4 * o.rx + 10, 4 * o.space + 2 * Math.max(0, o.stem - o.space) + 8];
     const f = Math.min(1, ...[oc, on].flatMap(o => { const [w, h] = need(o); return [bw / w, bh / h]; }));
     pc.box.replaceChildren(tuneSample(oc, f, bw, bh)); pn.box.replaceChildren(tuneSample(on, f, bw, bh));
-    pc.lim.textContent = tuneLabel(same() ? ends : tuneEnds(win, cur)); pn.lim.textContent = tuneLabel(ends);
+    pc.lim.textContent = tuneLabel(same() ? ends : tuneEnds(win, cur), cur); pn.lim.textContent = tuneLabel(ends, pv);
+    hugBtn.classList.toggle("on", !!pv.hug); hugBtn.replaceChildren(el("span", { class: "dot" }), pv.hug ? "NOTE HEADS FILL THEIR SPACE — THE LINES HUG THEM" : "NOTE HEADS FILL THEIR SPACE: OFF"); wheels.nz.node.classList.toggle("idle", !!pv.hug);
     for (const [k] of TUNE_SPECS) { wheels[k].up.disabled = !ends[k].up; wheels[k].dn.disabled = !ends[k].dn; }
     const px = x => (Math.round(x * 10) / 10) + "px";
     note.textContent = `${DECK_NAME[win].charAt(0) + DECK_NAME[win].slice(1).toLowerCase()} stave — lines ${px(oc.space)} → ${px(on.space)} apart · heads ${px(2 * oc.ry)} → ${px(2 * on.ry)} tall · a beat ${px(oc.beatPx)} → ${px(on.beatPx)} wide` + (f < 0.999 ? ` · both samples drawn at ${Math.round(f * 100)}%` : " · samples at actual size");
@@ -8291,10 +8306,10 @@ function openTune(winArg) {
     const node = el("div", { class: "tnCtl" }, el("div", { class: "tnCap" }, cap), el("div", { class: "tnFrame" }, tuneIcon(k), el("div", { class: "tnCol" }, up, dn), wh));
     wheels[k] = { up, dn, node }; row.append(node);
   }
-  applyBtn.onclick = () => { if (same()) return; S.zoomWin[win] = pv.z; S.noteZoom[tuneKey()] = pv.nz; S.spacing = pv.sp ? "custom" : "regular"; S.spacingSp = pv.sp || null; S.homeNext = Object.assign(S.homeNext || {}, { [win]: true });
+  applyBtn.onclick = () => { if (same()) return; S.hugHeads = !!pv.hug; S.zoomWin[win] = pv.z; S.noteZoom[tuneKey()] = pv.nz; S.spacing = pv.sp ? "custom" : "regular"; S.spacingSp = pv.sp || null; S.homeNext = Object.assign(S.homeNext || {}, { [win]: true });
     savePrefs(); renderAll(); cur = tuneNow(win); pv = Object.assign({}, cur); draw(); toast("Applied — the stave is drawn to the new measures"); };
   resetBtn.onclick = () => { pv = Object.assign({}, cur); draw(); };
-  body.append(el("div", { class: "tnPanels" }, pc.node, pn.node), note, row);
+  body.append(el("div", { class: "tnPanels" }, pc.node, pn.node), note, hugBtn, row);
   openModal("Tune dimensions", body, [resetBtn, applyBtn]); draw();
 }
 function guideToggle() { S.vlDeck = !S.vlDeck; if (!S.vlDeck) { if (S.push) S.push = null; if (S.mv && S.mv.mode === "delete") S.mv = null; } savePrefs(); renderAll(); toast(S.vlDeck ? "The line and its bar are up — LINE again puts them away" : "The line is put away"); }   // the wide screen: LINE brings the line's bar up over the strips, and puts it away
@@ -10166,6 +10181,7 @@ function openSettings() {
     el("div", { class: "tiny" }, "The tint and frame on the bar that is awake, on every stave. Boxed only: a medium black frame and no tint. None: nothing but the dashed entry box."),
     el("div", { class: "pLbl" }, "Note spacing"), seg([["regular", "Regular"], ["small", "Small"], ["tight", "Tight"]].concat(S.spacing === "custom" ? [["custom", "Tuned"]] : []), S.spacing, v => { S.spacing = v; savePrefs(); renderAll(); }),
     el("div", { class: "mrow" }, el("button", { class: "btn sm", title: "Stave line spacing, note size and note spacing on three wheels, with a sample of each beside a preview", onclick: () => openTune() }, "Tune dimensions…")),
+    el("div", { class: "mrow" }, toggle("Note heads fill their space: the lines above and below hug every head, on every stave", !!S.hugHeads, v => { S.hugHeads = v; savePrefs(); renderAll(); })),
     el("div", { class: "tiny" }, "Regular: the bars set in Window shows fill the width. Small and Tight: every beat no wider than two, or one and a half, of the stave's own staff spaces (and never wider than Regular's), so the spacing complements the view's size and the note size, with as many bars in view as fit at that width, the last running off the edge and the rest a scroll away; on the phone and the deck alike (Stacked staves keep their own bars). The beats stay regular: a beat is a beat."),
     sec("Notes & Markings"),
     el("div", { class: "pLbl" }, "Notes appearance"), radios("look", [["trad", "Traditional"], ["pill", "Pills"], ["circle", "Circles"]], S.noteStyle, v => { S.noteStyle = v; savePrefs(); renderAll(); openSettings(); }, false, okLook),
@@ -11450,7 +11466,7 @@ async function boot() {
   let syncing = false;
   scrollers.forEach(sc => sc.addEventListener("scroll", () => { if (syncing) return; syncing = true; scrollers.forEach(o => { if (o !== sc) o.scrollLeft = sc.scrollLeft; }); const inner = $("beatRow").querySelector(".inner"); if (inner) inner.style.transform = `translateX(${-sc.scrollLeft}px)`; syncing = false; }, { passive: true }));
   $("barLabel").addEventListener("click", openSectionOps);
-  wireTempo(); initPlayL(); initPad(); initVlTrack(); $("lyrOpenBtn").addEventListener("click", weOpenFromButton); $("tuneOpenBtn").addEventListener("click", () => openTune()); window.addEventListener("resize", () => setTimeout(weReseat, 60));
+  wireTempo(); initPlayL(); initPad(); initVlTrack(); $("lyrOpenBtn").addEventListener("click", weOpenFromButton); $("tuneOpenBtn").addEventListener("click", () => openTune()); initModalGuard(); window.addEventListener("resize", () => setTimeout(weReseat, 60));
   $("saveBtn").addEventListener("click", openLibrary);
   document.querySelectorAll(".win .delBtn").forEach(b => b.addEventListener("click", () => delAskOpen(b)));
   document.querySelectorAll(".win .bsBtn").forEach(b => b.addEventListener("click", () => backspaceNote(WIN_PART[b.dataset.win])));
