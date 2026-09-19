@@ -111,10 +111,10 @@ svg text { pointer-events: none; }
    3. LAYOUT — one column on a phone; melody stack left / band right when wide
    ═══════════════════════════════════════════════════════════════════════ */
 #app { max-width: 560px; margin: 0 auto; padding: 8px 6px calc(14px + env(safe-area-inset-bottom)); display: grid; gap: 7px;
-  grid-template-columns: 1fr; grid-template-areas: "head" "mel" "rhy" "lyr" "pal" "acc" "bass"; }   /* the bar bracket rides in the head row; the play pallet closes the page */
+  grid-template-columns: 1fr; grid-template-areas: "head" "mel" "rhy" "lyr" "vl" "pal" "acc" "bass"; }   /* the bar bracket rides in the head row; the play pallet closes the page */
 #rollBar { grid-area: rollbar; display: none; gap: 6px; }
 /* rolled-up view: three labelled bars across the top; open staves drop down beneath; strips and tools follow */
-#app.rolled { max-width: 560px !important; grid-template-columns: 1fr !important; grid-template-areas: "head" "rollbar" "mel" "rhy" "lyr" "acc" "bass" "pal" !important; }   /* the Rhythm and Lyrics strips flush under the melody, the accompaniment and bass beneath them */
+#app.rolled { max-width: 560px !important; grid-template-columns: 1fr !important; grid-template-areas: "head" "rollbar" "mel" "rhy" "lyr" "vl" "acc" "bass" "pal" !important; }   /* the Rhythm and Lyrics strips flush under the melody, the accompaniment and bass beneath them */
 @media (min-width: 860px) and (min-aspect-ratio: 5/4), (max-height: 520px) and (min-aspect-ratio: 5/4) { #app.rolled { max-width: 1180px !important; padding-left: 16px; padding-right: 16px; } #app.rolled .win .focus { display: none !important; } }
 #app.rolled #rollBar { display: flex; justify-content: center; padding-left: 50px; }         /* room at the left for TURN */
 /* the phone's lyrics editing: the melody's window and the Lyrics strip reach the screen's edges as the keyboard does — the gutter with its marks kept, the column beside the stave away (its bulk tools with it, back when the keyboard closes), the ↑ ↓ away (the register still scrolls), the Rhythm strip and the Lyrics label away */
@@ -307,7 +307,7 @@ text.clef, text.smufl { user-select: none; }
 @media (min-width: 860px) and (min-aspect-ratio: 5/4), (max-height: 520px) and (min-aspect-ratio: 5/4) { .win .focus { display: block; } }
 /* one window given the whole screen (wide layouts) */
 #app.focused { max-width: none !important; grid-template-columns: 1fr !important; }
-#app.focus-mel { grid-template-areas: "head" "nav" "mel" "rhy" "lyr" "pal" !important; }
+#app.focus-mel { grid-template-areas: "head" "nav" "mel" "rhy" "lyr" "vl" "pal" !important; }
 #app.focus-acc { grid-template-areas: "head" "nav" "acc" !important; }
 #app.focus-bass { grid-template-areas: "head" "nav" "bass" !important; }
 #app.focus-mel :is(#accWin, #bassWin, #foot), #app.focus-acc :is(#melWin, #rhyStrip, #lyrStrip, #palette, #bassWin, #foot), #app.focus-bass :is(#melWin, #rhyStrip, #lyrStrip, #palette, #accWin, #foot) { display: none !important; }
@@ -779,6 +779,55 @@ body.kbOpen #lyrEdit, #app.deck.kbUp #lyrEdit { display: none !important; }   /*
   background-image: radial-gradient(circle at 42% 38%, #f2f2f2 0.9px, transparent 1.3px), radial-gradient(circle at 50% 50%, #a8a8a8 2.1px, #6a6a6a 2.5px, transparent 3px);
   background-size: 9px 8px; background-position: 0 0, 0 0; }
 #quick.float .qctl { grid-row: 2 / 5; }
+/* the line's bar (the phone): under the melody stave and its strips, above the accompaniment — a slider whose grip stands exactly under the line, and the line's controls.
+   The line itself: wide white dashes with a blue glow, over the five lines of each stave alone */
+#vlBar { grid-area: vl; display: grid; gap: 5px; min-width: 0; }
+#app.deck #vlBar, #app.lyrEdit #vlBar { display: none; }
+#vlBar .vlRow { display: grid; grid-template-columns: 44px 1fr 30px; gap: 0 4px; align-items: center; }
+#vlTrack { position: relative; height: 34px; border: 2px solid #1b2a4a; border-radius: 9px; background: linear-gradient(#d2d5da, #b9bdc4); box-shadow: inset 0 0 0 3px #f4f5f7, inset 0 2px 5px 3px rgba(0,0,0,.28); touch-action: none; cursor: ew-resize; }
+#vlGrip { position: absolute; top: 3px; bottom: 3px; width: 26px; margin-left: -13px; border-radius: 6px; border: 1.5px solid #222; background: linear-gradient(90deg, #5d6167, #8d9198 45%, #55595f); box-shadow: 0 1px 3px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.35); display: flex; align-items: center; justify-content: center; gap: 4px; pointer-events: none; }
+#vlGrip i { width: 2px; height: 60%; background: #f2f3f5; border-radius: 1px; box-shadow: 0 0 1px rgba(0,0,0,.6); }
+#vlPanel { display: grid; grid-template-columns: auto 1fr; gap: 5px 6px; align-items: start; font-family: var(--sans); }
+#vlPanel .top { grid-column: 1 / -1; display: grid; grid-template-columns: 52px repeat(5, 1fr); gap: 4px; align-items: stretch; }
+#vlPanel .ind { display: grid; grid-template-rows: 1fr 1fr; gap: 2px; }
+#vlPanel .ind span { display: grid; place-items: center; font-size: 6px; font-weight: 800; letter-spacing: .04em; color: #fff; border: 1.5px solid #141414; border-radius: 3px; opacity: .38; }
+#vlPanel .ind .un { background: #1f9d45; } #vlPanel .ind .lk { background: #e02020; }
+#vlPanel .ind .un.now { animation: vlGlow 1.5s ease-in-out infinite; } #vlPanel .ind .lk.now { animation: vlBlink 1.5s step-end infinite; }
+@keyframes vlGlow { 0%, 100% { opacity: .55; box-shadow: none; } 50% { opacity: 1; box-shadow: 0 0 6px 1px #4be07a; } }
+@keyframes vlBlink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: .3; } }
+#vlPanel button { min-height: 30px; padding: 2px 3px; border: 1.5px solid #12325e; border-radius: 5px; background: linear-gradient(#35c3ff, #0e9fe6); color: #07223f; font-size: 6.6px; font-weight: 800; letter-spacing: .03em; line-height: 1.15; box-shadow: 0 2px 3px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.55); }
+#vlPanel button.dark { background: linear-gradient(#1c3a78, #0b1f4d); color: #fff; border-color: #050f2a; }
+#vlPanel button.green { background: linear-gradient(#2fc463, #129a43); color: #fff; border-color: #0a4f22; }
+#vlPanel button.on { outline: 2px solid #fff; outline-offset: -3px; }
+#vlPanel button:disabled { filter: grayscale(1); opacity: .42; box-shadow: none; }
+#vlPanel button:active:not(:disabled) { filter: brightness(1.12); }
+#vlPanel .dirBox { border: 2px solid #111; border-radius: 3px; background: #e9eaec; display: grid; grid-template-rows: auto 1fr; }
+#vlPanel .dirBox .cap { background: #111; color: #fff; font-size: 6px; font-weight: 800; letter-spacing: .06em; text-align: center; padding: 2px 4px; }
+#vlPanel .dirBox .btns { display: grid; grid-template-columns: 1fr 2px 1fr; gap: 4px; padding: 4px; align-items: center; } #vlPanel .dirBox .btns i { width: 2px; height: 22px; background: #111; }
+#vlPanel .dirBox button { min-height: 24px; background: linear-gradient(#e6e7ea, #b7bbc2); color: #111; border-color: #333; }
+#vlPanel .dirBox button.on { background: linear-gradient(#ffd27a, #f5a623); outline: none; }
+#vlPanel .left { display: grid; gap: 5px; justify-items: end; }
+#vlPanel .mvBox { border: 2px solid #111; border-radius: 12px; padding: 5px 7px; display: grid; grid-template-columns: auto auto 1fr; gap: 4px 8px; align-items: center; }
+#vlPanel .mvBox.off { opacity: .42; filter: grayscale(1); }
+#vlPanel .mvBox .rad { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 6px; justify-items: center; }
+#vlPanel .mvBox .rad label { display: grid; justify-items: center; gap: 2px; font-size: 6px; font-weight: 800; color: #fff; }
+#vlPanel .mvBox .rad label b { background: #111; border-radius: 2px; padding: 1px 4px; letter-spacing: .04em; }
+#vlPanel .mvBox .rad .dot { width: 17px; height: 17px; border-radius: 50%; border: 2.5px solid #111; background: #fff; display: grid; place-items: center; } #vlPanel .mvBox .rad .dot.on::after { content: ""; width: 9px; height: 9px; border-radius: 50%; background: #111; }
+#vlPanel .mvBox .arr { grid-column: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 2px; border: 2px solid #111; border-radius: 6px; padding: 2px; }
+#vlPanel .mvBox .arr button { min-height: 24px; font-size: 15px; line-height: 1; padding: 0 8px; }
+#vlPanel .mvBox .or { grid-row: 1 / 3; grid-column: 2; font-size: 7px; font-weight: 800; color: var(--on-ground2, #111); }
+#vlPanel .mvBox .spec { grid-row: 1 / 3; grid-column: 3; min-height: 40px; }
+/* the line itself */
+#app:not(.deck) #lyrGuide .knob, #app:not(.deck) #lyrGuide .grab, #app:not(.deck) #lyrGuide .pushTag { display: none !important; }
+#app:not(.deck) #lyrGuide { opacity: 1; }
+#app:not(.deck) #lyrGuide .seg { border-left: none; width: 3px; margin-left: -1.5px; border-radius: 1px; background: repeating-linear-gradient(#fff 0 11px, transparent 11px 16px); filter: drop-shadow(0 0 2.5px #2f7bff) drop-shadow(0 0 1.5px #2f7bff) drop-shadow(0 0 5px rgba(47,123,255,.7)); }
+
+/* the composition map (MOVE TO SPECIFIC…) */
+.vlMap { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px; max-height: 58vh; overflow: auto; padding: 2px; }
+.vlMap .mb { border: 2px solid #bbb; border-radius: 4px; background: #fffdf8; padding: 1px 2px 2px; cursor: pointer; } .vlMap .mb small { display: block; font-size: 8px; font-weight: 800; color: #555; }
+.vlMap .mb.sel { border-color: #2f7bff; box-shadow: 0 0 0 1px #2f7bff; } .vlMap .mb.first { border-color: #f5a623; box-shadow: 0 0 0 1px #f5a623; } .vlMap .mb svg { display: block; width: 100%; height: 34px; }
+.vlMap .sec { grid-column: 1 / -1; font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #a06a5a; margin-top: 4px; }
+button.vlClose { background: #e02020 !important; color: #fff !important; border-color: #7a1410 !important; font-weight: 900; font-size: 18px; min-width: 52px; }
 /* the run magnifier: a floating window on the stave, twice the size, above the finger */
 .runOpt { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }                    /* the RUN menu's choices: the picture, then the words */
 .runOpt .runPic { width: 84px; height: 30px; flex: 0 0 auto; border: 1px solid #bbb; border-radius: 3px; background: #fffdf8; }
@@ -1260,6 +1309,10 @@ body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the s
     </div>
   </div>
 
+  <div id="vlBar">
+    <div class="vlRow"><span></span><div id="vlTrack" title="Drag the grip: the line moves with it"><div id="vlGrip"><i></i><i></i><i></i></div></div><span></span></div>
+    <div id="vlPanel"></div>
+  </div>
   <div id="arrows"><button id="arrUp" title="Up: the selected note a half step up, or the stave's register up"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V4M5 11l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="arrDn" title="Down: the selected note a half step down, or the stave's register down"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M5 13l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="arrL" title="Left: the selected note or word earlier, a picked run earlier, or the beat before"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H4M11 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="arrR" title="Right: the selected note or word later, a picked run later, or the beat after"><svg class="aico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16M13 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
   <div id="undoRow"><button id="undoBtn" title="Undo">UNDO</button><button id="redoBtn" title="Redo">REDO</button></div>
   <div id="mvRow"><button id="moveBtn" title="Move: arms on the first tap (once empty space of the same size is found in view), then confirms on the second">MOVE</button><button id="delBtn" title="Delete: arms on the first tap, then confirms on the second">DELETE</button><button id="selBtn" title="Select a run of beats to move or delete: tap the first beat, then the last — or use Bar / Section">SELECT</button><button id="repBtn" title="Repeat: tap the beat(s) to repeat, then REPEAT — it finds the space right after and copies them there; tap again to repeat further on">REPEAT</button><button id="copyBtn" title="Copy: tap the beats or bars to copy (SET each one), then tap empty space with room enough to paste them">COPY</button><button id="xhairBtn" title="Crosshair: drag a box over what to copy — release to set it, straight into the copied set" hidden>CROSSHAIR</button><button id="setCopyBtn" title="Set: add what is tapped to the copied set (up to 5)" hidden><span class="l">SET TO</span><span class="l">COPY</span></button></div>
@@ -7173,7 +7226,7 @@ function renderAll() {
     if (!Object.keys(S.homeNext).length) S.homeNext = null;
   }
   keepHome();
-  placeHWheels(); renderWindows(); renderStrips(); renderBeatRow(); placeDeckLabels(); renderPad(); placeLyrNav();
+  placeHWheels(); renderWindows(); renderStrips(); renderBeatRow(); placeDeckLabels(); renderPad(); placeLyrNav(); renderVlPanel();
   if (!deckMode() && kbUpNow()) keepStripClear();                                            // the phone: whatever the render moved, the Lyrics strip ends up above the keyboard
   if (deckMode()) { const r0 = Object.assign({}, DECK_ROWS), s0 = Object.assign({}, STEPS); allocate(); if (["mel", "acc", "bass"].some(w => DECK_ROWS[w] !== r0[w] || Math.abs(STEPS[w] - s0[w]) > 1e-6)) { keepHome(); renderWindows(); renderStrips(); renderBeatRow(); placeDeckLabels(); } }
   if (!deckMode()) { const r0 = Object.assign({}, PHONE_ROWS), s0 = Object.assign({}, STEPS); allocate(); const rh = keepHome(); if (rh || ["mel", "acc", "bass"].some(w => PHONE_ROWS[w] !== r0[w] || Math.abs(STEPS[w] - s0[w]) > 1e-6)) { renderWindows(); renderStrips(); renderBeatRow(); } }   // the phone: the column beside the stave is only whole once drawn (COVER is made then) — size the stave to it and draw again
@@ -7967,7 +8020,7 @@ function placeLyrGuide() {
   const g = GEO.mel, lyrBody = $("lyrStrip").querySelector(".body");
   const deckShow = deckMode() && WE.on && S.lyrGuide && !!g && $("melWin").offsetHeight > 0 && lyrBody.offsetHeight > 0 && S.winState.mel !== "closed";   // the deck's lyrics screen: a guide at the chip's left edge (where the entry box stands, or the chip in it) from the stave's top to the strip's foot, so the words are lined up on the beat by eye
   const pw = pushWin(), gp = GEO[pw], pwin = $(pw + "Win");
-  const show = deckShow || (S.guideOn !== false && !!(deckMode() ? (!WE.on && gp && pwin.classList.contains("deckOn") && pwin.offsetHeight > 0 && !duoMode()) : (g && S.winState.mel !== "closed" && $("melWin").offsetHeight > 0)));   // LINE hides the draggable guide   // the wide screen outside the lyrics screen: the same draggable guide on the stave in view
+  const show = deckShow || !!(deckMode() ? (S.guideOn !== false && !WE.on && gp && pwin.classList.contains("deckOn") && pwin.offsetHeight > 0 && !duoMode()) : (!WE.on && g && S.winState.mel !== "closed" && $("melWin").offsetHeight > 0));   // the phone: the line is always there (its bar is under the staves); the wide screen: LINE shows or hides it   // LINE hides the draggable guide   // the wide screen outside the lyrics screen: the same draggable guide on the stave in view
   gd.hidden = !show; gd.classList.toggle("deck", deckShow); if (!show) return;
   if (deckShow) { const ar = $("app").getBoundingClientRect(), sr = $("melSvg").getBoundingClientRect(), fr = $("melWin").querySelector(".frame").getBoundingClientRect(), lr = lyrBody.getBoundingClientRect();
     const bi = g.bars.includes(WE.bi) ? WE.bi : g.bars[0], x = sr.left + g.x(bi, Math.min(WE.t, barBeats(bi)));
@@ -7977,6 +8030,12 @@ function placeLyrGuide() {
   { const gg = gp, bs = gg.dia ? focusBandSteps(pw) : null, yTop = focusOn(pw) ? (gg.dia ? gg.yS(bs[bs.length - 1][1]) : gg.y(focusRange(pw)[1])) : 0;
     var x = sr.left + gg.x(S.guide.bi, Math.min(S.guide.t, barBeats(S.guide.bi))), top = sr.top + yTop, bottom = lr.bottom; }
   gd.style.left = Math.round(x - ar.left) + "px"; gd.style.top = Math.round(top - ar.top) + "px"; gd.style.height = Math.max(0, Math.round(bottom - top)) + "px";
+  if (!deckMode()) {                                                                        // the phone: the line over the five lines of each stave alone, the grip under it
+    const bands = []; for (const w of ["mel", "acc", "bass"]) { if (S.winState[w] === "closed" || !$(w + "Win").offsetHeight) continue; vlBands(w).forEach(b => bands.push(b)); }
+    if (!bands.length) { gd.hidden = true; return; } const t0 = Math.min(...bands.map(b => b[0])), b1 = Math.max(...bands.map(b => b[1]));
+    gd.style.top = Math.round(t0 - ar.top) + "px"; gd.style.height = Math.round(b1 - t0) + "px";
+    gd.querySelector(".segs").replaceChildren(...bands.map(([a, b]) => el("div", { class: "seg", style: `top:${Math.round(a - t0)}px;height:${Math.max(0, Math.round(b - a))}px` })));
+    gd.classList.toggle("push", !!S.push); placeVlGrip(x); renderVlPanel(); return; }
   { const picked = pushPicked(), segs = [], fr = pwin.querySelector(".frame").getBoundingClientRect(), mine = pw === "mel" ? ["melody", GRAND_LOWER] : [WIN_PART[pw]];
     segs.push({ top, bottom: fr.bottom, on: !S.push || picked.some(it => it.kind === "ev" && mine.includes(it.part)) });                             // the stave in view, from the five lines' top
     if (lyrBody.offsetHeight) segs.push({ top: fr.bottom, bottom: lr.bottom, on: !S.push || picked.some(it => it.kind === "chip") });                  // the strips
@@ -8117,7 +8176,8 @@ function pushFlushItems(bi, t) {                                                
 function pushStart() {
   if (!S.guide) { toast("Drag the guide line first"); return; }
   const found = pushFlushItems(S.guide.bi, S.guide.t), bar = S.song.bars[S.guide.bi], g = stripGeo();
-  const exact = found.filter(it => it.exact), items = exact.length ? exact : found, sure = exact.length > 0;   // on something to the pixel: that alone is taken, no question asked; between things: every one within reach is offered, boxed, for the choice
+  const sided = !deckMode() && VL.dir ? found.filter(it => it.side === (VL.dir === "right" ? "r" : "l")) : found;   // the phone: what stands flush on the chosen side of the line alone
+  const exact = sided.filter(it => it.exact), items = exact.length ? exact : sided, sure = deckMode() && exact.length > 0;   // the phone always boxes what is picked, to be left out or taken back by a tap   // on something to the pixel: that alone is taken, no question asked; between things: every one within reach is offered, boxed, for the choice
   if (items.length) {                                                                     // the line snaps onto the nearest edge picked, so it stands flush
     const edges = items.map(it => { if (it.kind === "ev") { const e = (bar.ev[it.part] || []).find(x => x.id === it.id), c = e && chainOf(bar, e, it.part); return c ? (it.side === "r" ? c.t : c.t + c.d) + (e.ox || 0) : null; } const c = bar.chips.find(x => x.id === it.id); return c ? (it.side === "r" ? c.t : c.t + chipFull(c, g)) + (c.ox || 0) : null; }).filter(v => v != null);
     if (edges.length) S.guide.t = edges.sort((a, b) => Math.abs(a - S.guide.t) - Math.abs(b - S.guide.t))[0];
@@ -8141,7 +8201,7 @@ function pushRange(it, bar) {                                                   
 function pushMove(t) {                                                                    // the line to t: the picked items are drawn along with it, as far as every one of them may go inside its beat
   const P = S.push; if (!P || t === P.t) return; const bar = S.song.bars[P.bi];
   let d = t - P.t;
-  if (P.dir == null && Math.abs(d) * ((GEO[pushWin()] || stripGeo()).beatPx) >= 1.5) {          // the first push sets the way: pushing left, whatever stands to the right of the line is let go, and the other way round — a push goes one way
+  if (deckMode() && P.dir == null && Math.abs(d) * ((GEO[pushWin()] || stripGeo()).beatPx) >= 1.5) {          // the first push sets the way: pushing left, whatever stands to the right of the line is let go, and the other way round — a push goes one way
     P.dir = d < 0 ? -1 : 1; let dropped = 0; for (const it of P.items) { const k = pushKey(it); if (((P.dir < 0 && it.side === "r") || (P.dir > 0 && it.side === "l")) && !P.off.has(k)) { P.off.add(k); dropped++; } }
     if (dropped) toast(`Pushing ${P.dir < 0 ? "left" : "right"}: ${dropped} on the other side of the line let go`);
   }
@@ -8173,6 +8233,101 @@ function drawPushChipBoxes(svg, gl, HL) {                                       
     svg.append(svgEl("rect", { class: "pushBox" + (off ? " off" : ""), x: left, y: 1, width: Math.max(2, right - left), height: HL - 2, fill: "rgba(224,32,32,.001)", stroke: off ? "#888" : "#e02020", "stroke-width": 1.5, "stroke-dasharray": off ? "3 3" : null, "pointer-events": "none" }));
     S.push.boxes.push({ win: "lyr", x0: left, y0: 1, x1: right, y1: HL - 1, it }); }
 }
+/* ───────── the line's bar (the phone) ─────────
+   LOCK TO ADJUST (the push): choose LEFT or RIGHT, stand the line flush against what is to be pushed, lock — everything flush on that side is picked (boxed; a tap leaves one out or
+   takes it back) and the grip then draws them along with the line, a fine placement inside their beats; UNLOCK ends it. Unlocked: HIGHLIGHT TO SELECT picks a run of beats within the
+   section; COPY SELECTION keeps it for PASTE SELECTION (at the line's beat); MOVE SELECTION queues a move — by beat or by bar with the arrows, PASTE at the line's beat, or MOVE TO
+   SPECIFIC… on a map of the whole composition (a tap on a bar moves it there; SHIFT, then a second bar, lays copies from the first to the second until no whole beat is left) */
+const VL = { dir: null, by: "beat", clip: null, moveQueued: false, mapFirst: null, mapShift: false };
+const vlLocked = () => !!S.push;
+const vlHasSel = () => !!(S.mv && S.mv.mode === "delete" && S.mv.start != null);
+function vlLock() { if (!VL.dir) { toast("Choose the push direction first — LEFT or RIGHT"); return; } if (S.mv) S.mv = null; pushStart(); renderVlPanel(); }
+function vlUnlock() { if (S.push) pushEnd(); renderVlPanel(); }
+function vlHighlight() { if (vlLocked()) return; mvStart("delete"); renderVlPanel(); }
+function vlTake() { const mv = S.mv; if (!vlHasSel()) return null; const group = mvGroup(mv.part, mv.start, mv.end); if (!group.length) { toast("Nothing in the highlighted beats"); return null; }
+  return { part: mv.part, start: mv.start, len: r3(mv.end - mv.start), evs: group.map(o => ({ rel: r3(o.abs - mv.start), e: JSON.parse(JSON.stringify(o.e)) })) }; }
+function vlCopy() { const c = vlTake(); if (!c) return; VL.clip = c; VL.moveQueued = false; renderVlPanel(); toast(`Copied ${c.evs.length} — PASTE SELECTION lays it at the line's beat`); }
+function vlMoveQueue() { const c = vlTake(); if (!c) return; VL.clip = c; VL.moveQueued = true; renderVlPanel(); toast("Move queued — step it with the arrows, PASTE it at the line's beat, or MOVE TO SPECIFIC…"); }
+function vlLay(part, abs, e, cut) {                                                          // one event laid at abs, split over bar lines where it must be; cut: nothing past this point
+  let left = e.d, first = true, n = 0; if (cut != null) left = Math.min(left, r3(cut - abs)); if (left <= 1e-6) return 0;
+  while (left > 1e-6) { const at = absToBar(abs); if (!at) break; const room = r3(Math.min(left, barBeats(at.bi) - at.t)), more = left - room > 1e-6;
+    const piece = Object.assign({}, JSON.parse(JSON.stringify(e)), { id: uid(), t: at.t, d: room }); if (!first) delete piece.artic; if (more || (e.tie && cut == null)) piece.tie = true; else delete piece.tie; delete piece.ox;
+    (S.song.bars[at.bi].ev[part] = S.song.bars[at.bi].ev[part] || []).push(piece); abs = r3(abs + room); left = r3(left - room); first = false; n++; }
+  return n;
+}
+function vlRemoveSource(c) { const g = mvGroup(c.part, c.start, r3(c.start + c.len)); g.forEach(o => { const bar = S.song.bars[o.bi]; bar.ev[c.part] = bar.ev[c.part].filter(x => x !== o.e); }); return new Set(); }
+function vlPasteAt(dest, opts = {}) {                                                       // the clip laid at dest; a queued move lifts the original first
+  const c = VL.clip; if (!c) return false; const end = r3(dest + (opts.len != null ? opts.len : c.len)); const total = barAbs(S.song.bars.length);
+  if (dest < -1e-6 || end > total + 1e-6) { toast("That runs past the end of the song"); return false; }
+  const skip = new Set(); if (VL.moveQueued && !opts.keepSource) mvGroup(c.part, c.start, r3(c.start + c.len)).forEach(o => skip.add(o.e));
+  if (!spanFree(c.part, dest, end, skip)) { toast("Something is in the way there"); return false; }
+  if (VL.moveQueued && !opts.keepSource) vlRemoveSource(c);
+  for (const it of c.evs) { if (opts.len != null && it.rel >= opts.len - 1e-6) continue; vlLay(c.part, r3(dest + it.rel), it.e, opts.len != null ? end : null); }
+  return true;
+}
+function vlPaste() { if (!VL.clip || vlLocked()) return; const g = S.guide; if (!g) return; const dest = r3(barAbs(g.bi) + Math.floor(g.t + 1e-6));
+  if (!vlPasteAt(dest)) return; const moved = VL.moveQueued; if (moved) { VL.moveQueued = false; VL.clip.start = dest; } S.mv = null; renderAll(); toast(moved ? "Moved to the line's beat" : "Pasted at the line's beat"); }
+function vlStep(dir) { if (!VL.moveQueued || !vlHasSel()) { toast("Highlight, then MOVE SELECTION first"); return; } const b = absToBar(S.mv.start); mvShift(dir * (VL.by === "bar" ? barBeats(b ? b.bi : 0) : 1)); if (VL.clip && S.mv) VL.clip.start = S.mv.start; renderVlPanel(); }
+/* the map: every bar of the composition in small, the five lines and the part's notes; the selection's bars ringed in blue */
+function vlOpenMap() {
+  if (!VL.clip) { toast("Highlight, then MOVE SELECTION first"); return; } VL.mapFirst = null; VL.mapShift = false;
+  const c = VL.clip, draw = () => {
+    const grid = el("div", { class: "vlMap" }), selA = c.start, selB = r3(c.start + c.len);
+    S.song.sections.forEach((sec, si) => { const r = sectionRange(si); grid.append(el("div", { class: "sec" }, sec.name));
+      for (let bi = r.start; bi < r.end; bi++) { const a = barAbs(bi), B = barBeats(bi), inSel = a < selB - 1e-6 && a + B > selA + 1e-6;
+        const svg = svgEl("svg", { viewBox: "0 0 100 40", preserveAspectRatio: "none" }); for (let k = 0; k < 5; k++) svg.append(svgEl("line", { x1: 0, x2: 100, y1: 8 + k * 6, y2: 8 + k * 6, stroke: "#777", "stroke-width": 0.8 }));
+        const evs = (S.song.bars[bi].ev[c.part] || []).filter(e => !e.rest && e.m != null), ms = evs.map(e => e.m), mid = ms.length ? (Math.min(...ms) + Math.max(...ms)) / 2 : 67;
+        for (const e of evs) { const x = 4 + (e.t / B) * 92, y = clamp(20 - (e.m - mid) * 1.5, 3, 37); svg.append(svgEl("ellipse", { cx: x + 3, cy: y, rx: 3.2, ry: 2.4, fill: "#111" })); svg.append(svgEl("line", { x1: x + 6, x2: x + 6, y1: y, y2: y - 10, stroke: "#111", "stroke-width": 1 })); }
+        const cell = el("div", { class: "mb" + (inSel ? " sel" : "") + (VL.mapFirst === bi ? " first" : ""), title: `Bar ${barNo(bi)}`, onclick: ev => pick(bi, ev.shiftKey) }, el("small", {}, String(barNo(bi))), svg); grid.append(cell); } });
+    return grid; };
+  const pick = (bi, shift) => {
+    if ((shift || VL.mapShift) && VL.mapFirst != null) { vlFill(VL.mapFirst, bi); VL.mapFirst = null; VL.mapShift = false; refresh(); return; }
+    if (VL.mapShift) { VL.mapFirst = bi; refresh(); toast("Now tap the last bar"); return; }
+    const dest = barAbs(bi); if (vlPasteAt(dest)) { c.start = dest; VL.moveQueued = true; S.mv = null; S.bi = bi; renderAll(); toast(`Moved to bar ${barNo(bi)}`); } VL.mapFirst = bi; refresh(); };
+  const body = el("div", {}); const refresh = () => { body.replaceChildren(el("div", { class: "tiny", style: "margin-bottom:6px" }, "Tap a bar: the selection (ringed in blue) moves there. SHIFT, then a first and a last bar (or Shift-click the last): copies are laid from the first to the last until no whole beat is left."), draw()); shiftBtn.classList.toggle("acc", VL.mapShift); };
+  const shiftBtn = el("button", { class: "btn", onclick: () => { VL.mapShift = !VL.mapShift; VL.mapFirst = null; refresh(); if (VL.mapShift) toast(VL.mapFirst != null ? "Tap the last bar" : "Tap the first bar, then the last"); } }, "SHIFT");
+  openModal("Move selection to…", body, [shiftBtn, el("button", { class: "btn vlClose", title: "Close", onclick: () => { closeModal(); renderAll(); } }, "\u2715")]); refresh();
+}
+function vlFill(b0, b1) {                                                                   // copies laid end to end from one bar to another; the last one cut back to the last whole beat that fits
+  const c = VL.clip; if (!c) return; const lo = Math.min(b0, b1), hi = Math.max(b0, b1), from = barAbs(lo), to = r3(barAbs(hi) + barBeats(hi)); let at = from, n = 0;
+  while (at < to - 1e-6) { const room = r3(to - at), len = room >= c.len - 1e-6 ? c.len : Math.floor(room + 1e-6); if (len < 1 - 1e-6) break;
+    const ok = vlPasteAt(at, { len: len < c.len - 1e-6 ? len : null, keepSource: n > 0 || !VL.moveQueued ? true : false }); if (!ok) break; if (n === 0 && VL.moveQueued) { c.start = at; } at = r3(at + len); n++; }
+  S.mv = null; renderAll(); toast(n ? `${n} cop${n === 1 ? "y" : "ies"} laid from bar ${barNo(lo)} to bar ${barNo(hi)}` : "No room to lay it there");
+}
+function renderVlPanel() {
+  const box = $("vlPanel"); if (!box || deckMode()) return; const locked = vlLocked(), sel = vlHasSel() && !locked, hlOn = !!(S.mv && S.mv.mode === "delete") && !locked;
+  const B = (label, fn, o = {}) => { const b = el("button", { class: (o.cls || "") + (o.on ? " on" : ""), title: o.title || "", onclick: fn }); String(label).split("\n").forEach((ln, i) => { if (i) b.append(el("br")); b.append(ln); }); if (o.dis) b.disabled = true; return b; };
+  const top = el("div", { class: "top" },
+    el("div", { class: "ind" }, el("span", { class: "un" + (locked ? "" : " now") }, "UNLOCKED"), el("span", { class: "lk" + (locked ? " now" : "") }, "LOCKED")),
+    B("LOCK TO\nADJUST", vlLock, { dis: locked, title: "Pick what stands flush with the line on the chosen side; the grip then moves it" }),
+    B("HIGHLIGHT\nTO SELECT", vlHighlight, { dis: locked, on: hlOn, title: "Drag or tap across beats and bars in this section" }),
+    B("COPY\nSELECTION", vlCopy, { dis: !sel, title: "Copy the highlighted beats" }),
+    B("MOVE\nSELECTION", vlMoveQueue, { dis: !sel, cls: "dark", on: VL.moveQueued && !locked, title: "Queue the highlighted beats for a move" }),
+    B("PASTE\nSELECTION", vlPaste, { dis: locked || !VL.clip, cls: "green", title: "Lay the selection at the line's beat" }));
+  const dirBox = el("div", { class: "dirBox" }, el("div", { class: "cap" }, "PUSH DIRECTION"), el("div", { class: "btns" },
+    B("LEFT", () => { if (locked) return; VL.dir = "left"; renderVlPanel(); }, { on: VL.dir === "left", dis: locked }), el("i"), B("RIGHT", () => { if (locked) return; VL.dir = "right"; renderVlPanel(); }, { on: VL.dir === "right", dis: locked })));
+  const left = el("div", { class: "left" }, dirBox, B("UNLOCK", vlUnlock, { dis: !locked, cls: "dark", title: "End the push and free the other tools" }));
+  const mvOn = VL.moveQueued && !locked, rad = (v, l) => el("label", { onclick: () => { if (!mvOn) return; VL.by = v; renderVlPanel(); } }, el("span", { class: "dot" + (VL.by === v ? " on" : "") }), el("b", {}, l));
+  const mvBox = el("div", { class: "mvBox" + (mvOn ? "" : " off") }, el("div", { class: "rad" }, rad("beat", "BY BEAT"), rad("bar", "BY BAR")), el("span", { class: "or" }, "OR"),
+    B("MOVE TO\nSPECIFIC\u2026", vlOpenMap, { dis: !mvOn, cls: "spec" }), el("div", { class: "arr" }, B("\u2b05", () => vlStep(-1), { dis: !mvOn }), B("\u27a1", () => vlStep(1), { dis: !mvOn })));
+  box.replaceChildren(top, left, mvBox);
+}
+/* the slider: the grip stands exactly under the line; a drag moves the line to the pixel (and, locked, what it pushes) */
+function initVlTrack() {
+  const tr = $("vlTrack"); if (!tr) return; let d = null;
+  const to = e => { const g = GEO.mel, svg = $("melSvg"); if (!g || !svg) return; const sr = svg.getBoundingClientRect(), at = g.at(e.clientX - sr.left);
+    if (S.push) { if (at.bi !== S.push.bi) return; pushMove(clamp(at.t, 0, barBeats(at.bi))); renderWindows(); renderStrips(); placeLyrGuide(); return; }
+    S.guide = { bi: at.bi, t: at.t }; placeLyrGuide(); };
+  tr.addEventListener("pointerdown", e => { e.preventDefault(); d = { id: e.pointerId }; try { tr.setPointerCapture(e.pointerId); } catch (x) {} to(e); });
+  window.addEventListener("pointermove", e => { if (d && e.pointerId === d.id) to(e); });
+  const end = e => { if (d && e.pointerId === d.id) d = null; }; window.addEventListener("pointerup", end); window.addEventListener("pointercancel", end);
+  tr.addEventListener("touchstart", e => e.preventDefault(), { passive: false }); tr.addEventListener("touchmove", e => e.preventDefault(), { passive: false });
+}
+function placeVlGrip(x) { const tr = $("vlTrack"), gr = $("vlGrip"); if (!tr || !gr || deckMode() || !tr.offsetWidth) return; const r = tr.getBoundingClientRect(); gr.style.left = clamp(x - r.left - 2, 13, r.width - 17) + "px"; }   // the grip's centre on the line's x (inside the track's border)
+/* the five lines of every stave under the line: [top, bottom] in screen y, one pair to a staff */
+function vlBands(win) { const g = GEO[win], svg = $(win + "Svg"); if (!g || !svg || !svg.getBoundingClientRect().height) return []; const top = svg.getBoundingClientRect().top;
+  const bs = focusBandSteps(win); if (bs) return bs.map(([lo, hi]) => [top + g.yS(hi), top + g.yS(lo)]);
+  return focusBands(win).map(([lo, hi]) => S.halfLines ? [top + g.y(hi), top + g.y(lo)] : [top + g.y(hi) - g.step / 2, top + g.y(lo) + g.step / 2]); }
 /* the scratch pad: shown beside the stave in view on the deck, its words kept with the song (song.pad); the font size and RULED are the app's own settings */
 function renderPad() {
   const pad = $("pad"); if (!pad) return; const on = deckMode() && !!S.padOn && kbUpNow() && !duoMode(); pad.hidden = !on; if (!on) return;
@@ -8706,7 +8861,7 @@ function trayRow2(box) {
   put(el("button", { class: "tplay run" + (runOn() ? " on" : ""), title: "Note run: press and drag along a stave to lay a run of notes", onclick: openRunSetup }, el("span", { class: "sub" }, "RUN")));
   [4, 2, 0.5, 0.25, 0.125].forEach(v => put(el("button", { onclick: () => tapRestLen(v), class: (ownR ? evR.rest && Math.abs(baseLen(evR.d) - v) < 1e-9 : S.restNext && (S.restLen || S.len) === v) ? "on" : "", title: ownR ? `Make it a ${REST_NAME[v]} rest` : `${REST_NAME[v]} rest: goes in at the next free spot, or arms one for your next tap` }, restIcon(v))));
   for (const k of ["staccato", "tenuto"]) put(el("button", { class: "art" + (S.artic === k ? " armed" : "") + (ev && !sc && ev.artic === k ? " on" : ""), onclick: () => tapArtic(k), title: S.artic === k ? `${ARTIC[k].label} armed — tap notes to mark them; tap again to return to note entry` : `${ARTIC[k].label}: tap before entering a note, or arm it and tap existing notes` }, ARTIC[k].glyph));
-  box.append(el("div", { class: "xc two" }, el("button", { class: "push" + (S.push ? " on" : ""), title: "Push: the guide line takes whatever stands on it along as it is dragged — tap to engage, tap again to finish", onclick: () => S.push ? pushEnd() : pushStart() }, "PUSH"), el("button", { class: S.guideOn !== false ? "on" : "", title: "Show or hide the guide line", onclick: guideToggle }, "LINE")));   // PUSH over LINE, sharing a slot
+  box.append(el("div", { class: "xc empty", title: "Room for a key to come" }));
   box.append(el("div", { class: "xc two" }, el("button", { title: "Notes a step larger on this screen (the staves stay as they are)", onclick: () => noteZoomStep(1) }, "N+"), el("button", { title: "Notes a step smaller on this screen", onclick: () => noteZoomStep(-1) }, "N−")));
 }
 function quickAct(id) { const it = QUICK_ITEMS[id]; if (!it) return; if (it.kind === "rest") tapRestLen(it.v); else if (it.kind === "len") tapLength(it.v); else if (it.kind === "slur") tapArtic("slur"); else if (it.kind === "tie") tapTie(); else if (it.kind === "ghost") tapGhostNote(); else tapDot(); }
@@ -10302,7 +10457,7 @@ function escAll() {
   if (had(S.mv)) S.mv = null; if (had(S.rep)) S.rep = null; if (had(S.cpy)) S.cpy = null;
   if (had(typeof PSEL !== "undefined" && PSEL.on)) leavePlaySelect();
   if (had(S.artic)) S.artic = null; if (had(S.dynArm)) S.dynArm = null; if (had(S.restNext)) S.restNext = false; if (had(S.ghostNext)) S.ghostNext = false;
-  if (had(runOn())) S.run.on = false; if (had(S.push)) S.push = null;
+  if (had(runOn())) S.run.on = false; if (had(S.push)) S.push = null; if (typeof VL !== "undefined" && had(VL.moveQueued)) VL.moveQueued = false;
   if (had(S.sel || S.selChip)) { S.sel = null; S.selChip = null; } if (had((S.picked || []).length)) S.picked = [];
   S.ghost = null; S.justEntered = null; if (S.mvDest) S.mvDest = null;
   if (typeof WE !== "undefined" && WE.on && had(WE.picking || WE.picks.length)) { WE.picking = false; WE.picks = []; }
@@ -11103,7 +11258,7 @@ async function boot() {
   let syncing = false;
   scrollers.forEach(sc => sc.addEventListener("scroll", () => { if (syncing) return; syncing = true; scrollers.forEach(o => { if (o !== sc) o.scrollLeft = sc.scrollLeft; }); const inner = $("beatRow").querySelector(".inner"); if (inner) inner.style.transform = `translateX(${-sc.scrollLeft}px)`; syncing = false; }, { passive: true }));
   $("barLabel").addEventListener("click", openSectionOps);
-  wireTempo(); initPlayL(); initPad(); $("lyrOpenBtn").addEventListener("click", weOpenFromButton); window.addEventListener("resize", () => setTimeout(weReseat, 60));
+  wireTempo(); initPlayL(); initPad(); initVlTrack(); $("lyrOpenBtn").addEventListener("click", weOpenFromButton); window.addEventListener("resize", () => setTimeout(weReseat, 60));
   $("saveBtn").addEventListener("click", openLibrary);
   document.querySelectorAll(".win .delBtn").forEach(b => b.addEventListener("click", () => delAskOpen(b)));
   document.querySelectorAll(".win .bsBtn").forEach(b => b.addEventListener("click", () => backspaceNote(WIN_PART[b.dataset.win])));
