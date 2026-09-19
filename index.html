@@ -788,7 +788,7 @@ body.kbOpen #lyrEdit, #app.deck.kbUp #lyrEdit { display: none !important; }   /*
 #app.deck #vlBar { position: fixed; left: 0; right: 0; z-index: 58; gap: 3px; padding: 3px 4px 4px; background: var(--ground); border-top: 1.5px solid #141414; box-shadow: 0 -4px 12px rgba(0,0,0,.45); }
 #app.deck #vlBar .vlRow { display: block; } #app.deck #vlTrack { height: 26px; }
 #app.deck #vlPanel { display: flex; flex-wrap: nowrap; gap: 5px; align-items: stretch; }
-#app.deck #vlPanel .top { display: flex; gap: 4px; flex: 0 0 auto; } #app.deck #vlPanel .top .ind { width: 54px; } #app.deck #vlPanel .top button { width: 62px; }
+#app.deck #vlPanel .top { display: flex; gap: 4px; flex: 0 0 auto; } #app.deck #vlPanel .top .ind { width: 54px; } #app.deck #vlPanel .top button { width: 62px; } #app.deck #vlPanel .lockGrp { display: flex; gap: 4px; }
 #app.deck #vlPanel .left { display: flex; gap: 4px; align-items: stretch; flex: 0 0 auto; } #app.deck #vlPanel .left > button { width: 56px; }
 #app.deck #vlPanel .dirBox { grid-template-rows: auto 1fr; } #app.deck #vlPanel .dirBox .btns { padding: 2px 4px; } #app.deck #vlPanel .dirBox button { min-height: 18px; } #app.deck #vlPanel .dirBox .btns i { height: 16px; }
 #app.deck #vlPanel button { min-height: 28px; }
@@ -801,6 +801,7 @@ body.kbOpen #lyrEdit, #app.deck.kbUp #lyrEdit { display: none !important; }   /*
 #vlGrip i { width: 2px; height: 60%; background: #f2f3f5; border-radius: 1px; box-shadow: 0 0 1px rgba(0,0,0,.6); }
 #vlPanel { display: grid; grid-template-columns: auto 1fr; gap: 5px 6px; align-items: start; font-family: var(--sans); }
 #vlPanel .top { grid-column: 1 / -1; display: grid; grid-template-columns: 52px repeat(5, 1fr); gap: 4px; align-items: stretch; }
+#vlPanel .lockGrp { grid-column: span 2; display: grid; grid-template-columns: 52px 1fr; gap: 4px; padding: 2px; border: 1px solid #fff; border-radius: 6px; }   /* UNLOCKED, LOCKED and LOCK TO ADJUST belong together: a thin white ring round the three */
 #vlPanel .ind { display: grid; grid-template-rows: 1fr 1fr; gap: 2px; }
 #vlPanel .ind span { display: grid; place-items: center; font-size: 6px; font-weight: 800; letter-spacing: .04em; color: #fff; border: 1.5px solid #141414; border-radius: 3px; opacity: .38; }
 #vlPanel .ind .un { background: #1f9d45; } #vlPanel .ind .lk { background: #e02020; }
@@ -8329,8 +8330,8 @@ function renderVlPanel() {
   const sig = [deckMode(), locked, sel, hlOn, VL.dir, VL.by, !!VL.clip, VL.moveQueued].join("|"); if (box.dataset.sig === sig && box.childElementCount) return; box.dataset.sig = sig;   // rebuilt only when what it shows has changed
   const B = (label, fn, o = {}) => { const b = el("button", { class: (o.cls || "") + (o.on ? " on" : ""), title: o.title || "", onclick: fn }); String(label).split("\n").forEach((ln, i) => { if (i) b.append(el("br")); b.append(ln); }); if (o.dis) b.disabled = true; return b; };
   const top = el("div", { class: "top" },
-    el("div", { class: "ind" }, el("span", { class: "un" + (locked ? "" : " now") }, "UNLOCKED"), el("span", { class: "lk" + (locked ? " now" : "") }, "LOCKED")),
-    B("LOCK TO\nADJUST", vlLock, { dis: locked, title: "Pick what stands flush with the line on the chosen side; the grip then moves it" }),
+    el("div", { class: "lockGrp" }, el("div", { class: "ind" }, el("span", { class: "un" + (locked ? "" : " now") }, "UNLOCKED"), el("span", { class: "lk" + (locked ? " now" : "") }, "LOCKED")),
+      B("LOCK TO\nADJUST", vlLock, { dis: locked, title: "Pick what stands flush with the line on the chosen side; the grip then moves it" })),   /* the two indicators and the key they answer to, ringed together */
     B("HIGHLIGHT\nTO SELECT", vlHighlight, { dis: locked, on: hlOn, title: "Drag or tap across beats and bars in this section" }),
     B("COPY\nSELECTION", vlCopy, { dis: !sel, title: "Copy the highlighted beats" }),
     B("MOVE\nSELECTION", vlMoveQueue, { dis: !sel, cls: "dark", on: VL.moveQueued && !locked, title: "Queue the highlighted beats for a move" }),
