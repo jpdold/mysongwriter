@@ -473,6 +473,9 @@ text.clef, text.smufl { user-select: none; }
 #lyrGuide.deck { z-index: 75; opacity: .95; } #lyrGuide.deck .seg { border-left-color: #f5a623; } #lyrGuide.deck .knob, #lyrGuide.deck .pushTag { display: none !important; }
 #app.deck #lyrGuide:not(.deck) { z-index: 9; }   /* the wide screen's draggable guide (outside the lyrics screen): over the stave and the strips */   /* the deck's guide: amber, over the keyboard's plane, with no knob: it stands where the entry box is */
 #app:not(.deck).norhy #rhyStrip .tag, #app:not(.deck).norhy #rhyStrip .body { display: none; }
+/* the phone, the Rhythm strip hidden: its row is given up, and the line's bar comes up to stand just short of flush under the stave's window; SHOW RHYTHM hangs where it was, in the margin beside the slider */
+#app:not(.deck).norhy #rhyStrip { height: 0; min-height: 0; overflow: visible; align-items: start; position: relative; z-index: 2; pointer-events: none; } #app:not(.deck).norhy #rhyToggle { pointer-events: auto; align-self: start; margin-top: 7px; }
+#app:not(.deck).norhy #vlBar { margin-top: -19px; }   /* three row gaps (the strips' empty rows keep theirs) less the 2px it stands off the window */
 /* the tool bar, in thirds, each flipping on its own: the left between its tools (UNDO / REDO, MOVE / DELETE, PITCH, ITEM) and the
    staff-lines switch; the middle between playback and this part's buttons; the right between four palettes — notes (the quick
    palette), rests, dynamics, marks — each flip button at its own third's far corner */
@@ -6305,7 +6308,7 @@ function loadPrefs() {
   S.deck = Array.isArray(p.deck) && p.deck.length ? p.deck.filter(w => ["mel", "acc", "bass"].includes(w)) : ["mel", "acc", "bass"]; if (!S.deck.length) S.deck = ["mel"];
   S.duoBars = p.duoBars === 8 ? 8 : 4; S.duoBand = p.duoBand === "bass" ? "bass" : "acc"; S.beatDividers = p.beatDividers !== false;
   S.focusBand = Object.assign({ mel: { on: false, lo: 64 }, acc: { on: false, lo: 52 }, bass: { on: false, lo: 40 } }, p.focusBand || {}); for (const w of ["mel", "acc", "bass"]) { if (!S.focusBand[w]) S.focusBand[w] = { on: false, lo: { mel: 64, acc: 52, bass: 40 }[w] }; S.focusBand[w].lo = clamp(Math.round((S.focusBand[w].lo != null ? S.focusBand[w].lo : { mel: 64, acc: 52, bass: 40 }[w]) / 2) * 2, 24, 96); }
-  S.doors = Object.assign({ mel: true, acc: true, bass: true }, p.doors || {}); S.playX = +p.playX || 0; S.noteZoom = Object.assign({ phone: 1, deck: 1 }, p.noteZoom || {}); S.edge = !!p.edge; S.padOn = !!p.padOn; S.padFont = ({ s: 1, m: 1, l: 1 })[p.padFont] ? p.padFont : "m"; S.padRuled = p.padRuled !== false; S.lyrGuide = !!p.lyrGuide; S.sigsOff = !!p.sigsOff; S.guideOn = p.guideOn !== false; S.vlDeck = !!p.vlDeck; S.collapsed = Object.assign({ mel: false, acc: false, bass: false }, p.collapsed || {});   // Stacked staves: which parts are folded to a bar
+  S.doors = Object.assign({ mel: true, acc: true, bass: true }, p.doors || {}); S.playX = +p.playX || 0; S.noteZoom = Object.assign({ phone: 1, deck: 1 }, p.noteZoom || {}); S.edge = !!p.edge; S.padOn = !!p.padOn; S.padFont = ({ s: 1, m: 1, l: 1 })[p.padFont] ? p.padFont : "m"; S.padRuled = p.padRuled !== false; S.lyrGuide = !!p.lyrGuide; S.sigsOff = !!p.sigsOff; S.headKeep = !!p.headKeep; S.guideOn = p.guideOn !== false; S.vlDeck = !!p.vlDeck; S.collapsed = Object.assign({ mel: false, acc: false, bass: false }, p.collapsed || {});   // Stacked staves: which parts are folded to a bar
   S.clefs = Object.assign({ mel: { on: false, kind: "treble" }, acc: { on: false, kind: "treble" }, bass: { on: false, kind: "bass" } }, p.clefs || {});
   if (p.clef && p.clef.on && !p.clefs) ["mel", "acc", "bass"].forEach(w => { S.clefs[w] = { on: true, kind: p.clef.kind }; });   // an older setting: one clef for all
   for (const w of ["mel", "acc", "bass"]) if (!S.clefs[w] || !CLEFS[S.clefs[w].kind]) S.clefs[w] = { on: false, kind: w === "bass" ? "bass" : "treble" };
@@ -6317,7 +6320,7 @@ function loadPrefs() {
   S.layout = p.layout === "stack" ? "stack" : "rolled";                                 // Stacked staves or Rolled up: the page comes back in the view it was left in
   applyTheme();
 }
-function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, deck: S.deck, rhyShown: S.rhyShown, lyrShown: S.lyrShown, partsShown: S.partsShown, dynShown: S.dynShown, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, beatLines: S.beatLines, barHi: S.barHi, spacing: S.spacing, collapsed: S.collapsed, rangeLock: S.rangeLock, kbLayout: S.kbLayout, kbTheme: S.kbTheme, kbSpace: S.kbSpace, kbBackUp: S.kbBackUp, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, keepAwake: S.keepAwake, paper: S.paper, quick: S.quick, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout, duoBars: S.duoBars, duoBand: S.duoBand, beatDividers: S.beatDividers, focusBand: S.focusBand, doors: S.doors, playX: S.playX || 0, noteZoom: S.noteZoom, edge: S.edge, padOn: S.padOn, padFont: S.padFont, padRuled: S.padRuled, lyrGuide: S.lyrGuide, sigsOff: S.sigsOff, guideOn: S.guideOn, vlDeck: S.vlDeck, clefs: S.clefs, phoneWins: S.phoneWins, lyrOff: S.lyrOff, run: S.run ? { mode: S.run.mode, preset: S.run.preset, semis: S.run.semis } : null }); }
+function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, deck: S.deck, rhyShown: S.rhyShown, lyrShown: S.lyrShown, partsShown: S.partsShown, dynShown: S.dynShown, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, beatLines: S.beatLines, barHi: S.barHi, spacing: S.spacing, collapsed: S.collapsed, rangeLock: S.rangeLock, kbLayout: S.kbLayout, kbTheme: S.kbTheme, kbSpace: S.kbSpace, kbBackUp: S.kbBackUp, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, keepAwake: S.keepAwake, paper: S.paper, quick: S.quick, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout, duoBars: S.duoBars, duoBand: S.duoBand, beatDividers: S.beatDividers, focusBand: S.focusBand, doors: S.doors, playX: S.playX || 0, noteZoom: S.noteZoom, edge: S.edge, padOn: S.padOn, padFont: S.padFont, padRuled: S.padRuled, lyrGuide: S.lyrGuide, sigsOff: S.sigsOff, headKeep: S.headKeep, guideOn: S.guideOn, vlDeck: S.vlDeck, clefs: S.clefs, phoneWins: S.phoneWins, lyrOff: S.lyrOff, run: S.run ? { mode: S.run.mode, preset: S.run.preset, semis: S.run.semis } : null }); }
 function applyTheme() {
   const r = document.documentElement;
   const TEX = { pearl: "#f3f0ea", cobalt: "#0b3d91", cherry: "#c4202b", mustard: "#d8d12e" };   // the textured themes, and the colour each gives the browser's bar
@@ -6513,7 +6516,7 @@ let GEO = {};
 const SPACING_SP = { regular: null, small: 2, tight: 1.5 };
 const PINCH_ENABLED = false;                                                              // the two-finger pinch on a stave (rows taller or shorter, more or fewer bars) is put away: the view is set from Settings and the buttons, never squeezed; flip this to bring it back
 const staffSpacePx = (win, step) => (S.halfLines || clefOn(win)) ? 2 * step : step;     // a staff space on this stave, in pixels
-const clefPadPx = (win, step, W1) => clefNow(win) ? Math.min(Math.round(W1 * 0.4), Math.round(step * 2 * (CLEF_SLOT + sigSpacesKey(keyObj(S.song.key))) + (clefNow(win).bands ? step * 2.4 : 0) + step * 0.5)) : 0;   // room for the clef, the key signature and the time signature: exactly what the head draws, never more than two fifths of the width (then the head shrinks to fit)
+const clefPadPx = (win, step, W1) => clefNow(win) && !headHidden() ? Math.min(Math.round(W1 * 0.4), Math.round(step * 2 * (CLEF_SLOT + sigSpacesKey(keyObj(S.song.key))) + (clefNow(win).bands ? step * 2.4 : 0) + step * 0.5)) : 0;   // room for the clef, the key signature and the time signature: exactly what the head draws, never more than two fifths of the width (then the head shrinks to fit)
 /* Stacked staves: one pad for all the staves in view — the widest head's (a Grand Stave's, with its brace and two clefs) — so bar 1 starts at the same x on every stave and the bar lines and beat lines fall in line down the stack; a narrower head sits right-aligned in it */
 function sharedClefPad(W1) { let p = 0; for (const w of duoWins()) { if (S.collapsed[w]) continue; const { step } = rowsOf(w); p = Math.max(p, clefPadPx(w, step, W1)); } return p; }
 const clefPadFor = (win, step, W1) => duoMode() ? sharedClefPad(W1) : clefPadPx(win, step, W1);
@@ -7456,11 +7459,12 @@ const sigSpacesKey = key => { if (sigsHidden()) return 0.6; const n = keySig(key
 const sigSpaces = g => g.dia ? sigSpacesKey(g.dia) : 0;
 /* the key and time signatures out of sight — by the Settings switch, or while the lyrics keyboard is open — the stave's head keeping the clef alone; SIGS, a small tab at the stave's foot, shows them for 2.5 seconds */
 const sigsHidden = () => !S.sigPeek && (!!S.sigsOff || kbUpNow());
+const headHidden = () => !deckMode() && !S.headKeep && !S.sigPeek;                          // the phone: the stave's whole head — clef, key and time signatures — is out of view, and the stave begins at beat 1, unless Settings keeps it; the tab at the stave's foot shows it for a moment
 let sigPeekT = null;
 function sigPeek() { S.sigPeek = true; clearTimeout(sigPeekT); sigPeekT = setTimeout(() => { S.sigPeek = false; renderAll(); }, 2500); renderAll(); }
 const CLEF_SLOT = 3.0;                                                                     // the clef's room in spaces: the widest glyph and a little air after it
 function drawClefs(svg, g) {
-  const c = clefNow(g.win); if (!c) return;
+  const c = clefNow(g.win); if (!c || headHidden()) return;
   const bands = focusBands(g.win), pad = clefPad(g), sp0 = g.step * 2, lineY = m => (S.halfLines || g.dia) ? g.y(m) : g.y(m) - g.step / 2, ink = css("--line");
   const need = sp0 * (CLEF_SLOT + sigSpaces(g)) + (c.bands ? g.step * 2.4 : 0) + g.step * 0.5, hs = Math.min(1, pad / need), sp = sp0 * hs;   // the room the head wants at full size (the pad gives exactly this unless capped); a narrow stave: the whole head shrinks alike to fit, nothing leaning
   const glyph = (kind, lo) => {
@@ -8151,10 +8155,11 @@ function placeLyrNav() {
     { const side = win.querySelector(".side"); if (side && !side.querySelector(".escBtn")) side.prepend(el("button", { class: "escBtn", title: "Escape: let go of whatever is armed, pending or picked", onclick: escAll }, "ESC")); }   // the phone: ESC at the top of the column, above the stave's gear
     if (!nav) { nav = el("div", { class: "lyrNav" }, el("button", { class: "back", title: "Back two bars", onclick: () => $("prevBar").click() }, "◀ BACK"), el("button", { class: "next", title: "On two bars", onclick: () => $("nextBar").click() }, "NEXT ▶")); win.append(nav); }
     if (!tab) { tab = el("button", { class: "sigTab", title: "Show the key and time signatures for a moment", onclick: sigPeek }, "SIGS"); win.append(tab); }
+    { const head = !deckMode() && !S.headKeep, lbl = head ? "CLEF · SIGS" : "SIGS"; if (tab.textContent !== lbl) { tab.textContent = lbl; tab.title = head ? "Show the clef and the key and time signatures for a moment" : "Show the key and time signatures for a moment"; } }
     const lead = deckMode() ? w === deckActive() : w === leadWin();
     const showNav = lyrView() && lead && !win.classList.contains("closed") && frame.offsetHeight > 0;
     nav.hidden = !showNav;
-    const showTab = lead && !win.classList.contains("closed") && frame.offsetHeight > 0 && clefOn(w) && (S.sigsOff || kbUpNow()) && !S.sigPeek;
+    const showTab = lead && !win.classList.contains("closed") && frame.offsetHeight > 0 && clefOn(w) && (S.sigsOff || kbUpNow() || (!deckMode() && !S.headKeep)) && !S.sigPeek;
     tab.hidden = !showTab;
     if (showNav) {
       nav.querySelector(".back").hidden = viewFirst() <= 0; nav.querySelector(".next").hidden = viewFirst() + spanNow() >= S.song.bars.length;
@@ -8382,9 +8387,12 @@ function initVlTrack() {
   tr.addEventListener("touchstart", e => e.preventDefault(), { passive: false }); tr.addEventListener("touchmove", e => e.preventDefault(), { passive: false });
 }
 function placeVlDock() {                                                                   // the wide screen: the bar flush on the tool bar, its slider exactly under the stave's frame
-  const bar = $("vlBar"), tr = $("vlTrack"); if (!bar || !tr) return; if (!deckMode()) { bar.style.bottom = ""; tr.style.marginLeft = ""; tr.style.width = ""; return; }
-  const tb = $("toolbar").getBoundingClientRect(), fr = $(pushWin() + "Win").querySelector(".frame").getBoundingClientRect(), br = bar.getBoundingClientRect();
-  bar.style.bottom = Math.max(0, Math.round(window.innerHeight - tb.top)) + "px"; tr.style.marginLeft = Math.max(0, Math.round(fr.left - br.left - 4)) + "px"; tr.style.width = Math.round(fr.width) + "px";
+  const bar = $("vlBar"), tr = $("vlTrack"); if (!bar || !tr) return;
+  /* the track is no wider than the line can go: it begins flush on the left line of the first bar's first beat — the room of the stave's head (clef, key and time signatures), where the line never stands, is trimmed off it */
+  const w = pushWin(), g = GEO[w], sv = $(w + "Svg"), beat1 = g && sv ? sv.getBoundingClientRect().left + g.x(g.bars[0], 0) : null;
+  if (!deckMode()) { bar.style.bottom = ""; tr.style.width = ""; tr.style.marginLeft = ""; if (beat1 != null) { const cut = Math.round(beat1 - tr.getBoundingClientRect().left); tr.style.marginLeft = cut > 1 ? cut + "px" : ""; } return; }
+  const tb = $("toolbar").getBoundingClientRect(), fr = $(w + "Win").querySelector(".frame").getBoundingClientRect(), br = bar.getBoundingClientRect(), left = beat1 != null ? Math.max(fr.left, beat1) : fr.left;
+  bar.style.bottom = Math.max(0, Math.round(window.innerHeight - tb.top)) + "px"; tr.style.marginLeft = Math.max(0, Math.round(left - br.left - 4)) + "px"; tr.style.width = Math.round(fr.right - left) + "px";
 }
 function placeVlGrip(x) { const tr = $("vlTrack"), gr = $("vlGrip"); if (!tr || !gr || !tr.offsetWidth) return; const r = tr.getBoundingClientRect(); gr.style.left = (x - r.left - 2) + "px"; }   // the grip's centre on the line's x to the pixel, the track's border allowed for — at the stave's ends the grip overhangs the track rather than leave the line
 /* the five lines of every stave under the line: [top, bottom] in screen y, one pair to a staff */
@@ -10029,6 +10037,8 @@ function openSettings() {
     el("div", { class: "mrow" }, toggle("Lock the register scroll at the edge of each sound's range (top and bottom alike, on every stave)", S.rangeLock, v => { S.rangeLock = v; if (v) ["mel", "acc", "bass"].forEach(w => { const { rows } = rowsOf(w), [minV, , maxV] = viewLimits(w, rows); S.song.view[WIN_LO[w]] = clamp(viewOf(w), minV, maxV); }); savePrefs(); renderAll(); openSettings(); })),   // switched on, every stave's view is pulled inside its range at once
     el("p", { class: "tiny", style: "margin:0 0 6px" }, "Locks to: " + ["mel", "acc", "bass"].map(w => { const [lo, hi] = soundRange(w), P = S.song.parts[WIN_PART[w]], k = keyObj(S.song.key); return `${DECK_NAME[w].charAt(0) + DECK_NAME[w].slice(1).toLowerCase()} ${noteName(lo, k)}–${noteName(hi, k)} (${P.bank || P.inst})`; }).join(" · ") + ". A piano or a sample library that spans the keyboard leaves nothing to lock."),
     el("div", { class: "pLbl" }, "Key and time signatures"), seg([[false, "Shown"], [true, "Hidden"]], !!S.sigsOff, v => { S.sigsOff = v; savePrefs(); renderAll(); }), el("div", { class: "tiny", style: "margin-bottom:6px" }, "Hidden, the stave's head keeps the clef alone; the SIGS tab under the stave shows the signatures for a moment. While the lyrics keyboard is open they are always hidden."),
+    el("div", { class: "mrow" }, toggle("Vertical view: keep the clef and the key and time signatures in view", !!S.headKeep, v => { S.headKeep = v; savePrefs(); renderAll(); })),
+    el("p", { class: "tiny", style: "margin:0 0 6px" }, "Off, the upright screen's stave begins at beat 1, its whole head out of view; the CLEF · SIGS tab at the stave's foot shows it for a moment."),
     el("div", { class: "pLbl" }, "View (Staves)"), radios("view", [["stack", "Stacked Staves"], ["rolled", "Roll-up"]], S.layout, v => { S.layout = v; S.homeNext = { mel: true, acc: true, bass: true }; if (v === "rolled") { S.focus = null; $("app").classList.remove("focused", "focus-mel", "focus-acc", "focus-bass"); } else ["mel", "acc", "bass"].forEach(w => { if (S.winState[w] === "closed") S.winState[w] = "open"; }); savePrefs(); renderAll(); openSettings(); }),   // Stacked: every stave opens
     ...(S.layout === "stack" ? [
       el("div", { class: "pLbl" }, "Stacked staves on a widescreen view"), seg([[4, "4 bars"], [8, "8 bars"]], S.duoBars === 8 ? 8 : 4, v => { S.duoBars = v; S.homeNext = { mel: true, acc: true, bass: true }; savePrefs(); renderAll(); }, okDuoBars),
