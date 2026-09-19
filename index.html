@@ -797,14 +797,14 @@ body.kbOpen #lyrEdit, #app.deck.kbUp #lyrEdit { display: none !important; }   /*
 #app.deck #vlPanel .mvBox .arr { order: 2; } #app.deck #vlPanel .mvBox .arr button { min-height: 20px; } #app.deck #vlPanel .mvBox .or { order: 3; } #app.deck #vlPanel .mvBox .spec { order: 4; min-height: 26px; flex: 1 1 auto; }
 #vlBar .vlRow { display: grid; grid-template-columns: 44px 1fr 30px; gap: 0 4px; align-items: center; }
 #vlTrack { position: relative; height: 34px; border: 2px solid #1b2a4a; border-radius: 9px; background: linear-gradient(#d2d5da, #b9bdc4); box-shadow: inset 0 0 0 3px #f4f5f7, inset 0 2px 5px 3px rgba(0,0,0,.28); touch-action: none; cursor: ew-resize; }
-#vlGrip { will-change: left; position: absolute; top: 3px; bottom: 3px; width: 26px; margin-left: -13px; border-radius: 6px; border: 1.5px solid #222; background: linear-gradient(90deg, #5d6167, #8d9198 45%, #55595f); box-shadow: 0 1px 3px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.35); display: flex; align-items: center; justify-content: center; gap: 4px; pointer-events: none; }
+#vlGrip { will-change: transform; position: absolute; top: 3px; bottom: 3px; width: 26px; margin-left: -13px; border-radius: 6px; border: 1.5px solid #222; background: linear-gradient(90deg, #5d6167, #8d9198 45%, #55595f); box-shadow: 0 1px 3px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.35); display: flex; align-items: center; justify-content: center; gap: 4px; pointer-events: none; }
 #vlGrip i { width: 2px; height: 60%; background: #f2f3f5; border-radius: 1px; box-shadow: 0 0 1px rgba(0,0,0,.6); }
 #vlPanel { display: grid; grid-template-columns: auto 1fr; gap: 5px 6px; align-items: start; font-family: var(--sans); }
 #vlPanel .top { grid-column: 1 / -1; display: grid; grid-template-columns: 52px repeat(5, 1fr); gap: 4px; align-items: stretch; }
 #vlPanel .ind { display: grid; grid-template-rows: 1fr 1fr; gap: 2px; }
 #vlPanel .ind span { display: grid; place-items: center; font-size: 6px; font-weight: 800; letter-spacing: .04em; color: #fff; border: 1.5px solid #141414; border-radius: 3px; opacity: .38; }
 #vlPanel .ind .un { background: #1f9d45; } #vlPanel .ind .lk { background: #e02020; }
-#vlPanel .ind .un.now { animation: vlGlow 1.5s ease-in-out infinite; } #vlPanel .ind .lk.now { animation: vlBlink 1.5s step-end infinite; }
+#vlPanel .ind .un.now { opacity: 1; } #vlPanel .ind .lk.now { animation: vlBlink 1.5s step-end infinite; }   /* UNLOCKED stands lit and still; LOCKED blinks */
 @keyframes vlGlow { 0%, 100% { opacity: .55; box-shadow: none; } 50% { opacity: 1; box-shadow: 0 0 6px 1px #4be07a; } }
 @keyframes vlBlink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: .3; } }
 #vlPanel button { min-height: 30px; padding: 2px 3px; border: 1.5px solid #12325e; border-radius: 5px; background: linear-gradient(#35c3ff, #0e9fe6); color: #07223f; font-size: 6.6px; font-weight: 800; letter-spacing: .03em; line-height: 1.15; box-shadow: 0 2px 3px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.55); }
@@ -832,7 +832,8 @@ body.kbOpen #lyrEdit, #app.deck.kbUp #lyrEdit { display: none !important; }   /*
 /* the line itself */
 #lyrGuide .knob, #lyrGuide .grab, #lyrGuide .pushTag { display: none !important; }
 #lyrGuide:not(.deck) { opacity: 1; }
-#lyrGuide:not(.deck) .seg { border-left: none; width: 3px; margin-left: -1.5px; border-radius: 1px; background: repeating-linear-gradient(#fff 0 11px, transparent 11px 16px); filter: drop-shadow(0 0 2.5px #2f7bff) drop-shadow(0 0 1.5px #2f7bff) drop-shadow(0 0 5px rgba(47,123,255,.7)); }
+#lyrGuide:not(.deck) .seg { border-left: none; width: 3px; margin-left: -1.5px; border-radius: 1px; background: repeating-linear-gradient(#fff 0 11px, rgba(47,123,255,.55) 11px 16px); box-shadow: 0 0 3px 1px #2f7bff, 0 0 7px 2px rgba(47,123,255,.65); }   /* the glow as a shadow: painted once and moved by the compositor (three drop-shadow filters had to be painted again on every move of the grip) */
+#lyrGuide:not(.deck) { will-change: transform; }
 
 /* the composition map (MOVE TO SPECIFIC…) */
 .vlMap { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px; max-height: 58vh; overflow: auto; padding: 2px; }
@@ -8347,20 +8348,27 @@ function initVlTrack() {
   const tr = $("vlTrack"); if (!tr) return; let d = null;
   /* the finger's x is the line's x: the line and the grip are set straight from it (nothing laid out again, no render) — what must be drawn again (pushed items, a highlight grown by a beat) is
      drawn once a frame at most, so the grip never waits on it */
-  const to = e => { const w = pushWin(), g = GEO[w]; if (!g || !d) return; const c = d.cache, at = g.at(e.clientX - c.svgL);
-    if (S.push) { if (at.bi !== S.push.bi) return; d.pushT = clamp(at.t, 0, barBeats(at.bi)); if (!d.raf) d.raf = requestAnimationFrame(() => { d && (d.raf = 0); if (!S.push || d == null || d.pushT == null) return; pushMove(d.pushT); renderWindows(); renderStrips(); placeLyrGuide(); }); return; }
-    S.guide = { bi: at.bi, t: at.t }; const x = c.svgL + g.x(at.bi, at.t);
-    const gd = $("lyrGuide"), gr = $("vlGrip"); if (gd) gd.style.left = (x - c.appL) + "px"; if (gr) gr.style.left = (x - c.trL - 2) + "px";
+  const to = e => { const w = pushWin(), g = GEO[w]; if (!g || !d) return; const c = d.cache, at = g.at(e.clientX + c.off - c.svgL);   // c.off: the finger took the grip a little off its centre — the line keeps that distance rather than jumping under the finger
+    const slide = x => { const gd = $("lyrGuide"), gr = $("vlGrip"), dx = x - c.x0; if (gd) gd.style.transform = `translate3d(${dx}px,0,0)`; if (gr) gr.style.transform = `translate3d(${dx}px,0,0)`; };   // the line and the grip slid by the compositor from where they stood as the finger landed: no layout, no paint
+    if (S.push) { if (at.bi !== S.push.bi) return; const P = S.push; pushMove(clamp(at.t, 0, barBeats(at.bi))); slide(c.svgL + g.x(P.bi, P.t));   // the items' offsets are data; they are shown by sliding what is already drawn — no stave drawn again while the finger is down
+      if (!d.raf) d.raf = requestAnimationFrame(() => { if (!d) return; d.raf = 0; if (!S.push) return; const dxB = (S.push.t - c.pushT0) * g.beatPx;
+        for (const w2 of deckMode() ? [w] : ["mel", "acc", "bass"]) { const sv = $(w2 + "Svg"), g2 = GEO[w2]; if (!sv || !g2 || S.winState[w2] === "closed") continue; applyNoteOffsets(sv, g2, w2 === "mel" ? ["melody", GRAND_LOWER] : [WIN_PART[w2]]); sv.querySelectorAll(".pushBox:not(.off)").forEach(b => b.setAttribute("transform", `translate(${dxB} 0)`)); }
+        if (pushPicked().some(it => it.kind === "chip")) renderStrips(); }); return; }
+    S.guide = { bi: at.bi, t: at.t }; slide(c.svgL + g.x(at.bi, at.t));
     if (d.hl && S.mv && S.mv.mode === "delete" && !S.mv.armed) {                            // HIGHLIGHT on: the grip highlights every beat from where it was taken to where it is, reaching out from what was highlighted already
       const now = barAbs(at.bi) + Math.floor(at.t + 1e-6), sr = sectionRange(sectionOfBar(absToBar(d.hl.beat).bi)), lo = barAbs(sr.start), hi = barAbs(sr.end); let a = Math.max(lo, Math.min(d.hl.beat, now)), b = Math.min(hi, Math.max(d.hl.beat, now) + 1);
       const s0 = d.hl.sel0; if (s0 && s0.s >= lo - 1e-6 && s0.e <= hi + 1e-6) { a = Math.min(a, s0.s); b = Math.max(b, s0.e); }
       if (S.mv.start !== a || S.mv.end !== b) { S.mv.start = a; S.mv.end = b; S.mv.sub = null; if (!S.mv.part) S.mv.part = WIN_PART[w]; if (!d.raf) d.raf = requestAnimationFrame(() => { d && (d.raf = 0); renderWindows(); renderVlPanel(); }); } } };
   tr.addEventListener("pointerdown", e => { e.preventDefault(); const w = pushWin(), g = GEO[w], svg = $(w + "Svg"); if (!g || !svg) return;
-    d = { id: e.pointerId, raf: 0, pushT: null, hl: null, cache: { svgL: svg.getBoundingClientRect().left, appL: $("app").getBoundingClientRect().left, trL: tr.getBoundingClientRect().left } };   // measured once as the finger lands, not on every move
-    if (S.mv && S.mv.mode === "delete" && !S.mv.armed && !S.push) { const at = g.at(e.clientX - d.cache.svgL); d.hl = { beat: barAbs(at.bi) + Math.floor(at.t + 1e-6), sel0: S.mv.start != null ? { s: S.mv.start, e: S.mv.end } : null }; }
+    const svgL0 = svg.getBoundingClientRect().left, lineX0 = S.guide && g.bars.includes(S.guide.bi) ? svgL0 + g.x(S.guide.bi, S.guide.t) : null, onGrip = lineX0 != null && Math.abs(e.clientX - lineX0) <= 26;
+    if (!onGrip && !S.push) { const at0 = g.at(e.clientX - svgL0); S.guide = { bi: at0.bi, t: at0.t }; placeLyrGuide(); }   // a touch on the track away from the grip: the line comes to the finger once, laid out properly; on the grip (or while pushing) it is taken hold of where it stands
+    const x0 = svgL0 + g.x(S.guide.bi, S.guide.t);
+    d = { id: e.pointerId, raf: 0, hl: null, cache: { svgL: svgL0, x0, off: onGrip || S.push ? x0 - e.clientX : 0, pushT0: S.push ? S.push.t : 0 } };   // measured once as the finger lands, not on every move
+    if (S.mv && S.mv.mode === "delete" && !S.mv.armed && !S.push) { const at = g.at(e.clientX + d.cache.off - d.cache.svgL); d.hl = { beat: barAbs(at.bi) + Math.floor(at.t + 1e-6), sel0: S.mv.start != null ? { s: S.mv.start, e: S.mv.end } : null }; }
     try { tr.setPointerCapture(e.pointerId); } catch (x) {} to(e); });
   window.addEventListener("pointermove", e => { if (!d || e.pointerId !== d.id) return; const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : null; to(evs && evs.length ? evs[evs.length - 1] : e); });
-  const end = e => { if (d && e.pointerId === d.id) { const hadHl = !!d.hl; d = null; placeLyrGuide(); if (hadHl) renderAll(); } }; window.addEventListener("pointerup", end); window.addEventListener("pointercancel", end);
+  const end = e => { if (d && e.pointerId === d.id) { const hadHl = !!d.hl, wasPush = !!S.push; d = null; const gd = $("lyrGuide"), gr = $("vlGrip"); if (gd) gd.style.transform = ""; if (gr) gr.style.transform = ""; if (wasPush) { renderWindows(); renderStrips(); } placeLyrGuide(); if (hadHl) renderAll(); } };   /* the finger lifts: the slide is settled into a proper placement, and what was pushed is drawn afresh */
+  window.addEventListener("pointerup", end); window.addEventListener("pointercancel", end);
   tr.addEventListener("touchstart", e => e.preventDefault(), { passive: false }); tr.addEventListener("touchmove", e => e.preventDefault(), { passive: false });
 }
 function placeVlDock() {                                                                   // the wide screen: the bar flush on the tool bar, its slider exactly under the stave's frame
