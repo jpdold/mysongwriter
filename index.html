@@ -854,7 +854,7 @@ body.kbOpen #lyrEdit, #app.deck.kbUp #lyrEdit { display: none !important; }   /*
 #tray #quick .xc button.chord.on, body.runDraw #tray #quick .xc button.run.on { animation: chordBlink 1.4s step-end infinite; }
 /* Play All, Play Bar and Stop: three keys flush together on a pallet of their own, the pallet flush on the tray's top edge, and slid from side to side along it (placePlayL) — as far as the arrows' plate */
 #playL { justify-self: start; align-self: start; display: flex; gap: 0; margin-top: 20px; padding: 2px; background: var(--ground2); border: 1.5px solid #141414; border-radius: 4px 4px 0 0; border-bottom: none; box-shadow: inset 0 1px 0 rgba(255,255,255,.12); touch-action: pan-y; cursor: ew-resize; position: relative; z-index: 1; }
-#playL button { width: 27px; height: 28px; font-size: 14px; border-radius: 0; box-shadow: inset 0 1px 0 rgba(255,255,255,.7); }   /* the play keys a size smaller, so the three pallets share the tray's edge with room to spare on a narrow phone */
+#playL button { width: 24px; height: 28px; font-size: 13px; border-radius: 0; box-shadow: inset 0 1px 0 rgba(255,255,255,.7); }   /* the play keys a size smaller, so the three pallets share the tray's edge with room to spare on a narrow phone */
 #playL #playBarBtn .top, #playL #playSelBtn .top { line-height: 12px; } #playL #playBarBtn .sub, #playL #playSelBtn .sub { font-size: 6px; line-height: 7px; }
 #playL button + button { border-left: none; }
 #playL button:first-child { border-radius: 4px 0 0 4px; } #playL button:last-child { border-radius: 0 4px 4px 0; }
@@ -862,16 +862,21 @@ body.kbOpen #lyrEdit, #app.deck.kbUp #lyrEdit { display: none !important; }   /*
 /* the tempo on a pallet of its own on the tray's top edge, between the play pallet and the arrows' plate (placePlayL keeps it beside the play pallet) */
 #tempoL { justify-self: start; align-self: start; margin-top: 20px; padding: 2px; background: var(--ground2); border: 1.5px solid #141414; border-radius: 4px 4px 0 0; border-bottom: none; box-shadow: inset 0 1px 0 rgba(255,255,255,.12); position: relative; z-index: 1; }
 #tempoL:empty { display: none; }
+#app:not(.deck):not(.lyrEdit) #lyrStrip { display: none !important; }                        /* the phone: no Lyrics strip on the page — LYRICS on the tray opens the words; the strip is part of the editing screen alone */
+#lyrL { justify-self: start; align-self: start; margin-top: 20px; padding: 2px; background: var(--ground2); border: 1.5px solid #141414; border-radius: 4px 4px 0 0; border-bottom: none; box-shadow: inset 0 1px 0 rgba(255,255,255,.12); position: relative; z-index: 1; }   /* LYRICS on its own pallet, between the tempo and the arrows' plate */
+#lyrL button { height: 28px; padding: 0 5px; border: 1.5px solid #1b4f8a; border-radius: 4px; background: var(--lyric); color: var(--lyric-ink); font-family: var(--sans); font-size: 8.5px; font-weight: 800; letter-spacing: .08em; box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 1px 2px rgba(0,0,0,.35); }   /* in the lyric chips' own blue */
+#lyrL button:active { filter: brightness(1.12); }
+#app.deck #lyrL { display: none; }
 #tray #tempo { display: flex; height: 28px; border: 1.5px solid #141414; border-radius: 4px; overflow: hidden; background: linear-gradient(var(--sv-hi), var(--sv-lo)); }
-#tray #tempo button { width: 16px; height: 28px; border: none; border-radius: 0; box-shadow: none; font-size: 15px; font-weight: 700; padding: 0; background: linear-gradient(var(--sv-hi), var(--sv-lo)); color: #111; }
-#tray #tempo button#tempoLbl { width: auto; min-width: 36px; padding: 0 2px; font-size: 10px; font-weight: 800; font-variant-numeric: tabular-nums; background: #111; color: #fff; }
+#tray #tempo button { width: 15px; height: 28px; border: none; border-radius: 0; box-shadow: none; font-size: 14px; font-weight: 700; padding: 0; background: linear-gradient(var(--sv-hi), var(--sv-lo)); color: #111; }
+#tray #tempo button#tempoLbl { width: auto; min-width: 32px; padding: 0 1px; font-size: 9.5px; font-weight: 800; font-variant-numeric: tabular-nums; background: #111; color: #fff; }
 #tray #tempo button:active { background: linear-gradient(#ffd27a, #f5a623); }
 #app:not(.deck) #playPal { display: none; }                                                    /* the play pallet at the foot is gone: RANGE is on the tray, the tempo on the tray's edge; its row is kept free */
 /* the arrows and UNDO · REDO on a plate of their own, standing on the far right of the tray's top edge: a backing plate, the keys inset on it */
-#arrowPal { justify-self: end; align-self: start; width: calc(34% + 10px); height: 54px; background: var(--ground2); border: 1.5px solid #141414; border-bottom: none; border-radius: 4px 4px 0 0; box-shadow: inset 0 1px 0 rgba(255,255,255,.12); }
-#tray #arrows, #tray #undoRow { justify-self: end; align-self: start; width: 34%; position: relative; z-index: 1; }
-#tray #arrows { margin: 5px 5px 0 0; }
-#tray #undoRow { margin: 27px 5px 0 0; }
+#arrowPal { justify-self: end; align-self: start; width: calc(30% + 6px); height: 54px; background: var(--ground2); border: 1.5px solid #141414; border-bottom: none; border-radius: 4px 4px 0 0; box-shadow: inset 0 1px 0 rgba(255,255,255,.12); }
+#tray #arrows, #tray #undoRow { justify-self: end; align-self: start; width: 30%; position: relative; z-index: 1; }
+#tray #arrows { margin: 5px 3px 0 0; }
+#tray #undoRow { margin: 27px 3px 0 0; }
 /* the phone: the green Rhythm and Lyrics labels are small silver tabs, square-cornered, in bold black, close against their strips */
 #app:not(.deck) .strip .tag { justify-self: end; height: 17px; padding: 0 4px; font-size: 8.5px; font-weight: 800; letter-spacing: .02em; color: #000; background: linear-gradient(var(--sv-hi), var(--sv-lo2)); border: 1px solid #141414; border-radius: 0; box-shadow: 0 1px 2px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.7); }
 #app.focus-acc #quick, #app.focus-bass #quick { display: none; }
@@ -1261,7 +1266,7 @@ body.kbOpen #app { padding-bottom: 410px; }              /* room to scroll the s
   <div id="quick" title="Quick palette"></div>
   <div id="palette"><div class="prow" id="palRow1"></div><div class="prow" id="palRow2"></div><div class="prow" id="palRow3"></div><div class="prow" id="palRow4"></div></div>
   <div id="playPal"></div>
-  <div id="tray"><div id="arrowPal"></div><div id="playL"></div><div id="tempoL"></div></div>
+  <div id="tray"><div id="arrowPal"></div><div id="playL"></div><div id="tempoL"></div><div id="lyrL"><button id="lyrOpenBtn" title="Lyrics: open the words for editing">LYRICS</button></div></div>
   <div id="pad" hidden>
     <div class="padHead"><span>SCRATCH PAD</span><button class="padX" title="Close the scratch pad">✕</button></div>
     <div class="padCtl"><span class="padFonts"></span><span class="padSep" aria-hidden="true"></span><button id="padRule"></button></div>
@@ -7962,7 +7967,7 @@ function placeLyrGuide() {
   const g = GEO.mel, lyrBody = $("lyrStrip").querySelector(".body");
   const deckShow = deckMode() && WE.on && S.lyrGuide && !!g && $("melWin").offsetHeight > 0 && lyrBody.offsetHeight > 0 && S.winState.mel !== "closed";   // the deck's lyrics screen: a guide at the chip's left edge (where the entry box stands, or the chip in it) from the stave's top to the strip's foot, so the words are lined up on the beat by eye
   const pw = pushWin(), gp = GEO[pw], pwin = $(pw + "Win");
-  const show = deckShow || (S.guideOn !== false && !!(deckMode() ? (!WE.on && gp && pwin.classList.contains("deckOn") && pwin.offsetHeight > 0 && !duoMode()) : (g && S.winState.mel !== "closed" && $("melWin").offsetHeight > 0 && lyrBody.offsetHeight > 0)));   // LINE hides the draggable guide   // the wide screen outside the lyrics screen: the same draggable guide on the stave in view
+  const show = deckShow || (S.guideOn !== false && !!(deckMode() ? (!WE.on && gp && pwin.classList.contains("deckOn") && pwin.offsetHeight > 0 && !duoMode()) : (g && S.winState.mel !== "closed" && $("melWin").offsetHeight > 0)));   // LINE hides the draggable guide   // the wide screen outside the lyrics screen: the same draggable guide on the stave in view
   gd.hidden = !show; gd.classList.toggle("deck", deckShow); if (!show) return;
   if (deckShow) { const ar = $("app").getBoundingClientRect(), sr = $("melSvg").getBoundingClientRect(), fr = $("melWin").querySelector(".frame").getBoundingClientRect(), lr = lyrBody.getBoundingClientRect();
     const bi = g.bars.includes(WE.bi) ? WE.bi : g.bars[0], x = sr.left + g.x(bi, Math.min(WE.t, barBeats(bi)));
@@ -8195,7 +8200,7 @@ function placeTray() {                                                          
   const w = app.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
   tray.style.setProperty("--trayW", Math.round(w) + "px"); app.style.setProperty("--trayW", Math.round(w) + "px"); app.style.setProperty("--trayH", Math.round(tray.offsetHeight) + "px"); const hd = $("head"); if (hd) app.style.setProperty("--headH", Math.round(hd.offsetHeight) + "px");
 }
-function placePlayL() { placeTray(); const pl = $("playL"); if (!pl || deckMode()) return; const tl = $("tempoL"), tw = tl ? tl.offsetWidth + 6 : 0, max = Math.max(0, $("tray").clientWidth - $("arrowPal").offsetWidth - 4 - pl.offsetWidth - tw); S.playX = clamp(S.playX || 0, 0, max); pl.style.marginLeft = S.playX + "px"; if (tl) tl.style.marginLeft = (S.playX + pl.offsetWidth + 6) + "px"; }   // the tempo pallet rides just right of the play pallet, and both stop short of the arrows' plate
+function placePlayL() { placeTray(); const pl = $("playL"); if (!pl || deckMode()) return; const tl = $("tempoL"), ll = $("lyrL"), tw = (tl ? tl.offsetWidth + 4 : 0) + (ll ? ll.offsetWidth + 4 : 0), max = Math.max(0, $("tray").clientWidth - $("arrowPal").offsetWidth - 4 - pl.offsetWidth - tw); S.playX = clamp(S.playX || 0, 0, max); pl.style.marginLeft = S.playX + "px"; if (tl) tl.style.marginLeft = (S.playX + pl.offsetWidth + 4) + "px"; if (ll) ll.style.marginLeft = (S.playX + pl.offsetWidth + 4 + (tl ? tl.offsetWidth + 4 : 0)) + "px"; }   // the tempo pallet, then LYRICS, ride right of the play pallet   // the tempo pallet rides just right of the play pallet, and both stop short of the arrows' plate
 function initPlayL() {
   const pl = $("playL"); if (!pl) return; let d = null;
   pl.addEventListener("pointerdown", e => { d = { id: e.pointerId, x0: e.clientX, from: S.playX || 0, moved: false }; });
@@ -11098,7 +11103,7 @@ async function boot() {
   let syncing = false;
   scrollers.forEach(sc => sc.addEventListener("scroll", () => { if (syncing) return; syncing = true; scrollers.forEach(o => { if (o !== sc) o.scrollLeft = sc.scrollLeft; }); const inner = $("beatRow").querySelector(".inner"); if (inner) inner.style.transform = `translateX(${-sc.scrollLeft}px)`; syncing = false; }, { passive: true }));
   $("barLabel").addEventListener("click", openSectionOps);
-  wireTempo(); initPlayL(); initPad(); window.addEventListener("resize", () => setTimeout(weReseat, 60));
+  wireTempo(); initPlayL(); initPad(); $("lyrOpenBtn").addEventListener("click", weOpenFromButton); window.addEventListener("resize", () => setTimeout(weReseat, 60));
   $("saveBtn").addEventListener("click", openLibrary);
   document.querySelectorAll(".win .delBtn").forEach(b => b.addEventListener("click", () => delAskOpen(b)));
   document.querySelectorAll(".win .bsBtn").forEach(b => b.addEventListener("click", () => backspaceNote(WIN_PART[b.dataset.win])));
