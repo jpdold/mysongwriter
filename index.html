@@ -8371,8 +8371,9 @@ function placeVlDock() {                                                        
 function placeVlGrip(x) { const tr = $("vlTrack"), gr = $("vlGrip"); if (!tr || !gr || !tr.offsetWidth) return; const r = tr.getBoundingClientRect(); gr.style.left = (x - r.left - 2) + "px"; }   // the grip's centre on the line's x to the pixel, the track's border allowed for — at the stave's ends the grip overhangs the track rather than leave the line
 /* the five lines of every stave under the line: [top, bottom] in screen y, one pair to a staff */
 function vlBands(win) { const g = GEO[win], svg = $(win + "Svg"); if (!g || !svg || !svg.getBoundingClientRect().height) return []; const top = svg.getBoundingClientRect().top;
-  const bs = focusBandSteps(win); if (bs) return bs.map(([lo, hi]) => [top + g.yS(hi), top + g.yS(lo)]);
-  return focusBands(win).map(([lo, hi]) => S.halfLines ? [top + g.y(hi), top + g.y(lo)] : [top + g.y(hi) - g.step / 2, top + g.y(lo) + g.step / 2]); }
+  const fr = $(win + "Win").querySelector(".frame"), fb = fr.getBoundingClientRect(), fTop = fb.top + fr.clientTop, fBot = fb.bottom - fr.clientTop;   // the window's own inside: a staff scrolled out of it (the register moved) has no line drawn past the window's edge
+  const bs = focusBandSteps(win), raw = bs ? bs.map(([lo, hi]) => [top + g.yS(hi), top + g.yS(lo)]) : focusBands(win).map(([lo, hi]) => S.halfLines ? [top + g.y(hi), top + g.y(lo)] : [top + g.y(hi) - g.step / 2, top + g.y(lo) + g.step / 2]);
+  return raw.map(([a, b]) => [Math.max(a, fTop), Math.min(b, fBot)]).filter(([a, b]) => b - a > 1); }
 /* the scratch pad: shown beside the stave in view on the deck, its words kept with the song (song.pad); the font size and RULED are the app's own settings */
 function renderPad() {
   const pad = $("pad"); if (!pad) return; const on = deckMode() && !!S.padOn && kbUpNow() && !duoMode(); pad.hidden = !on; if (!on) return;
@@ -9025,7 +9026,7 @@ function initPointer() {
         if (dragCtx.swipe === "v") {
           const g = GEO[win], r = svg.getBoundingClientRect(), rows = Math.round(dy * (g.W / r.width) / g.step), { rows: n } = rowsOf(win), [minV, , maxV] = viewLimits(win, n);
           const next = clamp(rowsUp(win, dragCtx.lo0, rows), minV, maxV);
-          if (next !== viewOf(win)) { S.song.view[WIN_LO[win]] = next; renderWindows(); renderStrips(); }
+          if (next !== viewOf(win)) { S.song.view[WIN_LO[win]] = next; renderWindows(); renderStrips(); placeLyrGuide(); }   // the line goes with the five lines as the register is swiped
         }
         return;
       }
