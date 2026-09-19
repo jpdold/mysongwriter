@@ -8262,9 +8262,8 @@ let vlHlAt = 0;
 function vlHighlight() { if (vlLocked()) return; const now = performance.now(), on = !!(S.mv && S.mv.mode === "delete");
   if (on && now - vlHlAt < 900) return;                                                    // a doubled tap (a touch and its echo) must not switch it straight off again
   vlHlAt = now; if (on) { mvCancel(); toast("Highlight off"); renderVlPanel(); return; }
-  S.rep = null; S.cpy = null; mvStart("delete");
-  if (S.mv) { const w = deckMode() ? deckActive() : (S.winState[PART_WIN[S.activePart || "melody"]] !== "closed" ? PART_WIN[S.activePart || "melody"] : "mel"), part = S.activePart && PART_WIN[S.activePart] === w ? S.activePart : WIN_PART[w];   // the bar in view is highlighted at once, on the stave in use — a drag across the beats, or a tap on the first and the last, changes it
-    S.mv.part = part; S.mv.start = barAbs(S.bi); S.mv.end = r3(S.mv.start + barBeats(S.bi)); renderAll(); toast("This bar is highlighted — drag across the beats (or tap the first, then the last) to change it"); }
+  S.rep = null; S.cpy = null; mvStart("delete");                                           // nothing is highlighted until the finger says what: a drag across the beats (or the grip), or a tap on the first and the last
+  if (S.mv) toast("Highlight on — drag across the beats (or drag the grip), or tap the first beat, then the last");
   renderVlPanel(); }
 const vlSameStave = (p1, p2) => p1 === p2 || (vlParts(p1).includes(p2));                       // the two staffs of a Grand Stave are one stave
 const vlParts = part => (part === "melody" || part === GRAND_LOWER) && grandLower("mel") ? ["melody", GRAND_LOWER] : [part];   // the highlight lies over the whole stave: on a Grand Stave both of its staffs are taken, whichever the finger was on
@@ -8282,17 +8281,26 @@ function vlLay(part, abs, e, cut) {                                             
   return n;
 }
 function vlRemoveSource(c) { for (const part of c.parts || [c.part]) mvGroup(part, c.start, r3(c.start + c.len)).forEach(o => { const bar = S.song.bars[o.bi]; bar.ev[part] = bar.ev[part].filter(x => x !== o.e); }); }
+/* room for the clip at dest: each thing to be laid needs its own beats free, no more — the beats of the selection that hold nothing ask for nothing, so a selection goes into any space
+   that is empty where it has notes, whatever stands beside them or in the bars around (cut: a copy cut short lays nothing past it) */
+function vlRoom(c, dest, cut, skip) { const end = cut != null ? r3(dest + cut) : null;
+  return c.evs.every(it => { if (cut != null && it.rel >= cut - 1e-6) return true; const s = r3(dest + it.rel), e = end != null ? Math.min(r3(s + it.e.d), end) : r3(s + it.e.d); return e - s <= 1e-6 || spanFree(it.part || c.part, s, e, skip); }); }
 function vlPasteAt(dest, opts = {}) {                                                       // the clip laid at dest; a queued move lifts the original first
   const c = VL.clip; if (!c) return false; const end = r3(dest + (opts.len != null ? opts.len : c.len)); const total = barAbs(S.song.bars.length);
-  if (dest < -1e-6 || end > total + 1e-6) { toast("That runs past the end of the song"); return false; }
+  if (dest < -1e-6 || end > total + 1e-6) { if (!opts.quiet) toast("That runs past the end of the song"); return false; }
   const parts = c.parts || [c.part], skip = new Set(); if (VL.moveQueued && !opts.keepSource) for (const part of parts) mvGroup(part, c.start, r3(c.start + c.len)).forEach(o => skip.add(o.e));
-  for (const part of parts) { if (!c.evs.some(it => (it.part || c.part) === part)) continue; if (!spanFree(part, dest, end, skip)) { toast("Something is in the way there"); return false; } }   // room on every staff that has something to lay
+  if (!vlRoom(c, dest, opts.len, skip)) { if (!opts.quiet) toast("Something is in the way there"); return false; }
   if (VL.moveQueued && !opts.keepSource) vlRemoveSource(c);
   for (const it of c.evs) { if (opts.len != null && it.rel >= opts.len - 1e-6) continue; vlLay(it.part || c.part, r3(dest + it.rel), it.e, opts.len != null ? end : null); }
   return true;
 }
-function vlPaste() { if (!VL.clip || vlLocked()) return; const g = S.guide; if (!g) return; const dest = r3(barAbs(g.bi) + Math.floor(g.t + 1e-6));
-  if (!vlPasteAt(dest)) return; const moved = VL.moveQueued; if (moved) { VL.moveQueued = false; VL.clip.start = dest; } S.mv = null; renderAll(); toast(moved ? "Moved to the line's beat" : "Pasted at the line's beat"); }
+function vlPaste() { if (!VL.clip || vlLocked()) return; const g = S.guide; if (!g) return; const a0 = barAbs(g.bi), here = r3(a0 + Math.floor(g.t + 1e-6)), B = barBeats(g.bi);
+  /* the line's beat first; with no room there, the nearest beat to the line that has — within its bar, or the first beat of the next (a line stood a hair short of a bar line means the bar
+     beyond it, not the last beat of the one before) */
+  const near = []; for (let k = 0; k <= B; k++) { const d = r3(a0 + k); if (d !== here) near.push(d); } near.sort((p, q) => Math.abs(p - (a0 + g.t)) - Math.abs(q - (a0 + g.t)));
+  let dest = here; if (!vlPasteAt(here, { quiet: true })) { dest = near.find(d => vlPasteAt(d, { quiet: true })); if (dest == null) { vlPasteAt(here); return; } }   // nowhere near: the refusal is said for the line's own beat
+  const moved = VL.moveQueued; if (moved) { VL.moveQueued = false; VL.clip.start = dest; } S.mv = null; const at = absToBar(dest); if (at && !GEO[pushWin()].bars.includes(at.bi)) S.bi = at.bi; renderAll();
+  toast(dest === here ? (moved ? "Moved to the line's beat" : "Pasted at the line's beat") : `${moved ? "Moved" : "Pasted"} at bar ${barNo(at.bi)}, beat ${Math.round(at.t) + 1} — the nearest room to the line`); }
 function vlStep(dir) { if (!VL.moveQueued || !vlHasSel()) { toast("Highlight, then MOVE SELECTION first"); return; }
   const mv = S.mv, b = absToBar(mv.start), delta = dir * (VL.by === "bar" ? barBeats(b ? b.bi : 0) : 1), sr = sectionRange(sectionOfBar(b ? b.bi : 0)), lo = barAbs(sr.start), hi = barAbs(sr.end);
   if (mv.start + delta < lo - 1e-6 || mv.end + delta > hi + 1e-6) { toast("That is the edge of the section"); return; }
@@ -8350,7 +8358,7 @@ function initVlTrack() {
   /* the finger's x is the line's x: the line and the grip are set straight from it (nothing laid out again, no render) — what must be drawn again (pushed items, a highlight grown by a beat) is
      drawn once a frame at most, so the grip never waits on it */
   const to = e => { const w = pushWin(), g = GEO[w]; if (!g || !d) return; const c = d.cache, at = g.at(e.clientX + c.off - c.svgL);   // c.off: the finger took the grip a little off its centre — the line keeps that distance rather than jumping under the finger
-    const slide = x => { const gd = $("lyrGuide"), gr = $("vlGrip"), dx = x - c.x0; if (gd) gd.style.transform = `translate3d(${dx}px,0,0)`; if (gr) gr.style.transform = `translate3d(${dx}px,0,0)`; };   // the line and the grip slid by the compositor from where they stood as the finger landed: no layout, no paint
+    const slide = x => { const gd = c.gd, gr = c.gr, dx = Math.round((x - c.x0) * 2) / 2; if (dx === c.dx) return; c.dx = dx; if (gd) gd.style.transform = `translate3d(${dx}px,0,0)`; if (gr) gr.style.transform = `translate3d(${dx}px,0,0)`; };   // the line and the grip slid by the compositor from where they stood as the finger landed: no layout, no paint
     if (S.push) { if (at.bi !== S.push.bi) return; const P = S.push; pushMove(clamp(at.t, 0, barBeats(at.bi))); slide(c.svgL + g.x(P.bi, P.t));   // the items' offsets are data; they are shown by sliding what is already drawn — no stave drawn again while the finger is down
       if (!d.raf) d.raf = requestAnimationFrame(() => { if (!d) return; d.raf = 0; if (!S.push) return; const dxB = (S.push.t - c.pushT0) * g.beatPx;
         for (const w2 of deckMode() ? [w] : ["mel", "acc", "bass"]) { const sv = $(w2 + "Svg"), g2 = GEO[w2]; if (!sv || !g2 || S.winState[w2] === "closed") continue; applyNoteOffsets(sv, g2, w2 === "mel" ? ["melody", GRAND_LOWER] : [WIN_PART[w2]]); sv.querySelectorAll(".pushBox:not(.off)").forEach(b => b.setAttribute("transform", `translate(${dxB} 0)`)); }
@@ -8364,10 +8372,11 @@ function initVlTrack() {
     const svgL0 = svg.getBoundingClientRect().left, lineX0 = S.guide && g.bars.includes(S.guide.bi) ? svgL0 + g.x(S.guide.bi, S.guide.t) : null, onGrip = lineX0 != null && Math.abs(e.clientX - lineX0) <= 26;
     if (!onGrip && !S.push) { const at0 = g.at(e.clientX - svgL0); S.guide = { bi: at0.bi, t: at0.t }; placeLyrGuide(); }   // a touch on the track away from the grip: the line comes to the finger once, laid out properly; on the grip (or while pushing) it is taken hold of where it stands
     const x0 = svgL0 + g.x(S.guide.bi, S.guide.t);
-    d = { id: e.pointerId, raf: 0, hl: null, cache: { svgL: svgL0, x0, off: onGrip || S.push ? x0 - e.clientX : 0, pushT0: S.push ? S.push.t : 0 } };   // measured once as the finger lands, not on every move
+    d = { id: e.pointerId, raf: 0, hl: null, cache: { svgL: svgL0, x0, gd: $("lyrGuide"), gr: $("vlGrip"), dx: null, off: onGrip || S.push ? x0 - e.clientX : 0, pushT0: S.push ? S.push.t : 0 } };   // measured once as the finger lands, not on every move
     if (S.mv && S.mv.mode === "delete" && !S.mv.armed && !S.push) { const at = g.at(e.clientX + d.cache.off - d.cache.svgL); d.hl = { beat: barAbs(at.bi) + Math.floor(at.t + 1e-6), sel0: S.mv.start != null ? { s: S.mv.start, e: S.mv.end } : null }; }
     try { tr.setPointerCapture(e.pointerId); } catch (x) {} to(e); });
-  window.addEventListener("pointermove", e => { if (!d || e.pointerId !== d.id) return; const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : null; to(evs && evs.length ? evs[evs.length - 1] : e); });
+  /* the raw updates where the browser has them: each comes as the finger's sample arrives, not held for the next frame as a pointermove is — the line is set a frame sooner */
+  window.addEventListener("onpointerrawupdate" in window ? "pointerrawupdate" : "pointermove", e => { if (!d || e.pointerId !== d.id) return; const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : null; to(evs && evs.length ? evs[evs.length - 1] : e); });
   const end = e => { if (d && e.pointerId === d.id) { const hadHl = !!d.hl, wasPush = !!S.push; d = null; const gd = $("lyrGuide"), gr = $("vlGrip"); if (gd) gd.style.transform = ""; if (gr) gr.style.transform = ""; if (wasPush) { renderWindows(); renderStrips(); } placeLyrGuide(); if (hadHl) renderAll(); } };   /* the finger lifts: the slide is settled into a proper placement, and what was pushed is drawn afresh */
   window.addEventListener("pointerup", end); window.addEventListener("pointercancel", end);
   tr.addEventListener("touchstart", e => e.preventDefault(), { passive: false }); tr.addEventListener("touchmove", e => e.preventDefault(), { passive: false });
