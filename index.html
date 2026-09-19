@@ -8259,9 +8259,16 @@ function vlUnlock() { if (S.push) pushEnd(); renderVlPanel(); }
 let vlHlAt = 0;
 function vlHighlight() { if (vlLocked()) return; const now = performance.now(), on = !!(S.mv && S.mv.mode === "delete");
   if (on && now - vlHlAt < 900) return;                                                    // a doubled tap (a touch and its echo) must not switch it straight off again
-  vlHlAt = now; if (on) { mvCancel(); toast("Highlight off"); } else { S.rep = null; S.cpy = null; mvStart("delete"); } renderVlPanel(); }
-function vlTake() { const mv = S.mv; if (!vlHasSel()) return null; const group = mvGroup(mv.part, mv.start, mv.end); if (!group.length) { toast("Nothing in the highlighted beats"); return null; }
-  return { part: mv.part, start: mv.start, len: r3(mv.end - mv.start), evs: group.map(o => ({ rel: r3(o.abs - mv.start), e: JSON.parse(JSON.stringify(o.e)) })) }; }
+  vlHlAt = now; if (on) { mvCancel(); toast("Highlight off"); renderVlPanel(); return; }
+  S.rep = null; S.cpy = null; mvStart("delete");
+  if (S.mv) { const w = deckMode() ? deckActive() : (S.winState[PART_WIN[S.activePart || "melody"]] !== "closed" ? PART_WIN[S.activePart || "melody"] : "mel"), part = S.activePart && PART_WIN[S.activePart] === w ? S.activePart : WIN_PART[w];   // the bar in view is highlighted at once, on the stave in use — a drag across the beats, or a tap on the first and the last, changes it
+    S.mv.part = part; S.mv.start = barAbs(S.bi); S.mv.end = r3(S.mv.start + barBeats(S.bi)); renderAll(); toast("This bar is highlighted — drag across the beats (or tap the first, then the last) to change it"); }
+  renderVlPanel(); }
+const vlParts = part => (part === "melody" || part === GRAND_LOWER) && grandLower("mel") ? ["melody", GRAND_LOWER] : [part];   // the highlight lies over the whole stave: on a Grand Stave both of its staffs are taken, whichever the finger was on
+function vlTake() { const mv = S.mv; if (!vlHasSel()) return null; const parts = vlParts(mv.part), evs = [];
+  for (const part of parts) mvGroup(part, mv.start, mv.end).forEach(o => evs.push({ part, rel: r3(o.abs - mv.start), e: JSON.parse(JSON.stringify(o.e)) }));
+  if (!evs.length) { toast("Nothing in the highlighted beats — drag over the beats that hold the notes"); return null; }
+  return { part: mv.part, parts, start: mv.start, len: r3(mv.end - mv.start), evs }; }
 function vlCopy() { const c = vlTake(); if (!c) return; VL.clip = c; VL.moveQueued = false; renderVlPanel(); toast(`Copied ${c.evs.length} — PASTE SELECTION lays it at the line's beat`); }
 function vlMoveQueue() { const c = vlTake(); if (!c) return; VL.clip = c; VL.moveQueued = true; renderVlPanel(); toast("Move queued — step it with the arrows, PASTE it at the line's beat, or MOVE TO SPECIFIC…"); }
 function vlLay(part, abs, e, cut) {                                                          // one event laid at abs, split over bar lines where it must be; cut: nothing past this point
@@ -8271,19 +8278,24 @@ function vlLay(part, abs, e, cut) {                                             
     (S.song.bars[at.bi].ev[part] = S.song.bars[at.bi].ev[part] || []).push(piece); abs = r3(abs + room); left = r3(left - room); first = false; n++; }
   return n;
 }
-function vlRemoveSource(c) { const g = mvGroup(c.part, c.start, r3(c.start + c.len)); g.forEach(o => { const bar = S.song.bars[o.bi]; bar.ev[c.part] = bar.ev[c.part].filter(x => x !== o.e); }); return new Set(); }
+function vlRemoveSource(c) { for (const part of c.parts || [c.part]) mvGroup(part, c.start, r3(c.start + c.len)).forEach(o => { const bar = S.song.bars[o.bi]; bar.ev[part] = bar.ev[part].filter(x => x !== o.e); }); }
 function vlPasteAt(dest, opts = {}) {                                                       // the clip laid at dest; a queued move lifts the original first
   const c = VL.clip; if (!c) return false; const end = r3(dest + (opts.len != null ? opts.len : c.len)); const total = barAbs(S.song.bars.length);
   if (dest < -1e-6 || end > total + 1e-6) { toast("That runs past the end of the song"); return false; }
-  const skip = new Set(); if (VL.moveQueued && !opts.keepSource) mvGroup(c.part, c.start, r3(c.start + c.len)).forEach(o => skip.add(o.e));
-  if (!spanFree(c.part, dest, end, skip)) { toast("Something is in the way there"); return false; }
+  const parts = c.parts || [c.part], skip = new Set(); if (VL.moveQueued && !opts.keepSource) for (const part of parts) mvGroup(part, c.start, r3(c.start + c.len)).forEach(o => skip.add(o.e));
+  for (const part of parts) { if (!c.evs.some(it => (it.part || c.part) === part)) continue; if (!spanFree(part, dest, end, skip)) { toast("Something is in the way there"); return false; } }   // room on every staff that has something to lay
   if (VL.moveQueued && !opts.keepSource) vlRemoveSource(c);
-  for (const it of c.evs) { if (opts.len != null && it.rel >= opts.len - 1e-6) continue; vlLay(c.part, r3(dest + it.rel), it.e, opts.len != null ? end : null); }
+  for (const it of c.evs) { if (opts.len != null && it.rel >= opts.len - 1e-6) continue; vlLay(it.part || c.part, r3(dest + it.rel), it.e, opts.len != null ? end : null); }
   return true;
 }
 function vlPaste() { if (!VL.clip || vlLocked()) return; const g = S.guide; if (!g) return; const dest = r3(barAbs(g.bi) + Math.floor(g.t + 1e-6));
   if (!vlPasteAt(dest)) return; const moved = VL.moveQueued; if (moved) { VL.moveQueued = false; VL.clip.start = dest; } S.mv = null; renderAll(); toast(moved ? "Moved to the line's beat" : "Pasted at the line's beat"); }
-function vlStep(dir) { if (!VL.moveQueued || !vlHasSel()) { toast("Highlight, then MOVE SELECTION first"); return; } const b = absToBar(S.mv.start); mvShift(dir * (VL.by === "bar" ? barBeats(b ? b.bi : 0) : 1)); if (VL.clip && S.mv) VL.clip.start = S.mv.start; renderVlPanel(); }
+function vlStep(dir) { if (!VL.moveQueued || !vlHasSel()) { toast("Highlight, then MOVE SELECTION first"); return; }
+  const mv = S.mv, b = absToBar(mv.start), delta = dir * (VL.by === "bar" ? barBeats(b ? b.bi : 0) : 1), sr = sectionRange(sectionOfBar(b ? b.bi : 0)), lo = barAbs(sr.start), hi = barAbs(sr.end);
+  if (mv.start + delta < lo - 1e-6 || mv.end + delta > hi + 1e-6) { toast("That is the edge of the section"); return; }
+  const c = vlTake(); if (!c) return; VL.clip = c; VL.moveQueued = true; const dest = r3(c.start + delta);
+  if (!vlPasteAt(dest)) return;                                                             // every staff of the selection goes together, or none does
+  mv.start = r3(mv.start + delta); mv.end = r3(mv.end + delta); mv.moved = true; c.start = dest; const nb = absToBar(mv.start); if (nb) S.bi = nb.bi; S.sel = null; S.ghost = null; S.active = null; renderAll(); }
 /* the map: every bar of the composition in small, the five lines and the part's notes; the selection's bars ringed in blue */
 function vlOpenMap() {
   if (!VL.clip) { toast("Highlight, then MOVE SELECTION first"); return; } VL.mapFirst = null; VL.mapShift = false;
@@ -8292,7 +8304,7 @@ function vlOpenMap() {
     S.song.sections.forEach((sec, si) => { const r = sectionRange(si); grid.append(el("div", { class: "sec" }, sec.name));
       for (let bi = r.start; bi < r.end; bi++) { const a = barAbs(bi), B = barBeats(bi), inSel = a < selB - 1e-6 && a + B > selA + 1e-6;
         const svg = svgEl("svg", { viewBox: "0 0 100 40", preserveAspectRatio: "none" }); for (let k = 0; k < 5; k++) svg.append(svgEl("line", { x1: 0, x2: 100, y1: 8 + k * 6, y2: 8 + k * 6, stroke: "#777", "stroke-width": 0.8 }));
-        const evs = (S.song.bars[bi].ev[c.part] || []).filter(e => !e.rest && e.m != null), ms = evs.map(e => e.m), mid = ms.length ? (Math.min(...ms) + Math.max(...ms)) / 2 : 67;
+        const evs = (c.parts || [c.part]).flatMap(pt => S.song.bars[bi].ev[pt] || []).filter(e => !e.rest && e.m != null), ms = evs.map(e => e.m), mid = ms.length ? (Math.min(...ms) + Math.max(...ms)) / 2 : 67;
         for (const e of evs) { const x = 4 + (e.t / B) * 92, y = clamp(20 - (e.m - mid) * 1.5, 3, 37); svg.append(svgEl("ellipse", { cx: x + 3, cy: y, rx: 3.2, ry: 2.4, fill: "#111" })); svg.append(svgEl("line", { x1: x + 6, x2: x + 6, y1: y, y2: y - 10, stroke: "#111", "stroke-width": 1 })); }
         const cell = el("div", { class: "mb" + (inSel ? " sel" : "") + (VL.mapFirst === bi ? " first" : ""), title: `Bar ${barNo(bi)}`, onclick: ev => pick(bi, ev.shiftKey) }, el("small", {}, String(barNo(bi))), svg); grid.append(cell); } });
     return grid; };
