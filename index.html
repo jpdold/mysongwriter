@@ -6442,7 +6442,17 @@ function allocateDuo() {
     DECK_ROWS[w] = rows; STEPS[w] = Math.max(3, target / rows / k); clampView(w, rows);
   });
 }
+/* the rows as far apart as was asked, to the hundredth of a pixel: the window's height is no longer dealt out among a whole number of rows (which let the spacing move only in
+   jumps — the height over 27, over 29, over 31…); as many rows as fit at the spacing asked are drawn, and what is left over, less than two rows, goes into the stave's own top and
+   bottom margins (SLACK, added to the drawing's padding in geo), so the window keeps its height to the pixel and the staves stay centred in it */
+const SLACK = { mel: 0, acc: 0, bass: 0 };
+function fitRows(w, H, stepWant, minRows) {
+  const least = Math.max(1, minRows || 0, focusSpan(w) || 0); let step = Math.min(stepWant, H / least), rows = Math.max(least, Math.floor(H / step + 1e-6)); const ev = evenRows(rows, w, minRows);
+  if (ev > rows) { rows = ev; step = Math.min(step, H / rows); } else rows = ev;
+  return { rows, step, slack: Math.max(0, H - rows * step) };
+}
 function allocate() {
+  SLACK.mel = SLACK.acc = SLACK.bass = 0;
   if (duoMode() && !kbUpNow()) { allocateDuo(); return; }
   $("app").style.height = deckMode() ? window.innerHeight + "px" : "";                   // the deck's height from the window itself, so the tool bar lands at the visible foot whatever the browser makes of vh
   if (deckMode()) {                                                                       // the deck: the one part in view fills the stage exactly — flush on the strips, or on the tool bar when they are hidden
@@ -6458,7 +6468,8 @@ function allocate() {
       let rows = fitsAtFullScale ? clamp(Math.floor(target / (hi * k)), rows0, 88) : rows0;
       const minRows = minRowsFor(w); if (minRows && rows < minRows) rows = minRows;        // a clef view: never so large that its staves and ledger lines run out of view
       rows = evenRows(rows, w, minRows);                                                  // and a row count that centres the staves exactly
-      DECK_ROWS[w] = rows; STEPS[w] = fitsAtFullScale || rows > rows0 ? Math.max(3, target / rows / k) : Math.max(lo, target / rows0 / k);   // the usual case: the row COUNT adapts at the stave's natural scale, each row stretched a whisker so the strips land on the tool bar exactly; the old note: row height fixed at the stave's natural scale, only the row COUNT adapts, so spacing never fluctuates — too little room even for that (a short screen): shrink the rows themselves just enough to keep the tool bar on screen, never smaller than the usual minimum
+      DECK_ROWS[w] = rows; STEPS[w] = fitsAtFullScale || rows > rows0 ? Math.max(3, target / rows / k) : Math.max(lo, target / rows0 / k);
+      if (fitsAtFullScale) { const f = fitRows(w, target, hi * k, Math.max(rows0, minRows || 0)); DECK_ROWS[w] = rows = f.rows; STEPS[w] = f.step / k; SLACK[w] = f.slack; }   // granular: the natural row height times the line spacing asked, exactly   // the usual case: the row COUNT adapts at the stave's natural scale, each row stretched a whisker so the strips land on the tool bar exactly; the old note: row height fixed at the stave's natural scale, only the row COUNT adapts, so spacing never fluctuates — too little room even for that (a short screen): shrink the rows themselves just enough to keep the tool bar on screen, never smaller than the usual minimum
       { const key = WIN_LO[w], v = S.song && S.song.view ? viewOf(w) : null, [minV, topV] = viewLimits(w, rows); if (v != null && v + rows - 1 > topV) S.song.view[key] = Math.max(minV, topV + 1 - rows); }   // more rows than fit above: the range reaches lower instead
     }
     return;
@@ -6503,8 +6514,7 @@ function allocate() {
       if (want > room) { room = want; maxStepT = Math.max(maxStep, room / rows / 1); }
     }
     if (room > rows * step) {                                                                               // the column outreaches the stave at its natural row height: the rows are widened first, up to the widest the window size allows, and only then added — never a tower of tiny rows reaching C9 to fill the column
-      rows = evenRows(Math.max(rows, Math.ceil(room / maxStepT)), w, minRowsFor(w));                       // a row count that centres the staves exactly
-      STEPS[w] = room / rows / k;                                                                           // and the rows stretched (or eased) a whisker so the frame is exactly the column's height — the strips flush under the stave
+      const f = fitRows(w, room, maxStepT, Math.max(rows, minRowsFor(w))); rows = f.rows; STEPS[w] = f.step / k; SLACK[w] = f.slack;   // granular: rows at the widest asked (the line spacing times the window size's own), as many as fit, the remainder in the margins                                                                           // and the rows stretched (or eased) a whisker so the frame is exactly the column's height — the strips flush under the stave
     } else { rows = evenRows(rows, w, minRowsFor(w)); if (clefOn(w) && rows * step > room && room > 0) { const fit = room / rows, zRef = clefNow(w).bands ? 0.55 : 1, grow = Math.max(1, (S.zoomWin[w] || 1) / zRef), cap = Math.max(fit, window.innerHeight * 0.62 / rows); STEPS[w] = Math.min(step, cap, fit * grow) / k; } }   /* and wider than that when the lines are asked wider (Tune dimensions, WIDER): the stave then outgrows the column, up to three fifths of the screen's height, instead of standing still */   // a clef view taller than the column: its rows eased so the stave is exactly the column's height — the lines a little closer, the clef and signatures scaled with them
     PHONE_ROWS[w] = rows;
   }
@@ -6598,7 +6608,7 @@ function spacingSpan() {                                                        
 }
 function geo(win) {
   const svg = $(win + "Svg"), B = barBeats(), { rows, step } = rowsOf(win), lo = viewOf(win), hi = lo + rows - 1;
-  const n = spanNow(), first = viewFirst(), W1 = Math.max(120, svg.parentNode.clientWidth || $("rhyStrip").querySelector(".body").clientWidth || 300), padL = clefPadFor(win, step, W1), padR = 0, padT = 5, padB = 5;   // padL: room for the clef, the key signature and the time signature   // no pad at the ends: every beat, first and last, is exactly one share of the width
+  const n = spanNow(), first = viewFirst(), W1 = Math.max(120, svg.parentNode.clientWidth || $("rhyStrip").querySelector(".body").clientWidth || 300), padL = clefPadFor(win, step, W1), padR = 0, padT = 5 + (SLACK[win] || 0) / 2, padB = 5 + (SLACK[win] || 0) / 2;   // padL: room for the clef, the key signature and the time signature   // no pad at the ends: every beat, first and last, is exactly one share of the width
   const bars = viewBars(), starts = {}; let accB = 0;
   for (const b of bars) { starts[b] = accB; accB += barBeats(b); }
   const setPx = duoMode() ? 0 : setBeatPx(win, step, W1);                                   // a set spacing (Small / Tight): every beat this wide; at the song's end, with fewer bars left than fit, they fill the width as before
@@ -8276,7 +8286,7 @@ const tuneOk = (o, from) => { const a = tuneGuards(o), b = tuneGuards(from); ret
 function tuneNext(win, v, spec, dir) {
   const from = tuneSim(win, v), r2 = x => Math.round(x * 100) / 100;
   if (spec === "z") { let z = v.z;                                                          // the rows are shared out in whole numbers, so a notch may have to reach a little before the lines move at all
-    for (let i = 0; i < 10; i++) { z = r2(z * (dir > 0 ? 1.06 : 1 / 1.06)); if (z < TUNE_Z[0] - 1e-6 || z > TUNE_Z[1] + 1e-6) return null; const nv = Object.assign({}, v, { z }), o = tuneSim(win, nv);
+    for (let i = 0; i < 10; i++) { z = Math.round(z * (dir > 0 ? 1.03 : 1 / 1.03) * 1000) / 1000; if (z < TUNE_Z[0] - 1e-6 || z > TUNE_Z[1] + 1e-6) return null; const nv = Object.assign({}, v, { z }), o = tuneSim(win, nv);
       if (Math.abs(o.step - from.step) < 0.05) continue; if ((o.step - from.step) * dir < 0) continue; return tuneOk(o, from) ? nv : null; }
     return null; }
   if (spec === "nz") { const nz = r2(v.nz + dir * 0.05); if (nz < TUNE_NZ[0] - 1e-6 || nz > TUNE_NZ[1] + 1e-6) return null; const nv = Object.assign({}, v, { nz }), o = tuneSim(win, nv);
