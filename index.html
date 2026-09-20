@@ -8371,9 +8371,17 @@ function ezWins() { const all = ["mel", "acc", "bass"], open = all.filter(w => S
   if (next !== EZ.win) { if (EZ.sel) ezDrop(false); EZ.win = next; EZ.mode = "idle"; EZ.cur = null; EZ.bar = null; EZ.fing = null; S.sel = null; }
   all.forEach(w => { S.winState[w] = w === EZ.win ? "open" : "closed"; }); S.focus = null; if (EZ.win !== "mel") S.song.parts[WIN_PART[EZ.win]].on = true; S.activePart = WIN_PART[EZ.win]; }
 const ezDur = () => S.len * (S.dot ? 1.5 : 1);
+/* what is entered is the glyph that was chosen, whole — a half note goes in as a half note or not at all, never as tied pieces: the cursor stands only where the glyph fits as it is
+   written (on a beat, or inside one beat when it starts between beats; never over the bar line), on a grid of the glyph's own making — whole beats for a quarter and longer, the
+   half beat for an eighth, and so on */
+const ezStepT = () => { const d = ezDur(), base = baseLen(d); return Math.max(0.125, Math.min(1, isDotted(d) ? base / 2 : base)); };
+const ezFits = (bi, t, d = ezDur()) => t >= -1e-6 && t + d <= barBeats(bi) + 1e-6 && (Math.abs(t - Math.round(t)) < 1e-6 || t + d <= Math.floor(t + 1e-6) + 1 + 1e-6);
+const ezSpots = bi => { const st = ezStepT(), out = []; for (let t = 0; t < barBeats(bi) - 1e-6; t = r3(t + st)) if (ezFits(bi, t)) out.push(t); return out; };
+const ezNear = (bi, t) => { const sp = ezSpots(bi); return sp.length ? sp.reduce((a, b) => Math.abs(b - t) < Math.abs(a - t) ? b : a) : null; };
+function ezResnap() { const c = EZ.cur; if (!c || EZ.mark) return; const t = ezNear(c.bi, c.t); if (t != null) c.t = t; }   // a new length: the cursor steps to the nearest place that length can stand
 function ezHome() {                                                                        // the cursor's first stand: the first bar in view, after what it holds (its first beat when full), on C4
   const g = ezG(); if (!g) return null; const bi = g.bars.includes(S.bi) ? S.bi : g.bars[0], bar = S.song.bars[bi], B = barBeats(bi), end = Math.max(0, ...(bar.ev[WIN_PART[EZ.win]] || []).map(e => e.t + e.d));
-  return { bi, t: end < B - 1e-6 ? r3(Math.ceil(end / gridStep() - 1e-6) * gridStep()) : 0, m: EZ.win === "bass" ? 48 : 60 };   // C4 (the bass part: C3, inside its range)
+  const free = ezSpots(bi).find(t => t >= end - 1e-6); return { bi, t: free != null ? free : (ezSpots(bi)[0] || 0), m: EZ.win === "bass" ? 48 : 60 };   // C4 (the bass part: C3, inside its range)
 }
 function ezSetMode(mode) {
   if (EZ.mode === "item" && mode !== "item") ezDrop(false);
@@ -8399,7 +8407,9 @@ function ezTapItem() { const f = EZ.fing, g = ezG(); if (!f || !g) return; const
 function ezStep(dx, dy) {
   if (EZ.mode === "item" && EZ.sel) { if (dx) moveSel(dx * gridStep()); if (dy) transposeSel(dy); return; }
   if (EZ.mode !== "entry" || !EZ.cur) return; const g = ezG(), c = EZ.cur;
-  if (dx) { let t = r3(c.t + dx * gridStep()), bi = c.bi; if (t < -1e-6) { if (g.bars.includes(bi - 1)) { bi--; t = r3(barBeats(bi) - gridStep()); } else t = 0; } else if (t > barBeats(bi) - gridStep() + 1e-6) { if (g.bars.includes(bi + 1)) { bi++; t = 0; } else t = r3(barBeats(bi) - gridStep()); } c.bi = bi; c.t = t; }
+  if (dx) { const here = EZ.mark ? null : ezSpots(c.bi); if (!here) { c.t = clamp(r3(c.t + dx * gridStep()), 0, barBeats(c.bi) - gridStep()); }
+    else { const nx = dx > 0 ? here.find(t => t > c.t + 1e-6) : [...here].reverse().find(t => t < c.t - 1e-6);
+      if (nx != null) c.t = nx; else { const bi = c.bi + (dx > 0 ? 1 : -1), there = g.bars.includes(bi) ? ezSpots(bi) : []; if (there.length) { c.bi = bi; c.t = dx > 0 ? there[0] : there[there.length - 1]; } } } ezBanner(); }
   if (dy) { c.m = clamp(c.m + dy, 21, 108); ensureVisible(ezCurPart(), c.m); if (!EZ.mark && !S.restNext) previewNote(c.m, ezCurPart()); }
   ezPaint();
 }
@@ -8409,18 +8419,23 @@ function ezEnter() {
   if (EZ.mode !== "entry" || !EZ.cur) { toast("EDIT BAR first"); return; }
   const c = EZ.cur, bar = S.song.bars[c.bi], part = ezCurPart(), evs = bar.ev[part] = bar.ev[part] || [];
   if (EZ.mark) { const ch = chordChainAt(bar, c.t, part); if (!ch) { toast("No note there to mark"); return; } const ev = ch.head; if (DYN.includes(EZ.mark) || HAIR[EZ.mark]) setDyn(ev, EZ.mark); else { ev.artic = ev.artic === EZ.mark ? undefined : EZ.mark; if (!ev.artic) delete ev.artic; } renderAll(); return; }
-  const d = ezDur(), w = Math.min(0.25, d); if (evs.some(e => e.t < c.t + w - 1e-6 && e.t + e.d > c.t + 1e-6)) { toast("There's already something there"); return; }
-  let laid = d;
-  if (S.restNext) { let free = barBeats(c.bi) - c.t; for (const e of evs) if (e.t > c.t + 1e-6) free = Math.min(free, e.t - c.t); laid = Math.min(d, r3(free)); evs.push({ id: uid(), t: c.t, d: laid, rest: true }); if (part === "melody") syncNotesToChips(bar); }
-  else { const plan = planSpan(c.bi, c.t, d, part); if (plan.deny) { toast(plan.deny); return; } placeSpan(plan.pieces, part, c.m, null); previewNote(c.m, part); }
-  let t = r3(c.t + laid), bi = c.bi; t = r3(Math.ceil(t / gridStep() - 1e-6) * gridStep());                               // the cursor stays in hand, a step on: ready for the next
-  if (t > barBeats(bi) - 1e-6) { if (bi + 1 < S.song.bars.length) { bi++; t = 0; if (!ezG().bars.includes(bi)) S.bi = bi; } else t = r3(barBeats(bi) - gridStep()); }
+  const d = ezDur(), what = S.restNext ? "rest" : "note";
+  if (!ezFits(c.bi, c.t, d)) { toast(`That ${what} does not fit whole there`); return; }
+  if (evs.some(e => (part === "melody" || !e.rest || S.restNext) && e.t < c.t + d - 1e-6 && e.t + e.d > c.t + 1e-6)) { toast(`No room for that ${what} there \u2014 something stands in its beats`); return; }
+  if (S.restNext) { evs.push({ id: uid(), t: c.t, d, rest: true }); if (part === "melody") syncNotesToChips(bar); }
+  else { placeSpan([{ bi: c.bi, t: c.t, d }], part, c.m, null); previewNote(c.m, part); }                                  // one piece: the glyph as chosen
+  let bi = c.bi, t = ezSpots(bi).find(x => x >= c.t + d - 1e-6);                                                          // the cursor stays in hand, a step on: the next place this glyph can stand
+  if (t == null) { if (bi + 1 < S.song.bars.length && ezSpots(bi + 1).length) { bi++; t = ezSpots(bi)[0]; if (!ezG().bars.includes(bi)) S.bi = bi; } else t = c.t; }
   c.bi = bi; c.t = t; S.sel = null; renderAll();
 }
 /* the pallet beside the pad: a length, a rest or a mark — the cursor's glyph; with an item in hand, its new length (or its mark) at once */
+function ezSetLen(ev, nd) { const before = JSON.stringify(S.song), bi = S.sel.bi, part = S.sel.part, t = ev.t; setDur(ev, nd);
+  const now = (S.song.bars[bi].ev[part] || []).find(e => Math.abs(e.t - t) < 1e-6 && !!e.rest === !!ev.rest), ch = now && chainOf(S.song.bars[bi], now, part);
+  if (!now || Math.abs(now.d - nd) > 1e-6 || (ch && ch.members.length > 1)) { S.song = upgradeSong(JSON.parse(before)); const back = (S.song.bars[bi].ev[part] || []).find(e => Math.abs(e.t - t) < 1e-6); if (back) { S.sel = { bi, part, id: back.id }; if (EZ.sel) EZ.sel.id = back.id; } toast("That length does not fit whole there"); }
+  renderAll(); }
 function ezPickLen(v, rest) {
-  if (EZ.mode === "item" && EZ.sel) { const ev = selEv(); if (!ev) return; if (!!ev.rest !== !!rest) { toast(rest ? "That is a note — pick a note's length" : "That is a rest — pick a rest's length"); return; } setDur(ev, isDotted(ev.d) ? v * 1.5 : v); renderAll(); return; }
-  S.len = v; S.restNext = !!rest; EZ.mark = null; savePrefs(); ezPanel(); ezPaint();
+  if (EZ.mode === "item" && EZ.sel) { const ev = selEv(); if (!ev) return; if (!!ev.rest !== !!rest) { toast(rest ? "That is a note — pick a note's length" : "That is a rest — pick a rest's length"); return; } ezSetLen(ev, isDotted(ev.d) ? v * 1.5 : v); return; }
+  S.len = v; S.restNext = !!rest; EZ.mark = null; ezResnap(); savePrefs(); ezPanel(); ezPaint();
 }
 function ezPickMark(kind) { if (EZ.mode === "item" && EZ.sel) { const ev = selEv(); if (!ev || ev.rest || ev.m == null) return; if (DYN.includes(kind) || HAIR[kind]) setDyn(ev, kind); else { ev.artic = ev.artic === kind ? undefined : kind; if (!ev.artic) delete ev.artic; } renderAll(); return; }
   EZ.mark = EZ.mark === kind ? null : kind; ezPanel(); ezPaint(); }
@@ -8455,7 +8470,7 @@ function ezInitPad(pad) {
     if (EZ.mode === "item" && EZ.fing) { const x0 = g.x(EZ.bar, 0), x1 = g.x(EZ.bar, barBeats(EZ.bar)); EZ.fing.x = clamp(EZ.fing.x + dx, x0 + 2, x1 - 2); EZ.fing.y = clamp(EZ.fing.y + dy, 2, g.H - 2); ezPaint(); return; }   // the finger never leaves the bar in hand
     if (EZ.mode !== "entry" || !EZ.cur) return; const b0 = g.bars[0], bN = g.bars[g.bars.length - 1];
     d.px = clamp(d.px + dx, g.x(b0, 0), g.x(bN, barBeats(bN)) - 1); d.py = clamp(d.py + dy, g.step / 2, g.H - g.step / 2);
-    const at = g.at(d.px), st = gridStep(), t = clamp(Math.round(at.t / st) * st, 0, barBeats(at.bi) - st), m = g.m(d.py), c = EZ.cur;
+    const at = g.at(d.px), st = gridStep(), near = EZ.mark ? null : ezNear(at.bi, at.t), t = EZ.mark ? clamp(Math.round(at.t / st) * st, 0, barBeats(at.bi) - st) : near != null ? near : EZ.cur.t, m = g.m(d.py), c = EZ.cur;
     if (at.bi !== c.bi || Math.abs(t - c.t) > 1e-6 || m !== c.m) { const pm = c.m; c.bi = at.bi; c.t = r3(t); c.m = m; ezPaint(); ezBanner(); if (m !== pm && !EZ.mark && !S.restNext) previewNote(m, ezCurPart()); } });
   const end = e => { if (!d || e.pointerId !== d.id) return; const tap = d.far < 8 && e.timeStamp - d.at < 450; d = null; if (tap && EZ.mode === "item") ezTapItem(); };
   pad.addEventListener("pointerup", end); pad.addEventListener("pointercancel", e => { if (d && e.pointerId === d.id) d = null; });
@@ -8488,7 +8503,7 @@ function ezPanel() {
   const LV = [0.25, 0.5, 1, 2, 4, 0.125], cell = (kids, on, fn, title) => { const b = el("button", { class: on ? "on" : "", title: title || "", onclick: fn }); [kids].flat().forEach(k => b.append(k)); return b; };
   let cells = [];
   if (EZ.pal === "notes" || EZ.pal === "rests") { const rest = EZ.pal === "rests"; cells = [0.125, 0.25, 0.5, 1, 2, 4].map(v => cell(rest ? restIcon(v) : lenIcon(v), inHand ? (!!inHand.rest === rest && Math.abs(baseLen(inHand.d) - v) < 1e-9) : (!EZ.mark && !!S.restNext === rest && S.len === v), () => ezPickLen(v, rest)));
-    cells.push(cell(el("span", { class: "dotk" }, "•"), inHand ? isDotted(inHand.d) : !!S.dot, () => { if (inHand) { setDur(inHand, isDotted(inHand.d) ? inHand.d / 1.5 : inHand.d * 1.5); renderAll(); } else { S.dot = !S.dot; ezPanel(); ezPaint(); } }, "Dotted")); }
+    cells.push(cell(el("span", { class: "dotk" }, "•"), inHand ? isDotted(inHand.d) : !!S.dot, () => { if (inHand) ezSetLen(inHand, isDotted(inHand.d) ? inHand.d / 1.5 : inHand.d * 1.5); else { S.dot = !S.dot; ezResnap(); ezPanel(); ezPaint(); } }, "Dotted")); }
   else if (EZ.pal === "dyn") cells = ["pp", "p", "mp", "mf", "f", "ff", "cresc", "dim"].map(k => cell(el("i", {}, HAIR[k] ? (k === "cresc" ? "<" : ">") : k), inHand ? (inHand.dyn === k || inHand.hair === k) : EZ.mark === k, () => ezPickMark(k), HAIR[k] || k));
   else cells = Object.keys(ARTIC).filter(k => k !== "slur").map(k => cell(el("b", {}, ARTIC[k].glyph), inHand ? inHand.artic === k : EZ.mark === k, () => ezPickMark(k), ARTIC[k].label));
   grid.replaceChildren(...cells); grid.classList.toggle("lit", !!inHand);
