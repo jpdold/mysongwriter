@@ -8319,12 +8319,17 @@ function openTune(winArg) {
 }
 function guideToggle() { S.vlDeck = !S.vlDeck; if (!S.vlDeck) { if (S.push) S.push = null; if (S.mv && S.mv.mode === "delete") S.mv = null; } savePrefs(); renderAll(); toast(S.vlDeck ? "The line and its bar are up — LINE again puts them away" : "The line is put away"); }   // the wide screen: LINE brings the line's bar up over the strips, and puts it away
 function pushKey(it) { return it.kind + ":" + it.bi + ":" + (it.part || "") + ":" + it.id; }
+/* a note's right edge, for the line, is its head's — where the eye sees the note end — not the end of its time value a beat or more further on: the line stood against the right of a
+   head takes that note, to be drawn left. In beats from the note's start; a rest keeps its time value's end (0 here: no head to measure) */
+const pushHeadBeats = part => { const g = GEO[deckMode() ? pushWin() : (PART_WIN[part] || "mel")]; return g && g.step && g.beatPx ? (2 * headGeom(g).rx + 3) / g.beatPx : 0; };
+const pushEvEnd = (c, part) => { const hb = (c.rest || (c.head && c.head.rest)) ? 0 : pushHeadBeats(part); return c.t + (hb ? Math.min(hb, c.d) : c.d); };
 function pushFlushItems(bi, t) {                                                          // everything whose start or end stands on the line at t, in bar bi
   const bar = S.song.bars[bi], out = [], gp = GEO[pushWin()] || stripGeo(), reach = Math.max(1 / 64, 8 / gp.beatPx), near = (a, b) => Math.abs(a - b) <= reach + 1e-6, g = stripGeo();   // within 8px of the line counts as near it
   const tight = Math.max(1 / 64, 1.5 / gp.beatPx), exactly = (a, b) => Math.abs(a - b) <= tight + 1e-6;                                                                                                  // on it to the pixel: no doubt
   const parts = deckMode() ? (pushWin() === "mel" ? ["melody", ...(grandLower("mel") ? [GRAND_LOWER] : [])] : [WIN_PART[pushWin()]]) : ["melody", ...(grandLower("mel") ? [GRAND_LOWER] : []), ...["acc", "bass"].filter(w => S.winState[w] !== "closed").map(w => WIN_PART[w])];   // the phone: the melody (and the left hand on a Grand Stave), and the accompaniment and bass when their windows are open; the wide screen: the stave in view
-  for (const part of parts) for (const c of chains(bar, part)) { const ox = c.head.ox || 0, a = c.t + ox, b = c.t + c.d + ox; if (near(a, t) || near(b, t)) out.push({ kind: "ev", bi, part, id: c.head.id, side: near(a, t) ? "r" : "l", exact: exactly(a, t) || exactly(b, t) }); }
-  for (const c of bar.chips || []) { if (c.gap && !c.text) continue; const ox = c.ox || 0, a = c.t + ox, b = c.t + chipFull(c, g) + ox; if (near(a, t) || near(b, t)) out.push({ kind: "chip", bi, id: c.id, side: near(a, t) ? "r" : "l", exact: exactly(a, t) || exactly(b, t) }); }
+  const want = VL.dir ? (VL.dir === "right" ? "r" : "l") : null, sideOf = (a, b) => { const nA = near(a, t), nB = near(b, t); if (!nA && !nB) return null; if (nA && nB) return want || (Math.abs(a - t) <= Math.abs(b - t) ? "r" : "l"); return nA ? "r" : "l"; };   // both edges within reach (a small head): the side the push direction asks for, else the nearer
+  for (const part of parts) for (const c of chains(bar, part)) { const ox = c.head.ox || 0, a = c.t + ox, b = pushEvEnd(c, part) + ox, side = sideOf(a, b); if (side) out.push({ kind: "ev", bi, part, id: c.head.id, side, exact: exactly(side === "r" ? a : b, t) }); }
+  for (const c of bar.chips || []) { if (c.gap && !c.text) continue; const ox = c.ox || 0, a = c.t + ox, b = c.t + chipFull(c, g) + ox; const side = sideOf(a, b); if (side) out.push({ kind: "chip", bi, id: c.id, side, exact: exactly(side === "r" ? a : b, t) }); }
   return out;
 }
 function pushStart() {
@@ -8333,7 +8338,7 @@ function pushStart() {
   const sided = VL.dir ? found.filter(it => it.side === (VL.dir === "right" ? "r" : "l")) : found;   // what stands flush on the chosen side of the line alone
   const exact = sided.filter(it => it.exact), items = exact.length ? exact : sided, sure = false;   // always boxed, to be left out or taken back by a tap   // on something to the pixel: that alone is taken, no question asked; between things: every one within reach is offered, boxed, for the choice
   if (items.length) {                                                                     // the line snaps onto the nearest edge picked, so it stands flush
-    const edges = items.map(it => { if (it.kind === "ev") { const e = (bar.ev[it.part] || []).find(x => x.id === it.id), c = e && chainOf(bar, e, it.part); return c ? (it.side === "r" ? c.t : c.t + c.d) + (e.ox || 0) : null; } const c = bar.chips.find(x => x.id === it.id); return c ? (it.side === "r" ? c.t : c.t + chipFull(c, g)) + (c.ox || 0) : null; }).filter(v => v != null);
+    const edges = items.map(it => { if (it.kind === "ev") { const e = (bar.ev[it.part] || []).find(x => x.id === it.id), c = e && chainOf(bar, e, it.part); return c ? (it.side === "r" ? c.t : pushEvEnd(c, it.part)) + (e.ox || 0) : null; } const c = bar.chips.find(x => x.id === it.id); return c ? (it.side === "r" ? c.t : c.t + chipFull(c, g)) + (c.ox || 0) : null; }).filter(v => v != null);
     if (edges.length) S.guide.t = edges.sort((a, b) => Math.abs(a - S.guide.t) - Math.abs(b - S.guide.t))[0];
   }
   S.push = { bi: S.guide.bi, t: S.guide.t, items, off: new Set(), sure, boxes: [] }; S.sel = null; S.ghost = null; S.active = null; renderAll();
@@ -8349,7 +8354,7 @@ const pushHas = (kind, bi, part, id) => !!S.push && pushPicked().some(it => it.k
 /* the picked items are nudged, not retimed: each keeps its beat and its time value and is drawn a little to one side (ev.ox / chip.ox, in beats, drawn as pixels), never past the edges of the beat lane it starts in — a fine placement by eye, the playback untouched */
 function pushRange(it, bar) {                                                              // how far this item may be drawn either side of its time, in beats: inside its beat lane
   const g = GEO[pushWin()] || stripGeo();
-  if (it.kind === "ev") { const e = (bar.ev[it.part] || []).find(x => x.id === it.id); if (!e) return [0, 0]; const b0 = Math.floor(e.t + 1e-6), half = (headGeom(g).rx + 2) / g.beatPx; return [b0 - e.t - half, Math.max(b0 - e.t - half, b0 + 1 - e.t - half)]; }   // the head's centre inside the lane
+  if (it.kind === "ev") { const e = (bar.ev[it.part] || []).find(x => x.id === it.id); if (!e) return [0, 0]; const b0 = Math.floor(e.t + 1e-6), half = (headGeom(g).rx + 2) / g.beatPx; const B = barBeats(it.bi); return [Math.max(-e.t - half, Math.min(b0 - e.t - half, -0.5)), Math.min(B - e.t - half, Math.max(b0 + 1 - e.t - half, 0.5))]; }   // the head's centre inside its lane — and half a beat either way at the least, so a note on the beat can be drawn left of it as well as right — never out of the bar
   const c = bar.chips.find(x => x.id === it.id); if (!c) return [0, 0]; const b0 = Math.floor(c.t + 1e-6), slack = 4 / stripGeo().beatPx; return [b0 - c.t - slack, b0 + 1 - c.t - slack];   // a chip's left edge stays inside its beat lane, however wide the chip (its width had been counted against the lane, and a wide chip pinned the line to a couple of pixels)
 }
 function pushMove(t) {                                                                    // the line to t: the picked items are drawn along with it, as far as every one of them may go inside its beat
@@ -8372,7 +8377,7 @@ function drawPushBoxes(svg, g, win) {                                           
   if (!S.push) return; const bi = S.push.bi; if (!g.bars.includes(bi)) return; const bar = S.song.bars[bi], lx = g.x(bi, S.push.t), mine = win === "mel" ? ["melody", GRAND_LOWER] : [WIN_PART[win]]; if (deckMode() && win !== pushWin()) return;
   S.push.boxes = (S.push.boxes || []).filter(b => b.win !== win); if (S.push.sure) return;   // on something to the pixel: no boxes, nothing to choose
   for (const it of S.push.items) { if (it.kind !== "ev" || !mine.includes(it.part)) continue; const e = (bar.ev[it.part] || []).find(x => x.id === it.id); if (!e) continue; const off = S.push.off.has(pushKey(it)); const c = chainOf(bar, e, it.part) || { t: e.t, d: e.d, members: [e], head: e };
-    const ox = (e.ox || 0) * g.beatPx, x0 = g.x(bi, c.t) + ox, x1 = g.x(bi, c.t + c.d) + ox, ms = c.members.filter(m => m.m != null && !m.rest).map(m => m.m);
+    const ox = (e.ox || 0) * g.beatPx, x0 = g.x(bi, c.t) + ox, x1 = g.x(bi, pushEvEnd(c, it.part)) + ox, ms = c.members.filter(m => m.m != null && !m.rest).map(m => m.m);
     let y0, y1; if (ms.length) { const ys = ms.map(m => g.y(m)); y0 = Math.min(...ys) - g.step * 1.6; y1 = Math.max(...ys) + g.step * 1.6; } else { const [a, b] = focusRange(win); y0 = g.y(b) - g.step; y1 = g.y(a) + g.step; }
     const left = it.side === "r" ? lx : Math.min(x0, lx), right = it.side === "l" ? lx : Math.max(x1, lx);   // the box's edge flush on the line
     svg.append(svgEl("rect", { class: "pushBox" + (off ? " off" : ""), x: left, y: y0, width: Math.max(2, right - left), height: y1 - y0, fill: "rgba(224,32,32,.001)", stroke: off ? "#888" : "#e02020", "stroke-width": 1.5, "stroke-dasharray": off ? "3 3" : null, "pointer-events": "none" }));
