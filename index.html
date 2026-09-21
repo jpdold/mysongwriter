@@ -829,12 +829,13 @@ body.kbOpen #lyrEdit, #app.deck.kbUp #lyrEdit { display: none !important; }   /*
 #ezBanner { justify-self: center; width: max-content; max-width: 100%; margin-top: -3px; padding: 1px 6px; white-space: nowrap; background: #3d6fc4; color: #fff; border: 1px solid #12325e; font-size: 6.5px; font-weight: 800; letter-spacing: .08em; text-align: center; }
 #ezPanel .ezMid { display: grid; grid-template-columns: minmax(0, 1fr) 46px; gap: 5px; align-items: stretch; }
 #ezPanel .ezPcol { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 2px; min-width: 0; } #ezPad { min-height: 118px; background: #fff; border: 2.5px solid #1b2a4a; border-radius: 3px; box-shadow: inset 0 1px 4px rgba(0,0,0,.35); display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 0; cursor: crosshair; } #ezPad.idle { background: #eceef1; }
-#ease #ezPad .tile { border: none; border-radius: 0; background: #fff; box-shadow: inset 0 0 0 2px #1b2a4a; display: grid; place-items: center; } #ease #ezPad .tile span { padding: 14px 4px; min-width: 60%; background: #3d6fc4; color: #fff; font-size: 8px; } #ease #ezPad .tile.on { box-shadow: inset 0 0 0 2px #1b2a4a; } #ease #ezPad .tile.on span { background: #55bdec; color: #07223f; }
+#ease #ezPad .tile { border: none; border-radius: 0; background: #fff; box-shadow: inset 0 0 0 2px #1b2a4a; display: grid; place-items: center; } #ease #ezPad .tile span { line-height: 1.5; padding: 10px 4px; min-width: 60%; background: #3d6fc4; color: #fff; font-size: 8px; } #ease #ezPad .tile.on { box-shadow: inset 0 0 0 2px #1b2a4a; } #ease #ezPad .tile.on span { background: #55bdec; color: #07223f; }
 #ezPanel .ezWcol { display: grid; grid-template-rows: auto auto 1fr; gap: 3px; } #ezPanel .ezWtop { display: grid; grid-template-columns: 1fr 14px; gap: 2px; align-items: stretch; } #ezWlbl { background: #111; color: #fff; border-radius: 2px; font-size: 5.2px; font-weight: 800; letter-spacing: .04em; text-align: center; line-height: 1.15; padding: 2px 1px; display: grid; align-content: center; } #ease #ezWmode { font-size: 10px; }
 #ezWheel { border: 2px solid #141414; border-radius: 9px / 16px; cursor: ns-resize; display: grid; place-items: center; min-height: 66px;
   background: linear-gradient(rgba(0,0,0,.6), rgba(0,0,0,0) 22%, rgba(255,255,255,.3) 50%, rgba(0,0,0,0) 78%, rgba(0,0,0,.6)), repeating-linear-gradient(#e9e9e9 0 2px, #6d7178 2px 5px); background-repeat: no-repeat, repeat; } #ezWheel .arr { font-size: 26px; font-weight: 900; color: #111; text-shadow: 0 0 3px #fff, 0 0 3px #fff; pointer-events: none; }
 #ezPanel .ezRow { display: grid; grid-template-columns: 34px 56px 50px minmax(0, 1fr); gap: 4px; align-items: stretch; }   /* LYRICS half the width it had, SELECT and EDIT BAR close beside it, the four-way pad a quarter larger, ENTER the rest */
-#ease #ezLyr { background: var(--lyric); color: var(--lyric-ink); border: 1.5px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.45), 0 2px 3px rgba(0,0,0,.4); font-size: 6.5px; letter-spacing: .02em; } #ezPanel .ezSE { display: grid; grid-template-rows: 1fr 1fr; gap: 2px; } #ease .ezSE button { min-height: 17px; background: linear-gradient(#5a86d8, #3d6fc4); color: #fff; border-color: #12325e; }
+#ezPanel .ezLF { display: grid; grid-template-rows: 1fr 1fr; gap: 2px; min-width: 0; } #ease #ezFing { display: grid; place-items: center; background: linear-gradient(#5d6167, #3a3d42); border-color: #141414; } #ease #ezFing svg { width: 17px; height: 17px; display: block; } #ease #ezFing.on { background: linear-gradient(#6fb3ff, #2f7fd6); }   /* LYRICS as tall as EDIT BAR; under it, the pointing finger on a key of its own — white, a black outline */
+#ease #ezLyr { min-height: 17px; background: var(--lyric); color: var(--lyric-ink); border: 1.5px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.45), 0 2px 3px rgba(0,0,0,.4); font-size: 6.5px; letter-spacing: .02em; } #ezPanel .ezSE { display: grid; grid-template-rows: 1fr 1fr; gap: 2px; } #ease .ezSE button.on { outline: 2px solid #fff; outline-offset: -3px; } #ease .ezSE button { min-height: 17px; font-size: 6.4px; background: linear-gradient(#5a86d8, #3d6fc4); color: #fff; border-color: #12325e; }
 #ezDpad { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); width: 50px; height: 50px; border-radius: 4px; background: #3a3d42; } #ease #ezDpad button { border: none; border-radius: 2px; background: #6a6e75; box-shadow: none; display: grid; place-items: center; } #ezDpad svg { width: 13px; height: 13px; display: block; } #ease #ezDpad button:active { background: #f5a623; }
 #ezDpad .u { grid-area: 1 / 2; } #ezDpad .l { grid-area: 2 / 1; } #ezDpad .r { grid-area: 2 / 3; } #ezDpad .d { grid-area: 3 / 2; }
 #ease #ezEnter { background: linear-gradient(#a6e06a, #6fbf2e); color: #fff; border: 2px solid #fff; font-size: 10px; letter-spacing: .06em; text-shadow: 0 1px 1px rgba(0,0,0,.4); }
@@ -1036,7 +1037,11 @@ body.xhairOn #melSvg, body.xhairOn #accSvg, body.xhairOn #bassSvg { cursor: cros
    ═══════════════════════════════════════════════════════════════════════ */
 #overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; z-index: 80; align-items: flex-end; justify-content: center; }
 #overlay.on { display: flex; }
-#modal, #modal * { overscroll-behavior: contain; }   /* a list run to its end inside the window stops there: the page beneath is never taken along */
+#modal, #modal * { overscroll-behavior: contain; }
+/* the tie chooser: a silver box, a white field that fills with the values chosen, the values on offer under it */
+.ezTie { padding: 8px; border: 1.5px solid #141414; border-radius: 8px; background: linear-gradient(#e4e6ea, #b9bcc2); box-shadow: inset 0 1px 0 rgba(255,255,255,.7); } .ezTie .tieCap { background: #111; color: #fff; font-size: 9px; font-weight: 800; letter-spacing: .14em; text-align: center; padding: 2px 6px; border-radius: 3px; }
+.ezTie .tieField { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-height: 40px; margin: 7px 0; padding: 5px 8px; background: #fff; border: 1.5px solid #141414; border-radius: 4px; } .ezTie .tieField i { color: #999; font-style: normal; font-size: 22px; line-height: 1; } .ezTie .tieField em { margin-left: auto; font-size: 12px; color: #555; }
+.ezTie .tieOpts { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; } .ezTie .tieOpts .btn { min-width: 40px; padding: 3px 5px; } .tieVal { display: inline-flex; align-items: flex-end; vertical-align: middle; } .tieVal b { font-size: 16px; line-height: 1; margin-left: -3px; }   /* a list run to its end inside the window stops there: the page beneath is never taken along */
 #modal { background: #f7f7f7; color: #111; width: 100%; max-width: 560px; max-height: 88vh; overflow-y: auto; border-radius: 16px 16px 0 0;
   padding: 14px 16px calc(16px + env(safe-area-inset-bottom)); box-shadow: 0 -8px 40px rgba(0,0,0,.4); -webkit-user-select: text; user-select: text; }
 @media (min-width: 640px) { #overlay { align-items: center; padding: 20px; } #modal { border-radius: 16px; } }
@@ -6376,7 +6381,7 @@ function loadPrefs() {
   S.deck = Array.isArray(p.deck) && p.deck.length ? p.deck.filter(w => ["mel", "acc", "bass"].includes(w)) : ["mel", "acc", "bass"]; if (!S.deck.length) S.deck = ["mel"];
   S.duoBars = p.duoBars === 8 ? 8 : 4; S.duoBand = p.duoBand === "bass" ? "bass" : "acc"; S.beatDividers = p.beatDividers !== false;
   S.focusBand = Object.assign({ mel: { on: false, lo: 64 }, acc: { on: false, lo: 52 }, bass: { on: false, lo: 40 } }, p.focusBand || {}); for (const w of ["mel", "acc", "bass"]) { if (!S.focusBand[w]) S.focusBand[w] = { on: false, lo: { mel: 64, acc: 52, bass: 40 }[w] }; S.focusBand[w].lo = clamp(Math.round((S.focusBand[w].lo != null ? S.focusBand[w].lo : { mel: 64, acc: 52, bass: 40 }[w]) / 2) * 2, 24, 96); }
-  S.doors = Object.assign({ mel: true, acc: true, bass: true }, p.doors || {}); S.playX = +p.playX || 0; S.noteZoom = Object.assign({ phone: 1, deck: 1 }, p.noteZoom || {}); S.edge = !!p.edge; S.padOn = !!p.padOn; S.padFont = ({ s: 1, m: 1, l: 1 })[p.padFont] ? p.padFont : "m"; S.padRuled = p.padRuled !== false; S.lyrGuide = !!p.lyrGuide; S.sigsOff = !!p.sigsOff; S.headKeep = !!p.headKeep; S.ease = !!p.ease; S.hugHeads = p.econ ? !!p.hugHeads : true; S.guideOn = p.guideOn !== false; S.vlDeck = !!p.vlDeck; S.collapsed = Object.assign({ mel: false, acc: false, bass: false }, p.collapsed || {});   // Stacked staves: which parts are folded to a bar
+  S.doors = Object.assign({ mel: true, acc: true, bass: true }, p.doors || {}); S.playX = +p.playX || 0; S.noteZoom = Object.assign({ phone: 1, deck: 1 }, p.noteZoom || {}); S.edge = !!p.edge; S.padOn = !!p.padOn; S.padFont = ({ s: 1, m: 1, l: 1 })[p.padFont] ? p.padFont : "m"; S.padRuled = p.padRuled !== false; S.lyrGuide = !!p.lyrGuide; S.sigsOff = !!p.sigsOff; S.headKeep = !!p.headKeep; S.ease = !!p.ease; S.ezAlwaysTie = !!p.ezAlwaysTie; S.hugHeads = p.econ ? !!p.hugHeads : true; S.guideOn = p.guideOn !== false; S.vlDeck = !!p.vlDeck; S.collapsed = Object.assign({ mel: false, acc: false, bass: false }, p.collapsed || {});   // Stacked staves: which parts are folded to a bar
   S.clefs = Object.assign({ mel: { on: false, kind: "treble" }, acc: { on: false, kind: "treble" }, bass: { on: false, kind: "bass" } }, p.clefs || {});
   if (p.clef && p.clef.on && !p.clefs) ["mel", "acc", "bass"].forEach(w => { S.clefs[w] = { on: true, kind: p.clef.kind }; });   // an older setting: one clef for all
   for (const w of ["mel", "acc", "bass"]) if (!S.clefs[w] || !CLEFS[S.clefs[w].kind]) S.clefs[w] = { on: false, kind: w === "bass" ? "bass" : "treble" };
@@ -6388,7 +6393,7 @@ function loadPrefs() {
   S.layout = p.layout === "stack" ? "stack" : "rolled";                                 // Stacked staves or Rolled up: the page comes back in the view it was left in
   applyTheme();
 }
-function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, deck: S.deck, rhyShown: S.rhyShown, lyrShown: S.lyrShown, partsShown: S.partsShown, dynShown: S.dynShown, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, beatLines: S.beatLines, barHi: S.barHi, spacing: S.spacing, spacingSp: S.spacingSp, collapsed: S.collapsed, rangeLock: S.rangeLock, kbLayout: S.kbLayout, kbTheme: S.kbTheme, kbSpace: S.kbSpace, kbBackUp: S.kbBackUp, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, keepAwake: S.keepAwake, paper: S.paper, quick: S.quick, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout, duoBars: S.duoBars, duoBand: S.duoBand, beatDividers: S.beatDividers, focusBand: S.focusBand, doors: S.doors, playX: S.playX || 0, noteZoom: S.noteZoom, edge: S.edge, padOn: S.padOn, padFont: S.padFont, padRuled: S.padRuled, lyrGuide: S.lyrGuide, sigsOff: S.sigsOff, headKeep: S.headKeep, ease: S.ease, hugHeads: S.hugHeads, econ: S.econ, guideOn: S.guideOn, vlDeck: S.vlDeck, clefs: S.clefs, phoneWins: S.phoneWins, lyrOff: S.lyrOff, run: S.run ? { mode: S.run.mode, preset: S.run.preset, semis: S.run.semis } : null }); }
+function savePrefs() { writeJSON(STORE.prefs, { theme: S.theme, deck: S.deck, rhyShown: S.rhyShown, lyrShown: S.lyrShown, partsShown: S.partsShown, dynShown: S.dynShown, followWords: S.followWords, noteStyle: S.noteStyle, noteSize: S.noteSize, chordColor: S.chordColor, ftp: S.ftp, halfLines: S.halfLines, beatLines: S.beatLines, barHi: S.barHi, spacing: S.spacing, spacingSp: S.spacingSp, collapsed: S.collapsed, rangeLock: S.rangeLock, kbLayout: S.kbLayout, kbTheme: S.kbTheme, kbSpace: S.kbSpace, kbBackUp: S.kbBackUp, winSize: S.winSize, chordsDisp: S.chordsDisp, metro: S.metro, custom: S.custom, len: S.len, lyricFont: S.lyricFont, keepAwake: S.keepAwake, paper: S.paper, quick: S.quick, winState: S.winState, zoomWin: S.zoomWin, midi: S.midi, viewSpan: S.viewSpan, softKb2: S.softKb, kbPos: S.kbPos, layout: S.layout, duoBars: S.duoBars, duoBand: S.duoBand, beatDividers: S.beatDividers, focusBand: S.focusBand, doors: S.doors, playX: S.playX || 0, noteZoom: S.noteZoom, edge: S.edge, padOn: S.padOn, padFont: S.padFont, padRuled: S.padRuled, lyrGuide: S.lyrGuide, sigsOff: S.sigsOff, headKeep: S.headKeep, ease: S.ease, ezAlwaysTie: S.ezAlwaysTie, hugHeads: S.hugHeads, econ: S.econ, guideOn: S.guideOn, vlDeck: S.vlDeck, clefs: S.clefs, phoneWins: S.phoneWins, lyrOff: S.lyrOff, run: S.run ? { mode: S.run.mode, preset: S.run.preset, semis: S.run.semis } : null }); }
 function applyTheme() {
   const r = document.documentElement;
   const TEX = { pearl: "#f3f0ea", cobalt: "#0b3d91", cherry: "#c4202b", mustard: "#d8d12e" };   // the textured themes, and the colour each gives the browser's bar
@@ -8375,10 +8380,10 @@ function openTune(winArg) {
    pointing finger, kept inside that bar: a tap on the pad takes the item under it (a red box round its head; a tap again lets it go), the four-way pad nudges it (left, right) and
    moves it by half steps (up, down), the wheel likewise, a length on the pallet changes its length at once — and ENTER keeps the changes (ESC, or letting go, puts them back).
    The wheel's small key turns it from pitch to the stave's line spacing, the note size and the note spacing (the tuner's own notches and guards) */
-const EZ = { win: "mel", mode: "idle", cur: null, bar: null, sel: null, snap: null, fing: null, wheel: "pitch", pal: "notes", mark: null, built: false };
+const EZ = { win: "mel", mode: "idle", cur: null, bar: null, sel: null, snap: null, fing: null, fingOn: false, wheel: "pitch", pal: "notes", mark: null, built: false };
 const easeOn = () => !!S.ease && !deckMode() && !kbUpNow();
 const EZ_WHEEL = [["pitch", "ADJUST\nPITCH"], ["z", "STAVE\nSPACING"], ["nz", "NOTE\nSIZE"], ["sp", "NOTE\nSPACING"]];
-const ezWhite = (bi, win = "mel") => easeOn() && EZ.win === win && (EZ.mode === "bar" || EZ.mode === "item") && EZ.bar === bi;
+const ezWhite = (bi, win = "mel") => easeOn() && EZ.win === win && (EZ.mode === "nav" || EZ.mode === "edit") && EZ.bar === bi;
 const ezG = () => GEO[EZ.win];
 const ezParts = () => EZ.win === "mel" ? ["melody", ...(grandLower("mel") ? [GRAND_LOWER] : [])] : [WIN_PART[EZ.win]];
 /* one stave is worked on at a time, so one stave is open at a time, as large as the screen allows: the melody to begin with; a part opened from its bar takes the melody's place
@@ -8388,44 +8393,55 @@ function ezWins() { const all = ["mel", "acc", "bass"]; let open = all.filter(w 
   if (next !== EZ.win) ezWork(next, true); if (changed) open.forEach(w => { S.homeNext = Object.assign(S.homeNext || {}, { [w]: true }); });   // the shares have changed: every stave centred again in its new room
   EZ.openPrev = open.slice(); S.focus = null; if (EZ.win !== "mel") S.song.parts[WIN_PART[EZ.win]].on = true; S.activePart = WIN_PART[EZ.win];
   all.forEach(w => $(w + "Win").classList.toggle("ezSmall", w !== EZ.win)); }
-function ezWork(w, quiet) { if (w === EZ.win) return; if (EZ.sel) ezDrop(false); EZ.win = w; EZ.mode = "idle"; EZ.cur = null; EZ.bar = null; EZ.fing = null; S.sel = null; ["mel", "acc", "bass"].forEach(x => { S.homeNext = Object.assign(S.homeNext || {}, { [x]: true }); }); if (!quiet) renderAll(); }   // the stave in work: the panel drives it, and it has the two shares
+function ezWork(w, quiet) { if (w === EZ.win) return; ezDrop(false); EZ.win = w; EZ.mode = "idle"; EZ.cur = null; EZ.bar = null; EZ.sel = null; EZ.fing = null; EZ.fingOn = false; S.sel = null; ["mel", "acc", "bass"].forEach(x => { S.homeNext = Object.assign(S.homeNext || {}, { [x]: true }); }); if (!quiet) renderAll(); }   // the stave in work: the panel drives it, and it has the two shares
 const ezDur = () => S.len * (S.dot ? 1.5 : 1);
-/* what is entered is the glyph that was chosen, whole — a half note goes in as a half note or not at all, never as tied pieces: the cursor stands only where the glyph fits as it is
-   written (on a beat, or inside one beat when it starts between beats; never over the bar line), on a grid of the glyph's own making — whole beats for a quarter and longer, the
-   half beat for an eighth, and so on */
+/* what is entered is the glyph that was chosen, whole — a half note goes in as a half note, never as beat-by-beat tied pieces: the cursor stands where the glyph fits as it is written
+   (on a beat, or inside one beat when it starts between beats), on a grid of the glyph's own making — whole beats for a quarter and longer, the half beat for an eighth, and so on.
+   One exception, and only on the user's say-so: a glyph longer than what the bar has left may be asked for at the bar's end — it is then tied across the bar line (ezTieAsk) */
 const ezStepT = () => { const d = ezDur(), base = baseLen(d); return Math.max(0.125, Math.min(1, isDotted(d) ? base / 2 : base)); };
 const ezFits = (bi, t, d = ezDur()) => t >= -1e-6 && t + d <= barBeats(bi) + 1e-6 && (Math.abs(t - Math.round(t)) < 1e-6 || t + d <= Math.floor(t + 1e-6) + 1 + 1e-6);
-const ezSpots = bi => { const st = ezStepT(), out = []; for (let t = 0; t < barBeats(bi) - 1e-6; t = r3(t + st)) if (ezFits(bi, t)) out.push(t); return out; };
+const ezCross = (bi, t, d = ezDur()) => t + d > barBeats(bi) + 1e-6 && bi + 1 < S.song.bars.length;
+const ezSpots = bi => { const st = ezStepT(), B = barBeats(bi), out = []; for (let t = 0; t < B - 1e-6; t = r3(t + st)) if (ezFits(bi, t) || ezCross(bi, t)) out.push(t);
+  const end = r3(Math.max(0, ...((S.song.bars[bi].ev[WIN_PART[EZ.win]] || []).map(e => e.t + e.d)))); if (end > 1e-6 && end < B - 1e-6 && (ezFits(bi, end) || ezCross(bi, end)) && !out.some(t => Math.abs(t - end) < 1e-6)) { out.push(end); out.sort((a, b) => a - b); }   // and the end of what the bar holds, where the next entry naturally goes
+  return out; };
 const ezNear = (bi, t) => { const sp = ezSpots(bi); return sp.length ? sp.reduce((a, b) => Math.abs(b - t) < Math.abs(a - t) ? b : a) : null; };
 function ezResnap() { const c = EZ.cur; if (!c || EZ.mark) return; const t = ezNear(c.bi, c.t); if (t != null) c.t = t; }   // a new length: the cursor steps to the nearest place that length can stand
-function ezHome() {                                                                        // the cursor's first stand: the first bar in view, after what it holds (its first beat when full), on C4
-  const g = ezG(); if (!g) return null; const bi = g.bars.includes(S.bi) ? S.bi : g.bars[0], bar = S.song.bars[bi], B = barBeats(bi), end = Math.max(0, ...(bar.ev[WIN_PART[EZ.win]] || []).map(e => e.t + e.d));
+function ezHome(bar0) {                                                                    // the cursor's first stand: the bar asked for (else the first in view), after what it holds (its first beat when full), on C4
+  const g = ezG(); if (!g) return null; const bi = bar0 != null && g.bars.includes(bar0) ? bar0 : g.bars.includes(S.bi) ? S.bi : g.bars[0], bar = S.song.bars[bi], end = Math.max(0, ...(bar.ev[WIN_PART[EZ.win]] || []).map(e => e.t + e.d));
   const free = ezSpots(bi).find(t => t >= end - 1e-6); return { bi, t: free != null ? free : (ezSpots(bi)[0] || 0), m: EZ.win === "bass" ? 48 : 60 };   // C4 (the bass part: C3, inside its range)
 }
-function ezSetMode(mode) {
-  if (EZ.mode === "item" && mode !== "item") ezDrop(false);
-  EZ.mode = mode; if (mode === "entry") { if (!EZ.cur || !ezG() || !ezG().bars.includes(EZ.cur.bi)) EZ.cur = ezHome(); if (EZ.cur) ensureVisible(ezCurPart(), EZ.cur.m); }
-  if (mode === "idle" || mode === "entry" || mode === "pick") EZ.bar = null; if (mode !== "item") EZ.fing = null;
-  S.sel = null; S.ghost = null; renderAll();
+/* the modes: idle · entry (the cursor) · pick (the bars on the pad) · nav (a bar in hand: the box goes from entry to entry) · edit (EDIT THIS ITEM: the entry in the box is worked on) */
+function ezSetMode(mode, bar0) {
+  if (EZ.mode === "edit" && mode !== "edit") ezDrop(false); if (mode !== "nav" && mode !== "edit") { EZ.sel = null; EZ.fingOn = false; EZ.fing = null; }
+  EZ.mode = mode; if (mode === "entry") { if (bar0 != null || !EZ.cur || !ezG() || !ezG().bars.includes(EZ.cur.bi)) EZ.cur = ezHome(bar0); if (EZ.cur) ensureVisible(ezCurPart(), EZ.cur.m); }
+  if (mode === "idle" || mode === "entry" || mode === "pick") EZ.bar = null;
+  S.sel = mode === "nav" && EZ.sel ? { bi: EZ.sel.bi, part: EZ.sel.part, id: EZ.sel.id } : null; S.ghost = null; renderAll();
 }
-function ezEditBar() { if (EZ.mode === "idle") ezSetMode("entry"); else ezSetMode("pick"); }   // first the entry cursor; again, the bars to pick from for fine work
-function ezSelect() { if (EZ.bar == null) { ezSetMode("pick"); toast("Pick the bar first"); return; } const g = ezG(), B = barBeats(EZ.bar); EZ.fing = { x: g.x(EZ.bar, B / 2), y: g.H / 2 }; ezSetMode("item"); }
-function ezPickBar(bi) { EZ.bar = bi; S.bi = bi; EZ.fing = { x: 0, y: 0 }; ezSetMode("item");   // the bar picked, its first entry is in hand at once (red box, ready for the arrows, the wheel and the pallet) — the finger on it, to be moved to another; an empty bar has the finger alone
-  const g = ezG(), first = ezItems().sort((a, b) => a.x - b.x)[0]; EZ.fing = first ? { x: first.x, y: first.y } : { x: g.x(bi, barBeats(bi) / 2), y: g.H / 2 }; if (first) ezTake(first); else ezPaint(); }
-function ezEsc() { if (EZ.mode === "idle" && !EZ.sel) return; ezDrop(false); EZ.mode = "idle"; EZ.bar = null; EZ.fing = null; EZ.mark = null; S.sel = null; S.ghost = null; renderAll(); }
-/* the item in hand: taken with a copy of the song beside it, so that letting go without ENTER puts everything back */
-function ezTake(it) { ezDrop(false); EZ.snap = JSON.stringify(S.song); EZ.sel = it; S.sel = { bi: it.bi, part: it.part, id: it.id }; S.selAuto = false; renderAll(); }
-function ezDrop(keep) { if (!EZ.sel) return; if (!keep && EZ.snap && EZ.snap !== JSON.stringify(S.song)) { S.song = upgradeSong(JSON.parse(EZ.snap)); toast("Changes put back — ENTER keeps them"); } EZ.sel = null; EZ.snap = null; S.sel = null; }
+function ezEditBar() { ezSetMode("pick"); }                                                 // the bars in view go up on the pad, each to be tapped
+function ezPickBar(bi) { EZ.bar = bi; S.bi = bi; EZ.mode = "nav"; EZ.fingOn = false; renderAll();   // the bar picked turns light blue, its entries white, and its first entry is in the box at once; the arrows take the box from entry to entry
+  const first = ezSorted()[0]; if (!first) { toast(`Bar ${barNo(bi)} is empty — the cursor is in it: choose a value, place it, ENTER`); ezSetMode("entry", bi); return; } ezPoint(first); }
+function ezPoint(it) { EZ.sel = it; EZ.fing = { x: it.x, y: it.y }; S.sel = { bi: it.bi, part: it.part, id: it.id }; S.selAuto = false; renderAll(); }
+function ezEditItem() { if (EZ.mode === "edit") return; if (EZ.mode !== "nav" || !EZ.sel || !selEv()) { toast("EDIT BAR, tap a bar, then move the box to the item"); return; } EZ.snap = JSON.stringify(S.song); EZ.mode = "edit"; EZ.fingOn = false; renderAll(); }   // from here the arrows, the wheel and the pallet work on the item; a copy of the song stands by, so that ESC puts everything back
+function ezFinger() { if (EZ.mode !== "nav") { toast("The finger picks an item in a bar — EDIT BAR, then tap a bar"); return; } EZ.fingOn = !EZ.fingOn; if (EZ.fingOn && !EZ.fing) { const g = ezG(); EZ.fing = { x: g.x(EZ.bar, barBeats(EZ.bar) / 2), y: g.H / 2 }; } ezPanel(); ezPaint(); }
+function ezEsc() { if (EZ.mode === "idle" && !EZ.sel) return; ezDrop(false); EZ.mode = "idle"; EZ.bar = null; EZ.sel = null; EZ.fing = null; EZ.fingOn = false; EZ.mark = null; S.sel = null; S.ghost = null; renderAll(); }
+function ezDrop(keep) { if (!EZ.snap) return; if (!keep && EZ.snap !== JSON.stringify(S.song)) { S.song = upgradeSong(JSON.parse(EZ.snap)); toast("Changes put back — ENTER keeps them"); } EZ.snap = null; }
 function ezItems() { const g = ezG(), bi = EZ.bar, bar = S.song.bars[bi], out = []; if (!g || !bar) return out; const { rx } = headGeom(g);
   for (const part of ezParts()) for (const c of chains(bar, part)) { const ox = c.head.ox || 0; if (c.rest) out.push({ bi, part, id: c.head.id, rest: true, x: (g.x(bi, c.t + ox) + g.x(bi, c.t + c.d + ox)) / 2, y: restMidY(g, part !== "melody") });
     else if (c.head.m != null) out.push({ bi, part, id: c.head.id, x: g.x(bi, c.t + ox) + 2 + rx, y: g.y(clamp(c.head.m, g.lo, g.hi)) }); }
   return out; }
+const ezSorted = () => ezItems().sort((a, b) => a.x - b.x || a.y - b.y);
 function ezTapItem() { const f = EZ.fing, g = ezG(); if (!f || !g) return; const reach = Math.max(18, headGeom(g).rx * 2.2);
   const hit = ezItems().map(it => ({ it, d: Math.hypot(it.x - f.x, it.rest ? 0 : it.y - f.y) })).filter(o => o.d <= reach).sort((a, b) => a.d - b.d)[0];
-  if (!hit) { toast("Nothing under the finger"); return; } if (EZ.sel && EZ.sel.id === hit.it.id) { ezDrop(false); renderAll(); return; } ezTake(hit.it); }
-/* a step of the cursor or of the item in hand: dx in grid steps, dy in half steps */
+  if (!hit) { toast("Nothing under the finger"); return; } ezPoint(hit.it); }
+/* the arrows: in a bar in hand they take the box from entry to entry (left, right: along the bar; up, down: through what stands at the same place); once EDIT THIS ITEM is pressed
+   they work on the item (up, down: half steps; left, right: a nudge along the grid); on the entry cursor they move it */
 function ezStep(dx, dy) {
-  if (EZ.mode === "item" && EZ.sel) { if (dx) moveSel(dx * gridStep()); if (dy) transposeSel(dy); return; }
+  if (EZ.mode === "edit" && EZ.sel) { if (dx) { const e = selEv(); if (e) { const ox = clamp(Math.round(((e.ox || 0) + dx * 0.05) * 1000) / 1000, -0.5, 0.5); if (Math.abs(ox) < 1e-4) delete e.ox; else e.ox = ox; renderAll(); } }   // left, right: a nudge by eye, a twentieth of a beat at a press, half a beat at the most — where the item is drawn, never when it sounds
+    if (dy) transposeSel(dy); return; }
+  if (EZ.mode === "nav") { const all = ezSorted(); if (!all.length) return; const i = Math.max(0, all.findIndex(o => EZ.sel && o.id === EZ.sel.id)), cur = all[i], near = headGeom(ezG()).rx * 1.5; let nx = null;
+    if (dx) { const xs = all.filter(o => dx > 0 ? o.x > cur.x + near : o.x < cur.x - near); if (xs.length) { const x = dx > 0 ? xs[0].x : xs[xs.length - 1].x, col = xs.filter(o => Math.abs(o.x - x) <= near); nx = col.reduce((a, b) => Math.abs(b.y - cur.y) < Math.abs(a.y - cur.y) ? b : a); } }
+    if (dy) { const col = all.filter(o => Math.abs(o.x - cur.x) <= near && (dy > 0 ? o.y < cur.y - 0.5 : o.y > cur.y + 0.5)); if (col.length) nx = col.reduce((a, b) => Math.abs(b.y - cur.y) < Math.abs(a.y - cur.y) ? b : a); }
+    if (nx) ezPoint(nx); return; }
   if (EZ.mode !== "entry" || !EZ.cur) return; const g = ezG(), c = EZ.cur;
   if (dx) { const here = EZ.mark ? null : ezSpots(c.bi); if (!here) { c.t = clamp(r3(c.t + dx * gridStep()), 0, barBeats(c.bi) - gridStep()); }
     else { const nx = dx > 0 ? here.find(t => t > c.t + 1e-6) : [...here].reverse().find(t => t < c.t - 1e-6);
@@ -8434,44 +8450,88 @@ function ezStep(dx, dy) {
   ezPaint();
 }
 const ezCurPart = () => { const g = ezG(); return EZ.win !== "mel" ? WIN_PART[EZ.win] : g && EZ.cur && onLowerStaff(g, EZ.cur.m) ? GRAND_LOWER : "melody"; };
+const ezBusy = (bi, part, a, b, skip) => (S.song.bars[bi].ev[part] || []).some(e => !(skip && skip.includes(e)) && e.t < b - 1e-6 && e.t + e.d > a + 1e-6);
+function ezAdvance(bi, t) { const c = EZ.cur; let nt = ezSpots(bi).find(x => x >= t - 1e-6); if (nt == null) { if (bi + 1 < S.song.bars.length && ezSpots(bi + 1).length) { bi++; nt = ezSpots(bi)[0]; } else { bi = c.bi; nt = c.t; } } if (!ezG().bars.includes(bi)) S.bi = bi; c.bi = bi; c.t = nt; }   // the cursor stays in hand, a step on: the next place this glyph can stand
 function ezEnter() {
-  if (EZ.mode === "item") { if (!EZ.sel) { toast("Tap an item first"); return; } ezDrop(true); renderAll(); toast("Kept"); return; }
-  if (EZ.mode !== "entry" || !EZ.cur) { toast("EDIT BAR first"); return; }
+  if (EZ.mode === "edit") { ezDrop(true); EZ.mode = "nav"; renderAll(); toast("Kept"); return; }
+  if (EZ.mode === "nav") { toast("EDIT THIS ITEM first — then ENTER keeps what you change"); return; }
+  if (EZ.mode !== "entry" || !EZ.cur) { toast("Choose a value on the pallet to enter, or EDIT BAR to change what is there"); return; }
   const c = EZ.cur, bar = S.song.bars[c.bi], part = ezCurPart(), evs = bar.ev[part] = bar.ev[part] || [];
   if (EZ.mark) { const ch = chordChainAt(bar, c.t, part); if (!ch) { toast("No note there to mark"); return; } const ev = ch.head; if (DYN.includes(EZ.mark) || HAIR[EZ.mark]) setDyn(ev, EZ.mark); else { ev.artic = ev.artic === EZ.mark ? undefined : EZ.mark; if (!ev.artic) delete ev.artic; } renderAll(); return; }
   const d = ezDur(), what = S.restNext ? "rest" : "note";
+  if (ezCross(c.bi, c.t, d) && !ezFits(c.bi, c.t, d)) { ezTieAsk({ bi: c.bi, part, t: c.t, m: c.m, d, rest: !!S.restNext }); return; }
   if (!ezFits(c.bi, c.t, d)) { toast(`That ${what} does not fit whole there`); return; }
-  if (evs.some(e => (part === "melody" || !e.rest || S.restNext) && e.t < c.t + d - 1e-6 && e.t + e.d > c.t + 1e-6)) { toast(`No room for that ${what} there \u2014 something stands in its beats`); return; }
+  if (ezBusy(c.bi, part, c.t, c.t + d)) { toast(`No room for that ${what} there — something stands in its beats`); return; }
   if (S.restNext) { evs.push({ id: uid(), t: c.t, d, rest: true }); if (part === "melody") syncNotesToChips(bar); }
   else { placeSpan([{ bi: c.bi, t: c.t, d }], part, c.m, null); previewNote(c.m, part); }                                  // one piece: the glyph as chosen
-  let bi = c.bi, t = ezSpots(bi).find(x => x >= c.t + d - 1e-6);                                                          // the cursor stays in hand, a step on: the next place this glyph can stand
-  if (t == null) { if (bi + 1 < S.song.bars.length && ezSpots(bi + 1).length) { bi++; t = ezSpots(bi)[0]; if (!ezG().bars.includes(bi)) S.bi = bi; } else t = c.t; }
-  c.bi = bi; c.t = t; S.sel = null; renderAll();
+  ezAdvance(c.bi, c.t + d); S.sel = null; renderAll();
 }
-/* the pallet beside the pad: a length, a rest or a mark — the cursor's glyph; with an item in hand, its new length (or its mark) at once */
-function ezSetLen(ev, nd) { const before = JSON.stringify(S.song), bi = S.sel.bi, part = S.sel.part, t = ev.t; setDur(ev, nd);
+/* ── a note longer than its bar has room for: tied across the bar line, the user choosing how it is written in the bar beyond ── */
+const EZ_VALS = [4, 3, 2, 1.5, 1, 0.75, 0.5, 0.375, 0.25, 0.1875, 0.125];
+const ezSplit = x => { const out = []; let left = r3(x); for (const v of EZ_VALS) while (left >= v - 1e-6) { out.push(v); left = r3(left - v); } return out; };   // the fewest written values that make up x, the longest first
+const ezValIcon = v => { const dotted = isDotted(v), base = dotted ? v / 1.5 : v, box = el("span", { class: "tieVal" }, lenIcon(base)); if (dotted) box.append(el("b", {}, "•")); return box; };
+function ezTieAsk(job) {
+  const B = barBeats(job.bi), nb = job.bi + 1, avail = r3(B - job.t), rem = r3(job.d - avail), own = job.ev ? (chainOf(S.song.bars[job.bi], job.ev, job.part) || { members: [job.ev] }).members : null;
+  if (!S.song.bars[nb]) { toast("There is no bar beyond this one to tie into"); return; }
+  if (rem > barBeats(nb) + 1e-6) { toast("That is longer than this bar and the whole of the next"); return; }
+  if (ezBusy(job.bi, job.part, job.t, B, own) || ezBusy(nb, job.part, 0, rem)) { toast("No room to tie across — something stands in those beats"); return; }
+  if (job.rest) { ezLayTied(job, ezSplit(avail), ezSplit(rem)); return; }                                                  // a rest is simply written on both sides of the bar line
+  const choose = () => { let picks = [];
+    const draw = () => { const left = r3(rem - picks.reduce((a, b) => a + b, 0)), done = left < 1e-6, sug = ezSplit(rem), body = el("div", { class: "ezTie" });
+      body.append(el("div", { class: "tieCap" }, `BAR ${barNo(nb)} — ${done ? "THE TIE IS COMPLETE" : picks.length ? "THE NEXT NOTE VALUE" : "THE FIRST NOTE VALUE"}`));
+      const field = el("div", { class: "tieField" }, ...ezSplit(avail).map(ezValIcon), el("i", {}, "│"), ...picks.map(ezValIcon), done ? null : el("em", {}, `${fmtB(left)} beat${left === 1 ? "" : "s"} to go`)); body.append(field);
+      if (!done) { const opts = EZ_VALS.filter(v => v <= left + 1e-6 && v !== picks[picks.length - 1] && v >= 0.125);                       // never the same value twice running: two of a kind are one note of the next value up
+        body.append(el("div", { class: "tieOpts" }, ...opts.map(v => el("button", { class: "btn", title: fmtB(v) + " beats", onclick: () => { picks.push(v); draw(); } }, ezValIcon(v)))));
+        body.append(el("button", { class: "btn sm", onclick: () => { picks = sug.slice(); draw(); } }, "Use the suggestion: ", ...sug.map(ezValIcon))); }
+      openModal(done ? "Tie across the bar line" : "Complete the tie", body, done
+        ? [el("button", { class: "btn", onclick: closeModal }, "Cancel"), el("button", { class: "btn", onclick: () => { picks = []; draw(); } }, "Change"), el("button", { class: "btn acc", onclick: () => { closeModal(); ezLayTied(job, ezSplit(avail), picks); } }, "Accept")]
+        : [el("button", { class: "btn", onclick: closeModal }, "Cancel"), picks.length ? el("button", { class: "btn", onclick: () => { picks.pop(); draw(); } }, "Back") : null]); };
+    draw(); };
+  if (S.ezAlwaysTie) { choose(); return; }
+  const always = el("input", { type: "checkbox" }), body = el("div", {}, el("p", { style: "font-size:15px;margin:6px 0 10px" }, "The duration of the selected note exceeds this bar's available time space — tie across into next bar?"), el("label", { style: "display:flex;gap:8px;align-items:center;font-size:13px" }, always, "Always tie notes across to next bar when this happens"));
+  openModal(null, body, [el("button", { class: "btn", onclick: closeModal }, "No"), el("button", { class: "btn acc", onclick: () => { if (always.checked) { S.ezAlwaysTie = true; savePrefs(); } choose(); } }, "Yes")]);
+}
+function ezLayTied(job, cur, next) {                                                        // the pieces written: this bar's share, tied over the bar line to the values chosen beyond it
+  const bar = S.song.bars[job.bi], nbar = S.song.bars[job.bi + 1], part = job.part; bar.ev[part] = bar.ev[part] || []; nbar.ev[part] = nbar.ev[part] || [];
+  if (job.ev) { const ch = chainOf(bar, job.ev, part); if (ch) bar.ev[part] = bar.ev[part].filter(e => e === job.ev || !ch.members.includes(e)); }
+  let at = job.t; const all = [];
+  cur.forEach((v, i) => { const e = i === 0 && job.ev ? job.ev : (job.rest ? { id: uid(), rest: true } : { id: uid(), m: job.m }); e.t = r3(at); e.d = v; if (!(i === 0 && job.ev)) bar.ev[part].push(e); all.push(e); at += v; });
+  at = 0; next.forEach(v => { const e = job.rest ? { id: uid(), rest: true, t: r3(at), d: v } : { id: uid(), m: job.ev ? job.ev.m : job.m, t: r3(at), d: v }; nbar.ev[part].push(e); all.push(e); at += v; });
+  all.forEach((e, i) => { if (!job.rest && i < all.length - 1) e.tie = true; else delete e.tie; });
+  if (part === "melody") { syncNotesToChips(bar); syncNotesToChips(nbar); } if (!job.rest) previewNote(all[0].m, part);
+  if (EZ.mode === "entry" && EZ.cur) ezAdvance(job.bi + 1, at); renderAll();
+}
+/* the pallet beside the pad: a length, a rest or a mark. While an item is being edited it is the item's new length (or its mark), at once; otherwise it is the glyph of the entry
+   cursor — and choosing one brings the cursor up (in the bar in hand, when there is one) */
+function ezSetLen(ev, nd) { const bi = S.sel.bi, part = S.sel.part, t = ev.t;
+  if (!ev.rest && t + nd > barBeats(bi) + 1e-6) { ezTieAsk({ bi, part, t, m: ev.m, d: nd, ev }); return; }               // longer than the bar has left: across the bar line, if the user will have it
+  const before = JSON.stringify(S.song); setDur(ev, nd);
   const now = (S.song.bars[bi].ev[part] || []).find(e => Math.abs(e.t - t) < 1e-6 && !!e.rest === !!ev.rest), ch = now && chainOf(S.song.bars[bi], now, part);
   if (!now || Math.abs(now.d - nd) > 1e-6 || (ch && ch.members.length > 1)) { S.song = upgradeSong(JSON.parse(before)); const back = (S.song.bars[bi].ev[part] || []).find(e => Math.abs(e.t - t) < 1e-6); if (back) { S.sel = { bi, part, id: back.id }; if (EZ.sel) EZ.sel.id = back.id; } toast("That length does not fit whole there"); }
   renderAll(); }
-function ezDelete() { const ev = EZ.mode === "item" && EZ.sel ? selEv() : null; if (!ev) { toast("Take an item first \u2014 EDIT BAR, a bar, then the item"); return; }
-  const no = el("button", { class: "btn", onclick: closeModal }, "No"), yes = el("button", { class: "btn acc", onclick: () => { closeModal(); if (!selEv()) return; deleteSel(); EZ.sel = null; EZ.snap = null; S.sel = null;   // gone for good (UNDO brings it back): nothing is left in hand to be put back
-    const next = ezItems().sort((a, b) => a.x - b.x)[0]; if (next) { EZ.fing = { x: next.x, y: next.y }; } renderAll(); } }, "Yes");
+function ezDelete() { const ev = (EZ.mode === "nav" || EZ.mode === "edit") && EZ.sel ? selEv() : null; if (!ev) { toast("Take an item first — EDIT BAR, tap a bar, move the box to the item"); return; }
+  const no = el("button", { class: "btn", onclick: closeModal }, "No"), yes = el("button", { class: "btn acc", onclick: () => { closeModal(); if (!selEv()) return; deleteSel(); EZ.sel = null; EZ.snap = null; S.sel = null; EZ.mode = "nav";   // gone for good (UNDO brings it back): nothing is left in hand to be put back
+    renderAll(); const next = ezSorted()[0]; if (next) ezPoint(next); } }, "Yes");
   openModal(null, el("p", { style: "font-size:16px;margin:6px 0 4px" }, "Are you sure?"), [no, yes]); }
 function ezPickLen(v, rest) {
-  if (EZ.mode === "item" && EZ.sel) { const ev = selEv(); if (!ev) return; if (!!ev.rest !== !!rest) { toast(rest ? "That is a note — pick a note's length" : "That is a rest — pick a rest's length"); return; } ezSetLen(ev, isDotted(ev.d) ? v * 1.5 : v); return; }
-  S.len = v; S.restNext = !!rest; EZ.mark = null; ezResnap(); savePrefs(); ezPanel(); ezPaint();
+  if (EZ.mode === "edit" && EZ.sel) { const ev = selEv(); if (!ev) return; if (!!ev.rest !== !!rest) { toast(rest ? "That is a note — pick a note's length" : "That is a rest — pick a rest's length"); return; } ezSetLen(ev, isDotted(ev.d) ? v * 1.5 : v); return; }
+  S.len = v; S.restNext = !!rest; EZ.mark = null; savePrefs(); if (EZ.mode !== "entry") { ezSetMode("entry", EZ.bar); return; } ezResnap(); ezPanel(); ezPaint();
 }
-function ezPickMark(kind) { if (EZ.mode === "item" && EZ.sel) { const ev = selEv(); if (!ev || ev.rest || ev.m == null) return; if (DYN.includes(kind) || HAIR[kind]) setDyn(ev, kind); else { ev.artic = ev.artic === kind ? undefined : kind; if (!ev.artic) delete ev.artic; } renderAll(); return; }
-  EZ.mark = EZ.mark === kind ? null : kind; ezPanel(); ezPaint(); }
+function ezPickMark(kind) { if (EZ.mode === "edit" && EZ.sel) { const ev = selEv(); if (!ev || ev.rest || ev.m == null) return; if (DYN.includes(kind) || HAIR[kind]) setDyn(ev, kind); else { ev.artic = ev.artic === kind ? undefined : kind; if (!ev.artic) delete ev.artic; } renderAll(); return; }
+  EZ.mark = EZ.mark === kind ? null : kind; if (EZ.mode !== "entry") { ezSetMode("entry", EZ.bar); return; } ezPanel(); ezPaint(); }
 function ezWheelTurn(dir) {
-  if (EZ.wheel === "pitch") { ezStep(0, dir); return; }
+  if (EZ.wheel === "pitch") { if (EZ.mode === "nav") { toast("EDIT THIS ITEM first"); return; } ezStep(0, dir); return; }
   const win = EZ.win, nv = tuneNext(win, tuneNow(win), EZ.wheel, dir); if (!nv) { toast((dir > 0 ? "MAX " : "MIN ") + EZ_WHEEL.find(w => w[0] === EZ.wheel)[1].replace("\n", " ") + " REACHED"); return; }
   S.zoomWin[win] = nv.z; S.noteZoom[tuneKey()] = nv.nz; S.spacing = nv.sp ? "custom" : "regular"; S.spacingSp = nv.sp || null; S.homeNext = Object.assign(S.homeNext || {}, { [win]: true }); savePrefs(); renderAll();
 }
-/* what the mode lays over the stave: the tint under the bar in hand, the entry cursor in its glow, the pointing finger, the red box */
+/* the pointing hand, drawn: plain white, a black outline; its finger tip at (10.5, 2) of a 24-box */
+const EZ_HAND = "M 9 22 L 9 13.2 L 7.3 14.7 C 6.4 15.4 5.1 14.4 5.8 13.3 L 9 8.6 L 9 3.6 C 9 1.7 12 1.7 12 3.6 L 12 9.6 L 13 9.6 C 13.2 8.3 15.4 8.4 15.5 9.9 C 15.9 8.9 17.9 9.1 18 10.5 C 18.5 9.7 20.2 10 20.2 11.5 L 20.2 16 C 20.2 19.6 18.4 22 15 22 Z";
+const ezHand = (attrs = {}) => svgEl("path", Object.assign({ d: EZ_HAND, fill: "#fff", stroke: "#000", "stroke-width": 1.3, "stroke-linejoin": "round" }, attrs));
+/* what the mode lays over the stave: the tint under the bar in hand, the entry cursor in its glow, the box round the entry chosen, the pointing finger */
 function ezPaint() {
   document.querySelectorAll(".win svg .ezLay").forEach(n => n.remove()); const svg = $(EZ.win + "Svg"), g = ezG(); if (!svg || !easeOn() || !g || S.winState[EZ.win] === "closed") return;
-  if (EZ.bar != null && g.bars.includes(EZ.bar) && (EZ.mode === "bar" || EZ.mode === "item")) { const x0 = g.x(EZ.bar, 0), x1 = g.x(EZ.bar, barBeats(EZ.bar)), tint = svgEl("rect", { class: "ezLay", x: x0, y: 0, width: x1 - x0, height: g.H, fill: "#55bdec", opacity: 0.8, "pointer-events": "none" }), hit = svg.querySelector("rect.hit"); if (hit) hit.after(tint); else svg.prepend(tint); }
+  const inBar = EZ.mode === "nav" || EZ.mode === "edit";
+  if (EZ.bar != null && g.bars.includes(EZ.bar) && inBar) { const x0 = g.x(EZ.bar, 0), x1 = g.x(EZ.bar, barBeats(EZ.bar)), tint = svgEl("rect", { class: "ezLay", x: x0, y: 0, width: x1 - x0, height: g.H, fill: "#55bdec", opacity: 0.8, "pointer-events": "none" }), hit = svg.querySelector("rect.hit"); if (hit) hit.after(tint); else svg.prepend(tint); }
   const lay = svgEl("g", { class: "ezLay", "pointer-events": "none" }); svg.append(lay);
   if (EZ.mode === "entry" && EZ.cur && g.bars.includes(EZ.cur.bi)) { const c = EZ.cur, part = ezCurPart(), x = g.x(c.bi, c.t) + 2, { rx } = headGeom(g), m = clamp(c.m, g.lo, g.hi), y = g.y(m), sp = staffSpacePx(EZ.win, g.step);
     const gid = "ezGlow", defs = svgEl("defs", {}), rg = svgEl("radialGradient", { id: gid }); rg.append(svgEl("stop", { offset: "0%", "stop-color": "#ffe23a", "stop-opacity": 0.95 }), svgEl("stop", { offset: "55%", "stop-color": "#ffe23a", "stop-opacity": 0.5 }), svgEl("stop", { offset: "100%", "stop-color": "#ffe23a", "stop-opacity": 0 })); defs.append(rg); lay.append(defs);
@@ -8480,41 +8540,43 @@ function ezPaint() {
     else if (S.restNext) drawRest(lay, g, x + rx, ezDur(), "#111", {}, part);
     else { if (focusOn(EZ.win)) drawLedgers(lay, g, c.bi, { ev: { [part]: [{ t: c.t, d: ezDur(), m }] } }, "#111", part); drawNote(lay, g, x, m, ezDur(), "#111", { "data-ev": "ez" }); }
     const fr = svg.parentNode; if (fr && fr.scrollWidth > fr.clientWidth + 1) { if (x < fr.scrollLeft + 12) fr.scrollLeft = Math.max(0, x - 12); else if (x + 2 * rx > fr.scrollLeft + fr.clientWidth - 12) fr.scrollLeft = x + 2 * rx + 12 - fr.clientWidth; } }
-  if (EZ.mode === "item") { const { rx, ry } = headGeom(g);
-    if (EZ.fing) { const fs = Math.max(20, staffSpacePx(EZ.win, g.step) * 1.5); lay.append(svgEl("text", { x: EZ.fing.x, y: EZ.fing.y + fs, "text-anchor": "middle", "font-size": fs, fill: "#fff", "fill-opacity": 0.92, stroke: "#111", "stroke-width": 0.9, "paint-order": "stroke", "font-family": "'Segoe UI Symbol', 'Noto Sans Symbols 2', 'Apple Symbols', sans-serif" }, "☝")); }   // the finger's tip is the point: the hand hangs below it, clear of what it points at
-    if (EZ.sel) { const it = ezItems().find(o => o.id === EZ.sel.id); if (it) lay.append(it.rest ? svgEl("rect", { x: it.x - 9, y: it.y - 14, width: 18, height: 28, fill: "none", stroke: "#e02020", "stroke-width": 2.2 }) : svgEl("rect", { x: it.x - rx - 3, y: it.y - ry - 3, width: 2 * rx + 6, height: 2 * ry + 6, fill: "none", stroke: "#e02020", "stroke-width": 2.2 })); } }
+  if (inBar) { const { rx, ry } = headGeom(g), editing = EZ.mode === "edit";
+    if (EZ.sel) { const it = ezItems().find(o => o.id === EZ.sel.id), bx = it && (it.rest ? { x: it.x - 9, y: it.y - 14, width: 18, height: 28 } : { x: it.x - rx - 3, y: it.y - ry - 3, width: 2 * rx + 6, height: 2 * ry + 6 });
+      if (bx) lay.append(svgEl("rect", Object.assign(bx, { fill: "none", stroke: "#e02020", "stroke-width": editing ? 2.6 : 2, "stroke-dasharray": editing ? null : "4 2.5" }))); }   // the box: dashed while it is only being moved from entry to entry, solid once the item is being edited
+    if (EZ.fingOn && EZ.fing && !editing) { const k = Math.max(20, staffSpacePx(EZ.win, g.step) * 1.7) / 24; lay.append(ezHand({ transform: `translate(${EZ.fing.x - 10.5 * k} ${EZ.fing.y - 2 * k}) scale(${k})`, "stroke-width": 1.3 })); } }   // the finger's tip is the point: the hand hangs below it, clear of what it points at
 }
 /* the pad: the thumb's travel is the cursor's, scaled from the pad to the stave's window; a touch that does not travel is a tap */
 function ezInitPad(pad) {
-  let d = null;
-  pad.addEventListener("pointerdown", e => { if (EZ.mode !== "entry" && EZ.mode !== "item") return; const g = ezG(), svg = $(EZ.win + "Svg"); if (!g || !svg) return; e.preventDefault(); const fr = svg.parentNode;
+  let d = null; const fingering = () => EZ.mode === "nav" && EZ.fingOn && EZ.fing;
+  pad.addEventListener("pointerdown", e => { if (EZ.mode !== "entry" && !fingering()) return; const g = ezG(), svg = $(EZ.win + "Svg"); if (!g || !svg) return; e.preventDefault(); const fr = svg.parentNode;
     d = { id: e.pointerId, x: e.clientX, y: e.clientY, at: e.timeStamp, far: 0, kx: fr.clientWidth / Math.max(1, pad.clientWidth), ky: fr.clientHeight / Math.max(1, pad.clientHeight) };
     if (EZ.mode === "entry" && EZ.cur) { d.px = g.x(EZ.cur.bi, EZ.cur.t); d.py = g.y(clamp(EZ.cur.m, g.lo, g.hi)); } try { pad.setPointerCapture(e.pointerId); } catch (x) {} });
   pad.addEventListener("pointermove", e => { if (!d || e.pointerId !== d.id) return; const g = ezG(); if (!g) return; const dx = (e.clientX - d.x) * d.kx, dy = (e.clientY - d.y) * d.ky; d.x = e.clientX; d.y = e.clientY; d.far += Math.abs(dx) + Math.abs(dy);
-    if (EZ.mode === "item" && EZ.fing) { const x0 = g.x(EZ.bar, 0), x1 = g.x(EZ.bar, barBeats(EZ.bar)); EZ.fing.x = clamp(EZ.fing.x + dx, x0 + 2, x1 - 2); EZ.fing.y = clamp(EZ.fing.y + dy, 2, g.H - 2); ezPaint(); return; }   // the finger never leaves the bar in hand
+    if (fingering()) { const x0 = g.x(EZ.bar, 0), x1 = g.x(EZ.bar, barBeats(EZ.bar)); EZ.fing.x = clamp(EZ.fing.x + dx, x0 + 2, x1 - 2); EZ.fing.y = clamp(EZ.fing.y + dy, 2, g.H - 2); ezPaint(); return; }   // the finger never leaves the bar in hand
     if (EZ.mode !== "entry" || !EZ.cur) return; const b0 = g.bars[0], bN = g.bars[g.bars.length - 1];
     d.px = clamp(d.px + dx, g.x(b0, 0), g.x(bN, barBeats(bN)) - 1); d.py = clamp(d.py + dy, g.step / 2, g.H - g.step / 2);
     const at = g.at(d.px), st = gridStep(), near = EZ.mark ? null : ezNear(at.bi, at.t), t = EZ.mark ? clamp(Math.round(at.t / st) * st, 0, barBeats(at.bi) - st) : near != null ? near : EZ.cur.t, m = g.m(d.py), c = EZ.cur;
     if (at.bi !== c.bi || Math.abs(t - c.t) > 1e-6 || m !== c.m) { const pm = c.m; c.bi = at.bi; c.t = r3(t); c.m = m; ezPaint(); ezBanner(); if (m !== pm && !EZ.mark && !S.restNext) previewNote(m, ezCurPart()); } });
-  const end = e => { if (!d || e.pointerId !== d.id) return; const tap = d.far < 8 && e.timeStamp - d.at < 450; d = null; if (tap && EZ.mode === "item") ezTapItem(); };
+  const end = e => { if (!d || e.pointerId !== d.id) return; const tap = d.far < 8 && e.timeStamp - d.at < 450; d = null; if (tap && fingering()) ezTapItem(); };
   pad.addEventListener("pointerup", end); pad.addEventListener("pointercancel", e => { if (d && e.pointerId === d.id) d = null; });
 }
 function ezBanner() { const b = $("ezBanner"); if (!b) return; const c = EZ.cur;
-  b.textContent = EZ.mode === "pick" ? "SELECT BAR TO EDIT" : EZ.mode === "bar" ? `BAR ${barNo(EZ.bar)} · TAP SELECT` : EZ.mode === "item" ? (EZ.sel ? "EDIT, THEN ENTER" : "SELECT ITEM TO EDIT") : EZ.mode === "entry" && c ? `BAR ${barNo(c.bi)} · BEAT ${fracLabel(c.t + 1)}` : `BAR ${barNo(S.bi)}`; }
+  b.textContent = EZ.mode === "pick" ? "SELECT BAR TO EDIT" : EZ.mode === "nav" ? `BAR ${barNo(EZ.bar)} · CHOOSE ITEM` : EZ.mode === "edit" ? "EDITING · ENTER KEEPS" : EZ.mode === "entry" && c ? `BAR ${barNo(c.bi)} · BEAT ${fracLabel(c.t + 1)}` : `BAR ${barNo(S.bi)}`; }
 function ezBuild() {
   const K = (id, label, fn, cls = "") => { const b = el("button", { id, class: cls, onclick: fn }); String(label).split("\n").forEach((ln, i) => { if (i) b.append(el("br")); b.append(ln); }); return b; };
   const pad = el("div", { id: "ezPad" }), wheel = el("div", { id: "ezWheel", title: "Drag up or down" }, el("span", { class: "arr" }, "↕"));
   const head = (cls, rot, fn, title) => { const sv = svgEl("svg", { viewBox: "0 0 12 12", "aria-hidden": "true" }); sv.append(svgEl("path", { d: "M 6 1.6 L 10.6 9.8 H 1.4 Z", fill: "#2b2d31", stroke: "#fff", "stroke-width": 1.1, "stroke-linejoin": "round", transform: `rotate(${rot} 6 6)` })); return el("button", { class: cls, title, onclick: fn }, sv); };   // each arrow head drawn, a thin white line round it
-  const dp = el("div", { id: "ezDpad" }, head("u", 0, () => ezStep(0, 1), "Up a half step"), head("l", -90, () => ezStep(-1, 0), "Left"), head("r", 90, () => ezStep(1, 0), "Right"), head("d", 180, () => ezStep(0, -1), "Down a half step"));
+  const dp = el("div", { id: "ezDpad" }, head("u", 0, () => ezStep(0, 1), "Up"), head("l", -90, () => ezStep(-1, 0), "Left"), head("r", 90, () => ezStep(1, 0), "Right"), head("d", 180, () => ezStep(0, -1), "Down"));
+  const fsv = svgEl("svg", { viewBox: "0 0 24 24", "aria-hidden": "true" }); fsv.append(ezHand()); const fingBtn = el("button", { id: "ezFing", title: "The pointing finger: move it over an item with the pad, tap to put the box on it", onclick: ezFinger }, fsv);
   const panel = el("div", { id: "ezPanel" },
     el("div", { class: "ezMid" }, el("div", { class: "ezPcol" }, el("div", { id: "ezBanner" }), pad), el("div", { class: "ezWcol" }, K("ezEscBtn", "ESC", ezEsc, "esc"), el("div", { class: "ezWtop" }, el("span", { id: "ezWlbl" }), K("ezWmode", "↑", () => { EZ.wheel = EZ_WHEEL[(EZ_WHEEL.findIndex(w => w[0] === EZ.wheel) + 1) % EZ_WHEEL.length][0]; ezPanel(); }, "sm")), wheel)),
-    el("div", { class: "ezRow" }, K("ezLyr", "LYRICS", () => { ezEsc(); S.winState.mel = "open"; ezWork("mel", true); S.activePart = "melody"; weOpenFromButton(); }, "lyr"), el("div", { class: "ezSE" }, K("ezSel", "SELECT", ezSelect), K("ezEdit", "EDIT BAR", ezEditBar)), dp, K("ezEnter", "ENTER", ezEnter, "enter")),
+    el("div", { class: "ezRow" }, el("div", { class: "ezLF" }, K("ezLyr", "LYRICS", () => { ezEsc(); S.winState.mel = "open"; ezWork("mel", true); S.activePart = "melody"; weOpenFromButton(); }, "lyr"), fingBtn), el("div", { class: "ezSE" }, K("ezItem", "EDIT THIS\nITEM", ezEditItem), K("ezEdit", "EDIT BAR", ezEditBar)), dp, K("ezEnter", "ENTER", ezEnter, "enter")),
     el("div", { class: "ezRow nav" }, K("ezDel", "DEL", ezDelete, "del"), K("", "← PREV", () => $("prevBar").click(), "sm"), K("", "NEXT →", () => $("nextBar").click(), "sm"), el("span", { class: "gap" }), K("ezUndo", "UNDO", undo, "sm"), K("ezRedo", "REDO", redo, "sm")));
   const sq = (id, title, fn, draw, cap) => { const sv = svgEl("svg", { viewBox: "0 0 24 24", "aria-hidden": "true" }); draw(sv); return el("button", { id, title, class: cap ? "capped" : "", onclick: fn }, cap ? el("span", { class: "cap" }, cap) : null, sv); };   // the playback pallet: four squares in the keys' silver, each with its own sign
   const tri = (sv, fill, stroke) => sv.append(svgEl("path", { d: "M 7 4.5 L 19.5 12 L 7 19.5 Z", fill, stroke, "stroke-width": 1.4, "stroke-linejoin": "round" }));
   const play = el("div", { id: "ezPlay" }, el("div", { id: "ezPlayPal" },
-    sq("ezPlayAll", "Play All \u2014 the whole song from the start", () => $("playAllBtn").click(), sv => tri(sv, "#fff", "#3a3d42"), "ALL"),
-    sq("ezPlayBar", "Play Bar \u2014 this bar", () => $("playBarBtn").click(), sv => { tri(sv, "#2f7fd6", "#12325e"); }, "BAR"),
+    sq("ezPlayAll", "Play All — the whole song from the start", () => $("playAllBtn").click(), sv => tri(sv, "#fff", "#3a3d42"), "ALL"),
+    sq("ezPlayBar", "Play Bar — this bar", () => $("playBarBtn").click(), sv => { tri(sv, "#2f7fd6", "#12325e"); }, "BAR"),
     sq("ezStop", "Stop", () => $("stopBtn").click(), sv => sv.append(svgEl("rect", { x: 5, y: 5, width: 14, height: 14, rx: 2, fill: "none", stroke: "#3a3d42", "stroke-width": 0.8 }), svgEl("rect", { x: 6, y: 6, width: 12, height: 12, rx: 1.5, fill: "#e02020", stroke: "#fff", "stroke-width": 1.3 }))),   // the stop sign: a thin white line round it (a hair of grey outside, so the white shows on the silver)
     sq("ezRec", "Record (not yet)", () => {}, sv => sv.append(svgEl("circle", { cx: 12, cy: 12, r: 6.5, fill: "#e02020", stroke: "#7a1410", "stroke-width": 1.2 })))));
   const box = el("div", { id: "ease" }, play, el("div", { id: "ezPal" }, el("div", { id: "ezPalGrid" }), el("div", { id: "ezTabs" })), panel);
@@ -8532,12 +8594,15 @@ function ezPanel() {
   { const box = $("ease"), pal = $("ezPlayPal"), fr = $(EZ.win + "Win").querySelector(".frame"), wins = ["mel", "acc", "bass"].map(w => $(w + "Win")).filter(e => e.offsetHeight > 0);
     box.style.marginTop = ""; pal.style.left = ""; if (fr && wins.length) { const foot = Math.max(...wins.map(e => e.getBoundingClientRect().bottom)), gap = box.getBoundingClientRect().top - foot; if (gap > 5) box.style.marginTop = -(gap - 5) + "px";   // the rows of the hidden strips keep their gaps: taken back, so the pallet stands 5px under the last stave
       const fb = fr.getBoundingClientRect(), pb = pal.getBoundingClientRect(); pal.style.left = Math.round(((fb.left + fb.right) - (pb.left + pb.right)) / 2 * 2) / 2 + "px"; } }
-  const g = ezG(); if (EZ.cur && g && !g.bars.includes(EZ.cur.bi)) { EZ.cur.bi = g.bars[0]; EZ.cur.t = 0; } if (EZ.bar != null && g && !g.bars.includes(EZ.bar) && EZ.mode !== "pick") { ezDrop(false); EZ.bar = null; EZ.fing = null; EZ.mode = "pick"; }
+  const g = ezG(); if (EZ.cur && g && !g.bars.includes(EZ.cur.bi)) { EZ.cur.bi = g.bars[0]; EZ.cur.t = 0; } if (EZ.bar != null && g && !g.bars.includes(EZ.bar) && (EZ.mode === "nav" || EZ.mode === "edit")) { ezDrop(false); EZ.bar = null; EZ.sel = null; EZ.fing = null; EZ.fingOn = false; S.sel = null; EZ.mode = "pick"; }
+  if ((EZ.mode === "nav" || EZ.mode === "edit") && EZ.sel && !ezItems().some(o => o.id === EZ.sel.id)) { const first = ezSorted()[0]; EZ.sel = first || null; if (EZ.mode === "edit") { EZ.mode = "nav"; EZ.snap = null; } }   // the item went (an undo, a delete): the box goes to the first that is left
   /* the pallet */
-  const TABS = [["notes", "NOTES", "#d0201c"], ["rests", "RESTS", "#1f9d45"], ["dyn", "DYN", "#f2d21b"], ["art", "ART", "#f5a623"]], grid = $("ezPalGrid"), inHand = EZ.mode === "item" && EZ.sel ? selEv() : null;
-  const LV = [0.25, 0.5, 1, 2, 4, 0.125], cell = (kids, on, fn, title) => { const b = el("button", { class: on ? "on" : "", title: title || "", onclick: fn }); [kids].flat().forEach(k => b.append(k)); return b; };
+  const TABS = [["notes", "NOTES", "#d0201c"], ["rests", "RESTS", "#1f9d45"], ["dyn", "DYN", "#f2d21b"], ["art", "ART", "#f5a623"]], grid = $("ezPalGrid"), inHand = EZ.mode === "edit" && EZ.sel ? selEv() : null;
+  const cell = (kids, on, fn, title) => { const b = el("button", { class: on ? "on" : "", title: title || "", onclick: fn }); [kids].flat().forEach(k => b.append(k)); return b; };
   let cells = [];
-  if (EZ.pal === "notes" || EZ.pal === "rests") { const rest = EZ.pal === "rests"; cells = [0.125, 0.25, 0.5, 1, 2, 4].map(v => cell(rest ? restIcon(v) : lenIcon(v), inHand ? (!!inHand.rest === rest && Math.abs(baseLen(inHand.d) - v) < 1e-9) : (!EZ.mark && !!S.restNext === rest && S.len === v), () => ezPickLen(v, rest)));
+  if (EZ.pal === "notes" || EZ.pal === "rests") { const rest = EZ.pal === "rests", lenOn = (v, r) => inHand ? (!!inHand.rest === r && Math.abs(baseLen(inHand.d) - v) < 1e-9) : (EZ.mode === "entry" && !EZ.mark && !!S.restNext === r && S.len === v);
+    cells = [0.125, 0.25, 0.5, 1, 2, 4].map(v => cell(rest ? restIcon(v) : lenIcon(v), lenOn(v, rest), () => ezPickLen(v, rest)));
+    if (!rest) cells.push(cell(restIcon(1), lenOn(1, true), () => ezPickLen(1, true), "Quarter rest"));                     // the quarter rest, at hand among the notes: between the whole note and the dot
     cells.push(cell(el("span", { class: "dotk" }, "•"), inHand ? isDotted(inHand.d) : !!S.dot, () => { if (inHand) ezSetLen(inHand, isDotted(inHand.d) ? inHand.d / 1.5 : inHand.d * 1.5); else { S.dot = !S.dot; ezResnap(); ezPanel(); ezPaint(); } }, "Dotted")); }
   else if (EZ.pal === "dyn") cells = ["pp", "p", "mp", "mf", "f", "ff", "cresc", "dim"].map(k => cell(el("i", {}, HAIR[k] ? (k === "cresc" ? "<" : ">") : k), inHand ? (inHand.dyn === k || inHand.hair === k) : EZ.mark === k, () => ezPickMark(k), HAIR[k] || k));
   else cells = Object.keys(ARTIC).filter(k => k !== "slur").map(k => cell(el("b", {}, ARTIC[k].glyph), inHand ? inHand.artic === k : EZ.mark === k, () => ezPickMark(k), ARTIC[k].label));
@@ -8545,8 +8610,9 @@ function ezPanel() {
   $("ezTabs").replaceChildren(...TABS.map(([k, l, c]) => el("button", { class: EZ.pal === k ? "on" : "", style: `background:${c}`, onclick: () => { EZ.pal = k; ezPanel(); } }, l)));
   /* the pad's face */
   const pad = $("ezPad"); pad.className = EZ.mode;
-  if (EZ.mode === "pick" || EZ.mode === "bar") pad.replaceChildren(...(g ? g.bars : []).map(bi => el("button", { class: "tile" + (EZ.bar === bi ? " on" : ""), onclick: () => ezPickBar(bi) }, el("span", {}, "BAR " + barNo(bi))))); else pad.replaceChildren();
+  if (EZ.mode === "pick") pad.replaceChildren(...(g ? g.bars : []).map(bi => el("button", { class: "tile", onclick: () => ezPickBar(bi) }, el("span", {}, "TAP TO EDIT", el("br"), "BAR " + barNo(bi))))); else pad.replaceChildren();
   ezBanner(); const wl = $("ezWlbl"); wl.replaceChildren(); EZ_WHEEL.find(w => w[0] === EZ.wheel)[1].split("\n").forEach((ln, i) => { if (i) wl.append(el("br")); wl.append(ln); });
+  $("ezFing").classList.toggle("on", EZ.mode === "nav" && !!EZ.fingOn); $("ezItem").classList.toggle("on", EZ.mode === "edit"); $("ezItem").disabled = !((EZ.mode === "nav" && EZ.sel) || EZ.mode === "edit");
   $("ezUndo").disabled = !UNDO.stack.length; $("ezRedo").disabled = !UNDO.redo.length;
 }
 function guideToggle() { S.vlDeck = !S.vlDeck; if (!S.vlDeck) { if (S.push) S.push = null; if (S.mv && S.mv.mode === "delete") S.mv = null; } savePrefs(); renderAll(); toast(S.vlDeck ? "The line and its bar are up — LINE again puts them away" : "The line is put away"); }   // the wide screen: LINE brings the line's bar up over the strips, and puts it away
@@ -10422,6 +10488,7 @@ function openSettings() {
     el("p", { class: "tiny", style: "margin:0 0 6px" }, "Locks to: " + ["mel", "acc", "bass"].map(w => { const [lo, hi] = soundRange(w), P = S.song.parts[WIN_PART[w]], k = keyObj(S.song.key); return `${DECK_NAME[w].charAt(0) + DECK_NAME[w].slice(1).toLowerCase()} ${noteName(lo, k)}–${noteName(hi, k)} (${P.bank || P.inst})`; }).join(" · ") + ". A piano or a sample library that spans the keyboard leaves nothing to lock."),
     el("div", { class: "pLbl" }, "Key and time signatures"), seg([[false, "Shown"], [true, "Hidden"]], !!S.sigsOff, v => { S.sigsOff = v; savePrefs(); renderAll(); }), el("div", { class: "tiny", style: "margin-bottom:6px" }, "Hidden, the stave's head keeps the clef alone; the SIGS tab under the stave shows the signatures for a moment. While the lyrics keyboard is open they are always hidden."),
     el("div", { class: "mrow" }, toggle("Vertical view: Comfort / Ease \u2014 the stave is driven from a track pad under it, never touched", !!S.ease, v => { S.ease = v; EZ.mode = "idle"; EZ.bar = null; EZ.sel = null; EZ.snap = null; if (v) { S.easeWins = Object.assign({}, S.winState); EZ.win = "mel"; S.winState = { mel: "open", acc: "closed", bass: "closed" }; } else if (S.easeWins) { S.winState = Object.assign({}, S.easeWins); S.easeWins = null; } savePrefs(); closeModal(); renderAll(); })),
+    el("div", { class: "mrow" }, toggle("Comfort / Ease: always tie a note across to the next bar when it is longer than its bar has room for (without asking)", !!S.ezAlwaysTie, v => { S.ezAlwaysTie = v; savePrefs(); })),
     el("div", { class: "mrow" }, toggle("Vertical view: keep the clef and the key and time signatures in view", !!S.headKeep, v => { S.headKeep = v; savePrefs(); renderAll(); })),
     el("p", { class: "tiny", style: "margin:0 0 6px" }, "Off, the upright screen's stave begins at beat 1, its whole head out of view; the CLEF · SIGS tab at the stave's foot shows it for a moment."),
     el("div", { class: "pLbl" }, "View (Staves)"), radios("view", [["stack", "Stacked Staves"], ["rolled", "Roll-up"]], S.layout, v => { S.layout = v; S.homeNext = { mel: true, acc: true, bass: true }; if (v === "rolled") { S.focus = null; $("app").classList.remove("focused", "focus-mel", "focus-acc", "focus-bass"); } else ["mel", "acc", "bass"].forEach(w => { if (S.winState[w] === "closed") S.winState[w] = "open"; }); savePrefs(); renderAll(); openSettings(); }),   // Stacked: every stave opens
