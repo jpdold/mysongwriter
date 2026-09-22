@@ -825,18 +825,18 @@ body.kbOpen #lyrEdit, #app.deck.kbUp #lyrEdit { display: none !important; }   /*
 #ezPalGrid button svg { width: 18px; height: 22px; } #ezPalGrid button i { font-family: Georgia, serif; font-size: 12px; } #ezPalGrid button b { font-size: 14px; } #ezPalGrid .dotk { font-size: 18px; line-height: 1; }
 #ezTabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; margin-top: 5px; } #ease #ezTabs button { height: 12px; border-radius: 2px; border-width: 1px; font-size: 5.5px; color: #111; box-shadow: none; opacity: .55; } #ease #ezTabs button.on { opacity: 1; outline: 1.5px solid #fff; }
 #ezPanel { display: grid; gap: 4px; padding: 5px; border: 1.5px solid #141414; border-radius: 6px; background: linear-gradient(#c9ccd1, #a9adb4); box-shadow: 0 2px 4px rgba(0,0,0,.4); min-width: 0; }
-#ease #ezEscBtn { width: 100%; height: 20px; background: #fff; color: #2f7fd6; border: 2px solid #2f7fd6; font-size: 8.5px; font-weight: 900; letter-spacing: .08em; }
+#ease #ezEscBtn { width: 100%; height: 22px; background: #fff; color: #2f7fd6; border: 2px solid #2f7fd6; font-size: 8.5px; font-weight: 900; letter-spacing: .08em; }
 #ezBanner { justify-self: center; width: max-content; max-width: 100%; margin-top: -3px; padding: 1px 6px; white-space: nowrap; background: #3d6fc4; color: #fff; border: 1px solid #12325e; font-size: 6.5px; font-weight: 800; letter-spacing: .08em; text-align: center; }
-#ezPanel .ezMid { display: grid; grid-template-columns: minmax(0, 1fr) 46px; gap: 5px; align-items: stretch; }
+#ezPanel .ezMid { display: grid; grid-template-columns: minmax(0, 1fr) 54px; gap: 5px; align-items: stretch; }
 #ezPanel .ezPcol { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 2px; min-width: 0; } #ezPad { min-height: 118px; background: #fff; border: 2.5px solid #1b2a4a; border-radius: 3px; box-shadow: inset 0 1px 4px rgba(0,0,0,.35); display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 0; cursor: crosshair; } #ezPad.idle { background: #eceef1; }
 #ease #ezPad .tile { border: none; border-radius: 0; background: #fff; box-shadow: inset 0 0 0 2px #1b2a4a; display: grid; place-items: center; } #ease #ezPad .tile span { line-height: 1.5; padding: 10px 4px; min-width: 60%; background: #3d6fc4; color: #fff; font-size: 8px; } #ease #ezPad .tile.on { box-shadow: inset 0 0 0 2px #1b2a4a; } #ease #ezPad .tile.on span { background: #55bdec; color: #07223f; }
-#ezPanel .ezWcol { display: grid; grid-template-rows: auto auto 1fr; gap: 3px; } #ezPanel .ezWtop { display: grid; grid-template-columns: 1fr 14px; gap: 2px; align-items: stretch; } #ezWlbl { background: #111; color: #fff; border-radius: 2px; font-size: 5.2px; font-weight: 800; letter-spacing: .04em; text-align: center; line-height: 1.15; padding: 2px 1px; display: grid; align-content: center; } #ease #ezWmode { font-size: 10px; }
-#ezWheel { border: 2px solid #141414; border-radius: 9px / 16px; cursor: ns-resize; display: grid; place-items: center; min-height: 66px;
-  background: linear-gradient(rgba(0,0,0,.6), rgba(0,0,0,0) 22%, rgba(255,255,255,.3) 50%, rgba(0,0,0,0) 78%, rgba(0,0,0,.6)), repeating-linear-gradient(#e9e9e9 0 2px, #6d7178 2px 5px); background-repeat: no-repeat, repeat; } #ezWheel .arr { font-size: 26px; font-weight: 900; color: #111; text-shadow: 0 0 3px #fff, 0 0 3px #fff; pointer-events: none; }
+#ezPanel .ezWcol { display: grid; grid-template-rows: auto auto 1fr; gap: 3px; justify-items: center; } #ezPanel .ezWtop { width: 100%; display: grid; grid-template-rows: auto 22px; gap: 2px; } #ezWlbl { background: #111; color: #fff; border-radius: 3px; font-size: 7px; font-weight: 800; letter-spacing: .06em; text-align: center; line-height: 1.2; padding: 3px 2px; display: grid; align-content: center; } #ease #ezWmode { font-size: 13px; height: 22px; }   /* the wheel's label and its key (the next thing it adjusts), large enough to read and press */
+#ezWheel { width: 30px; align-self: start; border: 2px solid #141414; border-radius: 9px / 16px; cursor: ns-resize; display: grid; place-items: center; height: 54px;
+  background: linear-gradient(rgba(0,0,0,.6), rgba(0,0,0,0) 22%, rgba(255,255,255,.3) 50%, rgba(0,0,0,0) 78%, rgba(0,0,0,.6)), repeating-linear-gradient(#e9e9e9 0 2px, #6d7178 2px 5px); background-repeat: no-repeat, repeat; } #ezWheel .arr { font-size: 20px; font-weight: 900; color: #111; text-shadow: 0 0 3px #fff, 0 0 3px #fff; pointer-events: none; }
 #ezPanel .ezRow { display: grid; grid-template-columns: 34px 56px 50px minmax(0, 1fr); gap: 4px; align-items: stretch; }   /* LYRICS half the width it had, SELECT and EDIT BAR close beside it, the four-way pad a quarter larger, ENTER the rest */
-#ezPanel .ezLF { display: grid; grid-template-rows: 1fr 1fr; gap: 2px; min-width: 0; } #ease #ezFing { display: grid; place-items: center; background: linear-gradient(#5d6167, #3a3d42); border-color: #141414; } #ease #ezFing svg { width: 17px; height: 17px; display: block; } #ease #ezFing.on { background: linear-gradient(#6fb3ff, #2f7fd6); }   /* LYRICS as tall as EDIT BAR; under it, the pointing finger on a key of its own — white, a black outline */
+#ezPanel .ezLF { display: grid; grid-template-rows: 1fr 1fr; gap: 2px; min-width: 0; } #ease #ezFing { display: grid; place-items: center; background: linear-gradient(#5d6167, #3a3d42); border-color: #141414; } #ease #ezFing svg { width: 19px; height: 19px; display: block; } #ease #ezFing.on { background: linear-gradient(#6fb3ff, #2f7fd6); }   /* LYRICS as tall as EDIT BAR; under it, the pointing finger on a key of its own — white, a black outline */
 #ease #ezLyr { min-height: 17px; background: var(--lyric); color: var(--lyric-ink); border: 1.5px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.45), 0 2px 3px rgba(0,0,0,.4); font-size: 6.5px; letter-spacing: .02em; } #ezPanel .ezSE { display: grid; grid-template-rows: 1fr 1fr; gap: 2px; } #ease .ezSE button.on { outline: 2px solid #fff; outline-offset: -3px; } #ease .ezSE button { min-height: 17px; font-size: 6.4px; background: linear-gradient(#5a86d8, #3d6fc4); color: #fff; border-color: #12325e; }
-#ezDpad { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); width: 50px; height: 50px; border-radius: 4px; background: #3a3d42; } #ease #ezDpad button { border: none; border-radius: 2px; background: #6a6e75; box-shadow: none; display: grid; place-items: center; } #ezDpad svg { width: 13px; height: 13px; display: block; } #ease #ezDpad button:active { background: #f5a623; }
+#ezDpad { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); gap: 1px; width: 50px; height: 50px; padding: 2px; box-sizing: border-box; border-radius: 6px; border: 1.5px solid #141414; background: linear-gradient(#4a4e55, #26292e); box-shadow: 0 3px 6px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.28); } #ease #ezDpad button { border: 1px solid #1c1e22; border-radius: 3px; background: linear-gradient(#9299a3, #5d6167); box-shadow: 0 2px 2px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.55); display: grid; place-items: center; } #ease #ezDpad button:active { background: linear-gradient(#ffd27a, #f5a623); box-shadow: inset 0 2px 3px rgba(0,0,0,.45); transform: translateY(1px); } #ezDpad svg { width: 13px; height: 13px; display: block; } #ease #ezDpad button:active { background: #f5a623; }
 #ezDpad .u { grid-area: 1 / 2; } #ezDpad .l { grid-area: 2 / 1; } #ezDpad .r { grid-area: 2 / 3; } #ezDpad .d { grid-area: 3 / 2; }
 #ease #ezEnter { background: linear-gradient(#a6e06a, #6fbf2e); color: #fff; border: 2px solid #fff; font-size: 10px; letter-spacing: .06em; text-shadow: 0 1px 1px rgba(0,0,0,.4); }
 #ezPanel .ezRow.nav { grid-template-columns: auto auto auto 1fr auto auto; margin-top: 3px; padding: 7px 0 3px; border-top: 1.5px solid rgba(0,0,0,.6); box-shadow: inset 0 1.5px 0 rgba(255,255,255,.75); }   /* the panel's foot, under a scored line: a dark cut with a light edge below it */ #ezPanel .ezRow.nav .sm { height: 20px; padding: 0 6px; font-size: 7px; } #ease #ezDel { height: 20px; padding: 0 7px; background: #e02020; color: #fff; border: 2px solid #fff; font-size: 8px; font-weight: 900; letter-spacing: .08em; box-shadow: 0 0 0 1px rgba(0,0,0,.45), 0 2px 3px rgba(0,0,0,.4); } #ease #ezDel:active { background: #a81414; }
@@ -7551,7 +7551,7 @@ const sigSpacesKey = key => { if (sigsHidden()) return 0.6; const n = keySig(key
 const sigSpaces = g => g.dia ? sigSpacesKey(g.dia) : 0;
 /* the key and time signatures out of sight — by the Settings switch, or while the lyrics keyboard is open — the stave's head keeping the clef alone; SIGS, a small tab at the stave's foot, shows them for 2.5 seconds */
 const sigsHidden = () => !S.sigPeek && (!!S.sigsOff || kbUpNow());
-const headHidden = () => !deckMode() && !S.headKeep && !S.sigPeek;                          // the phone: the stave's whole head — clef, key and time signatures — is out of view, and the stave begins at beat 1, unless Settings keeps it; the tab at the stave's foot shows it for a moment
+const headHidden = () => !deckMode() && !S.headKeep && !S.sigPeek && !(typeof easeOn === "function" && easeOn());                          // the phone: the stave's whole head — clef, key and time signatures — is out of view, and the stave begins at beat 1, unless Settings keeps it; the tab at the stave's foot shows it for a moment
 let sigPeekT = null;
 function sigPeek() { S.sigPeek = true; clearTimeout(sigPeekT); sigPeekT = setTimeout(() => { S.sigPeek = false; renderAll(); }, 2500); renderAll(); }
 const CLEF_SLOT = 3.0;                                                                     // the clef's room in spaces: the widest glyph and a little air after it
@@ -8252,7 +8252,7 @@ function placeLyrNav() {
     const lead = deckMode() ? w === deckActive() : w === leadWin();
     const showNav = lyrView() && lead && !win.classList.contains("closed") && frame.offsetHeight > 0;
     nav.hidden = !showNav;
-    const showTab = lead && !win.classList.contains("closed") && frame.offsetHeight > 0 && clefOn(w) && (S.sigsOff || kbUpNow() || (!deckMode() && !S.headKeep)) && !S.sigPeek;
+    const showTab = lead && !win.classList.contains("closed") && frame.offsetHeight > 0 && clefOn(w) && (S.sigsOff || kbUpNow() || headHidden()) && !S.sigPeek;
     tab.hidden = !showTab;
     if (showNav) {
       nav.querySelector(".back").hidden = viewFirst() <= 0; nav.querySelector(".next").hidden = viewFirst() + spanNow() >= S.song.bars.length;
@@ -8451,7 +8451,11 @@ function ezStep(dx, dy) {
 }
 const ezCurPart = () => { const g = ezG(); return EZ.win !== "mel" ? WIN_PART[EZ.win] : g && EZ.cur && onLowerStaff(g, EZ.cur.m) ? GRAND_LOWER : "melody"; };
 const ezBusy = (bi, part, a, b, skip) => (S.song.bars[bi].ev[part] || []).some(e => !(skip && skip.includes(e)) && e.t < b - 1e-6 && e.t + e.d > a + 1e-6);
-function ezAdvance(bi, t) { const c = EZ.cur; let nt = ezSpots(bi).find(x => x >= t - 1e-6); if (nt == null) { if (bi + 1 < S.song.bars.length && ezSpots(bi + 1).length) { bi++; nt = ezSpots(bi)[0]; } else { bi = c.bi; nt = c.t; } } if (!ezG().bars.includes(bi)) S.bi = bi; c.bi = bi; c.t = nt; }   // the cursor stays in hand, a step on: the next place this glyph can stand
+const ezFull = bi => ezParts().every(part => { const B = barBeats(bi), evs = [...(S.song.bars[bi].ev[part] || [])].sort((a, b) => a.t - b.t); let at = 0; for (const e of evs) { if (e.t > at + 1e-6) return false; at = Math.max(at, e.t + e.d); } return at >= B - 1e-6; });   // every beat of the bar accounted for, on every staff of the stave (both of a Grand Stave)
+function ezAdvance(bi, t) { const c = EZ.cur, part = ezCurPart(), free = x => !ezBusy(bi, part, x, x + Math.min(0.25, ezDur()));
+  let nt = ezSpots(bi).find(x => x >= t - 1e-6 && free(x)); if (nt == null) nt = ezSpots(bi).find(free);                                                  // on in this bar: the next place the glyph can stand, else the first free one
+  if (nt == null) { if (ezFull(bi) && bi + 1 < S.song.bars.length && ezSpots(bi + 1).length) { bi++; nt = ezSpots(bi)[0]; } else { nt = Math.min(t, barBeats(bi) - gridStep()); if (!ezFull(bi)) toast("This bar still has beats to fill \u2014 on every staff \u2014 before the cursor goes on"); } }   // the next bar only once this one is full
+  if (!ezG().bars.includes(bi)) S.bi = bi; c.bi = bi; c.t = r3(nt); }   // the cursor stays in hand, a step on: the next place this glyph can stand
 function ezEnter() {
   if (EZ.mode === "edit") { ezDrop(true); EZ.mode = "nav"; renderAll(); toast("Kept"); return; }
   if (EZ.mode === "nav") { toast("EDIT THIS ITEM first — then ENTER keeps what you change"); return; }
@@ -8525,7 +8529,7 @@ function ezWheelTurn(dir) {
   S.zoomWin[win] = nv.z; S.noteZoom[tuneKey()] = nv.nz; S.spacing = nv.sp ? "custom" : "regular"; S.spacingSp = nv.sp || null; S.homeNext = Object.assign(S.homeNext || {}, { [win]: true }); savePrefs(); renderAll();
 }
 /* the pointing hand, drawn: plain white, a black outline; its finger tip at (10.5, 2) of a 24-box */
-const EZ_HAND = "M 9 22 L 9 13.2 L 7.3 14.7 C 6.4 15.4 5.1 14.4 5.8 13.3 L 9 8.6 L 9 3.6 C 9 1.7 12 1.7 12 3.6 L 12 9.6 L 13 9.6 C 13.2 8.3 15.4 8.4 15.5 9.9 C 15.9 8.9 17.9 9.1 18 10.5 C 18.5 9.7 20.2 10 20.2 11.5 L 20.2 16 C 20.2 19.6 18.4 22 15 22 Z";
+const EZ_HAND = "M 9.2 2.6 a 1.7 1.7 0 0 1 3.4 0 V 11 h 0.4 a 1.5 1.5 0 0 1 3 0.4 h 0.3 a 1.5 1.5 0 0 1 3 0.4 h 0.2 a 1.5 1.5 0 0 1 3 0.5 V 17 c 0 3.3 -2.2 5.3 -5.5 5.3 h -3 c -1.8 0 -3 -0.7 -4.2 -2.2 L 4.5 14.8 a 1.5 1.5 0 0 1 2.4 -1.8 L 9.2 15.5 Z";
 const ezHand = (attrs = {}) => svgEl("path", Object.assign({ d: EZ_HAND, fill: "#fff", stroke: "#000", "stroke-width": 1.3, "stroke-linejoin": "round" }, attrs));
 /* what the mode lays over the stave: the tint under the bar in hand, the entry cursor in its glow, the box round the entry chosen, the pointing finger */
 function ezPaint() {
@@ -8543,21 +8547,22 @@ function ezPaint() {
   if (inBar) { const { rx, ry } = headGeom(g), editing = EZ.mode === "edit";
     if (EZ.sel) { const it = ezItems().find(o => o.id === EZ.sel.id), bx = it && (it.rest ? { x: it.x - 9, y: it.y - 14, width: 18, height: 28 } : { x: it.x - rx - 3, y: it.y - ry - 3, width: 2 * rx + 6, height: 2 * ry + 6 });
       if (bx) lay.append(svgEl("rect", Object.assign(bx, { fill: "none", stroke: "#e02020", "stroke-width": editing ? 2.6 : 2, "stroke-dasharray": editing ? null : "4 2.5" }))); }   // the box: dashed while it is only being moved from entry to entry, solid once the item is being edited
-    if (EZ.fingOn && EZ.fing && !editing) { const k = Math.max(20, staffSpacePx(EZ.win, g.step) * 1.7) / 24; lay.append(ezHand({ transform: `translate(${EZ.fing.x - 10.5 * k} ${EZ.fing.y - 2 * k}) scale(${k})`, "stroke-width": 1.3 })); } }   // the finger's tip is the point: the hand hangs below it, clear of what it points at
+    if (EZ.fingOn && EZ.fing && !editing) { const k = Math.max(20, staffSpacePx(EZ.win, g.step) * 1.7) / 24; lay.append(ezHand({ transform: `translate(${EZ.fing.x - 10.9 * k} ${EZ.fing.y - 0.9 * k}) scale(${k})`, "stroke-width": 1.3 })); } }   // the finger's tip is the point: the hand hangs below it, clear of what it points at
 }
 /* the pad: the thumb's travel is the cursor's, scaled from the pad to the stave's window; a touch that does not travel is a tap */
 function ezInitPad(pad) {
   let d = null; const fingering = () => EZ.mode === "nav" && EZ.fingOn && EZ.fing;
-  pad.addEventListener("pointerdown", e => { if (EZ.mode !== "entry" && !fingering()) return; const g = ezG(), svg = $(EZ.win + "Svg"); if (!g || !svg) return; e.preventDefault(); const fr = svg.parentNode;
-    d = { id: e.pointerId, x: e.clientX, y: e.clientY, at: e.timeStamp, far: 0, kx: fr.clientWidth / Math.max(1, pad.clientWidth), ky: fr.clientHeight / Math.max(1, pad.clientHeight) };
+  pad.addEventListener("pointerdown", e => { const g = ezG(), svg = $(EZ.win + "Svg"); if (!g || !svg) return; e.preventDefault(); const fr = svg.parentNode;
+    d = { id: e.pointerId, x: e.clientX, y: e.clientY, at: e.timeStamp, far: 0, still: EZ.mode !== "entry" && !fingering(), kx: fr.clientWidth / Math.max(1, pad.clientWidth), ky: fr.clientHeight / Math.max(1, pad.clientHeight) };   // still: nothing to drag in this mode — a tap alone counts
     if (EZ.mode === "entry" && EZ.cur) { d.px = g.x(EZ.cur.bi, EZ.cur.t); d.py = g.y(clamp(EZ.cur.m, g.lo, g.hi)); } try { pad.setPointerCapture(e.pointerId); } catch (x) {} });
-  pad.addEventListener("pointermove", e => { if (!d || e.pointerId !== d.id) return; const g = ezG(); if (!g) return; const dx = (e.clientX - d.x) * d.kx, dy = (e.clientY - d.y) * d.ky; d.x = e.clientX; d.y = e.clientY; d.far += Math.abs(dx) + Math.abs(dy);
+  pad.addEventListener("pointermove", e => { if (!d || e.pointerId !== d.id || d.still) return; const g = ezG(); if (!g) return; const dx = (e.clientX - d.x) * d.kx, dy = (e.clientY - d.y) * d.ky; d.x = e.clientX; d.y = e.clientY; d.far += Math.abs(dx) + Math.abs(dy);
     if (fingering()) { const x0 = g.x(EZ.bar, 0), x1 = g.x(EZ.bar, barBeats(EZ.bar)); EZ.fing.x = clamp(EZ.fing.x + dx, x0 + 2, x1 - 2); EZ.fing.y = clamp(EZ.fing.y + dy, 2, g.H - 2); ezPaint(); return; }   // the finger never leaves the bar in hand
     if (EZ.mode !== "entry" || !EZ.cur) return; const b0 = g.bars[0], bN = g.bars[g.bars.length - 1];
     d.px = clamp(d.px + dx, g.x(b0, 0), g.x(bN, barBeats(bN)) - 1); d.py = clamp(d.py + dy, g.step / 2, g.H - g.step / 2);
     const at = g.at(d.px), st = gridStep(), near = EZ.mark ? null : ezNear(at.bi, at.t), t = EZ.mark ? clamp(Math.round(at.t / st) * st, 0, barBeats(at.bi) - st) : near != null ? near : EZ.cur.t, m = g.m(d.py), c = EZ.cur;
     if (at.bi !== c.bi || Math.abs(t - c.t) > 1e-6 || m !== c.m) { const pm = c.m; c.bi = at.bi; c.t = r3(t); c.m = m; ezPaint(); ezBanner(); if (m !== pm && !EZ.mark && !S.restNext) previewNote(m, ezCurPart()); } });
-  const end = e => { if (!d || e.pointerId !== d.id) return; const tap = d.far < 8 && e.timeStamp - d.at < 450; d = null; if (tap && fingering()) ezTapItem(); };
+  const end = e => { if (!d || e.pointerId !== d.id) return; const tap = d.far < 8 && e.timeStamp - d.at < 450, still = d.still; d = null; if (!tap) return; if (fingering()) { ezTapItem(); return; }
+    if (still && EZ.mode !== "edit") { ezSetMode("entry", EZ.bar); toast(`The cursor is up \u2014 ${S.restNext ? "a rest" : "a note"} of the value on the pallet`); } };   // a tap on the pad with nothing in hand: the entry cursor, in the bar in hand when there is one
   pad.addEventListener("pointerup", end); pad.addEventListener("pointercancel", e => { if (d && e.pointerId === d.id) d = null; });
 }
 function ezBanner() { const b = $("ezBanner"); if (!b) return; const c = EZ.cur;
@@ -8707,6 +8712,14 @@ function vlHighlight() { if (vlLocked()) return; const now = performance.now(), 
   S.rep = null; S.cpy = null; mvStart("delete");                                           // nothing is highlighted until the finger says what: a drag across the beats (or the grip), or a tap on the first and the last
   if (S.mv) toast("Highlight on — drag across the beats (or drag the grip), or tap the first beat, then the last");
   renderVlPanel(); }
+/* the run a highlight drag makes: from the beat pressed to the one under the finger, reaching out from what was highlighted already — or, pressed inside the highlight, trimming it
+   back to the finger: dragged backwards, the end comes back to the finger (the beats swept over, the one under it too, let go); forwards, the start goes on to it. Null: nothing left */
+function hlReach(from, now, s0, lo, hi) {
+  let a = Math.max(lo, Math.min(from, now)), b = Math.min(hi, Math.max(from, now) + 1);
+  if (s0 && s0.s >= lo - 1e-6 && s0.e <= hi + 1e-6) { const inside = from >= s0.s - 1e-6 && from < s0.e - 1e-6;
+    if (inside && now < from) { a = s0.s; b = now; } else if (inside && now > from) { a = now + 1; b = s0.e; } else { a = Math.min(a, s0.s); b = Math.max(b, s0.e); } }
+  return b > a + 1e-6 ? [a, b] : null;
+}
 const vlSameStave = (p1, p2) => p1 === p2 || (vlParts(p1).includes(p2));                       // the two staffs of a Grand Stave are one stave
 const vlParts = part => (part === "melody" || part === GRAND_LOWER) && grandLower("mel") ? ["melody", GRAND_LOWER] : [part];   // the highlight lies over the whole stave: on a Grand Stave both of its staffs are taken, whichever the finger was on
 function vlTake() { const mv = S.mv; if (!vlHasSel()) return null; const parts = vlParts(mv.part), evs = [];
@@ -8820,8 +8833,7 @@ function initVlTrack() {
         if (pushPicked().some(it => it.kind === "chip")) renderStrips(); }); return; }
     S.guide = { bi: at.bi, t: at.t }; slide(c.svgL + g.x(at.bi, at.t));
     if (d.hl && S.mv && S.mv.mode === "delete" && !S.mv.armed) {                            // HIGHLIGHT on: the grip highlights every beat from where it was taken to where it is, reaching out from what was highlighted already
-      const now = barAbs(at.bi) + Math.floor(at.t + 1e-6), sr = sectionRange(sectionOfBar(absToBar(d.hl.beat).bi)), lo = barAbs(sr.start), hi = barAbs(sr.end); let a = Math.max(lo, Math.min(d.hl.beat, now)), b = Math.min(hi, Math.max(d.hl.beat, now) + 1);
-      const s0 = d.hl.sel0; if (s0 && s0.s >= lo - 1e-6 && s0.e <= hi + 1e-6) { a = Math.min(a, s0.s); b = Math.max(b, s0.e); }
+      const now = barAbs(at.bi) + Math.floor(at.t + 1e-6), sr = sectionRange(sectionOfBar(absToBar(d.hl.beat).bi)), lo = barAbs(sr.start), hi = barAbs(sr.end), r = hlReach(d.hl.beat, now, d.hl.sel0, lo, hi), [a, b] = r || [null, null];
       if (S.mv.start !== a || S.mv.end !== b) { S.mv.start = a; S.mv.end = b; S.mv.sub = null; if (!S.mv.part) S.mv.part = WIN_PART[w]; if (!d.raf) d.raf = requestAnimationFrame(() => { d && (d.raf = 0); renderWindows(); renderVlPanel(); }); } } };
   tr.addEventListener("pointerdown", e => { e.preventDefault(); const w = pushWin(), g = GEO[w], svg = $(w + "Svg"); if (!g || !svg) return;
     const svgL0 = svg.getBoundingClientRect().left, lineX0 = S.guide && g.bars.includes(S.guide.bi) ? svgL0 + g.x(S.guide.bi, S.guide.t) : null, onGrip = lineX0 != null && Math.abs(e.clientX - lineX0) <= 26;
@@ -9494,8 +9506,8 @@ function initPointer() {
         if (dragCtx.swipe === "h" && dragCtx.selFrom && S.mv && S.mv.mode === "delete" && !S.mv.armed) {   // SELECT, dragged across: the run is every beat from the one pressed to the one under the finger, either way, inside the section
           const g = GEO[win], at = g.at(svgPoint(svg, e).x), now = barAbs(at.bi) + Math.floor(at.t + 1e-6), f = dragCtx.selFrom, mv = S.mv;
           if (!dragCtx.selDrag && now === f.beat) return;                                   // still inside the beat pressed: a tap whose finger shifted, not a drag — it is read as a tap when it lifts
-          const sr = sectionRange(sectionOfBar(absToBar(f.beat).bi)), lo = barAbs(sr.start), hi = barAbs(sr.end); let a = Math.max(lo, Math.min(f.beat, now)), b = Math.min(hi, Math.max(f.beat, now) + 1);
-          { const s0 = dragCtx.sel0; if (s0 && vlSameStave(s0.part, f.part) && s0.s >= lo - 1e-6 && s0.e <= hi + 1e-6) { a = Math.min(a, s0.s); b = Math.max(b, s0.e); } }   // the highlight already there is kept and reached out from: forgot bar 2? drag back over it and bar 3 stays
+          const sr = sectionRange(sectionOfBar(absToBar(f.beat).bi)), lo = barAbs(sr.start), hi = barAbs(sr.end), s0 = dragCtx.sel0 && vlSameStave(dragCtx.sel0.part, f.part) ? dragCtx.sel0 : null, r = hlReach(f.beat, now, s0, lo, hi);
+          if (!r) { if (mv.start != null) { mv.start = mv.end = null; mv.sub = null; dragCtx.selDrag = true; renderAll(); } return; } const [a, b] = r;   // the highlight already there is reached out from — or, pressed inside it, trimmed back to the finger
           if (mv.part !== f.part || mv.start !== a || mv.end !== b || !dragCtx.selDrag) { mv.part = f.part; mv.start = a; mv.end = b; mv.sub = null; mv.moved = false; dragCtx.selDrag = true; S.active = null; S.sel = null; S.ghost = null; renderAll(); }
           return;
         }
