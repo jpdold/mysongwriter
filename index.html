@@ -6894,10 +6894,14 @@ function chordPieces(bi, t, d, part) {                                          
   }
   return { pieces: dealByBeat(pieces) };
 }
+/* a note nudged from its place (LOCK TO ADJUST, SPACE EVENLY, the arrows in Comfort / Ease) is drawn a little to one side of its beat: what is built on it — the entry cursor, the box, a
+   note stacked on it for a chord — goes by the drawn place of the oldest note at that time (the first entered, so a chord's notes agree), not the beat's own */
+const oxAt = (bi, t, part) => { const e = (S.song.bars[bi] && S.song.bars[bi].ev[part] || []).find(x => x.ox && Math.abs(x.t - t) < 1e-6); return e ? e.ox : 0; };
+const nudgedAt = (g, bi, part, px) => { const { rx } = headGeom(g); const e = (S.song.bars[bi] && S.song.bars[bi].ev[part] || []).find(x => x.ox && !x.rest && x.m != null && (() => { const x0 = g.x(bi, x.t + x.ox) + 1; return px >= x0 - 2 && px <= x0 + 2 * rx + 4; })()); return e ? e.t : null; };   // a tap on a nudged head: the beat that head belongs to
 function addChordNote(bi, chain, m, part) {
   const plan = chordPieces(bi, chain.t, noteLenBeats(), part);
   if (plan.deny) { renderAll(); noticeModal(plan.deny); return; }
-  const first = placeSpan(plan.pieces, part, m, S.artic && S.artic !== "slur" ? S.artic : null);
+  const first = placeSpan(plan.pieces, part, m, S.artic && S.artic !== "slur" ? S.artic : null); if (chain.head.ox) first.ox = chain.head.ox;   // stacked on a nudged note: drawn beside it
   previewNote(m, part); S.sel = { bi, part, id: first.id }; S.selAuto = true; S.ghost = null; S.justEntered = { bi, beat: beatOf(bi, chain.t), part }; renderAll();
 }
 /* the chord a tap lands on: of the notes sounding at that time, the one that started last — so with a quarter under two eighths, the "and" is the second eighth's */
@@ -7785,7 +7789,7 @@ function drawSelFrame(svg, x, y, w, h, rx) {
              svgEl("rect", { x, y, width: w, height: h, rx, fill: "none", stroke: "#fff", "stroke-width": 2.2, "pointer-events": "none" }));
 }
 function drawGhost(svg, g, bi, ghost, color) {
-  const x0 = g.x(bi, ghost.t) + 1, x1 = g.x(bi, ghost.t + ghost.d) - 1;                  // inset the same on both sides, so a half-beat box is exactly half
+  const ox = oxAt(bi, ghost.t, ghost.part) * g.beatPx, x0 = g.x(bi, ghost.t) + 1 + ox, x1 = g.x(bi, ghost.t + ghost.d) - 1 + ox;   // inset the same on both sides, so a half-beat box is exactly half — and beside a nudged note, where it is drawn
   if (ghost.t + ghost.d > barBeats(bi) + 1e-6) drawSpillArrows(svg, g, bi);
   svg.append(svgEl("rect", { x: x0, y: 2, width: Math.max(4, x1 - x0), height: g.H - 4, rx: 2, fill: color, "fill-opacity": 0.18, stroke: color, "stroke-width": 2.2, "stroke-dasharray": "6 3", "pointer-events": "none" }));
   if (ghost.rest) drawRest(svg, g, (x0 + x1) / 2, ghost.d, color, { opacity: 0.7 }, ghost.part);
@@ -8465,6 +8469,7 @@ function ezEnter() {
   const d = ezDur(), what = S.restNext ? "rest" : "note";
   if (ezCross(c.bi, c.t, d) && !ezFits(c.bi, c.t, d)) { ezTieAsk({ bi: c.bi, part, t: c.t, m: c.m, d, rest: !!S.restNext }); return; }
   if (!ezFits(c.bi, c.t, d)) { toast(`That ${what} does not fit whole there`); return; }
+  if (!S.restNext && chordOn(part)) { const ch = chordChainAt(bar, c.t, part); if (ch && ch.head.m != null && Math.abs(ch.t - c.t) < 1e-6) { addChordNote(c.bi, ch, c.m, part); S.sel = null; renderAll(); return; } }   // chord mode, on a note: stacked on it, drawn beside it wherever it was nudged to
   if (ezBusy(c.bi, part, c.t, c.t + d)) { toast(`No room for that ${what} there — something stands in its beats`); return; }
   if (S.restNext) { evs.push({ id: uid(), t: c.t, d, rest: true }); if (part === "melody") syncNotesToChips(bar); }
   else { placeSpan([{ bi: c.bi, t: c.t, d }], part, c.m, null); previewNote(c.m, part); }                                  // one piece: the glyph as chosen
@@ -8537,7 +8542,7 @@ function ezPaint() {
   const inBar = EZ.mode === "nav" || EZ.mode === "edit";
   if (EZ.bar != null && g.bars.includes(EZ.bar) && inBar) { const x0 = g.x(EZ.bar, 0), x1 = g.x(EZ.bar, barBeats(EZ.bar)), tint = svgEl("rect", { class: "ezLay", x: x0, y: 0, width: x1 - x0, height: g.H, fill: "#55bdec", opacity: 0.8, "pointer-events": "none" }), hit = svg.querySelector("rect.hit"); if (hit) hit.after(tint); else svg.prepend(tint); }
   const lay = svgEl("g", { class: "ezLay", "pointer-events": "none" }); svg.append(lay);
-  if (EZ.mode === "entry" && EZ.cur && g.bars.includes(EZ.cur.bi)) { const c = EZ.cur, part = ezCurPart(), x = g.x(c.bi, c.t) + 2, { rx } = headGeom(g), m = clamp(c.m, g.lo, g.hi), y = g.y(m), sp = staffSpacePx(EZ.win, g.step);
+  if (EZ.mode === "entry" && EZ.cur && g.bars.includes(EZ.cur.bi)) { const c = EZ.cur, part = ezCurPart(), x = g.x(c.bi, c.t + oxAt(c.bi, c.t, part)) + 2, { rx } = headGeom(g), m = clamp(c.m, g.lo, g.hi), y = g.y(m), sp = staffSpacePx(EZ.win, g.step);
     const gid = "ezGlow", defs = svgEl("defs", {}), rg = svgEl("radialGradient", { id: gid }); rg.append(svgEl("stop", { offset: "0%", "stop-color": "#ffe23a", "stop-opacity": 0.95 }), svgEl("stop", { offset: "55%", "stop-color": "#ffe23a", "stop-opacity": 0.5 }), svgEl("stop", { offset: "100%", "stop-color": "#ffe23a", "stop-opacity": 0 })); defs.append(rg); lay.append(defs);
     lay.append(svgEl("circle", { cx: x + rx, cy: y, r: Math.max(26, sp * 2.6), fill: `url(#${gid})` }));
     if (EZ.mark) { lay.append(svgEl("circle", { cx: x + rx, cy: y, r: Math.max(7, rx), fill: "none", stroke: "#111", "stroke-width": 1.6, "stroke-dasharray": "3 2" }), svgEl("text", { x: x + rx, y: y - Math.max(10, rx + 4), "text-anchor": "middle", "font-size": 12, "font-weight": 800, "font-style": "italic", fill: "#111", "font-family": "Georgia, serif" }, ARTIC[EZ.mark] ? ARTIC[EZ.mark].glyph : (HAIR[EZ.mark] || EZ.mark))); }
@@ -9542,6 +9547,7 @@ function initPointer() {
       if (d.moved) { if (d.locked && d.ev) return; if (!d.ev && d.swipe === "h" && !(typeof WE !== "undefined" && WE.on)) { const dx = e.clientX - d.x0; if (Math.abs(dx) > 50) { S.bi = clamp(S.bi + (dx < 0 ? 1 : -1), 0, S.song.bars.length - 1); S.sel = null; S.ghost = null; } } renderAll(); return; }   // a swipe ends as a swipe: no tap, no entry
       const p = svgPoint(svg, e), g = GEO[win], at = g.at(p.x);
       const partAt = win === "mel" && onLowerStaff(g, g.m(p.y)) ? GRAND_LOWER : WIN_PART[win], winAt = PART_WIN[partAt];   // the Grand Stave's lower staff: the Bass part's tap
+      { const nt = nudgedAt(g, at.bi, partAt, p.x); if (nt != null) at.t = nt; }                                                    // a nudged head under the finger: the tap is on its beat, wherever the head is drawn
       S.selChip = null;
       if (PSEL.on) { if (d.ev && !d.ev.rest && d.ev.m != null) { const key = d.part + ":" + d.ev.id; if (PSEL.ids.has(key)) PSEL.ids.delete(key); else PSEL.ids.add(key); renderWindows(); } return; }   // Play Select: taps only choose notes
       if (S.push) { if (S.push.sure) return;                                                                                         // PUSH: a tap inside a choice box leaves that item out, or takes it back (none to choose when the line is on something outright)
