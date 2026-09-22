@@ -6458,8 +6458,13 @@ function allocateDuo() {
    jumps — the height over 27, over 29, over 31…); as many rows as fit at the spacing asked are drawn, and what is left over, less than two rows, goes into the stave's own top and
    bottom margins (SLACK, added to the drawing's padding in geo), so the window keeps its height to the pixel and the staves stay centred in it */
 const SLACK = { mel: 0, acc: 0, bass: 0 };
+/* the most rows that can still stand centred on the staves: the pitches run out (A0 to C8) before a very close spacing runs out of rows, and once the rows reached past them the
+   view was pinned to the range's end and the staves sat low in the window — so no more rows than the range has room for either side of the staves; what is left over goes into the margins */
+function centredRowsMax(w) { const lo = 21, hi = 108;
+  if (clefOn(w)) { const k = keyObj(S.song.key), bs = focusBandSteps(w), a = bs[0][0], b = bs[bs.length - 1][1], lS = spell(lo, k).step, hS = spell(hi, k).step; return 2 * Math.min(a - lS, hS - b) + (b - a + 1); }
+  if (!focusOn(w)) return Infinity; const [blo, bhi] = focusRange(w); return 2 * Math.min(blo - lo, hi - bhi) + (bhi - blo + 1); }
 function fitRows(w, H, stepWant, minRows) {
-  const least = Math.max(1, minRows || 0, focusSpan(w) || 0); let step = Math.min(stepWant, H / least), rows = Math.max(least, Math.floor(H / step + 1e-6)); const ev = evenRows(rows, w, minRows);
+  const least = Math.max(1, minRows || 0, focusSpan(w) || 0); let step = Math.min(stepWant, H / least), rows = Math.max(least, Math.min(Math.floor(H / step + 1e-6), Math.max(least, centredRowsMax(w)))); const ev = evenRows(rows, w, minRows);
   if (ev > rows) { rows = ev; step = Math.min(step, H / rows); } else rows = ev;
   return { rows, step, slack: Math.max(0, H - rows * step) };
 }
