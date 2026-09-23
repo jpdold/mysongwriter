@@ -471,6 +471,8 @@ text.clef, text.smufl { user-select: none; }
 #lyrGuide .knob { position: absolute; left: -10px; top: -9px; width: 20px; height: 20px; border-radius: 50%; background: #111; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.5); pointer-events: auto; cursor: ew-resize; touch-action: none; }   /* the knob above the top line: drag it sideways */
 #lyrGuide .knob::before { content: ""; position: absolute; left: -10px; top: -10px; right: -10px; bottom: -10px; }
 #lyrGuide[hidden] { display: none; }
+.playHd { position: absolute; left: 0; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--accent); pointer-events: none; z-index: 3; will-change: transform; transform: translate3d(-9px,0,0); }   /* the playhead, over the stave: slid by the compositor */
+.strip .body .playHd { background: var(--box); } .playHd.lyr { background: #fff; }
 #lyrGuide.deck { z-index: 75; opacity: .95; } #lyrGuide.deck .seg { border-left-color: #f5a623; } #lyrGuide.deck .knob, #lyrGuide.deck .pushTag { display: none !important; }
 #app.deck #lyrGuide:not(.deck) { z-index: 9; }   /* the wide screen's draggable guide (outside the lyrics screen): over the stave and the strips */   /* the deck's guide: amber, over the keyboard's plane, with no knob: it stands where the entry box is */
 #app:not(.deck).norhy #rhyStrip .tag, #app:not(.deck).norhy #rhyStrip .body { display: none; }
@@ -9150,20 +9152,23 @@ function renderPalette0() {
   p.append(el("span", { class: "flexgap" }));
   if (FTP_ENABLED) b("⧉", () => openFtp(), { cls: "txt pop", title: "Pop the tools out into a floating palette" });
 }
+/* the playhead: a thin HTML line over each stave and strip, slid by the compositor alone (a transform, no layout, no paint) — it had been a line inside each stave's SVG, whose
+   attributes were rewritten every frame, and the whole staff was painted again with it, sixty times a second; the bookkeeping beside it (the windows' playing class, the
+   performance view's line) is done once a bar, not once a frame */
+const PH = { last: {}, bar: -1, on: false };
+function playHeadEl(host, id) { let d = host.querySelector(":scope > .playHd"); if (!d) { d = el("div", { class: "playHd" + (id === "lyrHead" ? " lyr" : ""), "data-id": id }); host.append(d); } return d; }
 function updatePlayhead() {
   const pp = S.playPos;
   if (pp && pp.bi !== S.bi) { const inView = viewBars().includes(pp.bi); S.bi = pp.bi; S.sel = null; if (!inView) { renderAll(); return; } renderNav(); }
   for (const id of ["melHead", "accHead", "bassHead", "rhyHead", "lyrHead"]) {
-    const l = $(id); if (!l) continue;
-    if (!pp) { l.setAttribute("x1", -5); l.setAttribute("x2", -5); continue; }
-    const win = id.startsWith("acc") ? "acc" : id.startsWith("bass") ? "bass" : id.startsWith("mel") ? "mel" : null;
-    const g = win ? GEO[win] : stripGeo();                                                  // a closed window has no geometry: its line just stays off-screen
-    if (!g || !g.bars.includes(pp.bi)) { l.setAttribute("x1", -5); l.setAttribute("x2", -5); continue; }
-    const x = g.x(pp.bi, pp.beat); l.setAttribute("x1", x); l.setAttribute("x2", x);
+    const win = id.startsWith("acc") ? "acc" : id.startsWith("bass") ? "bass" : id.startsWith("mel") ? "mel" : null, svg = $(id.replace("Head", "Svg")), host = svg && svg.parentNode; if (!host) continue;
+    const d = playHeadEl(host, id), g = win ? GEO[win] : stripGeo();
+    if (!pp || !g || !g.bars.includes(pp.bi) || (win && S.winState[win] === "closed")) { if (PH.last[id] !== null) { d.style.transform = "translate3d(-9px,0,0)"; PH.last[id] = null; } continue; }
+    const x = g.x(pp.bi, pp.beat); if (PH.last[id] == null || Math.abs(x - PH.last[id]) >= 0.25) { d.style.transform = `translate3d(${x}px,0,0)`; PH.last[id] = x; }
   }
-  document.querySelectorAll(".win").forEach(w => w.classList.toggle("playing", !!pp));
+  if (PH.on !== !!pp) { PH.on = !!pp; document.querySelectorAll(".win").forEach(w => w.classList.toggle("playing", PH.on)); }
   if (pp && GEO.mel && GEO.mel.n > 1) { const fr = $("melWin").querySelector(".frame"), x = GEO.mel.x(pp.bi, pp.beat); if (x < fr.scrollLeft + 10 || x > fr.scrollLeft + fr.clientWidth - 30) fr.scrollLeft = Math.max(0, x - 40); }
-  perfFollow();
+  const bar = pp ? pp.bi : -1; if (bar !== PH.bar) { PH.bar = bar; perfFollow(); }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
