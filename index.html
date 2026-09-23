@@ -812,6 +812,12 @@ body.kbOpen #lyrEdit, #app.deck.kbUp #lyrEdit { display: none !important; }   /*
 #app.ease #vlBar, #app.ease #palette, #app.ease #quick, #app.ease #tray, #app.ease #playPal, #app.ease #arrows, #app.ease #undoRow, #app.ease #mvRow, #app.ease #rhyStrip, #app.ease #lyrGuide { display: none !important; }
 #app.ease:not(.deck) { grid-template-columns: 1fr !important; grid-template-areas: "head" "nav" "rollbar" "mel" "acc" "bass" "vl" "rhy" "lyr" "pal" !important; }   /* the panel under whichever stave is in work: the three staves first (one open, two folded), then the panel */
 #app.ease .win .frame svg { pointer-events: none; }
+/* the wide screen's Comfort / Ease: the stave the left two thirds, the panel the right third (placed by script), the column beside the stave down to its gear, no strips, no tool bar, no line's bar */
+#app.deck.ease #melWin, #app.deck.ease #accWin, #app.deck.ease #bassWin { width: calc(66.667% - 10px); justify-self: start; }
+#app.deck.ease #toolbar, #app.deck.ease #rhyStrip, #app.deck.ease #lyrStrip, #app.deck.ease #dynStrip, #app.deck.ease #vlBar, #app.deck.ease #stripBtns, #app.deck.ease #ezPlay, #app.deck.ease #ezPal { display: none !important; }
+#app.deck.ease #deckNav > *:not(.gearBtn) { display: none !important; }
+#app.deck.ease #ease { position: absolute; z-index: 60; display: block; grid-area: auto; touch-action: none; } #app.deck.ease #ezPanel { height: 100%; box-sizing: border-box; display: grid; grid-template-rows: minmax(0, 1fr) auto auto; }
+#app.deck.ease #ezPanel .ezMid { min-height: 0; } #app.deck.ease #ezPanel .ezPcol { min-height: 0; } #app.deck.ease #ezPad { height: 100%; min-height: 60px; }
 #app.ease .win.ezSmall .side > *, #app.ease .win.ezSmall .gutter .rArr, #app.ease .win.ezSmall .sigTab, #app.ease .win.ezSmall .focusReturn { display: none !important; }   /* a stave that sits small: itself and its name, nothing to press but itself */
 #app.ease .win.ezSmall { cursor: pointer; } #app.ease .win:not(.ezSmall):not(.closed) .frame { box-shadow: 0 0 0 2px #ffe600; }   /* the stave in work, ringed */                                          /* the stave is looked at, not touched */
 #app.ease .win .side > *:not(.gear):not(.doorBtn) { display: none !important; }   /* beside the stave: the gear at the top, COVER under it — ESC is on the panel */
@@ -6473,12 +6479,12 @@ function allocate() {
   if (duoMode() && !kbUpNow()) { allocateDuo(); return; }
   $("app").style.height = deckMode() ? window.innerHeight + "px" : "";                   // the deck's height from the window itself, so the tool bar lands at the visible foot whatever the browser makes of vh
   if (deckMode()) {                                                                       // the deck: the one part in view fills the stage exactly — flush on the strips, or on the tool bar when they are hidden
-    const active = deckActive(), app = $("app"), h = id => ($(id) ? $(id).offsetHeight : 0), kb = !!(typeof WE !== "undefined" && WE.on), vlUp = app.classList.contains("vlUp") && !kb, rhyOn = S.rhyShown !== false && !kb && !vlUp, lyrOn = false;   // with the keyboard open the strips ride on it, and the stave takes their rows; with the line's bar up, the bar stands where the strips were
+    const active = deckActive(), app = $("app"), h = id => ($(id) ? $(id).offsetHeight : 0), kb = !!(typeof WE !== "undefined" && WE.on), vlUp = app.classList.contains("vlUp") && !kb && !easeOn(), rhyOn = S.rhyShown !== false && !kb && !vlUp, lyrOn = false;   // with the keyboard open the strips ride on it, and the stave takes their rows; with the line's bar up, the bar stands where the strips were
     const topExtra = 0;                                                                   // no beat labels on the deck: the frame starts at its window's top
     for (const w of ["mel", "acc", "bass"]) {
       const [rows0, lo, hi0] = WIN[S.winSize][w], hi = Math.max(hi0, WIN[S.winSize].mel[2]);
       if (w !== active) { STEPS[w] = lo; DECK_ROWS[w] = 0; continue; }
-      let target = window.innerHeight - 12 - h("head") - h("rollBar") - 6 - (h("rollBar") ? 1 : 0) - (rhyOn ? h("rhyStrip") : 0) - (lyrOn ? h("lyrStrip") : 0) - (S.dynShown && !app.classList.contains("kbUp") && !vlUp ? (h("dynStrip") || 32) : 0) - (vlUp ? (h("vlBar") || 76) : 0) - Math.max(h("toolbar"), 30) - topExtra - 16 + DECK_FIX.px;   // the strips, when shown, sit flush between the stave and the tool bar
+      let target = window.innerHeight - 12 - h("head") - h("rollBar") - 6 - (h("rollBar") ? 1 : 0) - (rhyOn ? h("rhyStrip") : 0) - (lyrOn ? h("lyrStrip") : 0) - (S.dynShown && !app.classList.contains("kbUp") && !vlUp ? (h("dynStrip") || 32) : 0) - (vlUp ? (h("vlBar") || 76) : 0) - (easeOn() ? 6 : Math.max(h("toolbar"), 30)) - topExtra - 16 + DECK_FIX.px;   // the strips, when shown, sit flush between the stave and the tool bar
       if (kb && duoMode()) { const kr = $("wordEdit").getBoundingClientRect(); if (kr.height > 0) target -= kr.height + h("lyrStrip") + 8; }   // the lyrics screen: the stave ends above the Lyrics strip riding on the keyboard
       { const side = $(w + "Win").querySelector(".side"); if (side && side.offsetHeight > 0) { const kids = [...side.children].filter(k => k.offsetHeight > 0), cs = getComputedStyle(side); const need = kids.reduce((a, k) => a + k.offsetHeight, 0) + Math.max(0, kids.length - 1) * (parseFloat(cs.rowGap) || 0) + (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0); target = Math.max(target, need - 16); } }   // never shorter than the buttons beside it need: they would hold the stave's row open and leave a gap   // the stave's drawing height: the screen less the rows above and below, the three 6px margins, the tool bar's 6px when the strips show, the frame's borders and pads
       const k = (STEP_K[S.noteSize] || 1) * (S.zoomWin[w] || 1), fitsAtFullScale = target >= rows0 * hi * k;   // room for at least the usual row count at the stave's natural scale (the spacing buttons' factor in k)?
@@ -6629,7 +6635,7 @@ function geo(win) {
   const bars = viewBars(), starts = {}; let accB = 0;
   for (const b of bars) { starts[b] = accB; accB += barBeats(b); }
   const setPx = duoMode() ? 0 : setBeatPx(win, step, W1);                                   // a set spacing (Small / Tight): every beat this wide; at the song's end, with fewer bars left than fit, they fill the width as before
-  const fillPx = (W1 - padL - padR) / (noteSizeNow() === "x" || duoMode() || setPx || edgeOn() || lyrView() ? Math.max(accB, B) : B);   // a bar to the window's width — or, at Micro, every bar in view across it side by side, nothing to scroll
+  const fillPx = (W1 - padL - padR) / (noteSizeNow() === "x" || duoMode() || setPx || edgeOn() || lyrView() || ezDeck() ? Math.max(accB, B) : B);   // a bar to the window's width — or, at Micro, every bar in view across it side by side, nothing to scroll
   const beatPx = setPx ? Math.max(setPx, fillPx) : fillPx;
   const W = padL + padR + Math.max(accB, B) * beatPx;
   const g = { win, B, n, first, bars, starts, totalBeats: accB, W, W1, H: padT + rows * step + padB, padL, padT, step, lo, hi, beatPx };
@@ -7049,7 +7055,8 @@ const kbUpNow = () => !!(typeof WE !== "undefined" && WE.on && $("wordEdit") && 
 const edgeOn = () => !!S.edge && deckMode() && !duoMode();                                 // EDGE: the stave out to the screen's left edge (the gutter folded away) and two bars more in view, side by side
 const lyrView = () => kbUpNow() && !duoMode() && !deckMode();                             // the phone's lyrics view (the keyboard open): the stave shows two bars across its width, its pitch marks folded away, centred on the screen; the wide screen's lyrics screen is as it always was
 const spanBase = () => lyrView() ? 2 : Math.max(1, S.viewSpan) + (edgeOn() ? 2 : 0);
-const spanNow = () => duoMode() ? (kbUpNow() ? 2 : (S.duoBars === 8 ? 8 : 4)) : lyrView() ? 2 : spacingSp() ? spacingSpan() : spanBase();   // Stacked staves keep their own bars; a set spacing takes as many as fit
+const ezSpan = () => (grandLower(EZ.win) ? 4 : 8) - (headHidden() ? 0 : 1);            // the wide screen's Comfort / Ease: eight bars across (seven with the head in view), a Grand Stave four (three)
+const spanNow = () => ezDeck() ? ezSpan() : duoMode() ? (kbUpNow() ? 2 : (S.duoBars === 8 ? 8 : 4)) : lyrView() ? 2 : spacingSp() ? spacingSpan() : spanBase();   // Stacked staves keep their own bars; a set spacing takes as many as fit
 const DECK_NAME = { mel: "MELODY", acc: "ACCOMPANIMENT", bass: "BASS" };
 const gearIco = () => { const s = svgEl("svg", { class: "ico" }); s.append(svgEl("use", { href: "#icoGear" })); return s; };   // the shared gear symbol (svgEl's third argument is text, so the <use> must be appended)
 function deckActive() { if (duoMode()) { if (kbUpNow()) return "mel"; const ws = duoWins(), w = PART_WIN[S.activePart || "melody"]; if (ws.includes(w) && !(S.collapsed && S.collapsed[w])) return w; return ws.find(x => !(S.collapsed && S.collapsed[x])) || "mel"; } const open = ["mel", "acc", "bass"].find(w => S.winState[w] !== "closed"); return S.deck.includes(open) ? open : S.deck[0]; }
@@ -7350,7 +7357,7 @@ function renderAll() {
   if (deckMode()) { const r0 = Object.assign({}, DECK_ROWS), s0 = Object.assign({}, STEPS); allocate(); if (["mel", "acc", "bass"].some(w => DECK_ROWS[w] !== r0[w] || Math.abs(STEPS[w] - s0[w]) > 1e-6)) { keepHome(); renderWindows(); renderStrips(); renderBeatRow(); placeDeckLabels(); } }
   if (!deckMode()) { const r0 = Object.assign({}, PHONE_ROWS), s0 = Object.assign({}, STEPS); allocate(); const rh = keepHome(); if (rh || ["mel", "acc", "bass"].some(w => PHONE_ROWS[w] !== r0[w] || Math.abs(STEPS[w] - s0[w]) > 1e-6)) { renderWindows(); renderStrips(); renderBeatRow(); } }   // the phone: the column beside the stave is only whole once drawn (COVER is made then) — size the stave to it and draw again
   if (deckMode() && !kbUpNow() && !duoMode()) {                                           // Stacked staves measure their room against the app's foot themselves, so this pass would only misread the folded bars and the lower staves as a gap   // the tool bar must end on the screen's foot, the stave and strips flush above it: measured as drawn, any miss (a load before the page had settled, a browser bar coming or going) is taken up by the stave at once
-    const tb = $("toolbar").getBoundingClientRect(), fr = $(deckActive() + "Win").querySelector(".frame").getBoundingClientRect();
+    const tbEl = $("toolbar"), tb = tbEl.offsetHeight ? tbEl.getBoundingClientRect() : { top: window.innerHeight - 6, bottom: window.innerHeight - 6 }, fr = $(deckActive() + "Win").querySelector(".frame").getBoundingClientRect();   // no tool bar (Comfort / Ease): the stave ends on the screen's foot
     const strips = ["dynStrip", "rhyStrip", "lyrStrip"].map(id => $(id)).filter(e => e && e.offsetHeight > 0 && getComputedStyle(e).position !== "fixed"), above = Math.max(fr.bottom, ...strips.map(e => e.getBoundingClientRect().bottom));
     const vb = $("app").classList.contains("vlUp") && $("vlBar").offsetHeight ? $("vlBar").getBoundingClientRect().top : tb.top;   // the line's bar up: the stave ends on the bar, not on the tool bar
     const over = tb.bottom - (window.innerHeight - 6), resid = over > 0.75 ? -over : vb - above;   // pushed past the foot: shrink by the overshoot; short of the tool bar: grow by the gap
@@ -7561,7 +7568,7 @@ const sigSpacesKey = key => { if (sigsHidden()) return 0.6; const n = keySig(key
 const sigSpaces = g => g.dia ? sigSpacesKey(g.dia) : 0;
 /* the key and time signatures out of sight — by the Settings switch, or while the lyrics keyboard is open — the stave's head keeping the clef alone; SIGS, a small tab at the stave's foot, shows them for 2.5 seconds */
 const sigsHidden = () => !S.sigPeek && (!!S.sigsOff || kbUpNow());
-const headHidden = () => !deckMode() && !S.headKeep && !S.sigPeek && !(typeof easeOn === "function" && easeOn());                          // the phone: the stave's whole head — clef, key and time signatures — is out of view, and the stave begins at beat 1, unless Settings keeps it; the tab at the stave's foot shows it for a moment
+const headHidden = () => !S.headKeep && !S.sigPeek && (typeof easeOn === "function" && easeOn() ? deckMode() : !deckMode());   // out of view, unless locked: the phone (but in Comfort / Ease, where it stands), and the wide screen's Comfort / Ease                          // the phone: the stave's whole head — clef, key and time signatures — is out of view, and the stave begins at beat 1, unless Settings keeps it; the tab at the stave's foot shows it for a moment
 let sigPeekT = null;
 function sigPeek() { S.sigPeek = true; clearTimeout(sigPeekT); sigPeekT = setTimeout(() => { S.sigPeek = false; renderAll(); }, 2500); renderAll(); }
 const CLEF_SLOT = 3.0;                                                                     // the clef's room in spaces: the widest glyph and a little air after it
@@ -8258,7 +8265,7 @@ function placeLyrNav() {
     { const side = win.querySelector(".side"); if (side && !side.querySelector(".escBtn")) side.prepend(el("button", { class: "escBtn", title: "Escape: let go of whatever is armed, pending or picked", onclick: escAll }, "ESC")); }   // the phone: ESC at the top of the column, above the stave's gear
     if (!nav) { nav = el("div", { class: "lyrNav" }, el("button", { class: "back", title: "Back two bars", onclick: () => $("prevBar").click() }, "◀ BACK"), el("button", { class: "next", title: "On two bars", onclick: () => $("nextBar").click() }, "NEXT ▶")); win.append(nav); }
     if (!tab) { tab = el("button", { class: "sigTab", title: "Show the key and time signatures for a moment", onclick: sigPeek }, "SIGS"); win.append(tab); }
-    { const head = !deckMode() && !S.headKeep, lbl = head ? "CLEF · SIGS" : "SIGS"; if (tab.textContent !== lbl) { tab.textContent = lbl; tab.title = head ? "Show the clef and the key and time signatures for a moment" : "Show the key and time signatures for a moment"; } }
+    { const head = headHidden() || (!deckMode() && !S.headKeep), lbl = head ? "CLEF · SIGS" : "SIGS"; if (tab.textContent !== lbl) { tab.textContent = lbl; tab.title = head ? "Show the clef and the key and time signatures for a moment" : "Show the key and time signatures for a moment"; } }
     const lead = deckMode() ? w === deckActive() : w === leadWin();
     const showNav = lyrView() && lead && !win.classList.contains("closed") && frame.offsetHeight > 0;
     nav.hidden = !showNav;
@@ -8391,7 +8398,8 @@ function openTune(winArg) {
    moves it by half steps (up, down), the wheel likewise, a length on the pallet changes its length at once — and ENTER keeps the changes (ESC, or letting go, puts them back).
    The wheel's small key turns it from pitch to the stave's line spacing, the note size and the note spacing (the tuner's own notches and guards) */
 const EZ = { win: "mel", mode: "idle", cur: null, bar: null, sel: null, snap: null, fing: null, fingOn: false, shift: false, multi: [], wheel: "pitch", pal: "notes", mark: null, built: false };
-const easeOn = () => !!S.ease && !deckMode() && !kbUpNow();
+const easeOn = () => !!S.ease && !kbUpNow() && (!deckMode() || S.layout === "rolled");   // the upright screen, and the wide screen's Roll-up view
+const ezDeck = () => easeOn() && deckMode();
 const EZ_WHEEL = [["pitch", "ADJUST\nPITCH"], ["z", "STAVE\nSPACING"], ["nz", "NOTE\nSIZE"], ["sp", "NOTE\nSPACING"]];
 const ezWhite = (bi, win = "mel") => easeOn() && EZ.win === win && (EZ.mode === "nav" || EZ.mode === "edit") && EZ.bar === bi && !EZ.fingOn;
 const ezG = () => GEO[EZ.win];
@@ -8404,7 +8412,7 @@ function phoneWinLimit() { if (deckMode()) return; const all = ["mel", "acc", "b
   WIN_RECENT = WIN_RECENT.filter(w => open.includes(w)); open.forEach(w => { if (!WIN_RECENT.includes(w)) WIN_RECENT.unshift(w); }); if (open.length <= 2) return;
   const keep = new Set(); if (easeOn() && open.includes(EZ.win)) keep.add(EZ.win); for (const w of WIN_RECENT) { if (keep.size >= 2) break; keep.add(w); }
   open.forEach(w => { if (!keep.has(w)) S.winState[w] = "closed"; }); WIN_RECENT = WIN_RECENT.filter(w => keep.has(w)); toast("Two staves at a time on this screen"); }
-function ezWins() { const all = ["mel", "acc", "bass"]; let open = all.filter(w => S.winState[w] !== "closed"); if (!open.length) { S.winState.mel = "open"; open = ["mel"]; }
+function ezWins() { if (deckMode()) { if (EZ.win !== deckActive()) ezWork(deckActive(), true); EZ.openPrev = null; return; } const all = ["mel", "acc", "bass"]; let open = all.filter(w => S.winState[w] !== "closed"); if (!open.length) { S.winState.mel = "open"; open = ["mel"]; }
   const fresh = EZ.openPrev ? open.find(w => !EZ.openPrev.includes(w)) : null, next = fresh || (open.includes(EZ.win) ? EZ.win : open[0]), changed = !EZ.openPrev || EZ.openPrev.join() !== open.join();
   if (next !== EZ.win) ezWork(next, true); if (changed) open.forEach(w => { S.homeNext = Object.assign(S.homeNext || {}, { [w]: true }); });   // the shares have changed: every stave centred again in its new room
   EZ.openPrev = open.slice(); S.focus = null; if (EZ.win !== "mel") S.song.parts[WIN_PART[EZ.win]].on = true; S.activePart = WIN_PART[EZ.win];
@@ -8629,7 +8637,9 @@ function ezBuild() {
 }
 function ezPanel() {
   if (!easeOn()) { const b = $("ease"); if (b) b.hidden = true; ["mel", "acc", "bass"].forEach(w => $(w + "Win").classList.remove("ezSmall")); EZ.openPrev = null; return; } if (!EZ.built) ezBuild(); $("ease").hidden = false;
-  { const box = $("ease"), pal = $("ezPlayPal"), fr = $(EZ.win + "Win").querySelector(".frame"), wins = ["mel", "acc", "bass"].map(w => $(w + "Win")).filter(e => e.offsetHeight > 0);
+  if (deckMode()) { const box = $("ease"), win = $(EZ.win + "Win"), fr = win.querySelector(".frame"), ar = $("app").getBoundingClientRect(), wr = win.getBoundingClientRect(), fb = fr.getBoundingClientRect(), nav = $("deckNav").getBoundingClientRect();   // the wide screen: the panel on the right third, the stave's height, up to the column's gear
+    box.style.left = Math.round(wr.right + 8 - ar.left) + "px"; box.style.width = Math.max(120, Math.round(nav.left - 6 - wr.right - 8)) + "px"; box.style.top = Math.round(fb.top - ar.top) + "px"; box.style.height = Math.round(fb.height) + "px"; box.style.marginTop = ""; }
+  else { const box = $("ease"), pal = $("ezPlayPal"), fr = $(EZ.win + "Win").querySelector(".frame"), wins = ["mel", "acc", "bass"].map(w => $(w + "Win")).filter(e => e.offsetHeight > 0); box.style.left = box.style.width = box.style.top = box.style.height = "";
     box.style.marginTop = ""; pal.style.left = ""; if (fr && wins.length) { const foot = Math.max(...wins.map(e => e.getBoundingClientRect().bottom)), gap = box.getBoundingClientRect().top - foot; if (gap > 5) box.style.marginTop = -(gap - 5) + "px";   // the rows of the hidden strips keep their gaps: taken back, so the pallet stands 5px under the last stave
       const fb = fr.getBoundingClientRect(), pb = pal.getBoundingClientRect(); pal.style.left = Math.round(((fb.left + fb.right) - (pb.left + pb.right)) / 2 * 2) / 2 + "px"; } }
   const g = ezG(); if (EZ.cur && g && !g.bars.includes(EZ.cur.bi)) { EZ.cur.bi = g.bars[0]; EZ.cur.t = 0; } if (EZ.bar != null && g && !g.bars.includes(EZ.bar) && (EZ.mode === "nav" || EZ.mode === "edit")) { ezDrop(false); EZ.bar = null; EZ.sel = null; EZ.fing = null; EZ.fingOn = false; S.sel = null; EZ.mode = "pick"; }
@@ -10533,7 +10543,7 @@ function openSettings() {
     el("div", { class: "mrow" }, toggle("Lock the register scroll at the edge of each sound's range (top and bottom alike, on every stave)", S.rangeLock, v => { S.rangeLock = v; if (v) ["mel", "acc", "bass"].forEach(w => { const { rows } = rowsOf(w), [minV, , maxV] = viewLimits(w, rows); S.song.view[WIN_LO[w]] = clamp(viewOf(w), minV, maxV); }); savePrefs(); renderAll(); openSettings(); })),   // switched on, every stave's view is pulled inside its range at once
     el("p", { class: "tiny", style: "margin:0 0 6px" }, "Locks to: " + ["mel", "acc", "bass"].map(w => { const [lo, hi] = soundRange(w), P = S.song.parts[WIN_PART[w]], k = keyObj(S.song.key); return `${DECK_NAME[w].charAt(0) + DECK_NAME[w].slice(1).toLowerCase()} ${noteName(lo, k)}–${noteName(hi, k)} (${P.bank || P.inst})`; }).join(" · ") + ". A piano or a sample library that spans the keyboard leaves nothing to lock."),
     el("div", { class: "pLbl" }, "Key and time signatures"), seg([[false, "Shown"], [true, "Hidden"]], !!S.sigsOff, v => { S.sigsOff = v; savePrefs(); renderAll(); }), el("div", { class: "tiny", style: "margin-bottom:6px" }, "Hidden, the stave's head keeps the clef alone; the SIGS tab under the stave shows the signatures for a moment. While the lyrics keyboard is open they are always hidden."),
-    el("div", { class: "mrow" }, toggle("Vertical view: Comfort / Ease \u2014 the stave is driven from a track pad under it, never touched", !!S.ease, v => { S.ease = v; EZ.mode = "idle"; EZ.bar = null; EZ.sel = null; EZ.snap = null; if (v) { S.easeWins = Object.assign({}, S.winState); EZ.win = "mel"; S.winState = { mel: "open", acc: "closed", bass: "closed" }; } else if (S.easeWins) { S.winState = Object.assign({}, S.easeWins); S.easeWins = null; } savePrefs(); closeModal(); renderAll(); })),
+    el("div", { class: "mrow" }, toggle("Comfort / Ease: the stave is driven from a track pad, never touched (the upright screen; the wide screen in its Roll-up view)", !!S.ease, v => { S.ease = v; EZ.mode = "idle"; EZ.bar = null; EZ.sel = null; EZ.snap = null; if (v) { S.easeWins = Object.assign({}, S.winState); EZ.win = "mel"; S.winState = { mel: "open", acc: "closed", bass: "closed" }; } else if (S.easeWins) { S.winState = Object.assign({}, S.easeWins); S.easeWins = null; } savePrefs(); closeModal(); renderAll(); })),
     el("div", { class: "mrow" }, toggle("Comfort / Ease: always tie a note across to the next bar when it is longer than its bar has room for (without asking)", !!S.ezAlwaysTie, v => { S.ezAlwaysTie = v; savePrefs(); })),
     el("div", { class: "mrow" }, toggle("Vertical view: keep the clef and the key and time signatures in view", !!S.headKeep, v => { S.headKeep = v; savePrefs(); renderAll(); })),
     el("p", { class: "tiny", style: "margin:0 0 6px" }, "Off, the upright screen's stave begins at beat 1, its whole head out of view; the CLEF · SIGS tab at the stave's foot shows it for a moment."),
