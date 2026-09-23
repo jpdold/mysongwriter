@@ -7961,7 +7961,7 @@ function renderWindows() {
       if (e.slur) { const end = bar.ev.melody.find(x => x.id === e.slur); if (end && end.m != null) drawSlur(svg, g, g.x(bi, e.t) + 2, e.m, g.x(bi, end.t) + 2, clamp(end.m, g.lo, g.hi), ink, up); }
     }
     { const lower = grandLower("mel"); if (lower && song.parts[lower].on) {                  // the Grand Stave: the Bass part on the lower staff, in its own colour
-        const lc = ezWhite(bi) ? "#fff" : css("--" + lower); drawMoveSel(svg, g, bi, lower); drawSpanBands(svg, g, bi, lower);
+        const lc = ezWhite(bi) ? "#fff" : ink0; drawMoveSel(svg, g, bi, lower);   // the lower staff's notes in the same ink as the upper's: plain black, as engraved drawSpanBands(svg, g, bi, lower);
         if (S.ghost && S.ghost.part === lower && S.ghost.bi === bi) drawGhost(svg, g, bi, S.ghost, lc);
         drawPartBar(svg, g, bi, lower, lc, "mel"); } }
     if (S.slurFrom && S.slurFrom.bi === bi && S.slurFrom.part === "melody") { const f = bar.ev.melody.find(x => x.id === S.slurFrom.id); if (f && f.m != null) svg.append(svgEl("circle", { cx: g.x(bi, f.t) + 2 + headGeom(g).rx + 1, cy: g.y(clamp(f.m, g.lo, g.hi)), r: g.step * 0.9, fill: "none", stroke: css("--box"), "stroke-width": 2, "stroke-dasharray": "3 2", "pointer-events": "none" })); }
