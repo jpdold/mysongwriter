@@ -5904,7 +5904,7 @@ function startPlayback(barList, opts = {}) {
   play.offs = []; let acc = 0; for (const b of barList) { play.offs.push(acc); acc += beatSec() * (Number(barBeats(b)) > 0 ? Number(barBeats(b)) : 4); } play.total = acc;
   if (play.range) { const rg = play.range, bs = beatSec(); play.offs = play.offs.map(o => o - rg.fromT * bs); play.total = acc - rg.fromT * bs - (barBeats(rg.lastBi) - rg.toT) * bs; }
   if (S.metro === "countin") { const bl = beatSec() * (TS_BEATS[S.song.sig] || 4); play.t0 += bl; for (let b = 0; b < (TS_BEATS[S.song.sig] || 4); b++) metroClick(ctx, play.t0 - bl + b * beatSec(), b === 0); }
-  S.playing = true; S.playPos = null;
+  S.playing = true; S.playPos = null; play.off = null; PH.anim = {};   // the clocks paired afresh, the glides begun afresh
   if ($("playBtn")) { $("playBtn").classList.add("on"); $("playBtn").firstChild.nodeValue = "■"; }
   const schedule = () => {
     if (!play.on) return;
@@ -5920,7 +5920,12 @@ function startPlayback(barList, opts = {}) {
   const tick = () => {
     if (!play.on) return;
     const total = play.total;
-    let t = ctx.currentTime - play.t0;
+    /* the line's clock: the audio clock is read paired with the display's (the output timestamp, where the browser gives it — the sound as it is heard, latency and all), the
+       pairing smoothed so the audio clock's steps (it moves in chunks of a few milliseconds) average out; the position is then taken from the display's clock, which is smooth */
+    let ct = ctx.currentTime, pt = performance.now(); if (ctx.getOutputTimestamp) { const o = ctx.getOutputTimestamp(); if (o && o.contextTime > 0 && o.performanceTime > 0) { ct = o.contextTime; pt = o.performanceTime; } }
+    const off = ct - pt / 1000; play.off = play.off == null ? off : play.off + (off - play.off) * (Math.abs(off - play.off) > 0.08 ? 1 : 0.06);   // a jump (a stall, a suspend) is taken at once; the chunks are smoothed
+    play.smooth = performance.now() / 1000 + play.off;
+    let t = play.smooth - play.t0;
     if (play.loop) t = ((t % total) + total) % total;
     let idx = -1; for (let i = 0; i < play.offs.length; i++) if (play.offs[i] <= t) idx = i;
     if (idx >= 0 && idx < play.bars.length) {
@@ -9155,16 +9160,25 @@ function renderPalette0() {
 /* the playhead: a thin HTML line over each stave and strip, slid by the compositor alone (a transform, no layout, no paint) — it had been a line inside each stave's SVG, whose
    attributes were rewritten every frame, and the whole staff was painted again with it, sixty times a second; the bookkeeping beside it (the windows' playing class, the
    performance view's line) is done once a bar, not once a frame */
-const PH = { last: {}, bar: -1, on: false };
+const PH = { last: {}, anim: {}, bar: -1, on: false };
 function playHeadEl(host, id) { let d = host.querySelector(":scope > .playHd"); if (!d) { d = el("div", { class: "playHd" + (id === "lyrHead" ? " lyr" : ""), "data-id": id }); host.append(d); } return d; }
+function playHeadGlide(d, id, g, pp) {                                                    // the line from where it stands to the bar's end in one linear glide, timed to the tempo; started afresh when the bar, the geometry or the drift asks for it
+  const x = g.x(pp.bi, pp.beat), xEnd = g.x(pp.bi, barBeats(pp.bi)), left = Math.max(0.02, (barBeats(pp.bi) - pp.beat) * beatSec()), a = PH.anim[id], now = performance.now();
+  const predicted = a && a.bi === pp.bi && a.beatPx === g.beatPx ? a.x0 + (a.x1 - a.x0) * Math.min(1, (now - a.at) / a.dur) : null;
+  if (predicted != null && Math.abs(predicted - x) < 2.5) return;                          // on course: the compositor carries on
+  if (a && a.anim) { try { a.anim.cancel(); } catch (e) {} }
+  const dur = left * 1000; let anim = null;
+  try { anim = d.animate([{ transform: `translate3d(${x}px,0,0)` }, { transform: `translate3d(${xEnd}px,0,0)` }], { duration: dur, easing: "linear", fill: "forwards" }); } catch (e) { d.style.transform = `translate3d(${x}px,0,0)`; }
+  PH.anim[id] = { bi: pp.bi, beatPx: g.beatPx, x0: x, x1: xEnd, at: now, dur, anim };
+}
 function updatePlayhead() {
   const pp = S.playPos;
   if (pp && pp.bi !== S.bi) { const inView = viewBars().includes(pp.bi); S.bi = pp.bi; S.sel = null; if (!inView) { renderAll(); return; } renderNav(); }
   for (const id of ["melHead", "accHead", "bassHead", "rhyHead", "lyrHead"]) {
     const win = id.startsWith("acc") ? "acc" : id.startsWith("bass") ? "bass" : id.startsWith("mel") ? "mel" : null, svg = $(id.replace("Head", "Svg")), host = svg && svg.parentNode; if (!host) continue;
     const d = playHeadEl(host, id), g = win ? GEO[win] : stripGeo();
-    if (!pp || !g || !g.bars.includes(pp.bi) || (win && S.winState[win] === "closed")) { if (PH.last[id] !== null) { d.style.transform = "translate3d(-9px,0,0)"; PH.last[id] = null; } continue; }
-    const x = g.x(pp.bi, pp.beat); if (PH.last[id] == null || Math.abs(x - PH.last[id]) >= 0.25) { d.style.transform = `translate3d(${x}px,0,0)`; PH.last[id] = x; }
+    if (!pp || !g || !g.bars.includes(pp.bi) || (win && S.winState[win] === "closed")) { if (PH.last[id] !== null) { const a = PH.anim[id]; if (a && a.anim) { try { a.anim.cancel(); } catch (e) {} } PH.anim[id] = null; d.style.transform = "translate3d(-9px,0,0)"; PH.last[id] = null; } continue; }
+    PH.last[id] = 1; playHeadGlide(d, id, g, pp);
   }
   if (PH.on !== !!pp) { PH.on = !!pp; document.querySelectorAll(".win").forEach(w => w.classList.toggle("playing", PH.on)); }
   if (pp && GEO.mel && GEO.mel.n > 1) { const fr = $("melWin").querySelector(".frame"), x = GEO.mel.x(pp.bi, pp.beat); if (x < fr.scrollLeft + 10 || x > fr.scrollLeft + fr.clientWidth - 30) fr.scrollLeft = Math.max(0, x - 40); }
