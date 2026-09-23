@@ -8602,9 +8602,9 @@ function ezInitPad(pad) {
     d.px = clamp(d.px + dx, g.x(b0, 0), g.x(bN, barBeats(bN)) - 1); d.py = clamp(d.py + dy, g.step / 2, g.H - g.step / 2);
     const at = g.at(d.px), st = gridStep(), near = EZ.mark ? null : ezNear(at.bi, at.t), t = EZ.mark ? clamp(Math.round(at.t / st) * st, 0, barBeats(at.bi) - st) : near != null ? near : EZ.cur.t, m = g.m(d.py), c = EZ.cur;
     if (at.bi !== c.bi || Math.abs(t - c.t) > 1e-6 || m !== c.m) { c.bi = at.bi; c.t = r3(t); c.m = m; ezPaint(); ezBanner(); } });
-  const end = e => { if (!d || e.pointerId !== d.id) return; const tap = d.far < 8 && e.timeStamp - d.at < 450, still = d.still; d = null; if (!tap) return; if (fingering()) { ezTapItem(); return; }
+  const end = e => { if (!d || e.pointerId !== d.id) return; const still = d.still, tap = still ? d.far < 8 : (d.far < 8 && e.timeStamp - d.at < 450); d = null; if (!tap) return; if (fingering()) { ezTapItem(); return; }   // with nothing in hand any touch that does not travel is a tap, however long it is held
     if (still && EZ.mode !== "edit") { ezSetMode("entry", EZ.bar); toast(`The cursor is up \u2014 ${S.restNext ? "a rest" : "a note"} of the value on the pallet`); } };   // a tap on the pad with nothing in hand: the entry cursor, in the bar in hand when there is one
-  pad.addEventListener("pointerup", end); pad.addEventListener("pointercancel", e => { if (d && e.pointerId === d.id) d = null; });
+  pad.addEventListener("pointerup", end); pad.addEventListener("pointercancel", e => { if (!d || e.pointerId !== d.id) return; if (d.still && d.far < 8) { end(e); return; } d = null; });   // a touch the browser took back (a scroll it thought it saw): with nothing in hand, still a tap
 }
 function ezBanner() { const b = $("ezBanner"); if (!b) return; const c = EZ.cur;
   b.textContent = EZ.mode === "pick" ? "SELECT BAR TO EDIT" : EZ.mode === "nav" ? (EZ.bar != null ? `BAR ${barNo(EZ.bar)} \u00b7 CHOOSE ITEM` : "POINT TO AN ITEM") + (EZ.multi.length > 1 ? ` \u00b7 ${EZ.multi.length} HELD` : "") : EZ.mode === "edit" ? "EDITING · ENTER KEEPS" : EZ.mode === "entry" && c ? `BAR ${barNo(c.bi)} · BEAT ${fracLabel(c.t + 1)}` : `BAR ${barNo(S.bi)}`; }
