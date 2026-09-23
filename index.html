@@ -8447,7 +8447,8 @@ function ezFinger() { if (EZ.mode === "edit") { toast("ENTER or ESC first"); ret
   if (EZ.mode === "nav" && EZ.fingOn) { EZ.fingOn = false; ezPanel(); ezPaint(); return; }
   if (EZ.bar != null) { EZ.bar = null; EZ.sel = null; S.sel = null; }
   EZ.mode = "nav"; EZ.fingOn = true; if (!EZ.fing) EZ.fing = { x: (g.x(g.bars[0], 0) + g.x(g.bars[g.bars.length - 1], barBeats(g.bars[g.bars.length - 1]))) / 2, y: g.H / 2 }; S.ghost = null; renderAll(); }
-function ezEsc() { if (EZ.mode === "idle" && !EZ.sel && !EZ.multi.length) return; ezDrop(false); EZ.mode = "idle"; EZ.bar = null; EZ.sel = null; EZ.multi = []; EZ.shift = false; EZ.fing = null; EZ.fingOn = false; EZ.mark = null; S.sel = null; S.ghost = null; renderAll(); }
+function ezEsc() { const hl = !!(S.mv || S.rep || S.cpy || S.push); if (hl) { S.mv = null; S.rep = null; S.cpy = null; S.push = null; }   // a highlight (or a repeat, a copy, a push) left from the wide screen goes too
+  if (EZ.mode === "idle" && !EZ.sel && !EZ.multi.length) { if (hl) renderAll(); return; } ezDrop(false); EZ.mode = "idle"; EZ.bar = null; EZ.sel = null; EZ.multi = []; EZ.shift = false; EZ.fing = null; EZ.fingOn = false; EZ.mark = null; S.sel = null; S.ghost = null; renderAll(); }
 function ezDrop(keep) { if (!EZ.snap) return; if (!keep && EZ.snap !== JSON.stringify(S.song)) { S.song = upgradeSong(JSON.parse(EZ.snap)); toast("Changes put back — ENTER keeps them"); } EZ.snap = null; }
 function ezItems() { const g = ezG(), out = []; if (!g) return out; const { rx } = headGeom(g);
   for (const bi of EZ.bar != null ? [EZ.bar] : g.bars) { const bar = S.song.bars[bi]; if (!bar) continue;                                          // the bar in hand, or every bar in view (the quick edit)
