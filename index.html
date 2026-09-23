@@ -281,8 +281,8 @@ svg text { pointer-events: none; }
 .doors { position: absolute; z-index: 2; overflow: hidden; pointer-events: none; }   /* under the deck's MELODY tag (3) and the ↩ LINES button (4) */
 .doors[hidden] { display: none; }
 .doors .door { position: absolute; left: 0; right: 0; box-sizing: border-box; background: var(--ground); pointer-events: auto; transition: transform .38s ease; }
-.doors .door.top { top: 0; border-bottom: 4px solid rgba(255,255,255,.3); box-shadow: 0 2px 6px rgba(0,0,0,.4); }   /* the lip where each door ends */
-.doors .door.bot { border-top: 4px solid rgba(255,255,255,.3); box-shadow: 0 -2px 6px rgba(0,0,0,.4); }
+.doors .door.top { top: 0; border-bottom: 2px solid rgba(255,255,255,.4); box-shadow: 0 1px 2px rgba(0,0,0,.5); }   /* the lip where each door ends: a thin light line and a close shadow — a sharper edge */
+.doors .door.bot { border-top: 2px solid rgba(255,255,255,.4); box-shadow: 0 -1px 2px rgba(0,0,0,.5); }
 .doors.open .door.top { transform: translateY(-100%); } .doors.open .door.bot { transform: translateY(100%); }   /* both slide at once: one up, one down */
 #app.deck .side .doorBtn { display: none !important; }   /* the deck: the part in view has its doors (placeDoors hides the rest), toggled from the column beside it */
 .win .side .doorBtn { width: 30px; height: 24px; padding: 0; border: 1.5px solid #141414; border-radius: 4px; background: linear-gradient(var(--sv-hi), var(--sv-lo)); color: #111; font: 800 6.5px/1 system-ui, sans-serif; letter-spacing: .03em; }
@@ -7667,7 +7667,8 @@ function placeDoors(win) {
   box.hidden = !show; if (!show) { box.style.cssText = ""; return; }                       // not shown: unsized too, so nothing can show through
   box.style.left = (frame.offsetLeft + frame.clientLeft) + "px"; box.style.top = (frame.offsetTop + frame.clientTop) + "px"; box.style.width = frame.clientWidth + "px"; box.style.height = frame.clientHeight + "px";
   const lyrRoom = win === "mel" && !grandLower("mel") && viewBars().some(bi => (S.song.bars[bi].chips || []).some(c => !c.gap && c.text && c.text.trim())) ? g.step * 1.3 + 8 : 0;   // words under the staff: the lower door stands off them
-  const [ct, cb] = focusCaps(g), topH = clamp(ct - 1 - DOOR_SLIVER, 0, g.H), botY = clamp(cb + 1 + DOOR_SLIVER + lyrRoom, 0, g.H);
+  const [ct, cb] = focusCaps(g), room = staffSpacePx(win, g.step) + headGeom(g).ry + DOOR_SLIVER;   // each door stops a space and a half a head short of the outer line, and a sliver more: the note on the first ledger line (A5 over the treble, and its like below) stands clear, the door's edge just short of its head
+  const topH = clamp(ct - 1 - room, 0, g.H), botY = clamp(cb + 1 + room + lyrRoom, 0, g.H);
   const t = box.querySelector(".door.top"), b = box.querySelector(".door.bot");
   t.style.height = topH + "px"; b.style.top = botY + "px"; b.style.height = Math.max(0, g.H - botY) + "px";
   const [blo, bhi] = focusRange(win), closed = S.doors[win] !== false && blo >= g.lo && bhi <= g.hi;   // closed while the five lines are wholly in view; scrolled off them, the doors stand open
