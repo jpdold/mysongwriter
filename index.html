@@ -8493,7 +8493,7 @@ const ezCurPart = () => { const g = ezG(); return EZ.win !== "mel" ? WIN_PART[EZ
 const ezBusy = (bi, part, a, b, skip) => (S.song.bars[bi].ev[part] || []).some(e => !(skip && skip.includes(e)) && e.t < b - 1e-6 && e.t + e.d > a + 1e-6);
 const ezFull = bi => ezParts().every(part => { const B = barBeats(bi), evs = [...(S.song.bars[bi].ev[part] || [])].sort((a, b) => a.t - b.t); let at = 0; for (const e of evs) { if (e.t > at + 1e-6) return false; at = Math.max(at, e.t + e.d); } return at >= B - 1e-6; });   // every beat of the bar accounted for, on every staff of the stave (both of a Grand Stave)
 function ezAdvance(bi, t) { const c = EZ.cur, part = ezCurPart(), free = x => !ezBusy(bi, part, x, x + Math.min(0.25, ezDur()));
-  let nt = ezSpots(bi).find(x => x >= t - 1e-6 && free(x)); if (nt == null) nt = ezSpots(bi).find(free);                                                  // on in this bar: the next place the glyph can stand, else the first free one
+  let nt = ezSpots(bi).find(x => x >= t - 1e-6 && free(x)); if (nt == null) { nt = ezSpots(bi).find(free); if (nt != null) toast(`Beat ${fracLabel(nt + 1)} is still free — the cursor is back there`); }   // on in this bar: the next place the glyph can stand, else back to the first free one, and said
   if (nt == null) { if (ezFull(bi) && bi + 1 < S.song.bars.length && ezSpots(bi + 1).length) { bi++; nt = ezSpots(bi)[0]; } else { nt = Math.min(t, barBeats(bi) - gridStep()); if (!ezFull(bi)) toast("This bar still has beats to fill \u2014 on every staff \u2014 before the cursor goes on"); } }   // the next bar only once this one is full
   if (!ezG().bars.includes(bi)) S.bi = bi; c.bi = bi; c.t = r3(nt); }   // the cursor stays in hand, a step on: the next place this glyph can stand
 function ezStack(bi, ch, m, part) { const bar = S.song.bars[bi], pieces = ch.members.map(e => { const p = { id: uid(), t: e.t, d: e.d, m, chord: true }; if (e.tie) p.tie = true; if (e.ox) p.ox = e.ox; return p; });   // the chord note mirrors the note it stacks on, tied pieces and all
@@ -8609,7 +8609,11 @@ function ezInitPad(pad) {
     if (fingering()) { const b0 = EZ.bar != null ? EZ.bar : g.bars[0], bN = EZ.bar != null ? EZ.bar : g.bars[g.bars.length - 1], x0 = g.x(b0, 0), x1 = g.x(bN, barBeats(bN)); EZ.fing.x = clamp(EZ.fing.x + dx, x0 + 2, x1 - 2); EZ.fing.y = clamp(EZ.fing.y + dy, 2, g.H - 2); ezPaint(); return; }   // the finger never leaves the bar in hand
     if (EZ.mode !== "entry" || !EZ.cur) return; const b0 = g.bars[0], bN = g.bars[g.bars.length - 1];
     d.px = clamp(d.px + dx, g.x(b0, 0), g.x(bN, barBeats(bN)) - 1); d.py = clamp(d.py + dy, g.step / 2, g.H - g.step / 2);
-    const at = g.at(d.px), st = gridStep(), near = EZ.mark ? null : ezNear(at.bi, at.t), t = EZ.mark ? clamp(Math.round(at.t / st) * st, 0, barBeats(at.bi) - st) : near != null ? near : EZ.cur.t, m = g.m(d.py), c = EZ.cur;
+    const at = g.at(d.px), st = gridStep(), c = EZ.cur; let t;
+    if (at.bi !== c.bi && !EZ.mark) { const h = ezHome(at.bi); t = h ? h.t : 0; d.landed = at.bi; }                                        // into another bar: the cursor lands on its first free place (beat 1 when it is empty), wherever the finger crossed — and stays there for the rest of this swipe (the pitch still follows; the next swipe moves it along the bar)
+    else if (d.landed === at.bi) t = c.t;
+    else { const near = EZ.mark ? null : ezNear(at.bi, at.t); t = EZ.mark ? clamp(Math.round(at.t / st) * st, 0, barBeats(at.bi) - st) : near != null ? near : c.t; }
+    const m = g.m(d.py);
     if (at.bi !== c.bi || Math.abs(t - c.t) > 1e-6 || m !== c.m) { c.bi = at.bi; c.t = r3(t); c.m = m; ezPaint(); ezBanner(); } });
   const end = e => { if (!d || e.pointerId !== d.id) return; const still = d.still, tap = still ? d.far < 8 : (d.far < 8 && e.timeStamp - d.at < 450); d = null; if (!tap) return; if (fingering()) { ezTapItem(); return; }   // with nothing in hand any touch that does not travel is a tap, however long it is held
     if (still && EZ.mode !== "edit") { ezSetMode("entry", EZ.bar); toast(`The cursor is up \u2014 ${S.restNext ? "a rest" : "a note"} of the value on the pallet`); } };   // a tap on the pad with nothing in hand: the entry cursor, in the bar in hand when there is one
