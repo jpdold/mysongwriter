@@ -5001,7 +5001,7 @@ $("toast").addEventListener("pointerdown", () => { clearTimeout(toastTimer); $("
 $("reloadBtn").addEventListener("click", () => {                                       // ⟳ beside the menu: a fresh load of the app
   if (TURNED || document.fullscreenElement) {                                            // turned by TURN: a page reload would end fullscreen and drop the lock, so the app is refreshed in place instead
     try { localStorage.setItem("msw_reTurn", "1"); } catch (e) {} }                       // turned by TURN: a reload drops fullscreen and the lock — noted, so the wide view is brought back once the app is up again
-  location.reload();
+  location.replace(location.pathname + "?r=" + Date.now());                             // a fresh copy from the server, never the browser's cached one (a reload may take the cached page, and a fix just published is then not seen)
 });
 { try { localStorage.removeItem("msw_turned"); } catch (e) {} }   // an earlier build turned the screen back on the first tap after a load whenever TURN had last left it turned — so any tap on the phone could swing it to the wide view; that is gone, and its flag cleared (turned by TURN, ⟳ refreshes in place instead)
 function reportErr(msg) {
