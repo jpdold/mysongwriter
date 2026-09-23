@@ -8521,6 +8521,8 @@ function ezEnter() {
   const c = EZ.cur, bar = S.song.bars[c.bi], part = ezCurPart(), evs = bar.ev[part] = bar.ev[part] || [];
   if (EZ.mark) { const ch = chordChainAt(bar, c.t, part); if (!ch) { toast("No note there to mark"); return; } const ev = ch.head; if (DYN.includes(EZ.mark) || HAIR[EZ.mark]) setDyn(ev, EZ.mark); else { ev.artic = ev.artic === EZ.mark ? undefined : EZ.mark; if (!ev.artic) delete ev.artic; } renderAll(); return; }
   const d = ezDur(), what = S.restNext ? "rest" : "note";
+  { const w = Math.min(0.25, d), gap = ezSpots(c.bi).find(t0 => t0 < c.t - 1e-6 && !ezBusy(c.bi, part, t0, t0 + w) && !ezBusy(c.bi, part, t0, c.t));   // a composer writes in order: an entry never lands after an empty stretch — it goes to the earliest free place before the cursor (beat 1 of an empty bar; beat 2 when beat 1 is full and the cursor stands at 2½)
+    if (gap != null) { c.t = gap; ezBanner(); } }
   if (ezCross(c.bi, c.t, d) && !ezFits(c.bi, c.t, d)) { ezTieAsk({ bi: c.bi, part, t: c.t, m: c.m, d, rest: !!S.restNext }); return; }
   if (!ezFits(c.bi, c.t, d)) { toast(`That ${what} does not fit whole there`); return; }
   if (!S.restNext) { const ch = chordChainAt(bar, c.t, part); if (ch && ch.head.m != null && Math.abs(ch.t - c.t) < 1e-6) { ezStack(c.bi, ch, c.m, part); return; } }   // on a note's own start: a chord — the new note takes the note's length (whatever value is in hand) and its place, wherever it was nudged to
@@ -8717,9 +8719,7 @@ function ezInitPad(pad) {
     if (EZ.mode !== "entry" || !EZ.cur) return; const b0 = g.bars[0], bN = g.bars[g.bars.length - 1];
     d.px = clamp(d.px + dx, g.x(b0, 0), g.x(bN, barBeats(bN)) - 1); d.py = clamp(d.py + dy, g.step / 2, g.H - g.step / 2);
     const at = g.at(d.px), st = gridStep(), c = EZ.cur; let t;
-    if (EZ.mark) t = clamp(Math.round(at.t / st) * st, 0, barBeats(at.bi) - st);                                                         // a mark goes wherever the finger points
-    else if (at.bi !== c.bi) { const h = ezHome(at.bi); t = h ? h.t : 0; }                                                                // into another bar: the cursor lands on its first free place — beat 1 when the bar is empty, after what it holds otherwise
-    else t = c.t;                                                                                                                         // within the bar the pad moves the pitch alone; the arrows move the cursor along the bar
+    if (EZ.mark) t = clamp(Math.round(at.t / st) * st, 0, barBeats(at.bi) - st); else { const near = ezNear(at.bi, at.t); t = near != null ? near : c.t; }   // the cursor goes where the finger takes it; where the note lands is ENTER's affair (sequential, with forgiveness)
     const m = g.m(d.py);
     if (at.bi !== c.bi || Math.abs(t - c.t) > 1e-6 || m !== c.m) { c.bi = at.bi; c.t = r3(t); c.m = m; ezPaint(); ezBanner(); } });
   const end = e => { if (!d || e.pointerId !== d.id) return; if (d.run) { d = null; return; } const still = d.still, tap = still ? d.far < 8 : (d.far < 8 && e.timeStamp - d.at < 450); d = null; if (!tap) return; if (fingering()) { ezTapItem(); return; }   // with nothing in hand any touch that does not travel is a tap, however long it is held
