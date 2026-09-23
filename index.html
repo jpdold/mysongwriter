@@ -10703,6 +10703,7 @@ function openSettings() {
     el("div", { class: "mrow" }, toggle("Snap to beat (half-beats)", S.song.snap, v => { S.song.snap = v; renderAll(); openSettings(); })),
     sec("Device"),
     el("div", { class: "mrow" }, toggle("Keep the screen awake while the app is open" + ("wakeLock" in navigator ? "" : " (this browser cannot)"), S.keepAwake, v => { S.keepAwake = v; savePrefs(); if (v) wakeAcquire(); else wakeRelease(); })),
+    el("div", { class: "tiny", style: "margin-top:8px;opacity:.7" }, "Build: " + (document.lastModified || "?") + " — the copy of the app this screen is running; ⟳ beside the menu fetches the newest"),   // the build stamp: the server's own date for this copy, so a fix just published can be told from a cached copy
     el("div", { class: "mrow" }, el("button", { class: "btn sm", onclick: () => { closeModal(); openSampler(); } }, "♪ Sounds & samples"), el("button", { class: "btn sm", onclick: () => { closeModal(); openHelp(); } }, "How it works")),
   ], "settings", openSettings));
 }
