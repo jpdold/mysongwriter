@@ -6814,17 +6814,29 @@ function bandPlayEvents(part, bi) {
 const beatOf = (bi, t) => Math.min(Math.floor(t + 1e-6), Math.max(0, Math.ceil(barBeats(bi)) - 1));
 const inActive = (bi, t) => !!S.active && S.active.bi === bi;                          // the whole bar is awake: any beat of it takes taps
 /* a tap inside the awake bar aims the entry at the beat tapped: the box and the next note go there */
-function aimBeat(bi, t) { if (!S.active || S.active.bi !== bi) return; const b = beatOf(bi, t); if (b !== S.active.beat) { S.active.beat = b; S.ghost = null; S.justEntered = null; } }
+function aimBeat(bi, t) { if (!S.active || S.active.bi !== bi) return; const b = beatOf(bi, t); S.active.at = null; if (b !== S.active.beat) { S.active.beat = b; S.ghost = null; S.justEntered = null; } }   // aimed afresh: any gap the last tap picked out is let go
 /* inside the awake bar a tap on empty space lands at the marked beat wherever along the bar it falls: the time returned is the next free spot in that beat,
-   so the tap only gives the pitch; when the marked beat is full the next beat of the bar with room takes it, and failing that the tap's own beat */
+   so the tap only gives the pitch; when the marked beat is full the next beat of the bar with room takes it, and failing that the tap's own beat.
+   But a bar with something in it and room to spare takes a tap in a gap as meaning that gap: a tap on free space between two items, or between an item and either
+   end of the bar, that is not the gap the marked beat would fill, moves the entry there — at the tapped beat, or where the gap begins inside it — and the item in
+   hand goes in when it fits there whole (a rest is cut to fit); when it does not fit, the marked beat keeps it, and says so. The gap picked out is kept on the marked
+   beat (S.active.at) so the box, and the taps that follow, stay in it until the beat is aimed elsewhere. */
 function aimEntry(bi, t, part = "melody") {
   if (!S.active || S.active.bi !== bi) return t;
-  const bar = S.song.bars[bi], B = Math.ceil(barBeats(bi));
-  for (let b = S.active.beat; b < B; b++) {
-    const ts = freeSpotInBeat(bar, bi, b, part); if (ts == null) continue;
-    if (b !== S.active.beat) { const je = S.justEntered; aimBeat(bi, b); if (je && je.bi === bi && je.part === part) S.justEntered = { bi, beat: b, part }; }   // moved on by itself: the run of entry carries on, the next tap going straight in
-    return ts;
+  const bar = S.song.bars[bi], B = Math.ceil(barBeats(bi)), evs = bar.ev[part] || [];
+  const move = b => { if (b !== S.active.beat) { const je = S.justEntered; aimBeat(bi, b); if (je && je.bi === bi && je.part === part) S.justEntered = { bi, beat: b, part }; } };   // moved on by itself: the run of entry carries on, the next tap going straight in
+  let ts0 = null, b0 = S.active.beat;                                                     // where the marked beat would put it: its own free spot, or the next beat's with room
+  for (let b = S.active.beat; b < B; b++) { const ts = freeSpotInBeat(bar, bi, b, part); if (ts != null) { ts0 = ts; b0 = b; break; } }
+  const freeAt = !evs.some(e => e.t <= t + 1e-6 && e.t + e.d > t + 1e-6);              // the tap fell on free space (not along a note or a rest)
+  const lo = Math.min(ts0 == null ? t : ts0, t), hi = Math.max(ts0 == null ? t : ts0, t);
+  const sameGap = ts0 != null && !evs.some(e => e.t < hi - 1e-6 && e.t + e.d > lo + 1e-6);   // nothing stands between the marked beat's spot and the tap: the same gap
+  if (ts0 != null && (!freeAt || sameGap)) { move(b0); return ts0; }
+  if (freeAt) {                                                                           // a tap in another gap: the entry goes there when the item in hand fits
+    const tb = beatOf(bi, t), ts = gapSpot(bar, bi, tb, t, part);
+    if (ts != null && (S.restNext || !planSpan(bi, ts, noteLenBeats(), part).deny)) { move(tb); S.active.at = { t, part }; return ts; }
+    if (ts != null && ts0 != null && !planSpan(bi, ts0, noteLenBeats(), part).deny) toast(`No room for that length at beat ${tb + 1} — it goes in at beat ${b0 + 1}`);
   }
+  if (ts0 != null) { move(b0); return ts0; }
   aimBeat(bi, t); return t;
 }
 /* a different song is now in front: nothing may still point at the old one */
@@ -7039,10 +7051,22 @@ function showBox(bi, part = "melody", quiet = false, at = null) {
   else { const plan = planSpan(bi, ts, d, part); if (plan.deny) { if (!quiet) noticeModal(plan.deny); return false; } }
   S.ghost = { part, bi, t: ts, d, rest }; S.sel = null; renderWindows(); renderPalette(); return true;
 }
-/* the first free spot inside the active beat for a new note of the picked length */
+/* the free spot inside a beat for the gap a free time (`near`) lies in: the beat's own start when that is inside the gap, else where the gap begins;
+   null when `near` is not free, or the gap gives this beat no room for the shortest piece of what is in hand */
+function gapSpot(bar, bi, beat, near, part = "melody") {
+  const B = barBeats(bi), b1 = Math.min(B, beat + 1), evs = bar.ev[part] || [];
+  if (evs.some(e => e.t <= near + 1e-6 && e.t + e.d > near + 1e-6)) return null;
+  let gs = 0, ge = B;
+  for (const e of evs) { const end = r3(e.t + e.d); if (end <= near + 1e-6) gs = Math.max(gs, end); if (e.t > near + 1e-6) ge = Math.min(ge, e.t); }
+  const spot = r3(Math.max(gs, beat)), w = Math.min(0.25, noteLenBeats());
+  return spot < b1 - 1e-6 && ge - spot >= w - 1e-6 ? spot : null;
+}
+/* the first free spot inside the active beat for a new note of the picked length — in the gap the last tap picked out, while it still has room there */
 function freeSpotInBeat(bar, bi, beat, part = "melody") {
   const B = barBeats(bi), b0 = beat, b1 = Math.min(B, beat + 1), evs = [...(bar.ev[part] || [])].sort((a, b) => a.t - b.t);
   const w = Math.min(0.25, noteLenBeats()), busy = t => evs.some(e => e.t < t + w - 1e-6 && e.t + e.d > t + 1e-6);
+  const h = S.active && S.active.bi === bi && S.active.beat === beat && S.active.at && S.active.at.part === part ? S.active.at.t : null;
+  if (h != null) { const s = gapSpot(bar, bi, beat, h, part); if (s != null) return s; }
   const end = evs.length ? r3(Math.max(...evs.map(e => e.t + e.d))) : 0;
   if (end >= b0 - 1e-6 && end < b1 - 1e-6 && !busy(end)) return end;             // flush against what's there so far
   let t = b0;
@@ -9531,7 +9555,7 @@ function tapBand(win, bi, t, m, onNote = false, partOf = null) {
   const gh = S.ghost, direct = !!(S.justEntered && S.justEntered.bi === bi && S.justEntered.beat === S.active.beat && S.justEntered.part === part);
   const spot = freeSpotInBeat(bar, bi, S.active.beat, part);
   if (spot == null) { if (!S.artic) toast("This beat is full for the " + PART_META[part].short.toLowerCase() + " — select a note to change it"); return; }
-  if (!direct && !(gh && gh.part === part && gh.bi === bi && beatOf(bi, gh.t) === S.active.beat)) { showBox(bi, part); return; }   // first tap: the box at the next free spot in this beat
+  if (!direct && !(gh && gh.part === part && gh.bi === bi && Math.abs(gh.t - spot) < 1e-6)) { showBox(bi, part); return; }   // first tap: the box at the next free spot in this beat (a tap that picks out another gap moves the box there first)
   const ts = direct ? spot : gh.t, d = direct ? noteLenBeats() : gh.d; S.ghost = null;    // then: pitch from the tap, time from the box — or straight in, after the first note
   if (S.restNext) { S.restNext = false; const nx = (bar.ev[part] || []).filter(e => e.t > ts + 1e-6).sort((a, b) => a.t - b.t)[0]; const rd = Math.max(MIN_D, Math.min(d, r3((nx ? nx.t : B) - ts))); const rev = { id: uid(), t: ts, d: rd, rest: true }; bar.ev[part].push(rev); S.sel = { bi, part, id: rev.id }; S.justEntered = { bi, beat: S.active.beat, part }; renderAll(); return; }
   const plan = planSpan(bi, ts, d, part); if (plan.deny) { renderAll(); noticeModal(plan.deny); return; }
@@ -9808,7 +9832,7 @@ function initPointer() {
     if (S.dynArm) { const bi0 = evId ? parseInt(t.getAttribute("data-bi") || S.bi, 10) : at.bi, ev0 = evId ? S.song.bars[bi0].ev.melody.find(x => x.id === evId) : null; applyDynAt(bi0, "melody", ev0, at.t); return; }
     if (evId) { const bi = parseInt(t.getAttribute("data-bi") || S.bi, 10); const ev = S.song.bars[bi].ev.melody.find(x => x.id === evId); if (S.artic && ev && !ev.rest && ev.m != null) { applyArtic(bi, "melody", ev); return; } if (!ev || !inActive(bi, ev.t)) { activate(at.bi, at.t); return; } S.bi = bi; select(bi, "melody", S.sel && S.sel.id === evId ? null : evId); return; }
     if (!inActive(at.bi, at.t)) { activate(at.bi, at.t); showBox(at.bi, "melody"); return; }
-    aimBeat(at.bi, at.t); S.bi = at.bi; S.ghost = null; const rest = S.restNext; S.restNext = false; const spot = freeSpotInBeat(S.song.bars[at.bi], at.bi, S.active.beat); if (spot == null) { toast("This beat is full"); return; } insertSlotAt(at.bi, spot, noteLenBeats(), rest, true);
+    aimBeat(at.bi, at.t); S.active.at = { t: at.t, part: "melody" }; S.bi = at.bi; S.ghost = null; const rest = S.restNext; S.restNext = false; const spot = freeSpotInBeat(S.song.bars[at.bi], at.bi, S.active.beat); if (spot == null) { toast("This beat is full"); return; } insertSlotAt(at.bi, spot, noteLenBeats(), rest, true);   // the gap tapped takes the slot, when it has room
   });
   /* lyric strip: drag a word, tap to edit or add */
   const lyr = $("lyrSvg"); let ld = null;
