@@ -8393,7 +8393,7 @@ function openTune(winArg) {
 const EZ = { win: "mel", mode: "idle", cur: null, bar: null, sel: null, snap: null, fing: null, fingOn: false, shift: false, multi: [], wheel: "pitch", pal: "notes", mark: null, built: false };
 const easeOn = () => !!S.ease && !deckMode() && !kbUpNow();
 const EZ_WHEEL = [["pitch", "ADJUST\nPITCH"], ["z", "STAVE\nSPACING"], ["nz", "NOTE\nSIZE"], ["sp", "NOTE\nSPACING"]];
-const ezWhite = (bi, win = "mel") => easeOn() && EZ.win === win && (EZ.mode === "nav" || EZ.mode === "edit") && EZ.bar === bi;
+const ezWhite = (bi, win = "mel") => easeOn() && EZ.win === win && (EZ.mode === "nav" || EZ.mode === "edit") && EZ.bar === bi && !EZ.fingOn;
 const ezG = () => GEO[EZ.win];
 const ezParts = () => EZ.win === "mel" ? ["melody", ...(grandLower("mel") ? [GRAND_LOWER] : [])] : [WIN_PART[EZ.win]];
 /* one stave is worked on at a time, so one stave is open at a time, as large as the screen allows: the melody to begin with; a part opened from its bar takes the melody's place
@@ -8443,9 +8443,10 @@ const ezSelAll = () => EZ.multi.length ? EZ.multi.filter(o => (S.song.bars[o.bi]
 function ezEach(fn) { const keep = S.sel; for (const o of ezSelAll()) { S.sel = { bi: o.bi, part: o.part, id: o.id }; fn(selEv(), o); } S.sel = keep; }
 function ezShift() { EZ.shift = !EZ.shift; if (!EZ.shift) EZ.multi = []; else if (EZ.sel && !EZ.multi.length) EZ.multi = [{ bi: EZ.sel.bi, part: EZ.sel.part, id: EZ.sel.id }]; renderAll(); toast(EZ.shift ? "SHIFT: every item tapped or selected is held \u2014 SHIFT again lets them all go" : "SHIFT off"); }
 function ezEditItem() { if (EZ.mode === "edit") return; if (EZ.mode !== "nav" || !ezSelAll().length) { toast("Nothing is selected. Select an item first: tap the finger key and point to it, or tap EDIT BAR and choose a bar."); return; } EZ.snap = JSON.stringify(S.song); EZ.mode = "edit"; EZ.fingOn = false; renderAll(); }   // from here the arrows, the wheel and the pallet work on the item; a copy of the song stands by, so that ESC puts everything back
-function ezFinger() { if (EZ.mode === "edit") { toast("ENTER or ESC first"); return; } const g = ezG(); if (!g) return;                                  // the quick edit: the finger over the whole stave in view (or inside the bar in hand, when there is one)
-  if (EZ.mode !== "nav") { EZ.mode = "nav"; EZ.bar = null; EZ.fingOn = true; EZ.fing = { x: (g.x(g.bars[0], 0) + g.x(g.bars[g.bars.length - 1], barBeats(g.bars[g.bars.length - 1]))) / 2, y: g.H / 2 }; S.ghost = null; renderAll(); return; }
-  EZ.fingOn = !EZ.fingOn; if (EZ.fingOn && !EZ.fing) EZ.fing = { x: EZ.bar != null ? g.x(EZ.bar, barBeats(EZ.bar) / 2) : g.x(g.bars[0], 0), y: g.H / 2 }; ezPanel(); ezPaint(); }
+function ezFinger() { if (EZ.mode === "edit") { toast("ENTER or ESC first"); return; } const g = ezG(); if (!g) return;                                  // the quick spot editor: the finger over the whole stave in view, one item at a time (SHIFT holds more); no bar in hand, none tinted
+  if (EZ.mode === "nav" && EZ.fingOn) { EZ.fingOn = false; ezPanel(); ezPaint(); return; }
+  if (EZ.bar != null) { EZ.bar = null; EZ.sel = null; S.sel = null; }
+  EZ.mode = "nav"; EZ.fingOn = true; if (!EZ.fing) EZ.fing = { x: (g.x(g.bars[0], 0) + g.x(g.bars[g.bars.length - 1], barBeats(g.bars[g.bars.length - 1]))) / 2, y: g.H / 2 }; S.ghost = null; renderAll(); }
 function ezEsc() { if (EZ.mode === "idle" && !EZ.sel && !EZ.multi.length) return; ezDrop(false); EZ.mode = "idle"; EZ.bar = null; EZ.sel = null; EZ.multi = []; EZ.shift = false; EZ.fing = null; EZ.fingOn = false; EZ.mark = null; S.sel = null; S.ghost = null; renderAll(); }
 function ezDrop(keep) { if (!EZ.snap) return; if (!keep && EZ.snap !== JSON.stringify(S.song)) { S.song = upgradeSong(JSON.parse(EZ.snap)); toast("Changes put back — ENTER keeps them"); } EZ.snap = null; }
 function ezItems() { const g = ezG(), out = []; if (!g) return out; const { rx } = headGeom(g);
@@ -8565,7 +8566,7 @@ const ezHand = (attrs = {}) => svgEl("path", Object.assign({ d: EZ_HAND, fill: "
 function ezPaint() {
   document.querySelectorAll(".win svg .ezLay").forEach(n => n.remove()); const svg = $(EZ.win + "Svg"), g = ezG(); if (!svg || !easeOn() || !g || S.winState[EZ.win] === "closed") return;
   const inBar = EZ.mode === "nav" || EZ.mode === "edit";
-  if (EZ.bar != null && g.bars.includes(EZ.bar) && inBar) { const x0 = g.x(EZ.bar, 0), x1 = g.x(EZ.bar, barBeats(EZ.bar)), tint = svgEl("rect", { class: "ezLay", x: x0, y: 0, width: x1 - x0, height: g.H, fill: "#55bdec", opacity: 0.8, "pointer-events": "none" }), hit = svg.querySelector("rect.hit"); if (hit) hit.after(tint); else svg.prepend(tint); }
+  if (EZ.bar != null && g.bars.includes(EZ.bar) && inBar && !EZ.fingOn) { const x0 = g.x(EZ.bar, 0), x1 = g.x(EZ.bar, barBeats(EZ.bar)), tint = svgEl("rect", { class: "ezLay", x: x0, y: 0, width: x1 - x0, height: g.H, fill: "#55bdec", opacity: 0.8, "pointer-events": "none" }), hit = svg.querySelector("rect.hit"); if (hit) hit.after(tint); else svg.prepend(tint); }
   const lay = svgEl("g", { class: "ezLay", "pointer-events": "none" }); svg.append(lay);
   if (EZ.mode === "entry" && EZ.cur && g.bars.includes(EZ.cur.bi)) { const c = EZ.cur, part = ezCurPart(), x = g.x(c.bi, c.t + oxAt(c.bi, c.t, part)) + 2, { rx } = headGeom(g), m = clamp(c.m, g.lo, g.hi), y = g.y(m), sp = staffSpacePx(EZ.win, g.step);
     const gid = "ezGlow", defs = svgEl("defs", {}), rg = svgEl("radialGradient", { id: gid }); rg.append(svgEl("stop", { offset: "0%", "stop-color": "#ffe23a", "stop-opacity": 0.95 }), svgEl("stop", { offset: "55%", "stop-color": "#ffe23a", "stop-opacity": 0.5 }), svgEl("stop", { offset: "100%", "stop-color": "#ffe23a", "stop-opacity": 0 })); defs.append(rg); lay.append(defs);
@@ -8648,7 +8649,7 @@ function ezPanel() {
   const pad = $("ezPad"); pad.className = EZ.mode;
   if (EZ.mode === "pick") pad.replaceChildren(...(g ? g.bars : []).map(bi => el("button", { class: "tile", onclick: () => ezPickBar(bi) }, el("span", {}, "TAP TO EDIT", el("br"), "BAR " + barNo(bi))))); else pad.replaceChildren();
   ezBanner(); const wl = $("ezWlbl"); wl.replaceChildren(); EZ_WHEEL.find(w => w[0] === EZ.wheel)[1].split("\n").forEach((ln, i) => { if (i) wl.append(el("br")); wl.append(ln); });
-  $("ezFing").classList.toggle("on", EZ.mode === "nav" && !!EZ.fingOn); $("ezFing").disabled = EZ.mode === "edit"; $("ezShift").classList.toggle("on", !!EZ.shift); $("ezItem").classList.toggle("on", EZ.mode === "edit"); $("ezItem").disabled = !((EZ.mode === "nav" && ezSelAll().length) || EZ.mode === "edit");
+  $("ezFing").classList.toggle("on", EZ.mode === "nav" && !!EZ.fingOn); $("ezFing").disabled = EZ.mode === "edit"; $("ezEdit").disabled = EZ.mode === "nav" && !!EZ.fingOn; $("ezShift").classList.toggle("on", !!EZ.shift); $("ezItem").classList.toggle("on", EZ.mode === "edit"); $("ezItem").disabled = !((EZ.mode === "nav" && ezSelAll().length) || EZ.mode === "edit");
   $("ezUndo").disabled = !UNDO.stack.length; $("ezRedo").disabled = !UNDO.redo.length;
 }
 function guideToggle() { S.vlDeck = !S.vlDeck; if (!S.vlDeck) { if (S.push) S.push = null; if (S.mv && S.mv.mode === "delete") S.mv = null; } savePrefs(); renderAll(); toast(S.vlDeck ? "The line and its bar are up — LINE again puts them away" : "The line is put away"); }   // the wide screen: LINE brings the line's bar up over the strips, and puts it away
