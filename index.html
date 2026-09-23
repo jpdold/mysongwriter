@@ -7712,7 +7712,7 @@ function drawStaff(svg, g, key) {
   const deep = document.documentElement.hasAttribute("data-tex");             // Pearl: the window set deep — a longer, darker shadow under the top and left edges
   defs.append(grad(g.win + "InT", 0, 1, deep ? 0.6 : 0.32), grad(g.win + "InL", 1, 0, deep ? 0.45 : 0.22), grad(g.win + "InB", 0, 1, deep ? 0.2 : 0.14)); svg.append(defs);
   svg.append(svgEl("rect", { x: 0, y: 0, width: g.W, height: deep ? 20 : 9, fill: `url(#${g.win}InT)`, "pointer-events": "none" }),
-             svgEl("rect", { x: 0, y: 0, width: deep ? 14 : 7, height: g.H, fill: `url(#${g.win}InL)`, "pointer-events": "none" }),
+             svgEl("rect", { x: 0, y: 0, width: g.padL > 0 ? Math.min(deep ? 14 : 7, g.padL) : 0, height: g.H, fill: `url(#${g.win}InL)`, "pointer-events": "none" }),   // the left shadow lies on the head's room alone: where the stave begins at beat 1 (the head out of view) there is none, so the first entry is never caught in it
              svgEl("rect", { x: 0, y: g.H - 5, width: g.W, height: 5, fill: `url(#${g.win}InB)`, transform: `translate(0 ${2 * g.H - 5}) scale(1 -1)`, "pointer-events": "none" }));
   if (g.totalBeats < g.B - 1e-6) { const bx = Math.round(g.x(g.bars[g.bars.length - 1], barBeats(g.bars[g.bars.length - 1]))); svg.append(svgEl("line", { class: "stl", x1: bx, x2: bx, y1: 0, y2: g.H, stroke: css("--beat"), "stroke-width": 2 })); svg.append(svgEl("rect", { x: bx + 1, y: 0, width: g.W - bx, height: g.H, fill: css("--ground"), opacity: 0.12, "pointer-events": "none" })); }
 }
