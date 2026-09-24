@@ -8460,7 +8460,7 @@ function openTune(winArg) {
    pointing finger, kept inside that bar: a tap on the pad takes the item under it (a red box round its head; a tap again lets it go), the four-way pad nudges it (left, right) and
    moves it by half steps (up, down), the wheel likewise, a length on the pallet changes its length at once — and ENTER keeps the changes (ESC, or letting go, puts them back).
    The wheel's small key turns it from pitch to the stave's line spacing, the note size and the note spacing (the tuner's own notches and guards) */
-const EZ = { win: "mel", mode: "idle", cur: null, bar: null, sel: null, snap: null, fing: null, fingOn: false, shift: false, multi: [], wheel: "pitch", pal: "notes", mark: null, built: false };
+const EZ = { win: "mel", mode: "idle", cur: null, bar: null, sel: null, snap: null, fing: null, fingOn: false, shift: false, multi: [], wheel: "pitch", pal: "notes", mark: null, built: false, swipeAt: 0 };
 const easeOn = () => !!S.ease && !kbUpNow() && (!deckMode() || S.layout === "rolled");   // the upright screen, and the wide screen's Roll-up view
 const ezDeck = () => easeOn() && deckMode();
 const EZ_WHEEL = [["pitch", "ADJUST\nPITCH"], ["z", "STAVE\nSPACING"], ["nz", "NOTE\nSIZE"], ["sp", "NOTE\nSPACING"]];
@@ -8811,7 +8811,16 @@ function ezBuild() {
     sq("ezRec", "Record (not yet)", () => {}, sv => sv.append(svgEl("circle", { cx: 12, cy: 12, r: 6.5, fill: "#e02020", stroke: "#7a1410", "stroke-width": 1.2 })))));
   const box = el("div", { id: "ease" }, play, el("div", { id: "ezPal" }, el("div", { id: "ezPalGrid" }), el("div", { id: "ezTabs" })), panel);
   $("vlBar").after(box); ezInitPad(pad);
-  for (const w of ["mel", "acc", "bass"]) $(w + "Win").addEventListener("click", e => { if (!easeOn() || S.winState[w] === "closed" || w === EZ.win || e.target.closest("button")) return; ezWork(w); });   // a tap on a stave that sits small makes it the stave in work
+  for (const w of ["mel", "acc", "bass"]) $(w + "Win").addEventListener("click", e => { if (!easeOn() || S.winState[w] === "closed" || w === EZ.win || e.target.closest("button") || performance.now() - EZ.swipeAt < 500) return; ezWork(w); });   // a tap on a stave that sits small makes it the stave in work (the touch that ends a swipe is no tap)
+  /* a swipe across a stave pages the bars, as PREV and NEXT do: left for the bars on, right for the bars back. In Comfort / Ease the stave is looked at, not touched, and its bars are
+     fitted to its width, so there is nothing else for a swipe to do; a stave with more to show than its width (the phone's) scrolls under the finger as it always did, and no swipe is read */
+  for (const w of ["mel", "acc", "bass"]) { const fr = $(w + "Win").querySelector(".frame"); let sw = null;
+    fr.addEventListener("pointerdown", e => { sw = null; if (!easeOn() || e.target.closest("button") || fr.scrollWidth > fr.clientWidth + 1) return; sw = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY }; });
+    fr.addEventListener("pointermove", e => { if (sw && e.pointerId === sw.id) { sw.x = e.clientX; sw.y = e.clientY; } });
+    fr.addEventListener("pointerup", e => { if (!sw || e.pointerId !== sw.id) return; const dx = sw.x - sw.x0, dy = sw.y - sw.y0; sw = null;
+      if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.5) return;                                                             // a swipe: forty pixels or more, and more across than up or down
+      EZ.swipeAt = performance.now(); const b = $(dx < 0 ? "nextBar" : "prevBar"); if (b.disabled) { toast(dx < 0 ? "The last bars are in view" : "The first bars are in view"); return; } b.click(); });
+    fr.addEventListener("pointercancel", () => { sw = null; }); }
   let w = null, roll = 0;                                                                   // the wheel: a notch every 12px, up is more
   wheel.addEventListener("pointerdown", e => { e.preventDefault(); if (ezWheelOff()) { toast("Option only available in Pills or Circles formats"); return; } w = { id: e.pointerId, y: e.clientY, acc: 0 }; try { wheel.setPointerCapture(e.pointerId); } catch (x) {} });
   wheel.addEventListener("pointermove", e => { if (!w || e.pointerId !== w.id) return; const dy = e.clientY - w.y; w.y = e.clientY; w.acc += dy; roll += dy; wheel.style.backgroundPositionY = "0px, " + roll + "px"; while (Math.abs(w.acc) >= 12) { const dir = w.acc < 0 ? 1 : -1; w.acc += dir * 12; ezWheelTurn(dir); } });
@@ -8820,7 +8829,8 @@ function ezBuild() {
   EZ.built = true;
 }
 function ezPanel() {
-  if (!easeOn()) { const b = $("ease"); if (b) b.hidden = true; ["mel", "acc", "bass"].forEach(w => $(w + "Win").classList.remove("ezSmall")); EZ.openPrev = null; return; } if (!EZ.built) ezBuild(); $("ease").hidden = false;
+  if (!easeOn()) { const b = $("ease"); if (b) b.hidden = true; ["mel", "acc", "bass"].forEach(w => { $(w + "Win").classList.remove("ezSmall"); const fr = $(w + "Win").querySelector(".frame"); if (fr) fr.style.touchAction = ""; }); EZ.openPrev = null; return; } if (!EZ.built) ezBuild(); $("ease").hidden = false;
+  ["mel", "acc", "bass"].forEach(w => { const fr = $(w + "Win").querySelector(".frame"); if (fr) fr.style.touchAction = fr.scrollWidth > fr.clientWidth + 1 ? "" : "none"; });   // the swipe: a stave whose bars fit its width keeps the touch (else the browser takes it for a pan and cancels it); one with more to show scrolls under the finger
   { const np = $("ezPal"), col = $("ezPanel").querySelector(".ezPcol"); if (deckMode()) { if (np.parentNode !== col) col.append(np); np.classList.toggle("pop", !!EZ.palOpen); } else { if (np.parentNode !== $("ease")) $("ease").insertBefore(np, $("ezPanel")); np.classList.remove("pop"); EZ.palOpen = false; } $("ezNT").classList.toggle("on", !!EZ.palOpen); }
   { const pal = $("ezPlayPal"), foot = $("ezPanel").querySelector(".ezRow.nav"), gapEl = foot.querySelector(".gap"); const row = $("ezPanel").querySelector(".ezPlayRow"); if (row) row.remove(); if (deckMode()) { if (pal.parentNode !== gapEl) gapEl.replaceChildren(pal); } else if (pal.parentNode !== $("ezPlay")) $("ezPlay").append(pal); }   // the wide screen: the playback keys in the foot, between SHIFT and PREV, centred in the room between; the upright screen: on their pallet under the stave   // the wide screen: the playback keys in the panel's foot, between SHIFT and PREV; the upright screen: on their pallet under the stave
   if (deckMode()) { const box = $("ease"), win = $(EZ.win + "Win"), fr = win.querySelector(".frame"), ar = $("app").getBoundingClientRect(), wr = win.getBoundingClientRect(), fb = fr.getBoundingClientRect(), nav = $("deckNav").getBoundingClientRect();   // the wide screen: the panel on the right third, the stave's height, up to the column's gear
