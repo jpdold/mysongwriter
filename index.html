@@ -863,9 +863,9 @@ body.kbOpen #lyrEdit, #app.deck.kbUp #lyrEdit { display: none !important; }   /*
 #ease #ezPad .ezT { border-radius: 3px; font-size: 6px; font-weight: 900; letter-spacing: .06em; padding: 0; box-shadow: none; min-height: 12px; display: grid; place-items: center; }
 #ease #ezPad .ezT.bar, #ease #ezPad .ezT.per { background: #3d6fc4; color: #fff; border: 1px solid #fff; font-size: 7px; }   /* BAR and PER ITEM in the bar tiles' own blue, bold white caps; the one in hand flips to the light blue with dark caps, as the chosen tile did */
 #ease #ezPad .ezT.on { background: #55bdec; color: #07223f; outline: 2px solid #1b2a4a; outline-offset: -2px; } #ezPad .ezPerWrap { position: relative; display: grid; min-height: 0; }
-#ease #ezPad .ezNudge { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); display: grid; grid-auto-flow: column; align-items: center; gap: 2px; height: 12px; padding: 0 3px; border: 1px solid #141414; border-radius: 3px; background: linear-gradient(#e6e7ea, #b7bbc2); color: #111; font-size: 5px; font-weight: 900; letter-spacing: .04em; box-shadow: 0 1px 2px rgba(0,0,0,.4); }
-#ease #ezPad .ezNudge svg { width: 10px; height: 10px; background: #3a3d42; border-radius: 2px; } #ease #ezPad .ezNudge.on { background: linear-gradient(#6fb3ff, #2f7fd6); color: #fff; }
-#ezPad .ezPerWrap:has(.ezNudge) .ezT.per { padding-right: 44px; }   /* NUDGE in the corner: the word centred in what is left */
+#ease #ezPad .ezNudge { position: absolute; right: 3px; top: 50%; transform: translateY(-50%); display: grid; grid-template-rows: auto auto; justify-items: center; align-content: center; gap: 2px; width: 34px; height: 34px; padding: 0; border: 1px solid #141414; border-radius: 4px; background: linear-gradient(#e6e7ea, #b7bbc2); color: #111; font-size: 7px; font-weight: 900; letter-spacing: .06em; box-shadow: 0 1px 2px rgba(0,0,0,.4); }   /* a square: the word above, the arrow pad below */
+#ease #ezPad .ezNudge svg { width: 18px; height: 18px; background: #3a3d42; border-radius: 3px; } #ease #ezPad .ezNudge.on { background: linear-gradient(#6fb3ff, #2f7fd6); color: #fff; }
+#ezPad .ezPerWrap:has(.ezNudge) .ezT.per { padding-right: 40px; }   /* NUDGE in the corner: the word centred in what is left */
 #ezPad .ezColLbl { text-align: center; font-size: 6px; font-weight: 800; letter-spacing: .08em; color: #1b2a4a; }
 #ease #ezPad .tile { border: none; border-radius: 0; background: #fff; box-shadow: inset 0 0 0 2px #1b2a4a; display: grid; place-items: center; } #ease #ezPad .tile span { line-height: 1.5; padding: 10px 4px; min-width: 60%; background: #3d6fc4; color: #fff; font-size: 8px; } #ease #ezPad .tile.on { box-shadow: inset 0 0 0 2px #1b2a4a; } #ease #ezPad .tile.on span { background: #55bdec; color: #07223f; }
 #ezPanel .ezWcol { display: grid; grid-template-rows: auto auto 1fr; gap: 3px; justify-items: center; } #ezPanel .ezWtop { width: 100%; display: grid; grid-template-rows: auto 22px; gap: 2px; } #ezWlbl { background: #111; color: #fff; border-radius: 3px; font-size: 7px; font-weight: 800; letter-spacing: .06em; text-align: center; line-height: 1.2; padding: 3px 2px; display: grid; align-content: center; } #ease #ezWmode { font-size: 13px; height: 22px; }   /* the wheel's label and its key (the next thing it adjusts), large enough to read and press */
@@ -7995,7 +7995,7 @@ function drawPartBar(svg, g, bi, part, color, win) {
   }
   for (const e of [...bar.ev[part]].sort((a, b) => a.t - b.t)) {
     const x0 = g.x(bi, e.t) + 1, x1 = g.x(bi, e.t + Math.min(e.d, g.B - e.t)) - 1;
-    if (e.rest) { svg.append(svgEl("rect", { class: "noteEl", x: x0, y: 2, width: Math.max(4, x1 - x0), height: g.H - 4, rx: 2, fill: "none", stroke: css("--ink2"), "stroke-dasharray": "3 3", "data-ev": e.id, "data-part": part, "data-bi": bi })); drawRest(svg, g, (x0 + x1) / 2, e.d, css("--ink2"), {}, part); continue; }
+    if (e.rest) { svg.append(svgEl("rect", { class: "noteEl", x: x0, y: 2, width: Math.max(4, x1 - x0), height: g.H - 4, rx: 2, fill: "none", stroke: css("--ink2"), "stroke-dasharray": "3 3", "data-ev": e.id, "data-part": part, "data-bi": bi })); drawRest(svg, g, (x0 + x1) / 2, e.d, css("--ink2"), { "data-rest": e.id }, part); continue; }
     if (e.m < g.lo || e.m > g.hi) { svg.append(svgEl("text", { class: "noteEl", x: x0 + 2, y: e.m > g.hi ? 9 : g.H - 3, "font-size": 8, "font-weight": 700, fill: color, "data-ev": e.id, "data-part": part, "data-bi": bi, style: "pointer-events:all" }, (e.m > g.hi ? "▲" : "▼") + noteName(e.m, key))); continue; }
     drawNote(svg, g, x0 + 1, e.m, e.d, color, { "data-ev": e.id, "data-part": part, "data-bi": bi }, { noStem: beamed.has(e.id), outline: null, uni: unison.has(e.id), ghostNote: !!e.ghost, w: x1 - x0 + 2 });
     drawAccidental(svg, g, x0 + 1, e.m, color);
@@ -8024,7 +8024,7 @@ function renderWindows() {
       const x0 = g.x(bi, c.t) + 1, x1 = g.x(bi, c.t + c.d) - 1, selected = c.members.some(e => e.id === sel || pickedM.has(e.id));
       { const showSub = S.beatLines || c.rest || selected;   // the per-note solid outline, at that note's own duration: off in Settings or from the toolbar, unless the chain is a rest or selected
       svg.append(svgEl("rect", { class: "slot", x: x0, y: 2, width: Math.max(4, x1 - x0), height: g.H - 4, rx: 2, fill: selected ? box : "none", "fill-opacity": 0.14, stroke: showSub ? (c.rest ? css("--ink2") : box) : "none", "stroke-width": selected ? 2.8 : 2, "stroke-dasharray": c.rest ? "3 3" : "", "data-ev": c.head.id, "data-part": "melody", "data-bi": bi })); }
-      if (c.rest) { drawRest(svg, g, (x0 + x1) / 2, c.d, css("--ink2")); continue; }
+      if (c.rest) { drawRest(svg, g, (x0 + x1) / 2, c.d, css("--ink2"), { "data-rest": c.head.id }); continue; }
       if (c.head.m == null && spanNow() === 4) { /* unpitched: nothing to draw */ }
       if (c.head.m == null) continue;
       const m = c.head.m;
@@ -8533,7 +8533,7 @@ function ezPickGroup(bi, kind) { EZ.bar = bi; S.bi = bi; EZ.fingOn = false; EZ.n
 function ezPickItems(bi) { EZ.bar = bi; S.bi = bi; EZ.fingOn = false; EZ.nudge = false; EZ.pick = { kind: "item" }; ezDrop(false); EZ.multi = []; EZ.mode = "nav"; renderAll();
   const first = ezSorted()[0]; if (!first) { toast(`Bar ${barNo(bi)} is empty — the cursor is in it: choose a value, place it, ENTER`); ezSetMode("entry", bi); return; } ezPoint(first); }
 function ezNudgeToggle() { EZ.nudge = !EZ.nudge; ezPanel(); toast(EZ.nudge ? "NUDGE: ← → move where the item is drawn" : "← → walk the items again"); }
-function ezPoint(it) { EZ.sel = it; EZ.fing = { x: it.x, y: it.y }; S.sel = { bi: it.bi, part: it.part, id: it.id }; S.selAuto = false;
+function ezPoint(it) { EZ.sel = it; EZ.fing = { x: it.x, y: it.y }; EZ.magItem = it; S.sel = { bi: it.bi, part: it.part, id: it.id }; S.selAuto = false;
   if (EZ.shift) { const k = EZ.multi.findIndex(o => o.id === it.id); if (k >= 0) EZ.multi.splice(k, 1); else EZ.multi.push({ bi: it.bi, part: it.part, id: it.id }); } else EZ.multi = [];   // SHIFT on: the item is held with the others (tapped again, let go)
   renderAll(); }
 const ezInHand = () => EZ.mode === "edit" || (EZ.mode === "nav" && !!EZ.fingOn && !!EZ.sel);   // an item to work on: EDIT THIS ITEM pressed, or the finger's pick (its changes made as they come — UNDO takes them back)
@@ -8787,11 +8787,20 @@ function ezPaint() {
     if (EZ.fingOn && EZ.fing && !editing) { const R = Math.max(7, Math.min(13, staffSpacePx(EZ.win, g.step) * 0.6)), gid = "ezPtGlow", defs = svgEl("defs", {}), rg = svgEl("radialGradient", { id: gid });   // the pointer: a blue ring on the point, no fill, a soft glow round it
       rg.append(svgEl("stop", { offset: "0%", "stop-color": "#2f7fd6", "stop-opacity": 0.45 }), svgEl("stop", { offset: "55%", "stop-color": "#2f7fd6", "stop-opacity": 0.22 }), svgEl("stop", { offset: "100%", "stop-color": "#2f7fd6", "stop-opacity": 0 })); defs.append(rg); lay.append(defs);
       lay.append(svgEl("circle", { class: "ezPt", cx: EZ.fing.x, cy: EZ.fing.y, r: R * 2.4, fill: `url(#${gid})` }), svgEl("circle", { class: "ezPt", cx: EZ.fing.x, cy: EZ.fing.y, r: R, fill: "none", stroke: "#2f7fd6", "stroke-width": 2 }), svgEl("circle", { class: "ezPt", cx: EZ.fing.x, cy: EZ.fing.y, r: R + 1.6, fill: "none", stroke: "#fff", "stroke-width": 1, opacity: 0.85 })); } }
+  ezMagEls = []; ezMagnify();                                                              // the stave drawn afresh: the item under the ring made larger again (nothing to put back — the old elements are gone)
 }
 /* the pointer under the thumb: the nearest item within reach takes it (the ring pops onto the head's centre, or a rest's middle); the thumb's own travel goes on underneath
    (EZ.fingRaw), so the ring is never held back by what it snapped to, and it leaves the item the moment the thumb is out of reach */
 const ezReach = g => Math.max(18, headGeom(g).rx * 2.2);
 function ezMagnet(raw, items) { const g = ezG(); if (!g) return null; const reach = ezReach(g); return (items || ezItems()).map(it => ({ it, d: Math.hypot(it.x - raw.x, it.rest ? 0 : it.y - raw.y) })).filter(o => o.d <= reach).sort((a, b) => a.d - b.d).map(o => o.it)[0] || null; }
+/* the item the ring stands on, drawn a little larger: its note (head, stem and flags) or its rest glyph scaled about the ring's centre — the last one put back as it was */
+const EZ_MAG = 1.28; let ezMagEls = [];
+function ezMagnify() {
+  for (const n of ezMagEls) n.removeAttribute("transform"); ezMagEls = [];
+  const it = EZ.magItem; if (!it || !EZ.fingOn || EZ.mode === "edit") return; const svg = $(EZ.win + "Svg"); if (!svg) return;
+  const els = it.rest ? svg.querySelectorAll(`[data-rest="${it.id}"]`) : svg.querySelectorAll(`g[data-ev="${it.id}"]`);
+  els.forEach(n => { n.setAttribute("transform", `translate(${it.x} ${it.y}) scale(${EZ_MAG}) translate(${-it.x} ${-it.y})`); ezMagEls.push(n); });
+}
 function ezPointerMove() {                                                                  // the ring moved by its own coordinates — three attributes, no repaint of the layer (repainted only when the ring is not there to move)
   const svg = $(EZ.win + "Svg"), pts = svg ? svg.querySelectorAll(".ezLay circle.ezPt") : []; if (!pts.length || !EZ.fing) { ezPaint(); return; }
   pts.forEach(c => { c.setAttribute("cx", EZ.fing.x); c.setAttribute("cy", EZ.fing.y); });
@@ -8807,7 +8816,7 @@ function ezInitPad(pad) {
     if (EZ.mode === "entry" && EZ.cur) { d.px = g.x(EZ.cur.bi, EZ.cur.t); d.py = g.y(clamp(EZ.cur.m, g.lo, g.hi)); } if (fingering()) { EZ.fingRaw = { x: EZ.fing.x, y: EZ.fing.y }; d.items = ezItems(); } try { pad.setPointerCapture(e.pointerId); } catch (x) {} });   // the thumb's travel starts from where the ring stands; the items listed once for the drag
   pad.addEventListener("pointermove", e => { if (!d || e.pointerId !== d.id) return; if (d.run) { const r = pad.getBoundingClientRect(); rsMove(pad, e.clientX - r.left, e.clientY - r.top); return; } if (d.still) return; const g = ezG(); if (!g) return; const dx = (e.clientX - d.x) * d.kx, dy = (e.clientY - d.y) * d.ky; d.x = e.clientX; d.y = e.clientY; d.far += Math.abs(dx) + Math.abs(dy);
     if (fingering()) { const b0 = EZ.bar != null ? EZ.bar : g.bars[0], bN = EZ.bar != null ? EZ.bar : g.bars[g.bars.length - 1], x0 = g.x(b0, 0), x1 = g.x(bN, barBeats(bN)), raw = EZ.fingRaw || (EZ.fingRaw = { x: EZ.fing.x, y: EZ.fing.y });
-      raw.x = clamp(raw.x + dx, x0 + 2, x1 - 2); raw.y = clamp(raw.y + dy, 2, g.H - 2); const near = ezMagnet(raw, d.items); EZ.fing = near ? { x: near.x, y: near.y } : { x: raw.x, y: raw.y }; ezPointerMove(); return; }   // the finger never leaves the bar in hand; the ring pops onto the item in reach
+      raw.x = clamp(raw.x + dx, x0 + 2, x1 - 2); raw.y = clamp(raw.y + dy, 2, g.H - 2); const near = ezMagnet(raw, d.items); EZ.fing = near ? { x: near.x, y: near.y } : { x: raw.x, y: raw.y }; if ((near && near.id) !== (EZ.magItem && EZ.magItem.id)) { EZ.magItem = near; ezMagnify(); } ezPointerMove(); return; }   // the finger never leaves the bar in hand; the ring pops onto the item in reach
     if (EZ.mode !== "entry" || !EZ.cur) return; const b0 = g.bars[0], bN = g.bars[g.bars.length - 1];
     d.px = clamp(d.px + dx, g.x(b0, 0), g.x(bN, barBeats(bN)) - 1); d.py = clamp(d.py + dy, g.step / 2, g.H - g.step / 2);
     const at = g.at(d.px), st = gridStep(), c = EZ.cur; let t;
@@ -8898,7 +8907,7 @@ function ezPanel() {
       const barBox = el("button", { class: "ezT bar" + (here && K2 === "bar" ? " on" : ""), onclick: () => ezPickGroup(bi, "bar") }, "BAR");
       const per = el("button", { class: "ezT per" + (here && K2 === "item" ? " on" : ""), onclick: () => ezPickItems(bi) }, "PER ITEM");
       const nud = here && K2 === "item" ? (() => { const sv = svgEl("svg", { viewBox: "0 0 20 20", "aria-hidden": "true" }); const tri = (d, c) => sv.append(svgEl("path", { d, fill: c })); tri("M 10 2 L 13 6 L 7 6 Z", "#9a9a9a"); tri("M 10 18 L 7 14 L 13 14 Z", "#9a9a9a"); tri("M 2 10 L 6 7 L 6 13 Z", "#fff"); tri("M 18 10 L 14 7 L 14 13 Z", "#fff"); sv.append(svgEl("rect", { x: 7.5, y: 7.5, width: 5, height: 5, rx: 1, fill: "#fff" }));
-        return el("button", { class: "ezNudge" + (EZ.nudge ? " on" : ""), title: "NUDGE: ← → move where the item is drawn", onclick: e => { e.stopPropagation(); ezNudgeToggle(); } }, sv, el("span", {}, "NUDGE")); })() : null;
+        return el("button", { class: "ezNudge" + (EZ.nudge ? " on" : ""), title: "NUDGE: ← → move where the item is drawn", onclick: e => { e.stopPropagation(); ezNudgeToggle(); } }, el("span", {}, "NUDGE"), sv); })() : null;   // the word above the arrow pad
       return el("div", { class: "ezCol" }, barBox, el("div", { class: "ezPerWrap" }, per, nud), el("span", { class: "ezColLbl" }, "BAR " + barNo(bi))); }));
   else { pad.replaceChildren(); if (S.run && S.run.on && !EZ.runOpen) rsDraw(pad); } pad.classList.toggle("running", !!(S.run && S.run.on && !EZ.runOpen));
   ezBanner(); const wl = $("ezWlbl"); wl.replaceChildren(); EZ_WHEEL.find(w => w[0] === EZ.wheel)[1].split("\n").forEach((ln, i) => { if (i) wl.append(el("br")); wl.append(ln); }); wl.classList.toggle("off", ezWheelOff()); $("ezWheel").classList.toggle("off", ezWheelOff());
