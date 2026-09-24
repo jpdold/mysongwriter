@@ -5026,7 +5026,7 @@ function toast(msg, ms = 5200) {
 $("toast").addEventListener("pointerdown", () => { clearTimeout(toastTimer); $("toast").classList.remove("on"); });   // tapping it closes it right away instead of waiting out the timer
 $("reloadBtn").addEventListener("click", () => {                                       // ⟳ beside the menu: a fresh load of the app
   if (TURNED || document.fullscreenElement) {                                            // turned by TURN: a page reload would end fullscreen and drop the lock, so the app is refreshed in place instead
-    try { localStorage.setItem("msw_reTurn", "1"); } catch (e) {} }                       // turned by TURN: a reload drops fullscreen and the lock — noted, so the wide view is brought back once the app is up again
+    try { localStorage.setItem("msw_reTurn", TURNED_TO || "landscape"); } catch (e) {} }                       // turned by TURN: a reload drops fullscreen and the lock — noted, so the wide view is brought back once the app is up again
   location.replace(location.pathname + "?r=" + Date.now());                             // a fresh copy from the server, never the browser's cached one (a reload may take the cached page, and a fix just published is then not seen)
 });
 { try { localStorage.removeItem("msw_turned"); } catch (e) {} }   // an earlier build turned the screen back on the first tap after a load whenever TURN had last left it turned — so any tap on the phone could swing it to the wide view; that is gone, and its flag cleared (turned by TURN, ⟳ refreshes in place instead)
@@ -7110,14 +7110,14 @@ const deckMode = () => deckMQ();
 /* TURN, under ☰: the phone turned to the other orientation. The page asks to go fullscreen and then locks the screen's orientation, which a phone
    browser allows in fullscreen (and an installed app allows outright); turned back, it unlocks and leaves fullscreen. Where the browser cannot lock
    the orientation at all (iPhones) a toast says so — the phone itself still turns the view */
-let TURNED = false;
+let TURNED = false, TURNED_TO = null;                                                    // turned by TURN, and to which way — so a refresh brings that way back, not the other
 async function turnScreen() {
   const mq = deckMQ(), so = screen.orientation;
   if (!so || !so.lock) { toast("This browser cannot turn the screen — turn the phone itself"); return; }
   try {
     if (TURNED) { TURNED = false; try { so.unlock(); } catch (e) {} if (document.fullscreenElement && document.exitFullscreen) await document.exitFullscreen(); return; }   // turned by TURN: let the phone have its own orientation back
     if (!document.fullscreenElement && document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen({ navigationUI: "hide" });
-    await so.lock(mq ? "portrait" : "landscape"); TURNED = true;   // the other orientation from the one the screen has now — remembered, so a refresh (which drops fullscreen and the lock) can bring it back
+    const to = mq ? "portrait" : "landscape"; await so.lock(to); TURNED = true; TURNED_TO = to;   // the other orientation from the one the screen has now — remembered, with which way, so a refresh (which drops fullscreen and the lock) can bring it back
   } catch (e) { toast("The screen could not be turned here — turn the phone itself, or add the app to the home screen"); }
 }
 /* Stacked staves on a wide screen ("duo"): the deck's frame and tool bar, but two staves — the melody, about a third of the screen's height,
@@ -8824,6 +8824,7 @@ function ezInitPad(pad) {
   let d = null; const fingering = () => EZ.mode === "nav" && EZ.fingOn && EZ.fing;
   const running = () => S.run && S.run.on && easeOn() && !EZ.runOpen && EZ.mode !== "edit";
   pad.addEventListener("pointerdown", e => { if (e.target.closest(".tile") || e.target.closest(".ezCol") || e.target.closest(".ezRun") || e.target.closest(".rsInt") || EZ.mode === "pick") return;
+    if (!running() && (EZ.mode === "idle" || (EZ.mode === "nav" && !fingering()))) { ezSetMode("entry", EZ.bar); toast(`The cursor is up \u2014 ${S.restNext ? "a rest" : "a note"} of the value on the pallet`); }   // nothing in hand: the cursor up the moment the pad is touched, and this touch's travel moves it (a tap alone had brought it up, and a drag had done nothing)
     if (running()) { e.preventDefault(); const r = pad.getBoundingClientRect(); d = { id: e.pointerId, run: true }; try { pad.setPointerCapture(e.pointerId); } catch (x) {} rsMove(pad, e.clientX - r.left, e.clientY - r.top); return; } const g = ezG(), svg = $(EZ.win + "Svg"); if (!g || !svg) return; e.preventDefault(); const fr = svg.parentNode;   // a bar tile takes its own tap (the pad must not capture it, or the tile's click never comes)
     const gain = EZ.mode === "entry" ? 0.5 : 1;                                                                                                        // the entry cursor at half the pad's ratio: twice the thumb's travel to a row or a beat, for a finer hand
     d = { id: e.pointerId, x: e.clientX, y: e.clientY, at: e.timeStamp, far: 0, still: EZ.mode !== "entry" && !fingering(), kx: gain * fr.clientWidth / Math.max(1, pad.clientWidth), ky: EZ.mode === "entry" ? Math.min(gain * fr.clientHeight / Math.max(1, pad.clientHeight), g.step / 8) : fr.clientHeight / Math.max(1, pad.clientHeight) };   // and never less than 8px of thumb to a row, however close the rows are drawn   // still: nothing to drag in this mode — a tap alone counts
@@ -12116,7 +12117,7 @@ async function boot() {
   const fromLink = await importFromHash();
   if (!fromLink) { const cur = readJSON(STORE.cur, null); if (!cur || !loadSong(cur)) { S.song = newSong(); saveNow(); } }
   { let re = null; try { re = localStorage.getItem("msw_reTurn"); localStorage.removeItem("msw_reTurn"); } catch (e) {}   // refreshed from the wide view: back to it — the lock alone where the browser allows it, else a word to tap TURN
-    if (re) { (async () => { try { if (screen.orientation && screen.orientation.lock) { await screen.orientation.lock("landscape"); TURNED = true; } else throw 0; } catch (e) { toast("Refreshed — tap TURN to go back to the wide view"); } })(); } }
+    if (re) { (async () => { try { if (screen.orientation && screen.orientation.lock) { const to = re === "portrait" ? "portrait" : "landscape"; await screen.orientation.lock(to); TURNED = true; TURNED_TO = to; } else throw 0; } catch (e) { toast("Refreshed — tap TURN to go back to the wide view"); } })(); } }
   homeStaves();                                                                            // the app loads with every stave's staves centred in its window (each as it comes into view on the deck), the covers closed over the rest
   upgradeTies(S.song); S.chordsDisp = S.song.showRoman ? "roman" : S.chordsDisp;
   loadSampleMeta().then(loadSongBanks);
