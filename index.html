@@ -6407,7 +6407,7 @@ const GRAND_LOWER = "lh";
 const grandLower = win => (win === "mel" && clefNow("mel") && clefNow("mel").bands) ? GRAND_LOWER : null;   // the part the lower staff carries, when the melody's window is a Grand Stave
 const onLowerStaff = (g, m) => { if (!g.dia || g.win !== "mel" || !grandLower("mel")) return false; const bs = focusBandSteps("mel"); return g.stepOf(m) < (bs[0][1] + bs[1][0]) / 2; };   // a pitch below the middle of the gap between the staves belongs to the lower one
 const WIN_LO = { mel: "melLo", acc: "accLo", bass: "bassLo" };
-const NOTE_SCALE = { x: 0.47, s: 0.55, m: 0.72, l: 0.92 }; const noteSizeNow = () => (typeof deckMode === "function" && deckMode()) ? S.noteSize : "x"; const noteZoomNow = () => (S.noteZoom && S.noteZoom[deckMode() ? "deck" : "phone"]) || 1; const NS = () => (NOTE_SCALE[noteSizeNow()] || 1) * noteZoomNow();   // the note size incrementer: the heads (and stems, flags, marks with them) scaled on this screen alone, the staves untouched   // on the phone every note is drawn Micro   // x is Micro: notes small enough that every bar the window shows fits across it, side by side, with no sideways scrolling   // note size: heads, stems and flags; the stave never changes
+const NOTE_SCALE = { x: 0.47, s: 0.55, m: 0.72, l: 0.92 }; const tradNotes = () => S.noteStyle === "trad"; const sizeSel = () => tradNotes() ? "m" : S.noteSize;   /* Traditional notes have no note size: their heads are the stave's size (the lines above and below hug every head), so the size choice is put away for them and everything a size once set for them (stems, flags, rests, marks, the row height) stands at Medium */ const noteSizeNow = () => (typeof deckMode === "function" && deckMode()) ? sizeSel() : "x"; const microLayout = () => tradNotes() || "x" === noteSizeNow(); /* every bar in view across the window side by side: Micro's way, and Traditional notes' always (their heads are the stave's size whatever the beat's width) */ const noteZoomNow = () => tradNotes() ? 1 : (S.noteZoom && S.noteZoom[deckMode() ? "deck" : "phone"]) || 1; const NS = () => (NOTE_SCALE[noteSizeNow()] || 1) * noteZoomNow();   // the note size incrementer: the heads (and stems, flags, marks with them) scaled on this screen alone, the staves untouched   // on the phone every note is drawn Micro   // x is Micro: notes small enough that every bar the window shows fits across it, side by side, with no sideways scrolling   // note size: heads, stems and flags; the stave never changes
 const HK = () => S.halfLines ? 1.55 : 1;         // lines-and-spaces: heads grow to fill a space (two rows)
 const STEP_K = { x: 0.82, s: 0.94, m: 1, l: 1.06 };   // row height nudges a little with the note size (Micro's rows tighter still, so more of the range shows)
 Object.assign(S, { bi: 0, len: 1, dot: false, noteStyle: "trad", noteSize: "m", chordMode: false, chordWin: { mel: false, acc: false, bass: false }, chordColor: "black", justEntered: null, activePart: "melody", lastEntered: null, ftp: null, mv: null, selAuto: false, halfLines: true, winSize: "m", chordsDisp: "names", metro: "off", winState: { mel: "open", acc: "closed", bass: "closed" }, zoomWin: { mel: 1, acc: 1, bass: 1 }, lyricFont: "sans", viewSpan: 1, layout: "rolled", selChip: null, deck: ["mel", "acc", "bass"], deckSel: null, rhyShown: true, lyrShown: true, partsShown: true, dynShown: false, dynArm: null, ghost: null, restNext: false, restLen: null, ghostNext: false, artic: null, slurFrom: null, active: null, softKb: ("ontouchstart" in window), popPos: null, mode: "melody", rangeLock: false, kbLayout: "standard", kbTheme: "classic", kbSpace: 0, kbBackUp: 0, picked: [] });
@@ -6461,7 +6461,7 @@ const curBar = () => S.song.bars[S.bi];
 function viewOf(win) { const v = S.song.view; if (v.bassLo == null) v.bassLo = 36; return v[WIN_LO[win]]; }
 const DECK_ROWS = { mel: 0, acc: 0, bass: 0 }, PHONE_ROWS = { mel: 0, acc: 0, bass: 0 }; /* PHONE_ROWS: more rows than the window size says when the buttons beside the stave, or a clef's span, need them */ let DECK_TOP = 17; const DECK_FIX = { px: 0 };   // DECK_FIX: what the tool bar was found to miss the screen's foot by once drawn — the stave takes it up next time                        // the beat labels' height above the stave, as last seen                                          // on the deck the stave shows as many rows as fill the screen (computed by allocate)
 const ECON_Z = 0.45, DUO_K = 1 / ECON_Z;   // the line spacing the app now begins with (times the natural row height); Stacked staves, already close-set, count it back out so they look as they did
-function rowsOf(win) { const deck = deckMode() && DECK_ROWS[win]; const rows = deck ? DECK_ROWS[win] : (PHONE_ROWS[win] || WIN[S.winSize][win][0]); return { rows, step: deck ? STEPS[win] * (STEP_K[S.noteSize] || 1) * (S.zoomWin && S.zoomWin[win] || 1) * (duoMode() && !kbUpNow() ? DUO_K : 1) : Math.round(STEPS[win] * (STEP_K[S.noteSize] || 1) * 100) / 100 }; }   // the phone's row height to a hundredth, so a frame sized to the column beside it lands within a fraction of a pixel
+function rowsOf(win) { const deck = deckMode() && DECK_ROWS[win]; const rows = deck ? DECK_ROWS[win] : (PHONE_ROWS[win] || WIN[S.winSize][win][0]); return { rows, step: deck ? STEPS[win] * (STEP_K[sizeSel()] || 1) * (S.zoomWin && S.zoomWin[win] || 1) * (duoMode() && !kbUpNow() ? DUO_K : 1) : Math.round(STEPS[win] * (STEP_K[sizeSel()] || 1) * 100) / 100 }; }   // the phone's row height to a hundredth, so a frame sized to the column beside it lands within a fraction of a pixel
 /* share the screen among the open windows: melody weighs most; half windows count half; closed ones show a bar */
 /* the duo: the melody about a third of the screen's height at its natural scale; the band part in view fills exactly what is left
    between the last strip (or the melody) and the tool bar, edge to edge — its row height stretched a whisker so it lands flush */
@@ -6471,7 +6471,7 @@ function allocateDuo() {
      the staves left open share the rest by weight — the melody two parts, a band one — so the room freed by a fold goes to the staves that
      remain, and unfolding gives every stave its share back; each stave fills its share exactly, the rows at their natural scale and every row
      stretched a whisker, so the stack lands on the tool bar to the pixel; a clef view keeps its staff and ledger lines in view, centred */
-  const wins = duoWins(), k0 = STEP_K[S.noteSize] || 1, kOf = w => k0 * (S.zoomWin[w] || 1) * DUO_K, barH = window.innerHeight < 520 ? 12 : 24;
+  const wins = duoWins(), k0 = STEP_K[sizeSel()] || 1, kOf = w => k0 * (S.zoomWin[w] || 1) * DUO_K, barH = window.innerHeight < 520 ? 12 : 24;
   $("app").style.setProperty("--barH", barH + "px");
   const clampView = (w, rows) => { const key = WIN_LO[w], v = S.song && S.song.view ? viewOf(w) : null, [minV, topV] = viewLimits(w, rows); if (v != null && v + rows - 1 > topV) S.song.view[key] = Math.max(minV, topV + 1 - rows); };
   const open = wins.filter(w => !S.collapsed[w]);
@@ -6522,7 +6522,7 @@ function allocate() {
       let target = window.innerHeight - 12 - h("head") - h("rollBar") - 6 - (h("rollBar") ? 1 : 0) - (rhyOn ? h("rhyStrip") : 0) - (lyrOn ? h("lyrStrip") : 0) - (S.dynShown && !app.classList.contains("kbUp") && !vlUp ? (h("dynStrip") || 32) : 0) - (vlUp ? (h("vlBar") || 76) : 0) - (easeOn() ? 6 : Math.max(h("toolbar"), 30)) - topExtra - 16 + DECK_FIX.px;   // the strips, when shown, sit flush between the stave and the tool bar
       if (kb && duoMode()) { const kr = $("wordEdit").getBoundingClientRect(); if (kr.height > 0) target -= kr.height + h("lyrStrip") + 8; }   // the lyrics screen: the stave ends above the Lyrics strip riding on the keyboard
       { const side = $(w + "Win").querySelector(".side"); if (side && side.offsetHeight > 0) { const kids = [...side.children].filter(k => k.offsetHeight > 0), cs = getComputedStyle(side); const need = kids.reduce((a, k) => a + k.offsetHeight, 0) + Math.max(0, kids.length - 1) * (parseFloat(cs.rowGap) || 0) + (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0); target = Math.max(target, need - 16); } }   // never shorter than the buttons beside it need: they would hold the stave's row open and leave a gap   // the stave's drawing height: the screen less the rows above and below, the three 6px margins, the tool bar's 6px when the strips show, the frame's borders and pads
-      const k = (STEP_K[S.noteSize] || 1) * (S.zoomWin[w] || 1), fitsAtFullScale = target >= rows0 * hi * k;   // room for at least the usual row count at the stave's natural scale (the spacing buttons' factor in k)?
+      const k = (STEP_K[sizeSel()] || 1) * (S.zoomWin[w] || 1), fitsAtFullScale = target >= rows0 * hi * k;   // room for at least the usual row count at the stave's natural scale (the spacing buttons' factor in k)?
       let rows = fitsAtFullScale ? clamp(Math.floor(target / (hi * k)), rows0, 88) : rows0;
       const minRows = minRowsFor(w); if (minRows && rows < minRows) rows = minRows;        // a clef view: never so large that its staves and ledger lines run out of view
       rows = evenRows(rows, w, minRows);                                                  // and a row count that centres the staves exactly
@@ -6556,7 +6556,7 @@ function allocate() {
     if (!f(w)) continue; const side = $(w + "Win").querySelector(".side"); if (!side) continue;
     const kids = [...side.children].filter(k => k.offsetHeight > 0 && !k.hidden), cs = getComputedStyle(side), gap = parseFloat(cs.rowGap) || parseFloat(cs.gap) || 0;
     const need = kids.reduce((a, k) => a + k.offsetHeight + (parseFloat(getComputedStyle(k).marginTop) || 0), 0) + Math.max(0, kids.length - 1) * gap + (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
-    const [rows0, , hi0] = WIN[S.winSize][w], k = STEP_K[S.noteSize] || 1, step = Math.round(STEPS[w] * k * 100) / 100, maxStep = hi0 * k * (S.zoomWin[w] || 1); let rows = rows0;   // maxStep: the widest row this window size allows
+    const [rows0, , hi0] = WIN[S.winSize][w], k = STEP_K[sizeSel()] || 1, step = Math.round(STEPS[w] * k * 100) / 100, maxStep = hi0 * k * (S.zoomWin[w] || 1); let rows = rows0;   // maxStep: the widest row this window size allows
     if (clefOn(w)) rows = Math.max(rows, minRowsFor(w));                                                    // a clef's whole span in view, the Grand Stave's two staves, their gap and the ledger lines included
     const fcs = getComputedStyle($(w + "Win").querySelector(".frame")), chrome = 10 + (parseFloat(fcs.borderTopWidth) || 0) + (parseFloat(fcs.borderBottomWidth) || 0);   // the frame beyond its rows: 10px of padding and its borders as the browser really draws them
     let room = need - chrome, maxStepT = maxStep;                                                           // the rows' share of the column's height
@@ -6657,7 +6657,7 @@ const clefPadPx = (win, step, W1) => clefNow(win) && !headHidden() ? Math.min(Ma
 /* Stacked staves: one pad for all the staves in view — the widest head's (a Grand Stave's, with its brace and two clefs) — so bar 1 starts at the same x on every stave and the bar lines and beat lines fall in line down the stack; a narrower head sits right-aligned in it */
 function sharedClefPad(W1) { let p = 0; for (const w of duoWins()) { if (S.collapsed[w]) continue; const { step } = rowsOf(w); p = Math.max(p, clefPadPx(w, step, W1)); } return p; }
 const clefPadFor = (win, step, W1) => duoMode() ? sharedClefPad(W1) : clefPadPx(win, step, W1);
-const regularBeatPx = (win, step, W1) => (W1 - clefPadPx(win, step, W1)) / ((noteSizeNow() === "x" || duoMode() || edgeOn() || lyrView()) ? spanBase() * barBeats() : barBeats());   // Regular's beat width: the bars set in Window shows across the width (every one at Micro, the first otherwise)
+const regularBeatPx = (win, step, W1) => (W1 - clefPadPx(win, step, W1)) / ((microLayout() || duoMode() || edgeOn() || lyrView()) ? spanBase() * barBeats() : barBeats());   // Regular's beat width: the bars set in Window shows across the width (every one at Micro, the first otherwise)
 const setBeatPx = (win, step, W1) => spacingSp() ? Math.min(spacingSp() * staffSpacePx(win, step), regularBeatPx(win, step, W1)) : 0;   // a set spacing's beat width — never wider than Regular's, so Tight ≤ Small ≤ Regular in every view; else 0
 function spacingSpan() {                                                                  // Small / Tight: the bars the window holds at the set width, the last one part-way
   const win = leadWin(), svg = $(win + "Svg"), W1 = Math.max(120, (svg && svg.parentNode && svg.parentNode.clientWidth) || 300), { step } = rowsOf(win);
@@ -6670,7 +6670,7 @@ function geo(win) {
   const bars = viewBars(), starts = {}; let accB = 0;
   for (const b of bars) { starts[b] = accB; accB += barBeats(b); }
   const setPx = duoMode() ? 0 : setBeatPx(win, step, W1);                                   // a set spacing (Small / Tight): every beat this wide; at the song's end, with fewer bars left than fit, they fill the width as before
-  const fillPx = (W1 - padL - padR) / (noteSizeNow() === "x" || duoMode() || setPx || edgeOn() || lyrView() || ezDeck() ? Math.max(accB, B) : B);   // a bar to the window's width — or, at Micro, every bar in view across it side by side, nothing to scroll
+  const fillPx = (W1 - padL - padR) / (microLayout() || duoMode() || setPx || edgeOn() || lyrView() || ezDeck() ? Math.max(accB, B) : B);   // a bar to the window's width — or, at Micro, every bar in view across it side by side, nothing to scroll
   const beatPx = setPx ? Math.max(setPx, fillPx) : fillPx;
   const W = padL + padR + Math.max(accB, B) * beatPx;
   const g = { win, B, n, first, bars, starts, totalBeats: accB, W, W1, H: padT + rows * step + padB, padL, padT, step, lo, hi, beatPx };
@@ -7346,7 +7346,7 @@ function renderRollBar() {
     { let sc = $("staveCtl"); if (!sc) sc = el("div", { id: "staveCtl" }); if (sc.parentNode !== $("toolR")) $("toolR").insertBefore(sc, $("flipBtn"));   // WIDER and TIGHTER: under a STAVE cap at the tool bar's right end, acting on the stave in view
       sc.replaceChildren(el("button", { title: "Wider: the lines further apart, notes and clef with them, up to the widest", onclick: () => zoomRows(deckActive(), 1) }, "|<>|"), el("button", { title: "Tighter: the lines closer together, notes and clef with them, down to the legible least", onclick: () => zoomRows(deckActive(), -1) }, ">|<"),
         el("button", { class: S.edge ? "on" : "", title: "Edge: the stave out to the screen's left edge, with two more bars in view; tap again to bring the pitch marks back", onclick: () => { S.edge = !S.edge; homeStaves(); savePrefs(); renderAll(); } }, "⇤EDGE"),
-        el("button", { title: "Notes a step larger on this screen (the staves stay as they are)", onclick: () => noteZoomStep(1) }, "N+"), el("button", { title: "Notes a step smaller on this screen", onclick: () => noteZoomStep(-1) }, "N−"),
+        ...(tradNotes() ? [] : [el("button", { title: "Notes a step larger on this screen (the staves stay as they are)", onclick: () => noteZoomStep(1) }, "N+"), el("button", { title: "Notes a step smaller on this screen", onclick: () => noteZoomStep(-1) }, "N−")]),   // no N+ / N− for Traditional notes: their heads are the stave's size
         el("button", { class: S.vlDeck ? "on" : "", title: "The line: its slider and tools docked over the strips — push, highlight, copy, move", onclick: guideToggle }, "LINE"),
         el("button", { title: "Tune dimensions: the stave's line spacing, the note size and the note spacing on three wheels, with a preview", onclick: () => openTune() }, "TUNE")); }
     { let sbx = $("stripBtns"); if (!sbx) sbx = el("div", { id: "stripBtns" }); if (sbx.parentNode !== $("toolL")) $("toolL").prepend(sbx); sbx.replaceChildren(db, rb); }   // the strips' SHOW / HIDE buttons: a fixed set at the far left of the tool bar, DYN then RHYTHM then LYRICS as the strips lie — never flipped or scrolled
@@ -7788,7 +7788,7 @@ const paperFill = win => (win && S.paper && PAPER[S.paper[win]]) || css("--paper
 const headCap = g => (S.halfLines || g.dia) ? 0.94 : 0.78, headHug = g => (S.halfLines || g.dia) ? 0.94 : 0.47;                                   // half a head's greatest height, in rows: a space is two rows on a staff of lines and spaces (one row otherwise), less the lines' own thickness
 function headGeom(g) {
   const st = g.step, k = NS() * ((S.halfLines || g.dia) ? 1.55 : 1);                     // lines-and-spaces, and the Clef view's letter grid: heads grow to fill a space (two rows)
-  const ry = S.hugHeads ? st * headHug(g) : Math.min(st * 0.40 * k, st * headCap(g)), rx = ry * 1.18;   // the engraved head: 1.18 spaces wide for one high — never taller than its space; with "heads fill the space" on, exactly as tall, the lines above and below hugging it
+  const ry = S.hugHeads || tradNotes() ? st * headHug(g) : Math.min(st * 0.40 * k, st * headCap(g)), rx = ry * 1.18;   // the engraved head: 1.18 spaces wide for one high — never taller than its space; with "heads fill the space" on (and always for Traditional notes), exactly as tall, the lines above and below hugging it
   return { st, rx, ry, stem: Math.max(st * 1.9, ry * 6.4) };
 }
 function drawNote(svg, g, x, m, d, color, attrs, opts = {}) {
@@ -8347,6 +8347,7 @@ const pushOn = () => !!S.push;
 const pushWin = () => deckMode() ? deckActive() : "mel";                                 // the stave the guide line is measured on: the phone's melody, the wide screen's stave in view
 /* NOTE + / NOTE −: the notes a step larger or smaller on the screen in use — the heads never wider than a staff space nor smaller than a fifth of one, measured on the stave in view */
 function noteZoomStep(dir) {
+  if (tradNotes()) { toast("Traditional note heads are the stave's size — Tune the line spacing to change them"); return; }
   const win = deckMode() ? deckActive() : leadWin(), g = GEO[win] || geo(win), base = (NOTE_SCALE[noteSizeNow()] || 1) * ((S.halfLines || g.dia) ? 1.55 : 1);   // the head's height is st * 0.40 * base * zoom, capped at st * 0.78
   const zMax = Math.max(1, headCap(g) / (0.40 * base)), zMin = Math.min(1, 0.2 / (0.40 * base)), key = deckMode() ? "deck" : "phone";
   const z = clamp(Math.round(((S.noteZoom[key] || 1) + dir * 0.1) * 100) / 100, zMin, zMax);
@@ -8360,7 +8361,7 @@ function noteZoomStep(dir) {
    keep a sliver of air), nothing wider than the window gives. A setting already past a guard may stay, and may be eased, never made worse. APPLY makes the preview the stave's own */
 const TUNE_Z = [0.25, 2.5], TUNE_NZ = [0.3, 4], TUNE_SP_MIN = 0.75, TUNE_SP_STEP = 0.125;
 const tuneKey = () => deckMode() ? "deck" : "phone";
-const tuneNow = win => ({ z: S.zoomWin[win] || 1, nz: S.noteZoom[tuneKey()] || 1, sp: spacingSp(), hug: !!S.hugHeads });
+const tuneNow = win => ({ z: S.zoomWin[win] || 1, nz: S.noteZoom[tuneKey()] || 1, sp: spacingSp(), hug: !!S.hugHeads || tradNotes() });   // Traditional notes: the heads always fill the space
 function tuneSim(win, v) {                                                                  // the stave measured at v, and everything put back as it was
   const key = tuneKey(), keep = { z: S.zoomWin[win], nz: S.noteZoom[key], spacing: S.spacing, sp: S.spacingSp, hug: S.hugHeads, view: JSON.stringify(S.song.view) };
   S.hugHeads = !!v.hug; S.zoomWin[win] = v.z; S.noteZoom[key] = v.nz; S.spacing = v.sp ? "custom" : "regular"; S.spacingSp = v.sp || null;
@@ -8420,6 +8421,7 @@ function openTune(winArg) {
   const hugBtn = el("button", { class: "tnBtn hug", title: "Every note head as tall as its space, the lines above and below touching it; the note size then follows the line spacing", onclick: () => { pv = Object.assign({}, pv, { hug: !pv.hug });
     if (pv.hug) for (let i = 0; i < 40 && tuneGuards(tuneSim(win, pv)).some(m => m < -1e-6); i++) { const nv = tuneNext(win, pv, "z", -1); if (!nv) break; pv = nv; }
     draw(); } }, el("span", { class: "dot" }), "HEADS FILL THE SPACE");
+  if (tradNotes()) { hugBtn.disabled = true; hugBtn.title = "Traditional note heads always fill their space: the lines above and below hug every head, and the note size follows the line spacing"; }
   const draw = () => {
     const oc = tuneSim(win, cur), on = tuneSim(win, pv); ends = tuneEnds(win, pv);
     const bw = Math.max(80, pc.box.clientWidth || 150), bh = Math.max(70, pc.box.clientHeight || 120), need = o => [o.beatPx + 3.4 * o.rx + 12, 4 * o.space + 2 * Math.max(0, o.stem - 1.5 * o.space) + 10];
@@ -8444,7 +8446,7 @@ function openTune(winArg) {
     node.addEventListener("wheel", e => { e.preventDefault(); spin(e.deltaY > 0 ? 6 : -6); turn(k, e.deltaY > 0 ? -1 : 1); }, { passive: false });
     wheels[k] = { up, dn, node }; row.append(node);
   }
-  applyBtn.onclick = () => { if (same()) return; S.hugHeads = !!pv.hug; S.zoomWin[win] = pv.z; S.noteZoom[tuneKey()] = pv.nz; S.spacing = pv.sp ? "custom" : "regular"; S.spacingSp = pv.sp || null; S.homeNext = Object.assign(S.homeNext || {}, { [win]: true });
+  applyBtn.onclick = () => { if (same()) return; if (!tradNotes()) S.hugHeads = !!pv.hug; S.zoomWin[win] = pv.z; S.noteZoom[tuneKey()] = pv.nz; S.spacing = pv.sp ? "custom" : "regular"; S.spacingSp = pv.sp || null; S.homeNext = Object.assign(S.homeNext || {}, { [win]: true });
     savePrefs(); renderAll(); cur = tuneNow(win); pv = Object.assign({}, cur); draw(); };
   resetBtn.onclick = () => { pv = Object.assign({}, cur); draw(); };
   body.append(el("div", { class: "tnHead" }, el("span", {}, "TUNE · " + DECK_NAME[win]), closeBtn), el("div", { class: "tnPanels" }, pc.node, pn.node), row, el("div", { class: "tnFoot" }, hugBtn, resetBtn, applyBtn));
@@ -9648,7 +9650,7 @@ function trayRow2(box) {
   [4, 2, 0.5, 0.25, 0.125].forEach(v => put(el("button", { onclick: () => tapRestLen(v), class: (ownR ? evR.rest && Math.abs(baseLen(evR.d) - v) < 1e-9 : S.restNext && (S.restLen || S.len) === v) ? "on" : "", title: ownR ? `Make it a ${REST_NAME[v]} rest` : `${REST_NAME[v]} rest: goes in at the next free spot, or arms one for your next tap` }, restIcon(v))));
   for (const k of ["staccato", "tenuto"]) put(el("button", { class: "art" + (S.artic === k ? " armed" : "") + (ev && !sc && ev.artic === k ? " on" : ""), onclick: () => tapArtic(k), title: S.artic === k ? `${ARTIC[k].label} armed — tap notes to mark them; tap again to return to note entry` : `${ARTIC[k].label}: tap before entering a note, or arm it and tap existing notes` }, ARTIC[k].glyph));
   box.append(el("div", { class: "xc empty", title: "Room for a key to come" }));
-  box.append(el("div", { class: "xc two" }, el("button", { title: "Notes a step larger on this screen (the staves stay as they are)", onclick: () => noteZoomStep(1) }, "N+"), el("button", { title: "Notes a step smaller on this screen", onclick: () => noteZoomStep(-1) }, "N−")));
+  box.append(tradNotes() ? el("div", { class: "xc empty", title: "Room for a key to come" }) : el("div", { class: "xc two" }, el("button", { title: "Notes a step larger on this screen (the staves stay as they are)", onclick: () => noteZoomStep(1) }, "N+"), el("button", { title: "Notes a step smaller on this screen", onclick: () => noteZoomStep(-1) }, "N−")));   // no N+ / N− for Traditional notes: their heads are the stave's size
 }
 function quickAct(id) { const it = QUICK_ITEMS[id]; if (!it) return; if (it.kind === "rest") tapRestLen(it.v); else if (it.kind === "len") tapLength(it.v); else if (it.kind === "slur") tapArtic("slur"); else if (it.kind === "tie") tapTie(); else if (it.kind === "ghost") tapGhostNote(); else tapDot(); }
 /* a held button dropped on a cell: an empty cell simply takes it; a full cell trades places, unless an empty cell is near enough to take the displaced one */
@@ -10720,17 +10722,18 @@ function comboOKDuo(bars, win, size, look) { if (size !== "x") return false; ret
 const comboGate = () => deckMode();                                                        // the lists are for the wide screen: one for the rolled-up view, one for Stacked staves
 const comboOKNow = (bars, win, size, look) => duoMode() ? comboOKDuo(bars, win, size, look) : comboOK(bars, win, size, look);
 const barsNow = () => duoMode() ? (S.duoBars === 8 ? 8 : 4) : S.viewSpan;   // EDGE's two extra bars are no concern of the note-size lists: they only narrow the beats
-const comboNow = () => !comboGate() || comboOKNow(barsNow(), S.winSize, S.noteSize, S.noteStyle);
+const comboSize = () => tradNotes() ? "x" : S.noteSize;                                     // Traditional notes go in the lists as Micro: their heads are the stave's size whatever the beat's width, and every bar in view stands across the window
+const comboNow = () => !comboGate() || comboOKNow(barsNow(), S.winSize, comboSize(), S.noteStyle);
 function fixCombo() {                                                                       // a saved combination outside the list: the nearest allowed one, Micro first
   if (comboNow()) return false;
-  if (duoMode()) { S.noteSize = "x"; if (!comboOKDuo(barsNow(), S.winSize, "x", S.noteStyle)) S.duoBars = 4; return true; }
-  if (!comboOK(S.viewSpan, S.winSize, "x", S.noteStyle)) { if (comboOK(S.viewSpan, S.winSize, "x", "pill")) S.noteStyle = "pill"; else { S.viewSpan = 1; if (!comboOK(1, S.winSize, S.noteSize, S.noteStyle)) S.noteStyle = "pill"; return true; } }
-  S.noteSize = "x"; return true;
+  if (duoMode()) { if (!tradNotes()) S.noteSize = "x"; if (!comboOKDuo(barsNow(), S.winSize, "x", S.noteStyle)) S.duoBars = 4; return true; }
+  if (!comboOK(S.viewSpan, S.winSize, "x", S.noteStyle)) { if (comboOK(S.viewSpan, S.winSize, "x", "pill")) S.noteStyle = "pill"; else { S.viewSpan = 1; if (!comboOK(1, S.winSize, comboSize(), S.noteStyle)) S.noteStyle = "pill"; return true; } }
+  if (!tradNotes()) S.noteSize = "x"; return true;
 }
 function openSettings() {
   const seg = (opts, cur, fn, ok) => { const s = el("div", { class: "seg sm" }); opts.forEach(([v, l]) => { const bad = !!(ok && !ok(v)); s.append(el("button", { class: cur === v ? "on" : "", disabled: bad, title: bad ? "Not with the current bars, window and notes on the wide screen's rolled-up view" : null, onclick: () => { fn(v); openSettings(); } }, l)); }); return s; };
   const radios = (name, opts, cur, fn, col = false, ok = null) => { const box = el("div", { class: "radios" + (col ? " col" : "") }); opts.forEach(([v, l]) => { const bad = !!(ok && !ok(v)); const inp = el("input", { type: "radio", name: "set_" + name, disabled: bad }); inp.checked = cur === v; inp.addEventListener("change", () => { if (inp.checked) fn(v); }); box.append(el("label", { class: bad ? "off" : "", title: bad ? "Not with the current bars, window and notes on the wide screen's rolled-up view" : null }, inp, el("span", {}, l))); }); return box; };   // radio buttons: side by side, or one above the other (col)
-  const gate = comboGate(), duo = duoMode(), okBars = v => !gate || duo || comboOK(v, S.winSize, S.noteSize, S.noteStyle), okDuoBars = v => !duo || comboOKDuo(v, S.winSize, S.noteSize, S.noteStyle), okWin = v => !gate || comboOKNow(barsNow(), v, S.noteSize, S.noteStyle), okSize = v => !gate || comboOKNow(barsNow(), S.winSize, v, S.noteStyle), okLook = v => !gate || comboOKNow(barsNow(), S.winSize, S.noteSize, v);
+  const gate = comboGate(), duo = duoMode(), okBars = v => !gate || duo || comboOK(v, S.winSize, comboSize(), S.noteStyle), okDuoBars = v => !duo || comboOKDuo(v, S.winSize, comboSize(), S.noteStyle), okWin = v => !gate || comboOKNow(barsNow(), v, comboSize(), S.noteStyle), okSize = v => !gate || comboOKNow(barsNow(), S.winSize, v, S.noteStyle), okLook = v => !gate || (v === "trad" ? comboOKNow(barsNow(), S.winSize, "x", v) : comboOKNow(barsNow(), S.winSize, S.noteSize, v) || comboOKNow(barsNow(), S.winSize, "x", v));   // a look is allowed when some note size goes with it (Micro is set if the current one does not)
   const custom = S.custom || { ground: "#3b4a5a", ground2: "#2d3945", accent: "#3b8bd6", lyric: "#3f8fd0", box: "#f0a63c" };
   const colorRow = el("div", { class: "pRow tight" });
   if (S.theme === "custom") [["ground", "Body"], ["ground2", "Strips"], ["accent", "Buttons"], ["lyric", "Lyrics"], ["box", "Rhythm boxes"]].forEach(([k, l]) => colorRow.append(el("label", { class: "tiny", style: "display:inline-flex;align-items:center;gap:4px" }, el("input", { type: "color", value: custom[k], oninput: e => { custom[k] = e.target.value; S.custom = custom; applyTheme(); savePrefs(); }, onchange: () => renderAll() }), l)));
@@ -10769,13 +10772,14 @@ function openSettings() {
     el("div", { class: "tiny" }, "The tint and frame on the bar that is awake, on every stave. Boxed only: a medium black frame and no tint. None: nothing but the dashed entry box."),
     el("div", { class: "pLbl" }, "Note spacing"), seg([["regular", "Regular"], ["small", "Small"], ["tight", "Tight"]].concat(S.spacing === "custom" ? [["custom", "Tuned"]] : []), S.spacing, v => { S.spacing = v; savePrefs(); renderAll(); }),
     el("div", { class: "mrow" }, el("button", { class: "btn sm", title: "Stave line spacing, note size and note spacing on three wheels, with a sample of each beside a preview", onclick: () => openTune() }, "Tune dimensions…")),
-    el("div", { class: "mrow" }, toggle("Note heads fill their space: the lines above and below hug every head, on every stave", !!S.hugHeads, v => { S.hugHeads = v; savePrefs(); renderAll(); })),
+    ...(tradNotes() ? [] : [el("div", { class: "mrow" }, toggle("Note heads fill their space: the lines above and below hug every head, on every stave", !!S.hugHeads, v => { S.hugHeads = v; savePrefs(); renderAll(); }))]),   // Traditional heads always fill their space
     el("div", { class: "tiny" }, "Regular: the bars set in Window shows fill the width. Small and Tight: every beat no wider than two, or one and a half, of the stave's own staff spaces (and never wider than Regular's), so the spacing complements the view's size and the note size, with as many bars in view as fit at that width, the last running off the edge and the rest a scroll away; on the phone and the deck alike (Stacked staves keep their own bars). The beats stay regular: a beat is a beat."),
     sec("Notes & Markings"),
-    el("div", { class: "pLbl" }, "Notes appearance"), radios("look", [["trad", "Traditional"], ["pill", "Pills"], ["circle", "Circles"]], S.noteStyle, v => { S.noteStyle = v; savePrefs(); renderAll(); openSettings(); }, false, okLook),
-    el("div", { class: "pLbl" }, "Note size"), radios("size", [["x", "Micro"], ["s", "Small"], ["m", "Medium"], ["l", "Large"]], S.noteSize, v => { S.noteSize = v; S.homeNext = { mel: true, acc: true, bass: true }; savePrefs(); renderAll(); openSettings(); }, false, okSize),
+    el("div", { class: "pLbl" }, "Notes appearance"), radios("look", [["trad", "Traditional"], ["pill", "Pills"], ["circle", "Circles"]], S.noteStyle, v => { S.noteStyle = v; fixCombo(); S.homeNext = { mel: true, acc: true, bass: true }; savePrefs(); renderAll(); openSettings(); }, false, okLook),
+    ...(tradNotes() ? [el("div", { class: "tiny" }, "Traditional note heads are the stave's size: the lines above and below hug every head, so there is no note size to choose (WIDER, TIGHTER and Tune dimensions set the lines apart, and the heads with them). With several bars in view they stand side by side across the window.")]
+      : [el("div", { class: "pLbl" }, "Note size"), radios("size", [["x", "Micro"], ["s", "Small"], ["m", "Medium"], ["l", "Large"]], S.noteSize, v => { S.noteSize = v; S.homeNext = { mel: true, acc: true, bass: true }; savePrefs(); renderAll(); openSettings(); }, false, okSize),
     ...(gate ? [el("div", { class: "tiny" }, duo ? "With Stacked staves on the wide screen only Micro notes display cleanly: four bars in any window and look, eight bars only in a Small window with Traditional notes; a greyed choice would make another combination." : "On the wide screen's rolled-up view only some combinations of bars, window sizing, note size and note look display cleanly; a greyed choice would make one that does not. Micro goes with everything.")] : []),
-    el("div", { class: "tiny" }, "Micro: notes small enough that every bar the window shows fits across it side by side, with nothing to scroll — set Window shows to 2, 3 or 4 bars to see and edit several at once, upright or widescreen."),
+    el("div", { class: "tiny" }, "Micro: notes small enough that every bar the window shows fits across it side by side, with nothing to scroll — set Window shows to 2, 3 or 4 bars to see and edit several at once, upright or widescreen.")]),
     sec("Lyrics & keyboard"),
     el("div", { class: "pLbl" }, "Lyrics font"), seg([["sans", "Current"], ["serif", "Serif"], ["smallcaps", "Small caps"]], S.lyricFont, v => { S.lyricFont = v; savePrefs(); renderAll(); }),
     el("div", { class: "pLbl" }, "Lyrics keyboard"), seg([[true, "App keyboard (QWERTY + symbols)"], [false, "Phone's keyboard"]], S.softKb, v => { S.softKb = v; savePrefs(); renderWeKeys(); }),
