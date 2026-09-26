@@ -8549,7 +8549,9 @@ function ezSetMode(mode, bar0) {
    — no heads, no clef and no signatures, the lines for orientation alone — scaled to sit centred in the pad with air above and below. Two boxes select: the tall box spans the staff's height (two spaces beyond
    its outer lines, and further to just beyond the highest and lowest heads) and its left and right edges are pulled along the beats; the wide box spans every bar shown and its
    top and bottom edges are pulled along the rows. Each has a grey grip at its four corners, grooved along its own axis; a box's line is 1.75pt black, its inside tinted once open.
-   A box with no width (or height) leaves its axis open. What lies within both boxes' reach is selected — tinted blue on the stave, every entry in a white box — and the selection
+   At first both boxes stand small — a little more than a grip wide, so the grips sit apart, edge to edge, and show which way each opens — untinted and taking nothing: an axis
+   is engaged when one of its grips is taken, and is open until then. A box is never narrower than half a grip (the grips overlap that much at most). A touch that misses the
+   grips does nothing — the boxes stay where they are. What lies within both boxes' reach is selected — tinted blue on the stave, every entry in a white box — and the selection
    follows the boxes as they move: an entry a box leaves is let go. The arrows (▲ ▼ the selection in pitch, ◀ ▶ the tall box a step along), the wheel, ♯ ♮ ♭, the pallet and DEL
    work on the selection at once (UNDO takes them back); ENTER, ESC or EDIT again puts the pad back. */
 const EZ_TOPLINE = { treble: 77, bass: 57, alto: 67 };                                     // the pitch on the staff's top line: F5, A3, G4
@@ -8561,11 +8563,14 @@ function ezBoxLayout() {
   const sTop = staves[0].top + 4, sBot = staves[staves.length - 1].top - 8 - 4, parts = ezParts(), items = []; let acc = 0;   // two spaces beyond the outer lines
   for (const bi of bars) { const bar = S.song.bars[bi]; for (const part of parts) for (const ch of chains(bar, part)) items.push({ bi, part, id: ch.head.id, rest: !!ch.rest, t: acc + ch.t, d: ch.d, m: ch.rest ? null : ch.head.m, step: ch.rest || ch.head.m == null ? null : stepOf(ch.head.m), staff: staves.length > 1 && part !== "melody" ? staves[1] : staves[0] }); acc += barBeats(bi); }
   let hiStep = sTop, loStep = sBot; for (const it of items) if (it.step != null) { if (it.step + 1 > hiStep) hiStep = it.step + 1; if (it.step - 1 < loStep) loStep = it.step - 1; }   // and beyond the highest and lowest heads
-  const T = acc, mx = 18, my = 16, half = Math.min((H - 2 * my) / Math.max(1, hiStep - loStep), 14), beatPx = (W - 2 * mx) / Math.max(1, T), mid = (hiStep + loStep) / 2;
-  return { W, H, bars, T, items, staves, sTop, sBot, hiStep, loStep, half, beatPx, mx, my, gridT: gridStep(), midStep: Math.round((sTop + sBot) / 2), xOf: t => mx + t * beatPx, yOf: st => H / 2 + (mid - st) * half,
+  const T = acc, mx = 18, my = 16, half = Math.min((H - 2 * my) / Math.max(1, hiStep - loStep), 14), beatPx = (W - 2 * mx) / Math.max(1, T), mid = (hiStep + loStep) / 2, gridT = gridStep();
+  const gridsFor = px => Math.min(T, Math.max(gridT, Math.ceil(px / beatPx / gridT - 1e-6) * gridT)), stepsFor = px => Math.max(1, Math.ceil(px / half - 1e-6));   // beats (whole grid steps) and rows spanning so many pixels
+  return { W, H, bars, T, items, staves, sTop, sBot, hiStep, loStep, half, beatPx, mx, my, gridT, midStep: Math.round((sTop + sBot) / 2), xOf: t => mx + t * beatPx, yOf: st => H / 2 + (mid - st) * half,
+    minW: gridsFor(EZ_GRIP / 2), minH: stepsFor(EZ_GRIP / 2), iniW: gridsFor(EZ_GRIP + 3), iniH: stepsFor(EZ_GRIP + 3),   // never narrower than half a grip; at first a grip and a little more, so the grips stand apart
     at: a => { let s0 = 0; for (const bi of bars) { const B = barBeats(bi); if (a < s0 + B - 1e-6) return { bi, t: a - s0 }; s0 += B; } const last = bars[bars.length - 1]; return { bi: last, t: barBeats(last) }; } };
 }
-const ezBoxOn = () => { const B = EZ.box; return B ? { v: B.x1 > B.x0 + 1e-6, h: B.y1 > B.y0 } : { v: false, h: false }; };
+const EZ_GRIP = 9;                                                                          // a grip's width across its axis
+const ezBoxOn = () => { const B = EZ.box; return B ? { v: !!B.onV && B.x1 > B.x0 + 1e-6, h: !!B.onH && B.y1 > B.y0 } : { v: false, h: false }; };   // an axis is engaged once one of its grips has been taken
 function ezBoxSelect(L) { const B = EZ.box, on = ezBoxOn(); if (!B || (!on.v && !on.h)) return []; return L.items.filter(it => (!on.v || (it.t >= B.x0 - 1e-6 && it.t < B.x1 - 1e-6)) && (!on.h || (it.step == null ? (B.y0 <= it.staff.top - 4 && it.staff.top - 4 <= B.y1) : (it.step >= B.y0 && it.step <= B.y1)))); }
 function ezBoxSync(L) { L = L || ezBoxLayout(); if (!L || !EZ.box) return false; const sel = ezBoxSelect(L), ids = sel.map(o => o.part + ":" + o.id).join(","), changed = ids !== (EZ.box.ids || ""); EZ.box.ids = ids;
   EZ.multi = sel.map(o => ({ bi: o.bi, part: o.part, id: o.id })); const f = sel[0]; EZ.sel = f ? { bi: f.bi, part: f.part, id: f.id } : null; S.sel = EZ.sel ? Object.assign({}, EZ.sel) : null; ezBoxDraw(L); return changed; }
@@ -8582,7 +8587,7 @@ function ezBoxDraw(L) {
   /* no entries on the pad: the staff and bar lines are for orientation alone — what the boxes take is shown on the stave itself, tinted and boxed */
   const LW = 2.33, vx0 = L.xOf(B.x0), vx1 = L.xOf(B.x1), vy0 = L.yOf(L.hiStep), vy1 = L.yOf(L.loStep), hy0 = L.yOf(B.y1), hy1 = L.yOf(B.y0);   // 1.75pt
   const box = (x0, y0, x1, y1, open) => sv.append(svgEl("rect", { x: x0, y: y0, width: Math.max(0, x1 - x0), height: Math.max(0, y1 - y0), fill: open ? "#55bdec" : "none", "fill-opacity": 0.3, stroke: "#000", "stroke-width": LW, "stroke-linejoin": "round" }));
-  const grip = (x, y, vert) => { const w = vert ? 9 : 14, h = vert ? 14 : 9; sv.append(svgEl("rect", { x: x - w / 2, y: y - h / 2, width: w, height: h, rx: 1.5, fill: "#cfd2d6", stroke: "#4a4d52", "stroke-width": 0.9 })); for (const i of [-2.5, 0, 2.5]) sv.append(svgEl("line", vert ? { x1: x + i, y1: y - 4.5, x2: x + i, y2: y + 4.5, stroke: "#6e7278", "stroke-width": 1 } : { x1: x - 4.5, y1: y + i, x2: x + 4.5, y2: y + i, stroke: "#6e7278", "stroke-width": 1 })); };
+  const grip = (x, y, vert) => { const w = vert ? EZ_GRIP : 14, h = vert ? 14 : EZ_GRIP; sv.append(svgEl("rect", { x: x - w / 2, y: y - h / 2, width: w, height: h, rx: 1.5, fill: "#cfd2d6", stroke: "#4a4d52", "stroke-width": 0.9 })); for (const i of [-2.5, 0, 2.5]) sv.append(svgEl("line", vert ? { x1: x + i, y1: y - 4.5, x2: x + i, y2: y + 4.5, stroke: "#6e7278", "stroke-width": 1 } : { x1: x - 4.5, y1: y + i, x2: x + 4.5, y2: y + i, stroke: "#6e7278", "stroke-width": 1 })); };
   box(xL, hy0, xR, hy1, on.h); box(vx0, vy0, vx1, vy1, on.v);
   [[xL, hy0], [xR, hy0], [xL, hy1], [xR, hy1]].forEach(([x, y]) => grip(x, y, false)); [[vx0, vy0], [vx1, vy0], [vx0, vy1], [vx1, vy1]].forEach(([x, y]) => grip(x, y, true));
   pad.replaceChildren(sv);
@@ -8591,27 +8596,30 @@ let EZB = null;                                                                 
 function ezBoxPt(e, pad) { const r = pad.getBoundingClientRect(); return { x: (e.clientX - r.left) * pad.clientWidth / Math.max(1, r.width), y: (e.clientY - r.top) * pad.clientHeight / Math.max(1, r.height) }; }
 function ezBoxDown(e, pad) {
   const L = ezBoxLayout(), B = EZ.box; if (!L || !B) return; e.preventDefault(); const p = ezBoxPt(e, pad), on = ezBoxOn();
-  const vx0 = L.xOf(B.x0), vx1 = L.xOf(B.x1), vy0 = L.yOf(L.hiStep), vy1 = L.yOf(L.loStep), xL = L.xOf(0), xR = L.xOf(L.T), hy0 = L.yOf(B.y1), hy1 = L.yOf(B.y0), near = (x, y) => Math.hypot(p.x - x, p.y - y) <= 16;
-  let kind = near(vx1, vy0) || near(vx1, vy1) ? "vR" : near(vx0, vy0) || near(vx0, vy1) ? "vL" : near(xL, hy0) || near(xR, hy0) ? "hT" : near(xL, hy1) || near(xR, hy1) ? "hB" : on.v && p.x >= vx0 && p.x <= vx1 && p.y >= vy0 && p.y <= vy1 ? "vMove" : on.h && p.y >= hy0 && p.y <= hy1 ? "hMove" : "vNew";
-  if (kind === "vNew") { const t = Math.floor((p.x - L.mx) / L.beatPx / L.gridT) * L.gridT; B.x0 = clamp(t, 0, Math.max(0, L.T - L.gridT)); B.x1 = Math.min(L.T, B.x0 + L.gridT); kind = "vR"; }   // a touch on open pad: the tall box set on that beat, its right edge in hand
+  const vx0 = L.xOf(B.x0), vx1 = L.xOf(B.x1), vy0 = L.yOf(L.hiStep), vy1 = L.yOf(L.loStep), xL = L.xOf(0), xR = L.xOf(L.T), hy0 = L.yOf(B.y1), hy1 = L.yOf(B.y0);
+  const grips = [["vR", vx1, vy0], ["vR", vx1, vy1], ["vL", vx0, vy0], ["vL", vx0, vy1], ["hT", xL, hy0], ["hT", xR, hy0], ["hB", xL, hy1], ["hB", xR, hy1]];   // the grip nearest the finger takes the touch (a narrow box: its two grips close, the nearer wins)
+  let kind = null, bd = 16; for (const [k, x, y] of grips) { const d = Math.hypot(p.x - x, p.y - y); if (d <= bd) { bd = d; kind = k; } }
+  if (!kind) kind = on.v && p.x >= vx0 && p.x <= vx1 && p.y >= vy0 && p.y <= vy1 ? "vMove" : on.h && p.y >= hy0 && p.y <= hy1 ? "hMove" : null;
+  if (!kind) return;                                                                        // a touch that misses the grips (and an engaged box's inside): nothing moves
+  if (kind[0] === "v") B.onV = true; else B.onH = true;                                     // the grip taken engages its axis: the box is tinted and takes what it spans from here on
   EZB = { id: e.pointerId, kind, p, x0: B.x0, x1: B.x1, y0: B.y0, y1: B.y1 }; try { pad.setPointerCapture(e.pointerId); } catch (x) {}
   ezBoxChanged(L);
 }
 function ezBoxMove(e, pad) {
   if (!EZB || e.pointerId !== EZB.id) return; const L = ezBoxLayout(), B = EZ.box; if (!L || !B) return; const p = ezBoxPt(e, pad), dt = (p.x - EZB.p.x) / L.beatPx, ds = -(p.y - EZB.p.y) / L.half, q = v => Math.round(v / L.gridT) * L.gridT;
   switch (EZB.kind) {
-    case "vR": B.x1 = clamp(q(EZB.x1 + dt), B.x0, L.T); break;
-    case "vL": B.x0 = clamp(q(EZB.x0 + dt), 0, B.x1); break;
+    case "vR": B.x1 = clamp(q(EZB.x1 + dt), Math.min(L.T, B.x0 + L.minW), L.T); break;
+    case "vL": B.x0 = clamp(q(EZB.x0 + dt), 0, Math.max(0, B.x1 - L.minW)); break;
     case "vMove": { const w = EZB.x1 - EZB.x0, nx = clamp(q(EZB.x0 + dt), 0, L.T - w); B.x0 = nx; B.x1 = nx + w; break; }
-    case "hT": B.y1 = clamp(Math.round(EZB.y1 + ds), B.y0, L.hiStep); break;
-    case "hB": B.y0 = clamp(Math.round(EZB.y0 + ds), L.loStep, B.y1); break;
+    case "hT": B.y1 = clamp(Math.round(EZB.y1 + ds), Math.min(L.hiStep, B.y0 + L.minH), L.hiStep); break;
+    case "hB": B.y0 = clamp(Math.round(EZB.y0 + ds), L.loStep, Math.max(L.loStep, B.y1 - L.minH)); break;
     case "hMove": { const h = EZB.y1 - EZB.y0, ny = clamp(Math.round(EZB.y0 + ds), L.loStep, L.hiStep - h); B.y0 = ny; B.y1 = ny + h; break; }
   }
   ezBoxChanged(L);
 }
 function ezBoxUp(e) { if (EZB && e.pointerId === EZB.id) EZB = null; }
-function ezBoxShift(dx) { const L = ezBoxLayout(), B = EZ.box; if (!L || !B) return; const on = ezBoxOn(); if (!on.v) { B.x0 = 0; B.x1 = Math.min(L.T, L.gridT); } else { const w = B.x1 - B.x0, nx = clamp(B.x0 + dx * L.gridT, 0, L.T - w); B.x0 = nx; B.x1 = nx + w; } ezBoxChanged(L); }   // ◀ ▶: the tall box a grid step along
-function ezBoxOpen() { ezDrop(false); EZ.fingOn = false; EZ.fing = null; EZ.multi = []; EZ.sel = null; S.sel = null; S.ghost = null; EZ.bar = null; EZ.pick = null; EZ.nudge = false; EZ.mode = "box"; const L = ezBoxLayout(), m = L ? L.midStep : 0; EZ.box = { x0: 0, x1: 0, y0: m, y1: m, ids: "" }; renderAll(); toast("EDIT: the bars in view on the pad \u2014 pull the boxes' grips over the notes to select them"); }
+function ezBoxShift(dx) { const L = ezBoxLayout(), B = EZ.box; if (!L || !B) return; const on = ezBoxOn(); if (!on.v) B.onV = true; else { const w = B.x1 - B.x0, nx = clamp(B.x0 + dx * L.gridT, 0, L.T - w); B.x0 = nx; B.x1 = nx + w; } ezBoxChanged(L); }   // ◀ ▶: the tall box a grid step along (the first press engages it where it stands)
+function ezBoxOpen() { ezDrop(false); EZ.fingOn = false; EZ.fing = null; EZ.multi = []; EZ.sel = null; S.sel = null; S.ghost = null; EZ.bar = null; EZ.pick = null; EZ.nudge = false; EZ.mode = "box"; const L = ezBoxLayout(), m = L ? L.midStep : 0, w = L ? L.iniW : 1, h = L ? L.iniH : 2, y0 = m - Math.floor(h / 2); EZ.box = { x0: 0, x1: w, y0, y1: y0 + h, onV: false, onH: false, ids: "" }; renderAll(); toast("EDIT: the bars in view on the pad \u2014 pull the boxes' grips over the notes to select them"); }
 function ezBoxClose() { EZ.mode = "idle"; EZ.box = null; EZB = null; EZ.multi = []; EZ.sel = null; S.sel = null; renderAll(); }
 function ezEditBar() { if (EZ.mode === "box") { ezBoxClose(); return; } ezBoxOpen(); }   // EDIT: the box editor on the pad; again, the pad back
 /* EDIT: one column to a bar on the pad — BAR (every item in the bar, edited together), PER ITEM (the items one by one: the arrows
