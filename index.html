@@ -8691,6 +8691,24 @@ function ezAdvance(bi, t) { const c = EZ.cur, part = ezCurPart(), free = x => !e
 function ezStack(bi, ch, m, part) { const bar = S.song.bars[bi], pieces = ch.members.map(e => { const p = { id: uid(), t: e.t, d: e.d, m, chord: true }; if (e.tie) p.tie = true; if (e.ox) p.ox = e.ox; return p; });   // the chord note mirrors the note it stacks on, tied pieces and all
   if ((bar.ev[part] || []).some(e => Math.abs(e.t - ch.t) < 1e-6 && e.m === m && !e.rest)) { toast(noteName(m, keyObj(S.song.key)) + " is in that chord already"); return; }
   bar.ev[part].push(...pieces); if (part === "melody") syncNotesToChips(bar); previewNote(m, part); S.lastEntered = { part, bi, id: pieces[0].id }; S.sel = null; renderAll(); }
+/* the entry cursor standing on an item takes it in hand: a note whose start is the cursor's beat, drawn on the cursor's line or space (its pitch, or the same step with another
+   accidental), or a rest starting on that beat, at whatever pitch the cursor stands. The pallet then gives the item a new value, ♯ ♮ ♭ move it (the cursor with it), DEL takes it, and
+   ENTER writes what is in hand — a note at the cursor's pitch, or a rest, of the value on the pallet — in its place; the same again only steps the cursor on */
+function ezCurOn() { if (EZ.mode !== "entry" || !EZ.cur) return null; const c = EZ.cur, bar = S.song.bars[c.bi], part = ezCurPart(); if (!bar) return null; const k = keyObj(S.song.key), st = spell(c.m, k).step;
+  for (const ch of chains(bar, part)) { if (Math.abs(ch.t - c.t) > 1e-6) continue;
+    if (ch.rest) { const it = ezItems().find(o => o.id === ch.head.id); return { ch, ev: ch.head, part, rest: true, y: it ? it.y : null }; }   // a rest has no pitch: the cursor on its beat is on it, whatever its own pitch
+    else if (ch.head.m != null && spell(ch.head.m, k).step === st) return { ch, ev: ch.head, part, rest: false }; }
+  return null; }
+function ezReplace(on, d) {
+  const c = EZ.cur, bi = c.bi, bar = S.song.bars[bi], part = on.part, ev = on.ev, what = S.restNext ? "rest" : "note";
+  if (!!ev.rest === !!S.restNext && Math.abs(on.ch.d - d) < 1e-6 && (ev.rest || ev.m === c.m)) { ezAdvance(bi, c.t + d); S.sel = null; renderAll(); return; }   // the same again: nothing to change, the cursor steps on
+  const before = JSON.stringify(S.song), members = on.ch.members; bar.ev[part] = (bar.ev[part] || []).filter(e => !members.includes(e));
+  const fail = why => { S.song = upgradeSong(JSON.parse(before)); toast(why); };
+  if (!ezFits(bi, c.t, d)) { fail(`That ${what} does not fit whole there`); return; }
+  if (ezBusy(bi, part, c.t, c.t + d)) { fail(`No room for that ${what} there \u2014 something stands in its beats`); return; }
+  if (S.restNext) { bar.ev[part].push({ id: uid(), t: c.t, d, rest: true }); if (part === "melody") syncNotesToChips(bar); }
+  else { placeSpan([{ bi, t: c.t, d }], part, c.m, null); previewNote(c.m, part); }
+  ezAdvance(bi, c.t + d); S.sel = null; renderAll(); }
 function ezEnter() {
   if (EZ.mode === "box") { ezBoxClose(); toast("Kept — the changes were made as you went; UNDO takes them back"); return; }
   if (EZ.mode === "edit") { ezDrop(true); const grp = EZ.pick && EZ.pick.kind !== "item"; EZ.mode = grp ? "pick" : "nav"; if (grp) { EZ.multi = []; EZ.sel = null; S.sel = null; EZ.pick = null; } renderAll(); toast("Kept"); return; }
@@ -8701,6 +8719,7 @@ function ezEnter() {
   const c = EZ.cur, bar = S.song.bars[c.bi], part = ezCurPart(), evs = bar.ev[part] = bar.ev[part] || [];
   if (EZ.mark) { const ch = chordChainAt(bar, c.t, part); if (!ch) { toast("No note there to mark"); return; } const ev = ch.head; if (DYN.includes(EZ.mark) || HAIR[EZ.mark]) setDyn(ev, EZ.mark); else { ev.artic = ev.artic === EZ.mark ? undefined : EZ.mark; if (!ev.artic) delete ev.artic; } renderAll(); return; }
   const d = ezDur(), what = S.restNext ? "rest" : "note";
+  { const on = ezCurOn(); if (on) { ezReplace(on, d); return; } }                                                        // on an item: what is in hand takes its place
   { const w = Math.min(0.25, d), gap = ezSpots(c.bi).find(t0 => t0 < c.t - 1e-6 && !ezBusy(c.bi, part, t0, t0 + w) && !ezBusy(c.bi, part, t0, c.t));   // a composer writes in order: an entry never lands after an empty stretch — it goes to the earliest free place before the cursor (beat 1 of an empty bar; beat 2 when beat 1 is full and the cursor stands at 2½)
     if (gap != null) { c.t = gap; ezBanner(); } }
   if (ezCross(c.bi, c.t, d) && !ezFits(c.bi, c.t, d)) { ezTieAsk({ bi: c.bi, part, t: c.t, m: c.m, d, rest: !!S.restNext }); return; }
@@ -8754,8 +8773,10 @@ function ezSetLen(ev, nd) { const bi = S.sel.bi, part = S.sel.part, t = ev.t;
   const now = (S.song.bars[bi].ev[part] || []).find(e => Math.abs(e.t - t) < 1e-6 && !!e.rest === !!ev.rest), ch = now && chainOf(S.song.bars[bi], now, part);
   if (!now || Math.abs(now.d - nd) > 1e-6 || (ch && ch.members.length > 1)) { S.song = upgradeSong(JSON.parse(before)); const back = (S.song.bars[bi].ev[part] || []).find(e => Math.abs(e.t - t) < 1e-6); if (back) { S.sel = { bi, part, id: back.id }; if (EZ.sel) EZ.sel.id = back.id; } toast("That length does not fit whole there"); }
   renderAll(); }
-function ezDelete() { const all = (EZ.mode === "nav" || EZ.mode === "edit" || EZ.mode === "box") ? ezSelAll() : []; if (!all.length) { toast("Nothing is selected. Select an item first: tap the finger key and point to it, or tap EDIT BAR and choose a bar."); return; }
-  const no = el("button", { class: "btn", onclick: closeModal }, "No"), yes = el("button", { class: "btn acc", onclick: () => { closeModal(); ezEach(e => { if (e) deleteSel(); }); EZ.sel = null; EZ.multi = []; EZ.snap = null; S.sel = null; EZ.mode = "nav";   // gone for good (UNDO brings them back): nothing is left in hand to be put back
+function ezDelete() { const onCur = EZ.mode === "entry" ? ezCurOn() : null, all = onCur ? [onCur] : (EZ.mode === "nav" || EZ.mode === "edit" || EZ.mode === "box") ? ezSelAll() : []; if (!all.length) { toast("Nothing is selected. Select an item first: tap the finger key and point to it, or tap EDIT BAR and choose a bar."); return; }
+  const no = el("button", { class: "btn", onclick: closeModal }, "No"), yes = el("button", { class: "btn acc", onclick: () => { closeModal();
+    if (onCur) { const bi = EZ.cur.bi; for (const e of onCur.ch.members.slice()) { S.sel = { bi, part: onCur.part, id: e.id }; deleteSel(); } S.sel = null; renderAll(); return; }   // the item under the cursor (its tied pieces with it): gone, the cursor where it stood
+    ezEach(e => { if (e) deleteSel(); }); EZ.sel = null; EZ.multi = []; EZ.snap = null; S.sel = null; EZ.mode = "nav";   // gone for good (UNDO brings them back): nothing is left in hand to be put back
     renderAll(); const next = ezSorted()[0]; if (next && !EZ.shift) ezPoint(next); } }, "Yes");
   openModal(null, el("p", { style: "font-size:16px;margin:6px 0 4px" }, all.length > 1 ? `Delete ${all.length} items \u2014 are you sure?` : "Are you sure?"), [no, yes]); }
 /* the wide screen: NOTES/TOOLS opens the notes pallet over the pad's lower left quarter; a pick, ESC or the key again closes it */
@@ -8864,6 +8885,7 @@ function ezPalClose() { if (EZ.palOpen) { EZ.palOpen = false; ezPanel(); } }
 function ezPickLen(v, rest) {
   if (ezInHand() && ezSelAll().length) { if (EZ.pick && EZ.pick.kind !== "item") { toast("A length is changed one item at a time — PER ITEM"); return; } if (EZ.multi.length > 1) { let skip = 0; ezEach(e => { if (!e || !!e.rest !== !!rest) { skip++; return; } const nd = isDotted(e.d) ? v * 1.5 : v; if (e.t + nd > barBeats(S.sel.bi) + 1e-6) { skip++; return; } const before = JSON.stringify(S.song); setDur(e, nd); const now = (S.song.bars[S.sel.bi].ev[S.sel.part] || []).find(x => Math.abs(x.t - e.t) < 1e-6 && !!x.rest === !!e.rest), ch = now && chainOf(S.song.bars[S.sel.bi], now, S.sel.part); if (!now || Math.abs(now.d - nd) > 1e-6 || (ch && ch.members.length > 1)) { S.song = upgradeSong(JSON.parse(before)); skip++; } }); renderAll(); if (skip) toast(`${skip} left as ${skip === 1 ? "it was" : "they were"} \u2014 no room for that length whole`); return; }   // several held: each takes the length where it fits whole, the rest are left
     EZ.palOpen = false; const ev = selEv(); if (!ev) return; if (!!ev.rest !== !!rest) { toast(rest ? "That is a note \u2014 pick a note's length" : "That is a rest \u2014 pick a rest's length"); return; } ezSetLen(ev, isDotted(ev.d) ? v * 1.5 : v); return; }
+  { const on = EZ.mode === "entry" ? ezCurOn() : null; if (on && !!on.ev.rest === !!rest) { S.len = v; S.restNext = !!rest; EZ.mark = null; EZ.palOpen = false; savePrefs(); S.sel = { bi: EZ.cur.bi, part: on.part, id: on.ev.id }; ezSetLen(on.ev, isDotted(on.ch.d) ? v * 1.5 : v); S.sel = null; renderAll(); return; } }   // the cursor on a note (a rest): the value picked is the item's new value, the cursor staying on it
   S.len = v; S.restNext = !!rest; EZ.mark = null; EZ.palOpen = false; savePrefs(); if (EZ.mode !== "entry") { ezSetMode("entry", EZ.bar); return; } ezResnap(); ezPanel(); ezPaint();
 }
 function ezPickMark(kind) { if (ezInHand() && ezSelAll().length) { ezEach(ev => { if (!ev || ev.rest || ev.m == null) return; if (DYN.includes(kind) || HAIR[kind]) setDyn(ev, kind); else { ev.artic = ev.artic === kind ? undefined : kind; if (!ev.artic) delete ev.artic; } }); renderAll(); return; }
@@ -8890,6 +8912,8 @@ function ezPaint() {
     if (EZ.mark) { lay.append(svgEl("circle", { cx: x + rx, cy: y, r: Math.max(7, rx), fill: "none", stroke: "#111", "stroke-width": 1.6, "stroke-dasharray": "3 2" }), svgEl("text", { x: x + rx, y: y - Math.max(10, rx + 4), "text-anchor": "middle", "font-size": 12, "font-weight": 800, "font-style": "italic", fill: "#111", "font-family": "Georgia, serif" }, ARTIC[EZ.mark] ? ARTIC[EZ.mark].glyph : (HAIR[EZ.mark] || EZ.mark))); }
     else if (S.restNext) drawRest(lay, g, x + rx, ezDur(), "#111", {}, part);
     else { if (focusOn(EZ.win)) drawLedgers(lay, g, c.bi, { ev: { [part]: [{ t: c.t, d: ezDur(), m }] } }, "#111", part); drawNote(lay, g, x, m, ezDur(), "#111", { "data-ev": "ez" }); }
+    { const on = EZ.mark ? null : ezCurOn(); if (on) { const { ry } = headGeom(g), bx = on.rest ? { x: x + rx - 9, y: (on.y != null ? on.y : y) - 14, width: 18, height: 28 } : { x: x - 3, y: y - ry - 3, width: 2 * rx + 6, height: 2 * ry + 6 };   // the item under the cursor, in hand: boxed in white on a dark halo, as the box editor's picks are
+      lay.append(svgEl("rect", Object.assign({}, bx, { fill: "none", stroke: "#1b2a4a", "stroke-width": 5.2, opacity: 0.5, rx: 1.5 })), svgEl("rect", Object.assign(bx, { fill: "none", stroke: "#fff", "stroke-width": 3.2, rx: 1.5 }))); } }
     const fr = svg.parentNode; if (fr && fr.scrollWidth > fr.clientWidth + 1) { if (x < fr.scrollLeft + 12) fr.scrollLeft = Math.max(0, x - 12); else if (x + 2 * rx > fr.scrollLeft + fr.clientWidth - 12) fr.scrollLeft = x + 2 * rx + 12 - fr.clientWidth; } }
   if (inBar) { const { rx, ry } = headGeom(g), editing = EZ.mode === "edit";
     if (EZ.mode === "box" && EZ.box) { const L = ezBoxLayout(), r = L ? ezBoxStaveRect(g, L) : null; if (r) lay.append(svgEl("rect", { class: "ezTint", x: r.x, y: r.y, width: r.w, height: r.h, fill: "#55bdec", opacity: 0.35 })); }   // the boxes' reach, tinted
@@ -8941,12 +8965,13 @@ function ezInitPad(pad) {
   pad.addEventListener("pointerup", end); pad.addEventListener("pointercancel", e => { if (EZB) { ezBoxUp(e); return; } if (!d || e.pointerId !== d.id) return; if (d.run) { d = null; return; } if (d.still && d.far < 8) { end(e); return; } d = null; });   // a touch the browser took back (a scroll it thought it saw): with nothing in hand, still a tap
 }
 function ezBanner() { const b = $("ezBanner"); if (!b) return; const c = EZ.cur;
-  b.textContent = EZ.mode === "box" ? (() => { const bs = ezBoxBars(); return (bs.length > 1 ? `EDIT · BARS ${barNo(bs[0])}–${barNo(bs[bs.length - 1])}` : `EDIT · BAR ${barNo(bs.length ? bs[0] : S.bi)}`) + (EZ.multi.length ? ` · ${EZ.multi.length} SELECTED` : ""); })() : EZ.mode === "pick" ? "BAR · PER ITEM" : EZ.mode === "nav" ? (EZ.bar != null ? `BAR ${barNo(EZ.bar)} · PER ITEM` + (EZ.nudge ? " · NUDGE" : "") : EZ.fingOn && EZ.sel ? "ITEM IN HAND" : "POINT TO AN ITEM") + (EZ.multi.length > 1 ? ` · ${EZ.multi.length} HELD` : "") : EZ.mode === "edit" ? (EZ.pick && EZ.pick.kind === "bar" ? `BAR ${barNo(EZ.bar)} · ALL ITEMS` : "EDITING") + " · ENTER KEEPS" : EZ.mode === "entry" && c ? `BAR ${barNo(c.bi)} · BEAT ${fracLabel(c.t + 1)}` : `BAR ${barNo(S.bi)}`; }
+  b.textContent = EZ.mode === "box" ? (() => { const bs = ezBoxBars(); return (bs.length > 1 ? `EDIT · BARS ${barNo(bs[0])}–${barNo(bs[bs.length - 1])}` : `EDIT · BAR ${barNo(bs.length ? bs[0] : S.bi)}`) + (EZ.multi.length ? ` · ${EZ.multi.length} SELECTED` : ""); })() : EZ.mode === "pick" ? "BAR · PER ITEM" : EZ.mode === "nav" ? (EZ.bar != null ? `BAR ${barNo(EZ.bar)} · PER ITEM` + (EZ.nudge ? " · NUDGE" : "") : EZ.fingOn && EZ.sel ? "ITEM IN HAND" : "POINT TO AN ITEM") + (EZ.multi.length > 1 ? ` · ${EZ.multi.length} HELD` : "") : EZ.mode === "edit" ? (EZ.pick && EZ.pick.kind === "bar" ? `BAR ${barNo(EZ.bar)} · ALL ITEMS` : "EDITING") + " · ENTER KEEPS" : EZ.mode === "entry" && c ? `BAR ${barNo(c.bi)} · BEAT ${fracLabel(c.t + 1)}` + (() => { const on = ezCurOn(); return on ? (on.rest ? " · ON A REST" : " · ON A NOTE") : ""; })() : `BAR ${barNo(S.bi)}`; }
 function navK(dir, label, fn) { const b = el("button", { class: "sm navk", onclick: fn }), sv = svgEl("svg", { viewBox: "0 0 10 10", "aria-hidden": "true" }); sv.append(svgEl("path", { d: dir < 0 ? "M 7.5 1.5 L 3 5 L 7.5 8.5" : "M 2.5 1.5 L 7 5 L 2.5 8.5", fill: "none", stroke: "currentColor", "stroke-width": 1.8, "stroke-linecap": "round", "stroke-linejoin": "round" })); if (dir < 0) b.append(sv, el("span", {}, label)); else b.append(el("span", {}, label), sv); return b; }   // PREV and NEXT: the arrow drawn, the word beside it, the two centred together
-/* ♯ ♮ ♭ under the pad: the item in hand (every item held) a half step up or down, or to its natural in the key; the entry cursor the same */
+/* ♯ ♮ ♭ beside ENTER: the note selected (every note held, in hand or only pointed to) a half step up or down, or to its natural in the key; the note the entry cursor stands on the same, the cursor following it; else the cursor itself */
 function ezAccidental(a) {
   const k = keyObj(S.song.key), natural = m => { const sp = spell(m, k), acc = sp ? (sp.a != null ? sp.a : sp.acc != null ? sp.acc : 0) : 0; return m - acc; }, step = m => a === 0 ? natural(m) : clamp(m + a, 21, 108);
-  if (ezInHand() && ezSelAll().length) { let n = 0; ezEach(e => { if (!e || e.rest || e.m == null) return; const d = step(e.m) - e.m; if (d) { transposeSel(d); n++; } }); renderAll(); if (!n) toast(a === 0 ? "Already natural" : "Nothing to move"); return; }
+  if (EZ.mode === "entry" && EZ.cur) { const on = ezCurOn(); if (on && !on.rest) { const d = step(on.ev.m) - on.ev.m; if (!d) { toast(a === 0 ? "Already natural" : "Nothing to move"); return; } S.sel = { bi: EZ.cur.bi, part: on.part, id: on.ev.id }; transposeSel(d); S.sel = null; EZ.cur.m = clamp(on.ev.m, 21, 108); renderAll(); ezBanner(); return; } }
+  if (EZ.mode !== "entry" && ezSelAll().length) { let n = 0; ezEach(e => { if (!e || e.rest || e.m == null) return; const d = step(e.m) - e.m; if (d) { transposeSel(d); n++; } }); renderAll(); if (!n) toast(a === 0 ? "Already natural" : "Nothing to move"); return; }
   if (EZ.mode === "entry" && EZ.cur) { EZ.cur.m = step(EZ.cur.m); ensureVisible(ezCurPart(), EZ.cur.m); ezPaint(); ezBanner(); return; }
   toast("Point the finger to an item, or touch the pad for the cursor");
 }
