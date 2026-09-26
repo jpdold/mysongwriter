@@ -8546,7 +8546,7 @@ function ezSetMode(mode, bar0) {
   S.sel = mode === "nav" && EZ.sel ? { bi: EZ.sel.bi, part: EZ.sel.part, id: EZ.sel.id } : null; S.ghost = null; renderAll();
 }
 /* ── EDIT: the box editor. The bars in view (up to four, the four round the bar in hand) drawn on the pad — the staff's five lines (both staves of a Grand Stave), the bar lines
-   and the heads, no clef and no signatures — scaled to sit centred in the pad with air above and below. Two boxes select: the tall box spans the staff's height (two spaces beyond
+   — no heads, no clef and no signatures, the lines for orientation alone — scaled to sit centred in the pad with air above and below. Two boxes select: the tall box spans the staff's height (two spaces beyond
    its outer lines, and further to just beyond the highest and lowest heads) and its left and right edges are pulled along the beats; the wide box spans every bar shown and its
    top and bottom edges are pulled along the rows. Each has a grey grip at its four corners, grooved along its own axis; a box's line is 1.75pt black, its inside tinted once open.
    A box with no width (or height) leaves its axis open. What lies within both boxes' reach is selected — tinted blue on the stave, every entry in a white box — and the selection
@@ -8579,15 +8579,7 @@ function ezBoxDraw(L) {
   const xL = L.xOf(0), xR = L.xOf(L.T), sel = new Set(EZ.multi.map(o => o.part + ":" + o.id)), top0 = L.staves[0].top, botN = L.staves[L.staves.length - 1].top - 8;
   for (const st of L.staves) for (let i = 0; i < 5; i++) ln(xL, L.yOf(st.top - 2 * i), xR, L.yOf(st.top - 2 * i), 1);
   { let a = 0; for (const bi of L.bars) { ln(L.xOf(a), L.yOf(top0), L.xOf(a), L.yOf(botN), a ? 1.4 : 1.8); a += barBeats(bi); } ln(xR, L.yOf(top0), xR, L.yOf(botN), 1.8); }
-  const rH = Math.max(3, Math.min(L.half * 0.95, L.beatPx * 0.26)), rW = rH * 1.25, pick = (x, y, w, h) => sv.append(svgEl("rect", { x: x - 2.5, y: y - 2.5, width: w + 5, height: h + 5, fill: "none", stroke: "#1b2a4a", "stroke-width": 3, opacity: 0.45 }), svgEl("rect", { x: x - 2.5, y: y - 2.5, width: w + 5, height: h + 5, fill: "none", stroke: "#fff", "stroke-width": 1.6 }));
-  for (const it of L.items) { const x = L.xOf(it.t) + rW + 2, picked = sel.has(it.part + ":" + it.id);
-    if (it.step == null) { const y = L.yOf(it.staff.top - 4); sv.append(svgEl("rect", { x: x - rW, y: y - rH * 0.7, width: 2 * rW, height: rH * 1.4, rx: 1, fill: "#6a6d73" })); if (picked) pick(x - rW, y - rH * 0.7, 2 * rW, rH * 1.4); continue; }   // a rest: a grey block on the middle line
-    const y = L.yOf(it.step), top = it.staff.top, bot = top - 8;
-    for (let st = top + 2; st <= it.step; st += 2) ln(x - rW * 1.7, L.yOf(st), x + rW * 1.7, L.yOf(st), 1); for (let st = bot - 2; st >= it.step; st -= 2) ln(x - rW * 1.7, L.yOf(st), x + rW * 1.7, L.yOf(st), 1);   // ledger lines out to the head
-    const hollow = it.d >= 2 - 1e-6; sv.append(svgEl("ellipse", { cx: x, cy: y, rx: rW, ry: rH, fill: hollow ? "#fff" : "#111", stroke: "#111", "stroke-width": hollow ? 1.4 : 0 }));
-    if (it.d < 4 - 1e-6) ln(x + rW - 0.6, y, x + rW - 0.6, y - L.half * 6.5, 1.2);
-    if (picked) pick(x - rW, y - rH, 2 * rW, 2 * rH);
-  }
+  /* no entries on the pad: the staff and bar lines are for orientation alone — what the boxes take is shown on the stave itself, tinted and boxed */
   const LW = 2.33, vx0 = L.xOf(B.x0), vx1 = L.xOf(B.x1), vy0 = L.yOf(L.hiStep), vy1 = L.yOf(L.loStep), hy0 = L.yOf(B.y1), hy1 = L.yOf(B.y0);   // 1.75pt
   const box = (x0, y0, x1, y1, open) => sv.append(svgEl("rect", { x: x0, y: y0, width: Math.max(0, x1 - x0), height: Math.max(0, y1 - y0), fill: open ? "#55bdec" : "none", "fill-opacity": 0.3, stroke: "#000", "stroke-width": LW, "stroke-linejoin": "round" }));
   const grip = (x, y, vert) => { const w = vert ? 9 : 14, h = vert ? 14 : 9; sv.append(svgEl("rect", { x: x - w / 2, y: y - h / 2, width: w, height: h, rx: 1.5, fill: "#cfd2d6", stroke: "#4a4d52", "stroke-width": 0.9 })); for (const i of [-2.5, 0, 2.5]) sv.append(svgEl("line", vert ? { x1: x + i, y1: y - 4.5, x2: x + i, y2: y + 4.5, stroke: "#6e7278", "stroke-width": 1 } : { x1: x - 4.5, y1: y + i, x2: x + 4.5, y2: y + i, stroke: "#6e7278", "stroke-width": 1 })); };
