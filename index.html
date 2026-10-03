@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Song Writer has moved</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 18px 16px 40px; font: 16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: #f3f0ea; color: #16181b; }
+  main { max-width: 620px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 6px; }
+  p { margin: 8px 0; }
+  .card { background: #fff; border: 1.5px solid #141414; border-radius: 8px; padding: 14px; margin: 14px 0; }
+  .count { font-size: 18px; font-weight: 800; }
+  ul { margin: 8px 0 0; padding-left: 20px; }
+  li { margin: 3px 0; }
+  li span { color: #5a5f66; font-size: 13px; }
+  button, a.btn { display: block; width: 100%; min-height: 48px; margin: 10px 0 0; padding: 10px 14px; border: 1.5px solid #141414; border-radius: 8px; background: linear-gradient(#dcdde0, #b4b8bf); color: #111; font: 800 16px/1.2 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; text-align: center; text-decoration: none; cursor: pointer; }
+  button.main { background: linear-gradient(#6fb3ff, #2f7fd6); color: #fff; border-color: #1b4f8a; }
+  button:disabled { opacity: .45; }
+  textarea { width: 100%; height: 120px; margin-top: 10px; font: 11px/1.3 monospace; border: 1.5px solid #141414; border-radius: 6px; padding: 6px; }
+  .note { font-size: 13px; color: #454a52; }
+  #msg { min-height: 22px; font-weight: 700; color: #1b6b2a; margin-top: 10px; }
+  ol { padding-left: 22px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>My Song Writer has moved</h1>
+  <p>The app now lives at a new, private address. Songs are kept by this browser for the address they were saved at, so the songs you saved here have to be carried across once.</p>
+
+  <div class="card">
+    <div class="count" id="count">Looking for songs…</div>
+    <ul id="list"></ul>
+    <button class="main" id="save" disabled>Save a backup file</button>
+    <button id="share" hidden>Share the backup file…</button>
+    <button id="copy" disabled>Copy the backup as text</button>
+    <div id="msg" role="status"></div>
+    <textarea id="text" readonly hidden aria-label="The backup's text"></textarea>
+    <p class="note">Nothing leaves this phone unless you save, share or copy it. This page only reads what this browser has stored for the old address.</p>
+  </div>
+
+  <div class="card">
+    <b>Then, at the new address</b>
+    <ol>
+      <li>Open the app at its new address (sign in to GitHub if asked).</li>
+      <li>Tap ☰, then <b>Find saved songs</b>.</li>
+      <li>Tap <b>Bring songs in from a backup file…</b> and choose the file — or paste the copied text into the box and tap <b>Bring in the pasted backup</b>.</li>
+    </ol>
+    <a class="btn" href="https://upgraded-barnacle-5wgormo.pages.github.io/">Open the app at its new address</a>
+  </div>
+</main>
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var isSong = function (v) { return !!(v && typeof v === "object" && Array.isArray(v.bars) && Array.isArray(v.sections)); };
+  var keys = {}, songs = [], names = [];
+  try { names = Object.keys(localStorage); } catch (e) { names = []; }
+  names.forEach(function (k) {
+    var raw = null, v = null;
+    try { raw = localStorage.getItem(k); } catch (e) { return; }
+    if (raw == null) return;
+    try { v = JSON.parse(raw); } catch (e) { v = null; }
+    var mine = k.indexOf("mySongWriter") === 0;
+    if (isSong(v)) { songs.push(v); keys[k] = raw; }                                         // a song under a key of its own, wherever it is
+    else if (k === "mySongWriter.songs" && v && typeof v === "object") {                     // the old one-entry library
+      Object.keys(v).forEach(function (id) { if (isSong(v[id])) songs.push(v[id]); }); keys[k] = raw;
+    }
+    else if (mine && k !== "mySongWriter.prefs") keys[k] = raw;                              // the index and the current song's id; the layout's settings stay behind
+  });
+  var seen = {}; songs = songs.filter(function (s) { var id = s.id || JSON.stringify(s).length; if (seen[id]) return false; seen[id] = 1; return true; });
+  songs.sort(function (a, b) { return (b.updated || b.created || 0) - (a.updated || a.created || 0); });
+
+  var notes = function (s) { var n = 0; (s.bars || []).forEach(function (b) { var ev = b.ev || {}; Object.keys(ev).forEach(function (p) { if (Array.isArray(ev[p])) ev[p].forEach(function (e) { if (e && !e.rest && e.m != null) n++; }); }); }); return n; };
+  var when = function (t) { return t ? new Date(t).toLocaleDateString() : "no date"; };
+  $("count").textContent = songs.length ? songs.length + (songs.length === 1 ? " song" : " songs") + " found in this browser" : "No songs found in this browser";
+  songs.forEach(function (s) { var li = document.createElement("li"), sp = document.createElement("span"); li.textContent = (s.title || "Untitled song") + " "; sp.textContent = "· " + (s.key || "") + " · " + notes(s) + " notes · saved " + when(s.updated || s.created); li.appendChild(sp); $("list").appendChild(li); });
+  if (!songs.length) {
+    $("msg").style.color = "#8a3b12";
+    $("msg").textContent = "If you used the app in another browser, or as an app on the home screen, open this same address there.";
+    return;
+  }
+
+  var backup = JSON.stringify({ app: "My Song Writer backup", v: 1, at: new Date().toISOString(), from: location.origin, count: songs.length, keys: keys });
+  var fileName = "my-songs-backup.json";
+  var say = function (t) { $("msg").textContent = t; };
+  $("save").disabled = false; $("copy").disabled = false;
+
+  $("save").addEventListener("click", function () {
+    try {
+      var url = URL.createObjectURL(new Blob([backup], { type: "application/json" })), a = document.createElement("a");
+      a.href = url; a.download = fileName; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+      say("Saved: look for " + fileName + " in this phone's Downloads.");
+    } catch (e) { say("This browser would not save a file: use Copy instead."); }
+  });
+
+  try {
+    var f = new File([backup], fileName, { type: "application/json" });
+    if (navigator.canShare && navigator.canShare({ files: [f] })) {
+      $("share").hidden = false;
+      $("share").addEventListener("click", function () { navigator.share({ files: [f], title: "My Song Writer backup" }).then(function () { say("Shared."); }, function () {}); });
+    }
+  } catch (e) {}
+
+  $("copy").addEventListener("click", function () {
+    var box = $("text"), shown = function () { box.hidden = false; box.value = backup; box.focus(); box.select(); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(backup).then(function () { say("Copied: paste it into the box under Find saved songs at the new address."); }, function () { shown(); try { document.execCommand("copy"); say("Copied: paste it at the new address."); } catch (e) { say("Select all of the text below and copy it."); } });
+    } else { shown(); try { document.execCommand("copy"); say("Copied: paste it at the new address."); } catch (e) { say("Select all of the text below and copy it."); } }
+  });
+})();
+</script>
+</body>
+</html>
