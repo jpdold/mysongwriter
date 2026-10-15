@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sheet music import (experimental)</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 18px 16px 40px; font: 16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: #f3f0ea; color: #16181b; }
+  main { max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 6px; }
+  h2 { font-size: 16px; margin: 0 0 8px; }
+  p { margin: 8px 0; }
+  .card { background: #fff; border: 1.5px solid #141414; border-radius: 8px; padding: 14px; margin: 14px 0; }
+  .card[hidden] { display: none; }
+  button { display: block; width: 100%; min-height: 48px; margin: 10px 0 0; padding: 10px 14px; border: 1.5px solid #141414; border-radius: 8px; background: linear-gradient(#dcdde0, #b4b8bf); color: #111; font: 800 16px/1.2 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; cursor: pointer; }
+  button.main { background: linear-gradient(#6fb3ff, #2f7fd6); color: #fff; border-color: #1b4f8a; }
+  button:disabled { opacity: .45; cursor: default; }
+  input[type=file], input[type=password], input[type=text] { width: 100%; margin-top: 8px; padding: 10px; font: 15px system-ui, sans-serif; border: 1.5px solid #141414; border-radius: 6px; }
+  textarea { width: 100%; height: 260px; margin-top: 10px; font: 12px/1.35 monospace; border: 1.5px solid #141414; border-radius: 6px; padding: 6px; }
+  .note { font-size: 13px; color: #454a52; }
+  .warn { font-size: 13px; color: #8a3b12; }
+  #msg { min-height: 22px; font-weight: 700; color: #1b6b2a; margin-top: 10px; white-space: pre-wrap; }
+  #msg.err { color: #8a3b12; }
+  .pages { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .pages img { height: 120px; border: 1px solid #999; border-radius: 4px; }
+  dl { margin: 8px 0 0; } dt { font-weight: 700; margin-top: 6px; } dd { margin: 0 0 0 12px; font-size: 14px; }
+  ul.doubts { margin: 8px 0 0; padding-left: 20px; font-size: 14px; } ul.doubts li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Sheet music import <span class="note">(experimental)</span></h1>
+  <p>Photograph or scan a page of music, let a model read it, check what it saw, then take the result into My Song Writer as a backup file.</p>
+
+  <div class="card">
+    <h2>1. Pages</h2>
+    <input type="file" id="files" accept="image/*" multiple>
+    <p class="note">One image per page, in order. Big photos are shrunk before they are sent. PDFs are not accepted yet.</p>
+    <div class="pages" id="pages"></div>
+    <input type="text" id="hint" placeholder="Anything the reader should know (e.g. 'lead sheet, melody only', 'two voices on one staff')">
+  </div>
+
+  <div class="card">
+    <h2>2. Read the pages</h2>
+    <input type="password" id="key" placeholder="Anthropic API key (kept in this browser only)" autocomplete="off">
+    <p class="warn">The key is stored in this browser's localStorage and sent straight to the API from this page. Fine for a private test, not for a shared page: see the README.</p>
+    <button class="main" id="analyze" disabled>Read the music</button>
+    <div id="msg" role="status"></div>
+  </div>
+
+  <div class="card" id="review" hidden>
+    <h2>3. Check what was read</h2>
+    <dl id="summary"></dl>
+    <div id="doubtsWrap"><b>Doubtful spots</b><ul class="doubts" id="doubts"></ul></div>
+    <p class="note">The full reading is below and can be edited before converting.</p>
+    <textarea id="score" spellcheck="false" aria-label="The Score as JSON"></textarea>
+  </div>
+
+  <div class="card" id="convert" hidden>
+    <h2>4. Take it into the app</h2>
+    <button class="main" id="save">Save as a My Song Writer backup file</button>
+    <button id="copy">Copy the backup as text</button>
+    <p class="note">Then in the app: ☰ → <b>Find saved songs</b> → <b>Bring songs in from a backup file…</b></p>
+    <div id="msg2" role="status"></div>
+  </div>
+</main>
+<script src="score-schema.js"></script>
+<script src="analyze-claude.js"></script>
+<script src="to-msw.js"></script>
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var SI = window.SheetImport;
+  var KEY_STORE = "mySongWriter.sheetImport.apiKey";
+  var MAX_EDGE = 2000;
+  var pages = [];
+
+  try { $("key").value = localStorage.getItem(KEY_STORE) || ""; } catch (e) {}
+  $("key").addEventListener("change", function () { try { localStorage.setItem(KEY_STORE, $("key").value.trim()); } catch (e) {} });
+
+  var say = function (t, err) { $("msg").textContent = t; $("msg").className = err ? "err" : ""; };
+  var ready = function () { $("analyze").disabled = !pages.length; };
+
+  // Shrink a page to MAX_EDGE on its long side and re-encode as JPEG.
+  function prepare(file) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        var s = Math.min(1, MAX_EDGE / Math.max(img.width, img.height));
+        var c = document.createElement("canvas");
+        c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+        var ctx = c.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height); ctx.drawImage(img, 0, 0, c.width, c.height);
+        var dataUrl = c.toDataURL("image/jpeg", 0.9);
+        URL.revokeObjectURL(url);
+        resolve({ name: file.name, mediaType: "image/jpeg", data: dataUrl.split(",")[1], preview: dataUrl });
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error("Could not open " + file.name)); };
+      img.src = url;
+    });
+  }
+
+  $("files").addEventListener("change", function () {
+    var files = Array.prototype.slice.call($("files").files);
+    say("Preparing " + files.length + (files.length === 1 ? " page…" : " pages…"));
+    Promise.all(files.map(prepare)).then(function (ps) {
+      pages = ps; $("pages").innerHTML = "";
+      ps.forEach(function (p) { var im = document.createElement("img"); im.src = p.preview; im.alt = p.name; $("pages").appendChild(im); });
+      say(ps.length + (ps.length === 1 ? " page ready." : " pages ready.")); ready();
+    }, function (e) { pages = []; say(e.message, true); ready(); });
+  });
+
+  function showScore(score) {
+    var s = $("summary"); s.innerHTML = "";
+    var row = function (k, v) { var dt = document.createElement("dt"), dd = document.createElement("dd"); dt.textContent = k; dd.textContent = v; s.appendChild(dt); s.appendChild(dd); };
+    row("Title", score.title || "(none)");
+    row("Key", score.key ? score.key.tonic + " " + score.key.mode : "?");
+    row("Time", score.time ? score.time.beats + "/" + score.time.unit : "?");
+    row("Tempo", (score.tempo || "?") + (score.tempoText ? " · " + score.tempoText : ""));
+    row("Parts", (score.parts || []).map(function (p) { return p.name + " (" + p.clef + ")"; }).join(", ") || "none");
+    row("Measures", String((score.measures || []).length));
+    row("Sections", (score.sections || []).map(function (x) { return x.name + " " + x.from + "–" + x.to + (x.repeat ? " ×2" : ""); }).join(", ") || "none");
+    var d = $("doubts"); d.innerHTML = "";
+    (score.doubts || []).forEach(function (x) { var li = document.createElement("li"); li.textContent = "Bar " + x.measure + (x.part ? ", " + x.part : "") + ": " + x.what + " — " + x.why; d.appendChild(li); });
+    $("doubtsWrap").hidden = !(score.doubts && score.doubts.length);
+    var copy = Object.assign({}, score); delete copy._usage; delete copy._model;
+    $("score").value = JSON.stringify(copy, null, 2);
+    $("score").dataset.model = score._model || "";
+    $("review").hidden = false; $("convert").hidden = false;
+  }
+
+  $("analyze").addEventListener("click", function () {
+    var key = $("key").value.trim();
+    if (!key) { say("Enter an API key first.", true); return; }
+    $("analyze").disabled = true; say("Reading… this can take a minute or two for a full page.");
+    SI.analyzeScore(pages, { apiKey: key, hint: $("hint").value.trim() }).then(function (score) {
+      var u = score._usage || {};
+      say("Read " + (score.measures || []).length + " bars" + (u.input_tokens ? " (" + u.input_tokens + " in / " + u.output_tokens + " out tokens)" : "") + ".");
+      showScore(score);
+    }, function (e) { say(e.message, true); }).then(ready);
+  });
+
+  function backupText() {
+    var score;
+    try { score = JSON.parse($("score").value); } catch (e) { throw new Error("The Score is not valid JSON: " + e.message); }
+    score._model = $("score").dataset.model;
+    return JSON.stringify(SI.toBackup([SI.toSong(score)]));
+  }
+  var say2 = function (t, err) { $("msg2").textContent = t; $("msg2").className = err ? "err" : ""; };
+
+  $("save").addEventListener("click", function () {
+    try {
+      var text = backupText(), name = "sheet-import-backup.json";
+      var url = URL.createObjectURL(new Blob([text], { type: "application/json" })), a = document.createElement("a");
+      a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+      say2("Saved " + name + ".");
+    } catch (e) { say2(e.message, true); }
+  });
+
+  $("copy").addEventListener("click", function () {
+    try {
+      var text = backupText();
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { say2("Copied."); }, function () { say2("Could not copy; use Save instead.", true); });
+      else say2("This browser cannot copy; use Save instead.", true);
+    } catch (e) { say2(e.message, true); }
+  });
+})();
+</script>
+</body>
+</html>
